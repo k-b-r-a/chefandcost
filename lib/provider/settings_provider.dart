@@ -48,6 +48,29 @@ class SettingsState {
     required this.currencySymbol,
   });
 
+  factory SettingsState.initial() {
+    return SettingsState(
+      themeMode: ThemeMode.system,
+      seedColor: Colors.deepPurple,
+      locale: const Locale('es'),
+      decimalDigits: 2,
+      fontSizeScale: 1.0,
+      hapticFeedbackEnabled: true,
+      useMaterial3: true,
+      iconStyle: 'outlined',
+      numberColorsEnabled: true,
+      animationsEnabled: true,
+      scrollBehavior: 'default',
+      leftHandedMode: false,
+      highContrastText: false,
+      fontFamily: 'system',
+      showNavBarLabels: true,
+      defaultMassUnit: 'g',
+      defaultVolumeUnit: 'ml',
+      currencySymbol: r'$',
+    );
+  }
+
   SettingsState copyWith({
     ThemeMode? themeMode,
     Color? seedColor,
