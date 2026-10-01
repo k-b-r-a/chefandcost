@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -520,20 +521,21 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: Icon(Icons.file_download_outlined, color: theme.colorScheme.secondary),
-                      onPressed: () async {
-                        final selectedDirectory = await FilePicker.platform.getDirectoryPath(
-                          dialogTitle: l10n.localeName == 'es'
-                              ? 'Seleccionar carpeta para guardar la copia'
-                              : 'Select folder to save backup',
-                        );
-                        if (selectedDirectory != null) {
-                          notifier.downloadBackup(backup.id, backup.name, selectedDirectory);
-                        }
-                      },
-                      tooltip: l10n.localeName == 'es' ? 'Guardar copia en...' : 'Save backup to...',
-                    ),
+                    if (!kIsWeb)
+                      IconButton(
+                        icon: Icon(Icons.file_download_outlined, color: theme.colorScheme.secondary),
+                        onPressed: () async {
+                          final selectedDirectory = await FilePicker.platform.getDirectoryPath(
+                            dialogTitle: l10n.localeName == 'es'
+                                ? 'Seleccionar carpeta para guardar la copia'
+                                : 'Select folder to save backup',
+                          );
+                          if (selectedDirectory != null) {
+                            notifier.downloadBackup(backup.id, backup.name, selectedDirectory);
+                          }
+                        },
+                        tooltip: l10n.localeName == 'es' ? 'Guardar copia en...' : 'Save backup to...',
+                      ),
                     IconButton(
                       icon: Icon(Icons.settings_backup_restore, color: theme.colorScheme.primary),
                       onPressed: () => _confirmRestore(context, notifier, backup.id, l10n),

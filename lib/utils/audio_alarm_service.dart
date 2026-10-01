@@ -19,32 +19,39 @@ class AudioAlarmService {
     if (_isPlaying) return;
     _isPlaying = true;
 
-    // 1. Try Native Device System Alarm Ringtone via MethodChannel
-    try {
-      await _platform.invokeMethod('playSystemAlarm');
-    } catch (e) {
-      debugPrint('Native system alarm error: $e');
-      // 2. AudioPlayer Asset Fallback
+    // 1. Try Native Device System Alarm Ringtone via MethodChannel on mobile
+    if (!kIsWeb) {
       try {
-        _player ??= AudioPlayer();
-        await _player?.stop();
-        await _player?.setReleaseMode(ReleaseMode.loop);
-        await _player?.play(AssetSource('audio/alarm.wav'));
-      } catch (err) {
-        debugPrint('AudioPlayer fallback error: $err');
+        await _platform.invokeMethod('playSystemAlarm');
+      } catch (e) {
+        debugPrint('Native system alarm error: $e');
+        await _playFallback();
       }
+    } else {
+      await _playFallback();
     }
 
-    // 3. Continuous Haptic Vibration & Chime Loop
+    // 2. Continuous Haptic Vibration & Chime Loop
     _loopTimer?.cancel();
     _loopTimer = Timer.periodic(const Duration(milliseconds: 800), (_) {
       if (_isPlaying) {
         SystemSound.play(SystemSoundType.alert);
-        HapticFeedback.vibrate();
+        if (!kIsWeb) HapticFeedback.vibrate();
       } else {
         _loopTimer?.cancel();
       }
     });
+  }
+
+  Future<void> _playFallback() async {
+    try {
+      _player ??= AudioPlayer();
+      await _player?.stop();
+      await _player?.setReleaseMode(ReleaseMode.loop);
+      await _player?.play(AssetSource('audio/alarm.wav'));
+    } catch (err) {
+      debugPrint('AudioPlayer fallback error: $err');
+    }
   }
 
   Future<void> stopAlarm() async {
@@ -52,10 +59,12 @@ class AudioAlarmService {
     _loopTimer?.cancel();
     _loopTimer = null;
 
-    try {
-      await _platform.invokeMethod('stopSystemAlarm');
-    } catch (e) {
-      debugPrint('Native stop system alarm error: $e');
+    if (!kIsWeb) {
+      try {
+        await _platform.invokeMethod('stopSystemAlarm');
+      } catch (e) {
+        debugPrint('Native stop system alarm error: $e');
+      }
     }
 
     try {

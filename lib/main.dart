@@ -52,6 +52,14 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
   const CustomScrollBehavior(this.physicsType);
 
   @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
+
+  @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
     switch (physicsType) {
       case 'bounce':
@@ -225,29 +233,141 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
+    final isWide = MediaQuery.sizeOf(context).width >= 800;
+
+    final pageView = PageView(
+      controller: _pageController,
+      physics: settings.animationsEnabled
+          ? const PageScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
+      onPageChanged: (index) {
+        setState(() {
+          _currentIndex = index;
+          _isSearching = false;
+          _showSearchContent = false;
+          ref.read(searchQueryProvider.notifier).setQuery('');
+        });
+      },
+      children: _screens,
+    );
+
+    if (isWide) {
+      return Scaffold(
+        body: Row(
+          children: [
+            _buildNavigationRail(context, settings, l10n, theme),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(
+              child: Stack(
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: pageView,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 24,
+                    right: settings.leftHandedMode ? null : 24,
+                    left: settings.leftHandedMode ? 24 : null,
+                    child: _buildFab(context, settings, isWide: true) ?? const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       extendBody: true,
-      body: PageView(
-        controller: _pageController,
-        physics: settings.animationsEnabled
-            ? const PageScrollPhysics()
-            : const NeverScrollableScrollPhysics(),
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-            _isSearching = false;
-            _showSearchContent = false;
-            ref.read(searchQueryProvider.notifier).setQuery('');
-          });
-        },
-        children: _screens,
-      ),
+      body: pageView,
       floatingActionButtonLocation: settings.leftHandedMode
           ? FloatingActionButtonLocation.startFloat
           : FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildFab(context, settings),
+      floatingActionButton: _buildFab(context, settings, isWide: false),
       bottomNavigationBar: _buildFloatingNavBar(context, settings, l10n, theme),
+    );
+  }
+
+  Widget _buildNavigationRail(
+    BuildContext context,
+    SettingsState settings,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
+    return NavigationRail(
+      selectedIndex: _currentIndex,
+      onDestinationSelected: _navigateToTab,
+      labelType: settings.showNavBarLabels
+          ? NavigationRailLabelType.all
+          : NavigationRailLabelType.none,
+      minWidth: 72,
+      minExtendedWidth: 200,
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.restaurant_menu,
+                color: theme.colorScheme.onPrimaryContainer,
+                size: 26,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'RecipeTools',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+      destinations: [
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(0, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(0, true, settings.iconStyle)),
+          label: Text(l10n.home_title),
+        ),
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(1, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(1, true, settings.iconStyle)),
+          label: Text(l10n.recipes_title),
+        ),
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(2, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(2, true, settings.iconStyle)),
+          label: Text(l10n.ingredients_title),
+        ),
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(3, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(3, true, settings.iconStyle)),
+          label: Text(l10n.tools_title),
+        ),
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(4, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(4, true, settings.iconStyle)),
+          label: Text(l10n.config_button),
+        ),
+      ],
     );
   }
 
@@ -274,9 +394,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       child: RepaintBoundary(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          child: SizedBox(
-            height: pillHeight,
-            child: Container(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: SizedBox(
+                height: pillHeight,
+                child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface.withValues(alpha: 0.94),
@@ -413,10 +536,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
-  Widget? _buildFab(BuildContext context, SettingsState settings) {
+  Widget? _buildFab(BuildContext context, SettingsState settings, {bool isWide = false}) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.sizeOf(context).width;
@@ -424,15 +549,24 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     // determine visibility based on current screen (Recipes: 1, Ingredients: 2)
     final bool showFab = _currentIndex == 1 || _currentIndex == 2;
+    if (!showFab && isWide) return null;
+
     final anim400 = settings.animationsEnabled ? const Duration(milliseconds: 250) : Duration.zero;
     final anim300 = settings.animationsEnabled ? const Duration(milliseconds: 200) : Duration.zero;
     final anim200 = settings.animationsEnabled ? const Duration(milliseconds: 150) : Duration.zero;
 
+    final double searchWidth = isWide ? 320.0 : screenWidth - 48;
+    final double containerWidth = isWide
+        ? (_isSearching ? 400.0 : 130.0)
+        : screenWidth;
+
     return RepaintBoundary(
-      child: Container(
-        width: screenWidth,
+      child: AnimatedContainer(
+        duration: anim400,
+        curve: Curves.fastOutSlowIn,
+        width: containerWidth,
         height: 120, // enough height for the "jump" animation
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        padding: EdgeInsets.symmetric(horizontal: isWide ? 0 : 24.0),
         child: IgnorePointer(
           ignoring: !showFab,
           child: Stack(
@@ -452,7 +586,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   child: AnimatedContainer(
                     duration: anim400,
                     curve: Curves.fastOutSlowIn,
-                    width: _isSearching ? screenWidth - 48 : 40,
+                    width: _isSearching ? searchWidth : 40,
                     height: _isSearching ? 44 : 40,
                     decoration: BoxDecoration(
                       color: _isSearching
