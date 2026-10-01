@@ -9,6 +9,7 @@ import '../provider/settings_provider.dart';
 import '../provider/timers_provider.dart';
 import '../utils/recipe_utils.dart';
 import '../widgets/floating_pill_app_bar.dart';
+import '../widgets/tool_card.dart';
 
 import 'recipe_editor_screen.dart';
 import 'add_ingredient_screen.dart';
@@ -635,13 +636,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           children: [
                             CircleAvatar(
                               radius: 22,
-                              backgroundColor: recipe.colour != null
-                                  ? Color(
-                                      int.parse(
-                                        recipe.colour!.replaceFirst('#', '0xFF'),
-                                      ),
-                                    )
-                                  : theme.colorScheme.primary,
+                              backgroundColor: RecipeUtils.parseColor(
+                                recipe.colour,
+                                fallback: theme.colorScheme.primary,
+                              ),
                               child: const Icon(
                                 Icons.restaurant,
                                 color: Colors.white,
@@ -753,12 +751,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        _buildToolPreviewCard(
-          context: context,
-          theme: theme,
+        ToolCard(
           title: l10n.timers_title,
           subtitle: l10n.timers_desc,
           icon: Icons.timer_outlined,
+          isCompact: true,
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
@@ -768,12 +765,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         ),
         const SizedBox(height: 10),
-        _buildToolPreviewCard(
-          context: context,
-          theme: theme,
+        ToolCard(
           title: l10n.rule_of_three_title,
           subtitle: l10n.rule_of_three_desc,
           icon: Icons.calculate_outlined,
+          isCompact: true,
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
@@ -783,12 +779,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         ),
         const SizedBox(height: 10),
-        _buildToolPreviewCard(
-          context: context,
-          theme: theme,
+        ToolCard(
           title: l10n.unit_converter_title,
           subtitle: l10n.unit_converter_desc,
           icon: Icons.swap_horiz_rounded,
+          isCompact: true,
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
@@ -800,90 +795,5 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ],
     );
   }
-
-  Widget _buildToolPreviewCard({
-    required BuildContext context,
-    required ThemeData theme,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: theme.colorScheme.primary,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
+

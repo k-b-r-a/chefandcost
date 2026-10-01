@@ -6,6 +6,7 @@ import '../database/database.dart';
 import '../provider/database_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/recipe_utils.dart';
+import '../utils/ui_utils.dart';
 import 'compare_ingredients_screen.dart';
 import '../provider/settings_provider.dart';
 
@@ -93,18 +94,14 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
         if (mounted) Navigator.pop(context);
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.error_prefix(e.toString()))),
-          );
+          AppSnackBar.showError(context, l10n.error_prefix(e.toString()));
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
     } else if (_selectedUnitPk == null) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.error_select_unit)));
+        AppSnackBar.showError(context, l10n.error_select_unit);
       }
     }
   }

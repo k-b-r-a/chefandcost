@@ -4,6 +4,8 @@ import '../database/database.dart';
 import '../provider/database_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/recipe_utils.dart';
+import '../utils/dialog_utils.dart';
+import '../utils/ui_utils.dart';
 import '../provider/settings_provider.dart';
 
 class CompareIngredientsScreen extends ConsumerStatefulWidget {
@@ -38,40 +40,31 @@ class _CompareIngredientsScreenState
         ? widget.ingredient2
         : widget.ingredient1;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.merge_confirm_title),
-        content: Text(l10n.merge_confirm_message(other.name, survivor.name)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.done_button),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.merge_button),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialogs.confirm(
+      context,
+      title: l10n.merge_confirm_title,
+      message: l10n.merge_confirm_message(other.name, survivor.name),
+      confirmText: l10n.merge_button,
+      cancelText: l10n.done_button,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       setState(() => _isMerging = true);
       try {
         await ref.read(databaseProvider).mergeIngredients(other, survivor);
         if (mounted) {
-          ScaffoldMessenger.of(
+          AppSnackBar.showSuccess(
             context,
-          ).showSnackBar(SnackBar(content: Text(l10n.localeName == 'es' ? 'Ingredientes combinados con éxito' : 'Merged successfully')));
+            l10n.localeName == 'es'
+                ? 'Ingredientes combinados con éxito'
+                : 'Merged successfully',
+          );
           Navigator.pop(context); // go back to add screen
           Navigator.pop(context); // go back to list
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.error_prefix(e.toString()))),
-          );
+          AppSnackBar.showError(context, l10n.error_prefix(e.toString()));
         }
       } finally {
         if (mounted) setState(() => _isMerging = false);

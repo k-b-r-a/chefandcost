@@ -101,6 +101,17 @@ class RecipeUtils {
     return double.tryParse(clean) ?? 0.0;
   }
 
+  /// Safely parses a hex color string (e.g. "#FF5722" or "FF5722") with fallback.
+  static Color parseColor(String? hexString, {Color fallback = const Color(0xFF6750A4)}) {
+    if (hexString == null || hexString.isEmpty) return fallback;
+    try {
+      final formatted = hexString.replaceFirst('#', '').padLeft(8, 'f');
+      return Color(int.parse(formatted, radix: 16));
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   /// Formats any string containing a currency symbol with the currency symbol highlighted in the theme's accent/primary color.
   static TextSpan formatCurrencyTextSpan({
     required BuildContext context,
