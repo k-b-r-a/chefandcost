@@ -206,6 +206,78 @@ abstract class AppLocalizations {
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ];
 
+  /// No description provided for @home_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home_title;
+
+  /// No description provided for @home_greeting_morning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning, Chef'**
+  String get home_greeting_morning;
+
+  /// No description provided for @home_greeting_afternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon, Chef'**
+  String get home_greeting_afternoon;
+
+  /// No description provided for @home_greeting_evening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening, Chef'**
+  String get home_greeting_evening;
+
+  /// No description provided for @home_quick_actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get home_quick_actions;
+
+  /// No description provided for @home_recent_recipes.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Recipes'**
+  String get home_recent_recipes;
+
+  /// No description provided for @home_view_all.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get home_view_all;
+
+  /// No description provided for @home_active_timers.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Timers'**
+  String get home_active_timers;
+
+  /// No description provided for @home_kitchen_tools.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Tools'**
+  String get home_kitchen_tools;
+
+  /// No description provided for @home_stats_recipes.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipes'**
+  String get home_stats_recipes;
+
+  /// No description provided for @home_stats_ingredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients'**
+  String get home_stats_ingredients;
+
+  /// No description provided for @home_stats_avg_margin.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg. Margin'**
+  String get home_stats_avg_margin;
+
   /// No description provided for @recipes_title.
   ///
   /// In en, this message translates to:

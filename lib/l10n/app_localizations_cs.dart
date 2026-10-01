@@ -9,6 +9,42 @@ class AppLocalizationsCs extends AppLocalizations {
   AppLocalizationsCs([String locale = 'cs']) : super(locale);
 
   @override
+  String get home_title => 'Home';
+
+  @override
+  String get home_greeting_morning => 'Good morning, Chef';
+
+  @override
+  String get home_greeting_afternoon => 'Good afternoon, Chef';
+
+  @override
+  String get home_greeting_evening => 'Good evening, Chef';
+
+  @override
+  String get home_quick_actions => 'Quick Actions';
+
+  @override
+  String get home_recent_recipes => 'Recent Recipes';
+
+  @override
+  String get home_view_all => 'View all';
+
+  @override
+  String get home_active_timers => 'Active Timers';
+
+  @override
+  String get home_kitchen_tools => 'Kitchen Tools';
+
+  @override
+  String get home_stats_recipes => 'Recipes';
+
+  @override
+  String get home_stats_ingredients => 'Ingredients';
+
+  @override
+  String get home_stats_avg_margin => 'Avg. Margin';
+
+  @override
   String get recipes_title => 'Recipes';
 
   @override

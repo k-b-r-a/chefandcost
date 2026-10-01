@@ -8,6 +8,7 @@ import 'database/database.dart';
 import 'widgets/floating_pill_app_bar.dart';
 import 'utils/recipe_utils.dart';
 
+import 'screens/home_screen.dart';
 import 'screens/recipe_editor_screen.dart';
 import 'screens/ingredients_screen.dart';
 import 'screens/add_ingredient_screen.dart';
@@ -180,16 +181,34 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   bool _isSearchHovered = false;
   bool _isAddHovered = false;
 
-  final List<Widget> _screens = [
-    const RecipeListScreen(),
-    const IngredientsScreen(),
-    const ToolsScreen(),
-    const SettingsScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  void _navigateToTab(int index) {
+    if (_currentIndex != index) {
+      setState(() {
+        _currentIndex = index;
+        _isSearching = false;
+        _showSearchContent = false;
+        ref.read(searchQueryProvider.notifier).setQuery('');
+      });
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _screens = [
+      HomeScreen(onNavigateToTab: _navigateToTab),
+      const RecipeListScreen(),
+      const IngredientsScreen(),
+      const ToolsScreen(),
+      const SettingsScreen(),
+    ];
     _pageController = PageController(initialPage: _currentIndex);
   }
 
@@ -234,10 +253,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     ThemeData theme,
   ) {
     final items = [
-      (0, l10n.recipes_title),
-      (1, l10n.ingredients_title),
-      (2, l10n.tools_title),
-      (3, l10n.config_button),
+      (0, l10n.home_title),
+      (1, l10n.recipes_title),
+      (2, l10n.ingredients_title),
+      (3, l10n.tools_title),
+      (4, l10n.config_button),
     ];
 
     final double pillHeight = settings.showNavBarLabels ? 54.0 : 44.0;
@@ -394,8 +414,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final bool isLeft = settings.leftHandedMode;
 
-    // determine visibility based on current screen
-    final bool showFab = _currentIndex == 0 || _currentIndex == 1;
+    // determine visibility based on current screen (Recipes: 1, Ingredients: 2)
+    final bool showFab = _currentIndex == 1 || _currentIndex == 2;
 
     return Container(
       width: screenWidth,
@@ -559,9 +579,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   onEnter: (_) => setState(() => _isAddHovered = true),
                   onExit: (_) => setState(() => _isAddHovered = false),
                   child: FloatingActionButton(
-                    heroTag: _currentIndex == 0
-                        ? 'add_recipe_fab'
-                        : 'add_ingredient_fab',
+                    heroTag: _currentIndex == 2
+                        ? 'add_ingredient_fab'
+                        : 'add_recipe_fab',
                     elevation: 0,
                     hoverElevation: 0,
                     focusElevation: 0,
@@ -573,13 +593,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           )
                         : theme.colorScheme.secondaryContainer,
                     onPressed: () {
-                      if (_currentIndex == 0) {
+                      if (_currentIndex == 1) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const RecipeEditorScreen(),
                           ),
                         );
-                      } else {
+                      } else if (_currentIndex == 2) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const AddIngredientScreen(),
@@ -1297,33 +1317,37 @@ IconData getNavBarIcon(int index, bool isSelected, String iconStyle) {
   if (isSelected) {
     switch (index) {
       case 0: return Icons.home;
-      case 1: return Icons.inventory_2;
-      case 2: return Icons.handyman;
-      case 3: return Icons.settings;
+      case 1: return Icons.menu_book;
+      case 2: return Icons.inventory_2;
+      case 3: return Icons.handyman;
+      case 4: return Icons.settings;
     }
   }
   
   if (iconStyle == 'rounded') {
     switch (index) {
       case 0: return Icons.home_rounded;
-      case 1: return Icons.inventory_2_rounded;
-      case 2: return Icons.handyman_rounded;
-      case 3: return Icons.settings_rounded;
+      case 1: return Icons.menu_book_rounded;
+      case 2: return Icons.inventory_2_rounded;
+      case 3: return Icons.handyman_rounded;
+      case 4: return Icons.settings_rounded;
     }
   } else if (iconStyle == 'sharp') {
     switch (index) {
       case 0: return Icons.home_sharp;
-      case 1: return Icons.inventory_2_sharp;
-      case 2: return Icons.handyman_sharp;
-      case 3: return Icons.settings_sharp;
+      case 1: return Icons.menu_book_sharp;
+      case 2: return Icons.inventory_2_sharp;
+      case 3: return Icons.handyman_sharp;
+      case 4: return Icons.settings_sharp;
     }
   } else {
     // outlined
     switch (index) {
       case 0: return Icons.home_outlined;
-      case 1: return Icons.inventory_2_outlined;
-      case 2: return Icons.handyman_outlined;
-      case 3: return Icons.settings_outlined;
+      case 1: return Icons.menu_book_outlined;
+      case 2: return Icons.inventory_2_outlined;
+      case 3: return Icons.handyman_outlined;
+      case 4: return Icons.settings_outlined;
     }
   }
   return Icons.home_outlined;
