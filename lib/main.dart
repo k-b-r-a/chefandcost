@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
@@ -454,7 +456,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     height: _isSearching ? 44 : 40,
                     decoration: BoxDecoration(
                       color: _isSearching
-                          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.95)
+                          ? theme.colorScheme.surface.withValues(alpha: 0.65)
                           : (_isSearchHovered
                                 ? Color.alphaBlend(
                                     theme.colorScheme.onSurface.withValues(
@@ -471,10 +473,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                       ),
                       boxShadow: const [],
                     ),
-                    child: AnimatedSwitcher(
-                      duration: anim200,
-                      child: _isSearching
-                          ? AnimatedOpacity(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(_isSearching ? 20 : 12),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: _isSearching ? 8 : 0,
+                          sigmaY: _isSearching ? 8 : 0,
+                        ),
+                        child: AnimatedSwitcher(
+                          duration: anim200,
+                          child: _isSearching
+                              ? AnimatedOpacity(
                               duration: anim200,
                               opacity: _showSearchContent ? 1.0 : 0.0,
                               child: TextField(
@@ -564,6 +573,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   ),
                 ),
               ),
+            ),
+          ),
 
             // add button - jumps up when searching, stays at the right/left
             AnimatedPositioned(
