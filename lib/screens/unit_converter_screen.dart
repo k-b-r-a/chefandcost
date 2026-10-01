@@ -124,9 +124,12 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                 : (filteredUnits.isNotEmpty ? filteredUnits[0] : null);
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
@@ -377,8 +380,10 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                   ),
               ],
             ),
-          );
-        },
+          ),
+        ),
+      );
+    },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
       ),

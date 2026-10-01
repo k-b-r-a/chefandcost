@@ -12,7 +12,8 @@ import '../provider/settings_provider.dart';
 
 class AddIngredientScreen extends ConsumerStatefulWidget {
   final Ingredient? ingredient;
-  const AddIngredientScreen({super.key, this.ingredient});
+  final VoidCallback? onClose;
+  const AddIngredientScreen({super.key, this.ingredient, this.onClose});
 
   @override
   ConsumerState<AddIngredientScreen> createState() =>
@@ -91,7 +92,13 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
           );
         }
 
-        if (mounted) Navigator.pop(context);
+        if (mounted) {
+          if (widget.onClose != null) {
+            widget.onClose!();
+          } else {
+            Navigator.pop(context);
+          }
+        }
       } catch (e) {
         if (mounted) {
           AppSnackBar.showError(context, l10n.error_prefix(e.toString()));
@@ -141,6 +148,13 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: widget.onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                onPressed: widget.onClose,
+              )
+            : null,
         title: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
@@ -157,7 +171,10 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 680),
+                child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Form(
                 key: _formKey,
@@ -343,6 +360,8 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                 ),
               ),
             ),
+          ),
+        ),
     );
   }
 }

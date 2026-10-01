@@ -79,7 +79,10 @@ class RecipeEditorScreen extends ConsumerStatefulWidget {
     this.initialPrice,
     this.initialIngredients,
     this.initialSteps,
+    this.onClose,
   });
+
+  final VoidCallback? onClose;
 
   @override
   ConsumerState<RecipeEditorScreen> createState() => _RecipeEditorScreenState();
@@ -1099,7 +1102,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           ingredients: _ingredients,
           steps: stepsToSave,
         );
-        if (mounted) Navigator.of(context).pop();
+        if (mounted) {
+          if (widget.onClose != null) {
+            widget.onClose!();
+          } else {
+            Navigator.of(context).pop();
+          }
+        }
       } catch (e) {
         // error handling
         if (mounted) setState(() => _isSaving = false);
@@ -1199,14 +1208,31 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         final shouldPop = await onPopRequested();
-        if (shouldPop && context.mounted) Navigator.of(context).pop();
+        if (shouldPop && context.mounted) {
+          if (widget.onClose != null) {
+            widget.onClose!();
+          } else {
+            Navigator.of(context).pop();
+          }
+        }
       },
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
         appBar: AppBar(
           backgroundColor: theme.colorScheme.surface,
           elevation: 0,
-          leading: const BackButton(),
+          leading: widget.onClose != null
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                  onPressed: () async {
+                    final shouldPop = await onPopRequested();
+                    if (shouldPop && context.mounted) {
+                      widget.onClose!();
+                    }
+                  },
+                )
+              : const BackButton(),
           centerTitle: true,
           title: InkWell(
             onTap: () {
@@ -1268,9 +1294,12 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Form(
-                key: _formKey,
-                child: Column(
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 880),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
                   children: [
                     if (widget.isTemporary)
                       Container(
@@ -1778,6 +1807,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   ],
                 ),
               ),
+            ),
+          ),
       ), // close Scaffold (child of PopScope)
     ); // close PopScope
   }

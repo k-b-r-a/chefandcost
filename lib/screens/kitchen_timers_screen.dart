@@ -85,13 +85,15 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(22.0, 16.0, 22.0, 110.0),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    if (timers.isEmpty)
-                      _buildEmptyState(theme, notifier, l10n)
-                    else
-                      _buildTimersList(timers, notifier, theme, l10n),
-                  ]),
+                sliver: SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 860),
+                      child: timers.isEmpty
+                          ? _buildEmptyState(theme, notifier, l10n)
+                          : _buildTimersList(timers, notifier, theme, l10n),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -495,6 +497,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: 600),
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),

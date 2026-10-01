@@ -5,6 +5,7 @@ Widget buildFloatingPillAppBar({
   required String title,
   required ScrollController controller,
   Widget? titleWidget,
+  Widget? leading,
   Widget? trailing,
   Widget? underTitle,
   PreferredSizeWidget? bottom,
@@ -14,6 +15,7 @@ Widget buildFloatingPillAppBar({
   final double extraHeight = (bottom?.preferredSize.height ?? 0.0) + (underTitle != null ? 30.0 : 0.0);
   return SliverAppBar(
     pinned: true,
+    leading: leading,
     expandedHeight: 120 + extraHeight,
     collapsedHeight: 70 + (underTitle != null ? 18.0 : 0.0) + (bottom?.preferredSize.height ?? 0.0),
     backgroundColor: Colors.transparent,

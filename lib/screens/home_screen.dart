@@ -10,6 +10,7 @@ import '../provider/timers_provider.dart';
 import '../utils/recipe_utils.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../widgets/tool_card.dart';
+import '../provider/web_layout_provider.dart';
 
 import 'recipe_editor_screen.dart';
 import 'add_ingredient_screen.dart';
@@ -76,32 +77,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 100.0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // 1. Hero Greeting Banner
-                _buildGreetingCard(context, theme, l10n, settings),
-                const SizedBox(height: 16),
+            sliver: SliverToBoxAdapter(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 960),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Hero Greeting Banner
+                      _buildGreetingCard(context, theme, l10n, settings),
+                      const SizedBox(height: 16),
 
-                // 2. Active Timers Banner (Live countdown card if running)
-                const _LiveActiveTimersBanner(),
+                      // 2. Active Timers Banner (Live countdown card if running)
+                      const _LiveActiveTimersBanner(),
 
-                // 3. Quick Actions
-                _buildQuickActionsSection(context, theme, l10n),
-                const SizedBox(height: 20),
+                      // 3. Quick Actions
+                      _buildQuickActionsSection(context, theme, l10n),
+                      const SizedBox(height: 20),
 
-                // 5. Recent Recipes
-                _buildRecentRecipesSection(
-                  context: context,
-                  theme: theme,
-                  l10n: l10n,
-                  settings: settings,
-                  recipesAsync: recipesAsync,
+                      // 5. Recent Recipes
+                      _buildRecentRecipesSection(
+                        context: context,
+                        theme: theme,
+                        l10n: l10n,
+                        settings: settings,
+                        recipesAsync: recipesAsync,
+                      ),
+                      const SizedBox(height: 20),
+
+                      // 6. Kitchen Tools Quick Launch
+                      _buildKitchenToolsSection(context, theme, l10n),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
-
-                // 6. Kitchen Tools Quick Launch
-                _buildKitchenToolsSection(context, theme, l10n),
-              ]),
+              ),
             ),
           ),
         ],
@@ -231,11 +240,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: Icons.add_rounded,
                 isPrimary: true,
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const RecipeEditorScreen(),
-                    ),
-                  );
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openNewRecipe();
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const RecipeEditorScreen(),
+                      ),
+                    );
+                  }
                 },
               ),
               const SizedBox(width: 10),
@@ -246,11 +259,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: Icons.egg_outlined,
                 isPrimary: false,
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AddIngredientScreen(),
-                    ),
-                  );
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openNewIngredient();
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const AddIngredientScreen(),
+                      ),
+                    );
+                  }
                 },
               ),
               const SizedBox(width: 10),
@@ -261,11 +278,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: Icons.timer_outlined,
                 isPrimary: false,
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const KitchenTimersScreen(),
-                    ),
-                  );
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openTool(0);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const KitchenTimersScreen(),
+                      ),
+                    );
+                  }
                 },
               ),
               const SizedBox(width: 10),
@@ -276,11 +297,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: Icons.calculate_outlined,
                 isPrimary: false,
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const RuleOfThreeScreen(),
-                    ),
-                  );
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openTool(1);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const RuleOfThreeScreen(),
+                      ),
+                    );
+                  }
                 },
               ),
               const SizedBox(width: 10),
@@ -291,11 +316,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: Icons.swap_horiz_rounded,
                 isPrimary: false,
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const UnitConverterScreen(),
-                    ),
-                  );
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openTool(2);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const UnitConverterScreen(),
+                      ),
+                    );
+                  }
                 },
               ),
             ],
@@ -383,11 +412,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              l10n.home_recent_recipes,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.3,
+            Expanded(
+              child: Text(
+                l10n.home_recent_recipes,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.3,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             TextButton(
@@ -433,11 +466,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     const SizedBox(height: 12),
                     FilledButton.icon(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const RecipeEditorScreen(),
-                          ),
-                        );
+                        if (MediaQuery.sizeOf(context).width >= 640) {
+                          ref.read(webLayoutProvider.notifier).openNewRecipe();
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const RecipeEditorScreen(),
+                            ),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.add, size: 18),
                       label: Text(l10n.new_recipe_title),
@@ -476,12 +513,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                RecipeEditorScreen(recipeId: recipe.recipePk),
-                          ),
-                        );
+                        if (MediaQuery.sizeOf(context).width >= 640) {
+                          ref
+                              .read(webLayoutProvider.notifier)
+                              .openRecipe(recipe.recipePk);
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  RecipeEditorScreen(recipeId: recipe.recipePk),
+                            ),
+                          );
+                        }
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(14.0),
@@ -584,11 +627,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              l10n.home_kitchen_tools,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.3,
+            Expanded(
+              child: Text(
+                l10n.home_kitchen_tools,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.3,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             TextButton(
@@ -610,11 +657,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           icon: Icons.timer_outlined,
           isCompact: true,
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const KitchenTimersScreen(),
-              ),
-            );
+            if (MediaQuery.sizeOf(context).width >= 640) {
+              ref.read(webLayoutProvider.notifier).openTool(0);
+            } else {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const KitchenTimersScreen(),
+                ),
+              );
+            }
           },
         ),
         const SizedBox(height: 10),
@@ -624,11 +675,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           icon: Icons.calculate_outlined,
           isCompact: true,
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const RuleOfThreeScreen(),
-              ),
-            );
+            if (MediaQuery.sizeOf(context).width >= 640) {
+              ref.read(webLayoutProvider.notifier).openTool(1);
+            } else {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const RuleOfThreeScreen(),
+                ),
+              );
+            }
           },
         ),
         const SizedBox(height: 10),
@@ -638,11 +693,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           icon: Icons.swap_horiz_rounded,
           isCompact: true,
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const UnitConverterScreen(),
-              ),
-            );
+            if (MediaQuery.sizeOf(context).width >= 640) {
+              ref.read(webLayoutProvider.notifier).openTool(2);
+            } else {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const UnitConverterScreen(),
+                ),
+              );
+            }
           },
         ),
       ],
