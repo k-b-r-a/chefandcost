@@ -77,8 +77,9 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                       fallback: theme.colorScheme.primary,
                     );
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
+                    return RepaintBoundary(
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 6,
                       ),
@@ -201,7 +202,9 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                 ],
                               ),
                               AnimatedSize(
-                                duration: const Duration(milliseconds: 250),
+                                duration: settings.animationsEnabled
+                                    ? const Duration(milliseconds: 200)
+                                    : Duration.zero,
                                 curve: Curves.easeInOut,
                                 child: isExpanded
                                     ? Column(
@@ -275,8 +278,9 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                           ),
                         ),
                       ),
-                    );
-                  }, childCount: filteredRecipes.length),
+                    ),
+                  );
+                }, childCount: filteredRecipes.length),
                 ),
               );
             },

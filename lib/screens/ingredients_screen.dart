@@ -96,49 +96,51 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                         final unitSymbol = unit?.symbol ?? '';
                         final category = unit?.category;
 
-                        return ListTile(
-                          title: Text(
-                            ingredient.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: CurrencyText(
-                            l10n.ingredient_price_per_quantity(
-                              '${settings.currencySymbol}${RecipeUtils.formatNumber(ingredient.cost)}',
-                              RecipeUtils.formatNumber(
-                                ingredient.quantityForCost,
-                              ),
-                              unitSymbol,
+                        return RepaintBoundary(
+                          child: ListTile(
+                            title: Text(
+                              ingredient.name,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
-                            currencySymbol: settings.currencySymbol,
-                          ),
-                          leading: CircleAvatar(
-                            backgroundColor: UnitUtils.getCategoryContainerColor(category, theme),
-                            child: Icon(
-                              UnitUtils.getCategoryIcon(category),
-                              color: UnitUtils.getCategoryOnContainerColor(category, theme),
-                              size: 20,
+                            subtitle: CurrencyText(
+                              l10n.ingredient_price_per_quantity(
+                                '${settings.currencySymbol}${RecipeUtils.formatNumber(ingredient.cost)}',
+                                RecipeUtils.formatNumber(
+                                  ingredient.quantityForCost,
+                                ),
+                                unitSymbol,
+                              ),
+                              currencySymbol: settings.currencySymbol,
                             ),
-                          ),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    AddIngredientScreen(ingredient: ingredient),
+                            leading: CircleAvatar(
+                              backgroundColor: UnitUtils.getCategoryContainerColor(category, theme),
+                              child: Icon(
+                                UnitUtils.getCategoryIcon(category),
+                                color: UnitUtils.getCategoryOnContainerColor(category, theme),
+                                size: 20,
                               ),
-                            );
-                          },
-                          onLongPress: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    AddIngredientScreen(ingredient: ingredient),
-                              ),
-                            );
-                          },
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () =>
-                                _confirmDelete(context, ingredient),
+                            ),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AddIngredientScreen(ingredient: ingredient),
+                                ),
+                              );
+                            },
+                            onLongPress: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AddIngredientScreen(ingredient: ingredient),
+                                ),
+                              );
+                            },
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () =>
+                                  _confirmDelete(context, ingredient),
+                            ),
                           ),
                         );
                       }, childCount: filteredIngredients.length),
