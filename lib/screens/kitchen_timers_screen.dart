@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
@@ -174,13 +173,9 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
     KitchenTimersNotifier notifier,
     AppLocalizations l10n,
   ) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
             onTap: () => _showAddTimerDialog(context, notifier, l10n),
             borderRadius: BorderRadius.circular(24),
             child: Container(
@@ -253,9 +248,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 
   Widget _buildTimersList(

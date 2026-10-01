@@ -64,10 +64,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
     final recipesAsync = ref.watch(recipesWithFinancialsStreamProvider);
-    final timers = ref.watch(kitchenTimersProvider);
-
-    final runningTimers = timers.where((t) => t.isRunning && !t.isFinished).toList();
-    final finishedTimers = timers.where((t) => t.isFinished).toList();
 
     return Scaffold(
       body: CustomScrollView(
@@ -87,10 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 16),
 
                 // 2. Active Timers Banner (Live countdown card if running)
-                if (runningTimers.isNotEmpty || finishedTimers.isNotEmpty) ...[
-                  _buildLiveTimersCard(context, theme, l10n, runningTimers, finishedTimers),
-                  const SizedBox(height: 20),
-                ],
+                const _LiveActiveTimersBanner(),
 
                 // 3. Quick Actions
                 _buildQuickActionsSection(context, theme, l10n),
@@ -207,147 +200,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // --- 2. Live Active Timers Card ---
-  Widget _buildLiveTimersCard(
-    BuildContext context,
-    ThemeData theme,
-    AppLocalizations l10n,
-    List<KitchenTimerModel> runningTimers,
-    List<KitchenTimerModel> finishedTimers,
-  ) {
-    final topTimer = runningTimers.isNotEmpty
-        ? runningTimers.first
-        : finishedTimers.first;
 
-    final isDone = topTimer.isFinished;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDone
-            ? theme.colorScheme.errorContainer.withValues(alpha: 0.4)
-            : theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDone
-              ? theme.colorScheme.error.withValues(alpha: 0.4)
-              : theme.colorScheme.primary.withValues(alpha: 0.3),
-          width: 1.2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isDone ? Icons.alarm_on_rounded : Icons.timer_rounded,
-                color: isDone ? theme.colorScheme.error : theme.colorScheme.primary,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  isDone ? '¡Temporizador finalizado!' : l10n.home_active_timers,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isDone
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const KitchenTimersScreen(),
-                    ),
-                  );
-                },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(50, 30),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  l10n.home_view_all,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      topTimer.name,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isDone
-                          ? 'Terminado a las ${topTimer.formattedFinishedTime}'
-                          : topTimer.formattedTime,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                        color: isDone
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  ref.read(kitchenTimersProvider.notifier).toggleTimer(topTimer.id);
-                },
-                icon: Icon(
-                  topTimer.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  ref.read(kitchenTimersProvider.notifier).resetTimer(topTimer.id);
-                },
-                icon: Icon(
-                  Icons.replay_rounded,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          if (!isDone && topTimer.totalSeconds > 0) ...[
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: topTimer.progress,
-                minHeight: 6,
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   // --- 4. Quick Actions Section ---
   Widget _buildQuickActionsSection(
@@ -797,3 +650,157 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+class _LiveActiveTimersBanner extends ConsumerWidget {
+  const _LiveActiveTimersBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final timers = ref.watch(kitchenTimersProvider);
+    final runningTimers = timers.where((t) => t.isRunning && !t.isFinished).toList();
+    final finishedTimers = timers.where((t) => t.isFinished).toList();
+
+    if (runningTimers.isEmpty && finishedTimers.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final topTimer = runningTimers.isNotEmpty
+        ? runningTimers.first
+        : finishedTimers.first;
+
+    final isDone = topTimer.isFinished;
+
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 20.0),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDone
+                ? theme.colorScheme.errorContainer.withValues(alpha: 0.4)
+                : theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDone
+                  ? theme.colorScheme.error.withValues(alpha: 0.4)
+                  : theme.colorScheme.primary.withValues(alpha: 0.3),
+              width: 1.2,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isDone ? Icons.alarm_on_rounded : Icons.timer_rounded,
+                    color: isDone ? theme.colorScheme.error : theme.colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isDone ? '¡Temporizador finalizado!' : l10n.home_active_timers,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDone
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const KitchenTimersScreen(),
+                        ),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(50, 30),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      l10n.home_view_all,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          topTimer.name,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isDone
+                              ? 'Terminado a las ${topTimer.formattedFinishedTime}'
+                              : topTimer.formattedTime,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                            color: isDone
+                                ? theme.colorScheme.error
+                                : theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      ref.read(kitchenTimersProvider.notifier).toggleTimer(topTimer.id);
+                    },
+                    icon: Icon(
+                      topTimer.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      ref.read(kitchenTimersProvider.notifier).resetTimer(topTimer.id);
+                    },
+                    icon: Icon(
+                      Icons.replay_rounded,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              if (!isDone && topTimer.totalSeconds > 0) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: topTimer.progress,
+                    minHeight: 6,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -24,8 +24,9 @@ class ToolCard extends StatelessWidget {
     final iconSize = isCompact ? 22.0 : 24.0;
     final borderRadius = BorderRadius.circular(isCompact ? 18 : 20);
 
-    return Container(
-      decoration: BoxDecoration(
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: borderRadius,
         border: Border.all(
@@ -110,6 +111,7 @@ class ToolCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

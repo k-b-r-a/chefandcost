@@ -72,7 +72,8 @@ class _GlobalIngredientPickerSheetState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final currency = ref.watch(settingsProvider).currencySymbol;
+    final settings = ref.watch(settingsProvider);
+    final currency = settings.currencySymbol;
 
     return Container(
       height: MediaQuery.sizeOf(context).height * 0.9,
@@ -271,14 +272,18 @@ class _GlobalIngredientPickerSheetState
                               final bool shouldDim =
                                   hasFocus && !isThisFocused;
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 150),
-                                  opacity: shouldDim ? 0.35 : 1.0,
-                                  child: AnimatedContainer(
-                                    duration:
-                                        const Duration(milliseconds: 150),
+                              final animDuration = settings.animationsEnabled
+                                  ? const Duration(milliseconds: 150)
+                                  : Duration.zero;
+
+                              return RepaintBoundary(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: AnimatedOpacity(
+                                    duration: animDuration,
+                                    opacity: shouldDim ? 0.35 : 1.0,
+                                    child: AnimatedContainer(
+                                      duration: animDuration,
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? theme.colorScheme.primaryContainer
@@ -548,7 +553,8 @@ class _GlobalIngredientPickerSheetState
                                     ),
                                   ),
                                 ),
-                              );
+                              ),
+                            );
                             },
                           ),
                         );

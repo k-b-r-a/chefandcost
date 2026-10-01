@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 Widget buildFloatingPillAppBar({
@@ -41,37 +40,25 @@ Widget buildFloatingPillAppBar({
             centerTitle: true,
             titlePadding: EdgeInsets.zero,
             title: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 150),
               margin: EdgeInsets.only(
                 bottom: isCollapsed ? 12 : 16,
                 left: isCollapsed ? 30 : 0,
                 right: isCollapsed ? 30 : 0,
               ),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(
-                  alpha: isCollapsed ? 0.3 : 0.0,
-                ),
+                color: isCollapsed
+                    ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.85)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: isCollapsed ? 0.2 : 0.0,
-                  ),
+                  color: isCollapsed
+                      ? theme.colorScheme.outlineVariant.withValues(alpha: 0.25)
+                      : Colors.transparent,
                 ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (isCollapsed)
-                      Positioned.fill(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                          child: const SizedBox.shrink(),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.center,
@@ -107,12 +94,9 @@ Widget buildFloatingPillAppBar({
                             ),
                       ),
                     ),
-                  ],
-                ),
               ),
             ),
-          ),
-        );
+          );
       },
     ),
   );

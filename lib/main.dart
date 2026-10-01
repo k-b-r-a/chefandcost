@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
@@ -189,11 +187,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         _showSearchContent = false;
         ref.read(searchQueryProvider.notifier).setQuery('');
       });
-      _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      if (ref.read(settingsProvider).animationsEnabled) {
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        _pageController.jumpToPage(index);
+      }
     }
   }
 
@@ -226,6 +228,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       extendBody: true,
       body: PageView(
         controller: _pageController,
+        physics: settings.animationsEnabled
+            ? const PageScrollPhysics()
+            : const NeverScrollableScrollPhysics(),
         onPageChanged: (index) {
           setState(() {
             _currentIndex = index;
@@ -259,33 +264,33 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     ];
 
     final double pillHeight = settings.showNavBarLabels ? 54.0 : 44.0;
+    final animDuration = settings.animationsEnabled
+        ? const Duration(milliseconds: 200)
+        : Duration.zero;
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-        child: SizedBox(
-          height: pillHeight,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+      child: RepaintBoundary(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+          child: SizedBox(
+            height: pillHeight,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.94),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                  width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: MediaQuery(
                 data: MediaQuery.of(context).copyWith(
                   textScaler: TextScaler.linear(
@@ -300,7 +305,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                       children: [
                         // Smooth sliding indicator pill
                         AnimatedAlign(
-                          duration: const Duration(milliseconds: 250),
+                          duration: animDuration,
                           curve: Curves.easeOutCubic,
                           alignment: Alignment(
                             -1.0 + (_currentIndex * (2.0 / (items.length - 1))),
@@ -336,11 +341,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                         _showSearchContent = false;
                                         ref.read(searchQueryProvider.notifier).setQuery('');
                                       });
-                                      _pageController.animateToPage(
-                                        index,
-                                        duration: const Duration(milliseconds: 300),
-                                        curve: Curves.easeInOut,
-                                      );
+                                      if (settings.animationsEnabled) {
+                                        _pageController.animateToPage(
+                                          index,
+                                          duration: const Duration(milliseconds: 250),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      } else {
+                                        _pageController.jumpToPage(index);
+                                      }
                                     }
                                   },
                                   borderRadius: BorderRadius.circular(12),
@@ -355,7 +364,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                       children: [
                                         AnimatedScale(
                                           scale: isSelected ? 1.08 : 1.0,
-                                          duration: const Duration(milliseconds: 200),
+                                          duration: animDuration,
                                           curve: Curves.easeOut,
                                           child: Icon(
                                             icon,
@@ -368,7 +377,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                         if (settings.showNavBarLabels) ...[
                                           const SizedBox(height: 2),
                                           AnimatedDefaultTextStyle(
-                                            duration: const Duration(milliseconds: 200),
+                                            duration: animDuration,
                                             style: TextStyle(
                                               fontSize: 10.5,
                                               fontWeight: isSelected
@@ -402,9 +411,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget? _buildFab(BuildContext context, SettingsState settings) {
     final theme = Theme.of(context);
@@ -414,65 +422,62 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     // determine visibility based on current screen (Recipes: 1, Ingredients: 2)
     final bool showFab = _currentIndex == 1 || _currentIndex == 2;
+    final anim400 = settings.animationsEnabled ? const Duration(milliseconds: 250) : Duration.zero;
+    final anim300 = settings.animationsEnabled ? const Duration(milliseconds: 200) : Duration.zero;
+    final anim200 = settings.animationsEnabled ? const Duration(milliseconds: 150) : Duration.zero;
 
-    return Container(
-      width: screenWidth,
-      height: 120, // enough height for the "jump" animation
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: IgnorePointer(
-        ignoring: !showFab,
-        child: Stack(
-          alignment: isLeft ? Alignment.bottomLeft : Alignment.bottomRight,
-          children: [
-            // search bar - expands horizontally from the left of add button
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.fastOutSlowIn,
-              right: isLeft ? null : (_isSearching ? 0 : 56 + 12),
-              left: isLeft ? (_isSearching ? 0 : 56 + 12) : null,
-              bottom: 0, // aligned at the same floor as the 56px add button
-              child: AnimatedScale(
-                scale: showFab ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.fastOutSlowIn,
-                  width: _isSearching ? screenWidth - 48 : 40,
-                  height: _isSearching ? 44 : 40,
-                  decoration: BoxDecoration(
-                    color: _isSearching
-                        ? theme.colorScheme.surface.withValues(alpha: 0.7)
-                        : (_isSearchHovered
-                              ? Color.alphaBlend(
-                                  theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  theme.colorScheme.secondaryContainer,
-                                )
-                              : theme.colorScheme.secondaryContainer),
-                    borderRadius: BorderRadius.circular(_isSearching ? 20 : 12),
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withValues(
-                        alpha: _isSearching ? 0.4 : 0.1,
+    return RepaintBoundary(
+      child: Container(
+        width: screenWidth,
+        height: 120, // enough height for the "jump" animation
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: IgnorePointer(
+          ignoring: !showFab,
+          child: Stack(
+            alignment: isLeft ? Alignment.bottomLeft : Alignment.bottomRight,
+            children: [
+              // search bar - expands horizontally from the left of add button
+              AnimatedPositioned(
+                duration: anim400,
+                curve: Curves.fastOutSlowIn,
+                right: isLeft ? null : (_isSearching ? 0 : 56 + 12),
+                left: isLeft ? (_isSearching ? 0 : 56 + 12) : null,
+                bottom: 0, // aligned at the same floor as the 56px add button
+                child: AnimatedScale(
+                  scale: showFab ? 1.0 : 0.0,
+                  duration: anim300,
+                  curve: Curves.easeInOut,
+                  child: AnimatedContainer(
+                    duration: anim400,
+                    curve: Curves.fastOutSlowIn,
+                    width: _isSearching ? screenWidth - 48 : 40,
+                    height: _isSearching ? 44 : 40,
+                    decoration: BoxDecoration(
+                      color: _isSearching
+                          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.95)
+                          : (_isSearchHovered
+                                ? Color.alphaBlend(
+                                    theme.colorScheme.onSurface.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    theme.colorScheme.secondaryContainer,
+                                  )
+                                : theme.colorScheme.secondaryContainer),
+                      borderRadius: BorderRadius.circular(_isSearching ? 20 : 12),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: _isSearching ? 0.4 : 0.1,
+                        ),
                       ),
+                      boxShadow: const [],
                     ),
-                    boxShadow: const [],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(_isSearching ? 20 : 12),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: _isSearching ? 5 : 0,
-                        sigmaY: _isSearching ? 5 : 0,
-                      ),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: _isSearching
-                            ? AnimatedOpacity(
-                                duration: const Duration(milliseconds: 150),
-                                opacity: _showSearchContent ? 1.0 : 0.0,
-                                child: TextField(
+                    child: AnimatedSwitcher(
+                      duration: anim200,
+                      child: _isSearching
+                          ? AnimatedOpacity(
+                              duration: anim200,
+                              opacity: _showSearchContent ? 1.0 : 0.0,
+                              child: TextField(
                                   key: const ValueKey('search_field'),
                                   autofocus: true,
                                   onChanged: (value) {
@@ -555,23 +560,21 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                   ),
                                 ),
                               ),
-                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
             // add button - jumps up when searching, stays at the right/left
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 400),
+              duration: anim400,
               curve: Curves.fastOutSlowIn,
               right: isLeft ? null : 0,
               left: isLeft ? 0 : null,
               bottom: _isSearching ? 44 + 12 : 0, // moves up above search bar
               child: AnimatedScale(
                 scale: showFab ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
+                duration: anim300,
                 curve: Curves.easeInOut,
                 child: MouseRegion(
                   onEnter: (_) => setState(() => _isAddHovered = true),
@@ -616,8 +619,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 

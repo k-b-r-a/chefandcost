@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -1115,6 +1114,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final unitsAsync = ref.watch(unitsProvider);
+    final settings = ref.watch(settingsProvider);
 
     if (_yieldNameController.text.isEmpty) {
       _yieldNameController.text = l10n.unit_portions.toLowerCase();
@@ -1729,12 +1729,18 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       ),
                     ),
                     AnimatedSize(
-                      duration: const Duration(milliseconds: 350),
+                      duration: settings.animationsEnabled
+                          ? const Duration(milliseconds: 250)
+                          : Duration.zero,
                       curve: Curves.fastOutSlowIn,
                       alignment: Alignment.bottomCenter,
                       child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        reverseDuration: const Duration(milliseconds: 250),
+                        duration: settings.animationsEnabled
+                            ? const Duration(milliseconds: 250)
+                            : Duration.zero,
+                        reverseDuration: settings.animationsEnabled
+                            ? const Duration(milliseconds: 200)
+                            : Duration.zero,
                         layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
                           return Stack(
                             alignment: Alignment.bottomCenter,
@@ -2319,19 +2325,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   }
 
   Widget _buildAddIngredientSquare(ThemeData theme, AppLocalizations l10n) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _showGlobalIngredientPicker,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.35),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _showGlobalIngredientPicker,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
@@ -2398,9 +2400,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 
   Widget _buildIngredientItem(
