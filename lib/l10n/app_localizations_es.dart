@@ -9,6 +9,42 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get home_title => 'Inicio';
+
+  @override
+  String get home_greeting_morning => 'Buenos días, Chef';
+
+  @override
+  String get home_greeting_afternoon => 'Buenas tardes, Chef';
+
+  @override
+  String get home_greeting_evening => 'Buenas noches, Chef';
+
+  @override
+  String get home_quick_actions => 'Acciones Rápidas';
+
+  @override
+  String get home_recent_recipes => 'Recetas Recientes';
+
+  @override
+  String get home_view_all => 'Ver todas';
+
+  @override
+  String get home_active_timers => 'Temporizadores Activos';
+
+  @override
+  String get home_kitchen_tools => 'Herramientas de Cocina';
+
+  @override
+  String get home_stats_recipes => 'Recetas';
+
+  @override
+  String get home_stats_ingredients => 'Ingredientes';
+
+  @override
+  String get home_stats_avg_margin => 'Margen Promedio';
+
+  @override
   String get recipes_title => 'Recetas';
 
   @override
