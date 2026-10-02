@@ -69,6 +69,21 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     searchQuery: searchQuery,
                   );
 
+                  if (isWide && filteredIngredients.isNotEmpty) {
+                    final currentWeb = ref.watch(webLayoutProvider);
+                    if (currentWeb.middleTab == WebMiddleTab.ingredients &&
+                        currentWeb.selectedIngredient == null &&
+                        currentWeb.rightPaneView == WebRightPaneView.ingredient) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted &&
+                            ref.read(webLayoutProvider).selectedIngredient == null &&
+                            ref.read(webLayoutProvider).rightPaneView == WebRightPaneView.ingredient) {
+                          ref.read(webLayoutProvider.notifier).openIngredient(filteredIngredients.first);
+                        }
+                      });
+                    }
+                  }
+
                   if (filteredIngredients.isEmpty) {
                     final emptyMsg = searchQuery.isEmpty &&
                             currentFilter == IngredientFilterType.all

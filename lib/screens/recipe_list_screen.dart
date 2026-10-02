@@ -52,6 +52,22 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 return item.recipe.name.toLowerCase().contains(searchQuery);
               }).toList();
 
+              final isWideWeb = MediaQuery.sizeOf(context).width >= 640;
+              if (isWideWeb && filteredRecipes.isNotEmpty) {
+                final webLayout = ref.watch(webLayoutProvider);
+                if (webLayout.middleTab == WebMiddleTab.recipes &&
+                    webLayout.selectedRecipeId == null &&
+                    webLayout.rightPaneView == WebRightPaneView.recipe) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted &&
+                        ref.read(webLayoutProvider).selectedRecipeId == null &&
+                        ref.read(webLayoutProvider).rightPaneView == WebRightPaneView.recipe) {
+                      ref.read(webLayoutProvider.notifier).openRecipe(filteredRecipes.first.recipe.recipePk);
+                    }
+                  });
+                }
+              }
+
               if (filteredRecipes.isEmpty) {
                 return SliverFillRemaining(
                   child: AppEmptyState(

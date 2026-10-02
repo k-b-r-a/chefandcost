@@ -90,11 +90,9 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
     }
 
     if (tab == WebMiddleTab.recipes) {
-      final isRecipeView = state.rightPaneView == WebRightPaneView.recipe ||
-          state.rightPaneView == WebRightPaneView.newRecipe;
       state = state.copyWith(
         middleTab: tab,
-        rightPaneView: isRecipeView ? state.rightPaneView : WebRightPaneView.home,
+        rightPaneView: WebRightPaneView.recipe,
         clearIngredient: true,
         clearTool: true,
         isHomeActive: false,
@@ -103,11 +101,9 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
     }
 
     if (tab == WebMiddleTab.ingredients) {
-      final isIngredientView = state.rightPaneView == WebRightPaneView.ingredient ||
-          state.rightPaneView == WebRightPaneView.newIngredient;
       state = state.copyWith(
         middleTab: tab,
-        rightPaneView: isIngredientView ? state.rightPaneView : WebRightPaneView.home,
+        rightPaneView: WebRightPaneView.ingredient,
         clearRecipeId: true,
         clearTool: true,
         isHomeActive: false,

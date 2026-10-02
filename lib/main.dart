@@ -657,11 +657,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     WebLayoutState webLayout,
     WebLayoutNotifier webNotifier,
   ) {
-    if (webLayout.rightPaneView == WebRightPaneView.recipe &&
-        webLayout.selectedRecipeId != null) {
+    if (webLayout.rightPaneView == WebRightPaneView.recipe) {
+      if (webLayout.selectedRecipeId != null) {
+        return RecipeEditorScreen(
+          key: ValueKey('recipe_${webLayout.selectedRecipeId}'),
+          recipeId: webLayout.selectedRecipeId,
+          onClose: () => webNotifier.closeDetail(),
+        );
+      }
       return RecipeEditorScreen(
-        key: ValueKey('recipe_${webLayout.selectedRecipeId}'),
-        recipeId: webLayout.selectedRecipeId,
+        key: const ValueKey('recipe_new'),
         onClose: () => webNotifier.closeDetail(),
       );
     }
@@ -673,11 +678,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       );
     }
 
-    if (webLayout.rightPaneView == WebRightPaneView.ingredient &&
-        webLayout.selectedIngredient != null) {
+    if (webLayout.rightPaneView == WebRightPaneView.ingredient) {
+      if (webLayout.selectedIngredient != null) {
+        return AddIngredientScreen(
+          key: ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}'),
+          ingredient: webLayout.selectedIngredient,
+          onClose: () => webNotifier.closeDetail(),
+        );
+      }
       return AddIngredientScreen(
-        key: ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}'),
-        ingredient: webLayout.selectedIngredient,
+        key: const ValueKey('ingredient_new'),
         onClose: () => webNotifier.closeDetail(),
       );
     }

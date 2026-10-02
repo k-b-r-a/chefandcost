@@ -239,6 +239,54 @@ void main() {
       // Collapsible bottom sheets are NOT shown
       expect(find.byKey(const ValueKey('expanded_financials')), findsNothing);
       expect(find.byKey(const ValueKey('collapsed_financials')), findsNothing);
+
+      // Verify portions stepper and scale buttons exist in right financial list
+      final decBtn = find.byKey(const ValueKey('decrement_portions_button'));
+      final incBtn = find.byKey(const ValueKey('increment_portions_button'));
+      final yieldField = find.byKey(const ValueKey('right_panel_yield_field'));
+      final scaleChipX2 = find.byKey(const ValueKey('scale_preset_x2'));
+
+      expect(decBtn, findsOneWidget);
+      expect(incBtn, findsOneWidget);
+      expect(yieldField, findsOneWidget);
+      expect(scaleChipX2, findsOneWidget);
+
+      // Initial portions is '1'
+      expect(find.descendant(of: yieldField, matching: find.text('1')), findsOneWidget);
+
+      // Tap increment button [+]
+      await tester.tap(incBtn);
+      await tester.pump();
+      await tester.pump();
+
+      // Portions incremented to '2'
+      expect(find.descendant(of: yieldField, matching: find.text('2')), findsOneWidget);
+
+      // Tap decrement button [-]
+      await tester.tap(decBtn);
+      await tester.pump();
+      await tester.pump();
+
+      // Portions decremented back to '1'
+      expect(find.descendant(of: yieldField, matching: find.text('1')), findsOneWidget);
+
+      // Tap scale preset x2 button
+      await tester.tap(scaleChipX2);
+      await tester.pump();
+      await tester.pump();
+
+      // Scaled recipe dialog opens in the middle (Dialog, not full screen route)
+      expect(find.byKey(const ValueKey('scaled_recipe_dialog')), findsOneWidget);
+      expect(find.byKey(const ValueKey('apply_scaled_recipe_button')), findsOneWidget);
+
+      // Tap Apply to Recipe button
+      await tester.tap(find.byKey(const ValueKey('apply_scaled_recipe_button')));
+      await tester.pump();
+      await tester.pump();
+
+      // Dialog is dismissed and portions is now updated to 2
+      expect(find.byKey(const ValueKey('scaled_recipe_dialog')), findsNothing);
+      expect(find.descendant(of: yieldField, matching: find.text('2')), findsOneWidget);
     });
   });
 }
