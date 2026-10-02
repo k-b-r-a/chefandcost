@@ -72,6 +72,62 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
   }
 
   void setMiddleTab(WebMiddleTab tab) {
+    if (tab == WebMiddleTab.settings) {
+      final isAlreadySettingsView = state.rightPaneView == WebRightPaneView.settingsGeneral ||
+          state.rightPaneView == WebRightPaneView.settingsCloudSync ||
+          state.rightPaneView == WebRightPaneView.settingsStyles ||
+          state.rightPaneView == WebRightPaneView.settingsLocale ||
+          state.rightPaneView == WebRightPaneView.settingsAbout;
+      state = state.copyWith(
+        middleTab: tab,
+        rightPaneView: isAlreadySettingsView ? state.rightPaneView : WebRightPaneView.settingsGeneral,
+        clearRecipeId: true,
+        clearIngredient: true,
+        clearTool: true,
+        isHomeActive: false,
+      );
+      return;
+    }
+
+    if (tab == WebMiddleTab.recipes) {
+      final isRecipeView = state.rightPaneView == WebRightPaneView.recipe ||
+          state.rightPaneView == WebRightPaneView.newRecipe;
+      state = state.copyWith(
+        middleTab: tab,
+        rightPaneView: isRecipeView ? state.rightPaneView : WebRightPaneView.home,
+        clearIngredient: true,
+        clearTool: true,
+        isHomeActive: false,
+      );
+      return;
+    }
+
+    if (tab == WebMiddleTab.ingredients) {
+      final isIngredientView = state.rightPaneView == WebRightPaneView.ingredient ||
+          state.rightPaneView == WebRightPaneView.newIngredient;
+      state = state.copyWith(
+        middleTab: tab,
+        rightPaneView: isIngredientView ? state.rightPaneView : WebRightPaneView.home,
+        clearRecipeId: true,
+        clearTool: true,
+        isHomeActive: false,
+      );
+      return;
+    }
+
+    if (tab == WebMiddleTab.tools) {
+      final isToolView = state.rightPaneView == WebRightPaneView.tool;
+      state = state.copyWith(
+        middleTab: tab,
+        rightPaneView: isToolView ? state.rightPaneView : WebRightPaneView.tool,
+        selectedToolIndex: state.selectedToolIndex ?? 0,
+        clearRecipeId: true,
+        clearIngredient: true,
+        isHomeActive: false,
+      );
+      return;
+    }
+
     state = state.copyWith(
       middleTab: tab,
       isHomeActive: false,

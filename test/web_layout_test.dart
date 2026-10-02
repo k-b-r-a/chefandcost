@@ -105,6 +105,27 @@ void main() {
       expect(state.rightPaneView, WebRightPaneView.settingsGeneral);
       expect(state.isHomeActive, false);
     });
+
+    test('setMiddleTab(settings) switches right pane to settingsGeneral and clears previous ingredient', () {
+      final container = ProviderContainer();
+      final ingredient = Ingredient(
+        ingredientPk: 'ing_1',
+        name: 'Sugar',
+        cost: 2.5,
+        quantityForCost: 1000,
+        unitFk: 'unit_g',
+        dateCreated: DateTime.now(),
+      );
+      container.read(webLayoutProvider.notifier).openIngredient(ingredient);
+      expect(container.read(webLayoutProvider).rightPaneView, WebRightPaneView.ingredient);
+
+      container.read(webLayoutProvider.notifier).setMiddleTab(WebMiddleTab.settings);
+
+      final state = container.read(webLayoutProvider);
+      expect(state.middleTab, WebMiddleTab.settings);
+      expect(state.rightPaneView, WebRightPaneView.settingsGeneral);
+      expect(state.selectedIngredient, isNull);
+    });
   });
 
   group('Web 3-Column Layout Widget tests', () {
@@ -176,6 +197,48 @@ void main() {
 
       // Right pane shows SettingsGeneralScreen
       expect(find.byKey(const ValueKey('settings_general')), findsOneWidget);
+    });
+
+    testWidgets('Opening new recipe in wide screen displays web layout with persistent right financial panel and no bottom sheet',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      SharedPreferences.setMockInitialValues({});
+      final sharedPrefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(sharedPrefs),
+            recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
+            unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
+          ],
+          child: const RecipetoolsApp(),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump();
+
+      // Tap New Recipe add button in middle column toolbar
+      final addRecipeBtn = find.byIcon(Icons.add);
+      expect(addRecipeBtn, findsWidgets);
+      await tester.tap(addRecipeBtn.first);
+      await tester.pump();
+      await tester.pump();
+
+      // Right pane displays RecipeEditorScreen
+      expect(find.byKey(const ValueKey('recipe_new')), findsOneWidget);
+
+      // Financial summary is persistently displayed on the right
+      expect(find.text('Resumen Financiero'), findsOneWidget);
+
+      // Collapsible bottom sheets are NOT shown
+      expect(find.byKey(const ValueKey('expanded_financials')), findsNothing);
+      expect(find.byKey(const ValueKey('collapsed_financials')), findsNothing);
     });
   });
 }

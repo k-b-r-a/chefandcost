@@ -200,6 +200,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   final _priceFocusNode = FocusNode();
   final _totalSaleFocusNode = FocusNode();
   final _yieldFocusNode = FocusNode();
+  final _webYieldFocusNode = FocusNode();
 
   // ingredients, steps and timers state
   final List<RecipeIngredientData> _ingredients = [];
@@ -276,6 +277,24 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
     _yieldFocusNode.addListener(() {
       if (_yieldFocusNode.hasFocus) {
+        if (_yieldController.text.isNotEmpty) {
+          _yieldController.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: _yieldController.text.length,
+          );
+        }
+      } else {
+        if (_yieldController.text.isNotEmpty) {
+          final yieldVal = RecipeUtils.parseFormattedNumber(_yieldController.text);
+          _yieldController.text = RecipeUtils.formatNumber(
+            yieldVal <= 0 ? 1 : yieldVal,
+            decimalDigits: 0,
+          );
+        }
+      }
+    });
+    _webYieldFocusNode.addListener(() {
+      if (_webYieldFocusNode.hasFocus) {
         if (_yieldController.text.isNotEmpty) {
           _yieldController.selection = TextSelection(
             baseOffset: 0,
@@ -926,6 +945,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     _priceFocusNode.dispose();
     _totalSaleFocusNode.dispose();
     _yieldFocusNode.dispose();
+    _webYieldFocusNode.dispose();
     for (var ingredient in _ingredients) {
       ingredient.amountController.dispose();
     }
@@ -973,7 +993,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         );
       } else if (_priceFocusNode.hasFocus) {
         // manual price edit, margin will follow
-      } else if (_yieldFocusNode.hasFocus) {
+      } else if (_yieldFocusNode.hasFocus || _webYieldFocusNode.hasFocus) {
         // If yield changes, we maintain the configured profit margin and update the portion price
         double targetMarkup = RecipeUtils.parseFormattedNumber(
           _profitMarginController.text,
@@ -1294,523 +1314,1502 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 880),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                  children: [
-                    if (widget.isTemporary)
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final isDesktopWeb = constraints.maxWidth >= 640;
+                  if (isDesktopWeb) {
+                    return _buildDesktopWebLayout(
+                      context,
+                      theme,
+                      l10n,
+                      unitsAsync,
+                      constraints,
+                      onPopRequested,
+                    );
+                  }
+                  return _buildMobileLayout(
+                    context,
+                    theme,
+                    l10n,
+                    unitsAsync,
+                    settings,
+                  );
+                },
+              ),
+      ), // close Scaffold (child of PopScope)
+    ); // close PopScope
+  }
+
+  void _applyMarginPreset(double preset) {
+    _profitMarginController.text = RecipeUtils.formatNumber(preset, decimalDigits: 0);
+    double yieldVal = RecipeUtils.parseFormattedNumber(_yieldController.text);
+    if (yieldVal <= 0) yieldVal = 1.0;
+    double totalCost = 0.0;
+    for (var ing in _ingredients) {
+      totalCost += ing.totalCost;
+    }
+    double recommendedPrice = RecipeUtils.calculatePriceFromMarkup(
+      totalIngredientsCost: totalCost,
+      yieldVal: yieldVal,
+      targetMarkupPercent: preset,
+    );
+    _priceController.text = RecipeUtils.formatNumber(
+      recommendedPrice,
+      decimalDigits: 2,
+    );
+    _calculateSummary();
+  }
+
+  Widget _buildWebScaleButton(ThemeData theme, AppLocalizations l10n) {
+    return PopupMenuButton<double>(
+      tooltip: l10n.scale_recipe_tooltip,
+      onSelected: _openTemporaryScaledRecipe,
+      itemBuilder: (context) => [
+        _buildPopupMenuItem(context, 2.0, 'x2'),
+        _buildPopupMenuItem(context, 3.0, 'x3'),
+        _buildPopupMenuItem(context, 4.0, 'x4'),
+        _buildPopupMenuItem(context, 5.0, 'x5'),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.scale, size: 16, color: theme.colorScheme.primary),
+            const SizedBox(width: 6),
+            Text(
+              l10n.scale_button,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.arrow_drop_down, size: 16, color: theme.colorScheme.primary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebDuplicateButton(ThemeData theme, AppLocalizations l10n) {
+    return InkWell(
+      onTap: _duplicateCurrentRecipe,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: theme.colorScheme.secondary.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.copy_rounded, size: 16, color: theme.colorScheme.secondary),
+            const SizedBox(width: 6),
+            Text(
+              l10n.duplicate_button,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.secondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebSummaryItem({
+    required IconData icon,
+    required String value,
+    required String label,
+    required ThemeData theme,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: theme.colorScheme.primary),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebPersistentFinancialPanel(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+    Future<bool> Function() onPopRequested,
+  ) {
+    final currentMargin = RecipeUtils.parseFormattedNumber(_profitMarginController.text);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          left: BorderSide(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Header
+                  Row(
+                    children: [
                       Container(
-                        width: double.infinity,
-                        color: theme.colorScheme.primaryContainer.withValues(
-                          alpha: 0.3,
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 16,
+                        child: Icon(
+                          Icons.analytics_rounded,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          l10n.localeName == 'es' ? 'Resumen Financiero' : 'Financial Summary',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 18,
-                              color: theme.colorScheme.primary,
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 5),
+                            Text(
+                              l10n.localeName == 'es' ? 'En vivo' : 'Live',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 2. Hero Profit Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary.withValues(alpha: 0.15),
+                          theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Expanded(
                               child: Text(
-                                l10n.temporary_view_banner(
-                                  RecipeUtils.formatNumber(widget.multiplier),
+                                l10n.total_profit,
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onPrimaryContainer,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${_profitMarginController.text}% ${l10n.financial_margin.toLowerCase()}',
+                                style: TextStyle(
+                                  color: theme.colorScheme.onPrimary,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text.rich(
+                            RecipeUtils.formatCurrencyTextSpan(
+                              context: context,
+                              text: '$currency${RecipeUtils.formatNumber(_currentRevenue)}',
+                              currencySymbol: currency,
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: theme.colorScheme.primary,
+                              ),
+                              currencyColor: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${l10n.profit_per_portion}: $currency${RecipeUtils.formatNumber(_currentProfitPerPortion)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // 3. Margin Presets and Input
+                  Text(
+                    l10n.financial_margin,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [15.0, 30.0, 50.0, 70.0].map((preset) {
+                      final isSelected = (currentMargin - preset).abs() < 0.5;
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: InkWell(
+                            onTap: () => _applyMarginPreset(preset),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${preset.toInt()}%',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? theme.colorScheme.onPrimary
+                                      : theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildFinancialInputCard(
+                    theme: theme,
+                    label: '${l10n.financial_margin} (%)',
+                    controller: _profitMarginController,
+                    suffix: '%',
+                    focusNode: _profitMarginFocusNode,
+                  ),
+                  const SizedBox(height: 14),
+
+                  // 4. Price & Total Sale Inputs
+                  _buildFinancialInputCard(
+                    theme: theme,
+                    label: l10n.financial_price,
+                    controller: _priceController,
+                    prefix: currency,
+                    focusNode: _priceFocusNode,
+                  ),
+                  const SizedBox(height: 10),
+                  _buildFinancialInputCard(
+                    theme: theme,
+                    label: l10n.total_sale,
+                    controller: _totalSaleController,
+                    prefix: currency,
+                    focusNode: _totalSaleFocusNode,
+                  ),
+                  const SizedBox(height: 18),
+
+                  // 5. Cost Breakdown Grid
+                  Text(
+                    l10n.localeName == 'es' ? 'Desglose Financiero' : 'Financial Breakdown',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: 1.8,
+                    children: [
+                      _buildMetricCard(
+                        theme: theme,
+                        label: l10n.total_cost,
+                        value: '$currency${RecipeUtils.formatNumber(_currentTotalCost)}',
+                        color: theme.colorScheme.onSurface,
+                        minWidth: 0,
                       ),
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 22.0),
-                        children: [
-                          const SizedBox(height: 16),
-                          if (!widget.isTemporary && (widget.recipeId == null || _isEditingName)) ...[
-                            _buildCustomTextField(
-                              controller: _nameController,
-                              label: l10n.recipe_name,
-                              hint: l10n.recipe_name,
-                              validator: (value) =>
-                                  (value == null || value.isEmpty)
-                                  ? l10n.recipe_name
-                                  : null,
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _buildSectionHeader(l10n.recipe_description),
-                              IconButton(
-                                icon: Icon(
-                                  _isDescriptionExpanded
-                                      ? Icons.keyboard_arrow_up
-                                      : Icons.keyboard_arrow_down,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                onPressed: () => setState(() {
-                                  _isDescriptionExpanded =
-                                      !_isDescriptionExpanded;
-                                }),
-                              ),
-                            ],
-                          ),
-                          if (_isDescriptionExpanded) ...[
-                            _buildCustomTextField(
-                              controller: _descriptionController,
-                              label: '',
-                              hint: l10n.recipe_description_hint,
-                              maxLines: 3,
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                          if (widget.recipeId != null &&
-                              !widget.isTemporary) ...[
-                            const SizedBox(height: 8),
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  if (_recipeTimers.isEmpty)
-                                    InkWell(
-                                      borderRadius: BorderRadius.circular(20),
-                                      onTap: () => _showAddRecipeTimerDialog(theme, l10n),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: theme.colorScheme.secondaryContainer
-                                              .withValues(alpha: 0.3),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: theme.colorScheme.secondary
-                                                .withValues(alpha: 0.2),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.timer_outlined,
-                                              size: 18,
-                                              color: theme.colorScheme.secondary,
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              l10n.localeName == 'es' ? '+ Temporizador' : '+ Timer',
-                                              style: theme.textTheme.labelLarge?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: theme.colorScheme.secondary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    PopupMenuButton<RecipeTimerData>(
-                                      tooltip: l10n.localeName == 'es' ? 'Iniciar temporizador' : 'Start timer',
-                                      onSelected: (timerData) {
-                                        final timerName = timerData.nameController.text.trim().isEmpty
-                                            ? (_nameController.text.isEmpty ? 'Recipe Timer' : _nameController.text)
-                                            : timerData.nameController.text.trim();
+                      _buildMetricCard(
+                        theme: theme,
+                        label: l10n.cost_per_portion,
+                        value: '$currency${RecipeUtils.formatNumber(_currentCostPerPortion)}',
+                        color: theme.colorScheme.onSurfaceVariant,
+                        minWidth: 0,
+                      ),
+                      _buildMetricCard(
+                        theme: theme,
+                        label: l10n.total_sale,
+                        value: '$currency${RecipeUtils.formatNumber(_currentTotalRevenue)}',
+                        color: theme.colorScheme.secondary,
+                        minWidth: 0,
+                      ),
+                      _buildMetricCard(
+                        theme: theme,
+                        label: l10n.unit_portions,
+                        value: '${_yieldController.text} ${_yieldNameController.text.isNotEmpty ? _yieldNameController.text : l10n.unit_portions.toLowerCase()}',
+                        color: theme.colorScheme.primary,
+                        minWidth: 0,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
 
-                                        ref.read(kitchenTimersProvider.notifier).addTimer(
-                                          timerName,
-                                          timerData.durationSeconds,
-                                        );
-
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              l10n.localeName == 'es'
-                                                  ? 'Temporizador iniciado: $timerName (${timerData.formattedDuration})'
-                                                  : 'Timer started: $timerName (${timerData.formattedDuration})',
-                                            ),
-                                            action: SnackBarAction(
-                                              label: l10n.localeName == 'es' ? 'Ver' : 'View',
-                                              onPressed: () {
-                                                Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                    builder: (context) => const KitchenTimersScreen(),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      itemBuilder: (context) => _recipeTimers.map((timerData) {
-                                        return PopupMenuItem<RecipeTimerData>(
-                                          value: timerData,
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.play_arrow_rounded,
-                                                color: theme.colorScheme.primary,
-                                                size: 20,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  '${timerData.nameController.text} (${timerData.formattedDuration})',
-                                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }).toList(),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: theme.colorScheme.primaryContainer
-                                              .withValues(alpha: 0.3),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: theme.colorScheme.primary
-                                                .withValues(alpha: 0.3),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              Icons.timer_outlined,
-                                              size: 18,
-                                              color: theme.colorScheme.primary,
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              '${l10n.localeName == 'es' ? 'Temporizador' : 'Timer'} (${_recipeTimers.length})',
-                                              style: theme.textTheme.labelLarge?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: theme.colorScheme.primary,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Icon(
-                                              Icons.arrow_drop_down,
-                                              size: 18,
-                                              color: theme.colorScheme.primary,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  const SizedBox(width: 8),
-                                  PopupMenuButton<double>(
-                                    tooltip: l10n.scale_recipe_tooltip,
-                                    onSelected: _openTemporaryScaledRecipe,
-                                    itemBuilder: (context) => [
-                                      _buildPopupMenuItem(context, 2.0, 'x2'),
-                                      _buildPopupMenuItem(context, 3.0, 'x3'),
-                                      _buildPopupMenuItem(context, 4.0, 'x4'),
-                                      _buildPopupMenuItem(context, 5.0, 'x5'),
-                                    ],
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.primaryContainer
-                                            .withValues(alpha: 0.3),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: theme.colorScheme.primary
-                                              .withValues(alpha: 0.2),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.scale,
-                                            size: 18,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            l10n.scale_button,
-                                            style: theme.textTheme.labelLarge
-                                                ?.copyWith(
-                                                  color: theme.colorScheme.primary,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Icon(
-                                            Icons.arrow_drop_down,
-                                            size: 18,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  InkWell(
-                                    onTap: _duplicateCurrentRecipe,
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.secondaryContainer
-                                            .withValues(alpha: 0.3),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: theme.colorScheme.secondary
-                                              .withValues(alpha: 0.2),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.copy_rounded,
-                                            size: 18,
-                                            color: theme.colorScheme.secondary,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            l10n.duplicate_button,
-                                            style: theme.textTheme.labelLarge
-                                                ?.copyWith(
-                                                  color: theme.colorScheme.secondary,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: _buildSectionHeader(l10n.ingredients_title),
-                              ),
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: _showGlobalIngredientPicker,
-                                borderRadius: BorderRadius.circular(20),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.surface.withValues(alpha: 0.45),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.add_rounded,
-                                        size: 15,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        l10n.add_button,
-                                        style: TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          const Divider(height: 1),
-                          const SizedBox(height: 16),
-                          unitsAsync.when(
-                            data: (units) => ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _ingredients.length + 1,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                if (index == _ingredients.length) {
-                                  return _buildAddIngredientSquare(theme, l10n);
-                                }
-                                return _buildIngredientItem(
-                                  index,
-                                  theme.colorScheme,
-                                  units,
-                                );
-                              },
-                            ),
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                            error: (e, _) =>
-                                Center(child: Text(e.toString())),
-                          ),
-                          const SizedBox(height: 32),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: _buildSectionHeader(l10n.recipe_steps),
-                              ),
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () => _addStep(),
-                                borderRadius: BorderRadius.circular(20),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.surface.withValues(alpha: 0.45),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.add_rounded,
-                                        size: 15,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        l10n.add_button,
-                                        style: TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          const Divider(height: 1),
-                          const SizedBox(height: 16),
-                          if (_steps.isEmpty)
-                            _buildEmptyPlaceholder(
-                              l10n.no_steps,
-                              Icons.format_list_numbered,
-                            )
-                          else
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _steps.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(height: 16),
-                              itemBuilder: (context, index) =>
-                                  _buildStepItem(index, theme.colorScheme),
-                            ),
-                          _buildRecipeTimersSection(theme, l10n),
-                          const SizedBox(height: 48),
-                        ],
+                  // 6. Recipe Quick Summary Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
                       ),
                     ),
-                    AnimatedSize(
-                      duration: settings.animationsEnabled
-                          ? const Duration(milliseconds: 250)
-                          : Duration.zero,
-                      curve: Curves.fastOutSlowIn,
-                      alignment: Alignment.bottomCenter,
-                      child: AnimatedSwitcher(
-                        duration: settings.animationsEnabled
-                            ? const Duration(milliseconds: 250)
-                            : Duration.zero,
-                        reverseDuration: settings.animationsEnabled
-                            ? const Duration(milliseconds: 200)
-                            : Duration.zero,
-                        layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-                          return Stack(
-                            alignment: Alignment.bottomCenter,
-                            children: <Widget>[
-                              ...previousChildren,
-                              ?currentChild,
-                            ],
-                          );
-                        },
-                        transitionBuilder: (Widget child, Animation<double> animation) {
-                          final isIncoming = (child.key == const ValueKey('expanded_financials') && _showBottomFinancials) ||
-                                             (child.key == const ValueKey('collapsed_financials') && !_showBottomFinancials);
-                          
-                          final curvedAnimation = CurvedAnimation(
-                            parent: animation,
-                            curve: isIncoming ? Curves.easeOutCubic : Curves.easeInCubic,
-                          );
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildWebSummaryItem(
+                            icon: Icons.egg_outlined,
+                            value: '${_ingredients.length}',
+                            label: l10n.ingredients_title,
+                            theme: theme,
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 24,
+                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                        ),
+                        Expanded(
+                          child: _buildWebSummaryItem(
+                            icon: Icons.format_list_numbered,
+                            value: '${_steps.length}',
+                            label: l10n.recipe_steps,
+                            theme: theme,
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 24,
+                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                        ),
+                        Expanded(
+                          child: _buildWebSummaryItem(
+                            icon: Icons.timer_outlined,
+                            value: '${_recipeTimers.length}',
+                            label: l10n.localeName == 'es' ? 'Timers' : 'Timers',
+                            theme: theme,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-                          return FadeTransition(
-                            opacity: curvedAnimation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.0, 0.3),
-                                end: Offset.zero,
-                              ).animate(curvedAnimation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: _showBottomFinancials
-                            ? _buildBottomFinancials(context)
-                            : _buildCollapsedBottomFinancials(context),
+          // Bottom Action Buttons in Sidebar
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border(
+                top: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+                ),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!widget.isTemporary)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.check_rounded, size: 18),
+                      label: Text(l10n.save_button),
+                      onPressed: (_isLoading || _isSaving) ? null : _saveRecipe,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                    ),
+                  ),
+                if (widget.onClose != null) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                      label: Text(l10n.localeName == 'es' ? 'Volver' : 'Back'),
+                      onPressed: () async {
+                        final ok = await onPopRequested();
+                        if (ok && context.mounted) {
+                          widget.onClose!();
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebRecipeForm(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+    AsyncValue<List<Unit>> unitsAsync,
+  ) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 20.0),
+      children: [
+        if (widget.isTemporary)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.temporary_view_banner(
+                      RecipeUtils.formatNumber(widget.multiplier),
+                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Prominent Recipe Name Card
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.restaurant_menu_rounded,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.recipe_name,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _nameController,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                decoration: InputDecoration(
+                  hintText: l10n.recipe_name,
+                  hintStyle: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                validator: (value) =>
+                    (value == null || value.trim().isEmpty) ? l10n.recipe_name : null,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Yield & Quick Toolbar Row
+        Row(
+          children: [
+            // Yield / Portions input card
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.unit_portions,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.people_outline_rounded,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 55,
+                          child: TextField(
+                            controller: _yieldController,
+                            focusNode: _webYieldFocusNode,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _yieldNameController,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              hintText: l10n.unit_portions.toLowerCase(),
+                              hintStyle: TextStyle(
+                                color: theme.colorScheme.outlineVariant,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
+            const SizedBox(width: 12),
+            if (widget.recipeId != null && !widget.isTemporary) ...[
+              _buildWebScaleButton(theme, l10n),
+              const SizedBox(width: 8),
+              _buildWebDuplicateButton(theme, l10n),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Description Card
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            ),
           ),
-      ), // close Scaffold (child of PopScope)
-    ); // close PopScope
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.notes_rounded,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    l10n.recipe_description,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _descriptionController,
+                maxLines: 3,
+                style: theme.textTheme.bodyMedium,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  hintText: l10n.recipe_description_hint,
+                  hintStyle: TextStyle(
+                    color: theme.colorScheme.outlineVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+
+        // Ingredients Section Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: _buildSectionHeader(l10n.ingredients_title),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_ingredients.length}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.tonalIcon(
+              onPressed: _showGlobalIngredientPicker,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: Text(l10n.add_button),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Divider(height: 1),
+        const SizedBox(height: 16),
+
+        // Ingredients List
+        unitsAsync.when(
+          data: (units) => ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _ingredients.length + 1,
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              if (index == _ingredients.length) {
+                return _buildAddIngredientSquare(theme, l10n);
+              }
+              return _buildIngredientItem(
+                index,
+                theme.colorScheme,
+                units,
+              );
+            },
+          ),
+          loading: () => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          error: (e, _) => Center(child: Text(e.toString())),
+        ),
+        const SizedBox(height: 32),
+
+        // Steps Section Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: _buildSectionHeader(l10n.recipe_steps),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_steps.length}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.tonalIcon(
+              onPressed: () => _addStep(),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: Text(l10n.add_button),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Divider(height: 1),
+        const SizedBox(height: 16),
+
+        // Steps List
+        if (_steps.isEmpty)
+          _buildEmptyPlaceholder(
+            l10n.no_steps,
+            Icons.format_list_numbered,
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _steps.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) => _buildStepItem(index, theme.colorScheme),
+          ),
+        const SizedBox(height: 32),
+
+        // Timers Section
+        _buildRecipeTimersSection(theme, l10n),
+        const SizedBox(height: 48),
+      ],
+    );
+  }
+
+  Widget _buildDesktopWebLayout(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+    AsyncValue<List<Unit>> unitsAsync,
+    BoxConstraints constraints,
+    Future<bool> Function() onPopRequested,
+  ) {
+    final double financialPanelWidth = constraints.maxWidth < 820
+        ? 320.0
+        : (constraints.maxWidth < 1100 ? 350.0 : 380.0);
+
+    return Form(
+      key: _formKey,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _buildWebRecipeForm(context, theme, l10n, unitsAsync),
+          ),
+          VerticalDivider(
+            width: 1,
+            thickness: 1,
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+          ),
+          SizedBox(
+            width: financialPanelWidth,
+            child: _buildWebPersistentFinancialPanel(
+              context,
+              theme,
+              l10n,
+              onPopRequested,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+    AsyncValue<List<Unit>> unitsAsync,
+    SettingsState settings,
+  ) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 880),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              if (widget.isTemporary)
+                Container(
+                  width: double.infinity,
+                  color: theme.colorScheme.primaryContainer.withValues(
+                    alpha: 0.3,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.temporary_view_banner(
+                            RecipeUtils.formatNumber(widget.multiplier),
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 22.0),
+                  children: [
+                    const SizedBox(height: 16),
+                    if (!widget.isTemporary && (widget.recipeId == null || _isEditingName)) ...[
+                      _buildCustomTextField(
+                        controller: _nameController,
+                        label: l10n.recipe_name,
+                        hint: l10n.recipe_name,
+                        validator: (value) =>
+                            (value == null || value.isEmpty)
+                            ? l10n.recipe_name
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildSectionHeader(l10n.recipe_description),
+                        IconButton(
+                          icon: Icon(
+                            _isDescriptionExpanded
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                            color: theme.colorScheme.primary,
+                          ),
+                          onPressed: () => setState(() {
+                            _isDescriptionExpanded =
+                                !_isDescriptionExpanded;
+                          }),
+                        ),
+                      ],
+                    ),
+                    if (_isDescriptionExpanded) ...[
+                      _buildCustomTextField(
+                        controller: _descriptionController,
+                        label: '',
+                        hint: l10n.recipe_description_hint,
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    if (widget.recipeId != null &&
+                        !widget.isTemporary) ...[
+                      const SizedBox(height: 8),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (_recipeTimers.isEmpty)
+                              InkWell(
+                                borderRadius: BorderRadius.circular(20),
+                                onTap: () => _showAddRecipeTimerDialog(theme, l10n),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.secondaryContainer
+                                        .withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: theme.colorScheme.secondary
+                                          .withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.timer_outlined,
+                                        size: 18,
+                                        color: theme.colorScheme.secondary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        l10n.localeName == 'es' ? '+ Temporizador' : '+ Timer',
+                                        style: theme.textTheme.labelLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.secondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              PopupMenuButton<RecipeTimerData>(
+                                tooltip: l10n.localeName == 'es' ? 'Iniciar temporizador' : 'Start timer',
+                                onSelected: (timerData) {
+                                  final timerName = timerData.nameController.text.trim().isEmpty
+                                      ? (_nameController.text.isEmpty ? 'Recipe Timer' : _nameController.text)
+                                      : timerData.nameController.text.trim();
+
+                                  ref.read(kitchenTimersProvider.notifier).addTimer(
+                                    timerName,
+                                    timerData.durationSeconds,
+                                  );
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        l10n.localeName == 'es'
+                                            ? 'Temporizador iniciado: $timerName (${timerData.formattedDuration})'
+                                            : 'Timer started: $timerName (${timerData.formattedDuration})',
+                                      ),
+                                      action: SnackBarAction(
+                                        label: l10n.localeName == 'es' ? 'Ver' : 'View',
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => const KitchenTimersScreen(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                                itemBuilder: (context) => _recipeTimers.map((timerData) {
+                                  return PopupMenuItem<RecipeTimerData>(
+                                    value: timerData,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.play_arrow_rounded,
+                                          color: theme.colorScheme.primary,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            '${timerData.nameController.text} (${timerData.formattedDuration})',
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primaryContainer
+                                        .withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.timer_outlined,
+                                        size: 18,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${l10n.localeName == 'es' ? 'Temporizador' : 'Timer'} (${_recipeTimers.length})',
+                                        style: theme.textTheme.labelLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.arrow_drop_down,
+                                        size: 18,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            PopupMenuButton<double>(
+                              tooltip: l10n.scale_recipe_tooltip,
+                              onSelected: _openTemporaryScaledRecipe,
+                              itemBuilder: (context) => [
+                                _buildPopupMenuItem(context, 2.0, 'x2'),
+                                _buildPopupMenuItem(context, 3.0, 'x3'),
+                                _buildPopupMenuItem(context, 4.0, 'x4'),
+                                _buildPopupMenuItem(context, 5.0, 'x5'),
+                              ],
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primaryContainer
+                                      .withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: theme.colorScheme.primary
+                                        .withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.scale,
+                                      size: 18,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      l10n.scale_button,
+                                      style: theme.textTheme.labelLarge
+                                          ?.copyWith(
+                                            color: theme.colorScheme.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      size: 18,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: _duplicateCurrentRecipe,
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.secondaryContainer
+                                      .withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: theme.colorScheme.secondary
+                                        .withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.copy_rounded,
+                                      size: 18,
+                                      color: theme.colorScheme.secondary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      l10n.duplicate_button,
+                                      style: theme.textTheme.labelLarge
+                                          ?.copyWith(
+                                            color: theme.colorScheme.secondary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: _buildSectionHeader(l10n.ingredients_title),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: _showGlobalIngredientPicker,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface.withValues(alpha: 0.45),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.add_rounded,
+                                  size: 15,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  l10n.add_button,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 16),
+                    unitsAsync.when(
+                      data: (units) => ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _ingredients.length + 1,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          if (index == _ingredients.length) {
+                            return _buildAddIngredientSquare(theme, l10n);
+                          }
+                          return _buildIngredientItem(
+                            index,
+                            theme.colorScheme,
+                            units,
+                          );
+                        },
+                      ),
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (e, _) =>
+                          Center(child: Text(e.toString())),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: _buildSectionHeader(l10n.recipe_steps),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => _addStep(),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface.withValues(alpha: 0.45),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.add_rounded,
+                                  size: 15,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  l10n.add_button,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 16),
+                    if (_steps.isEmpty)
+                      _buildEmptyPlaceholder(
+                        l10n.no_steps,
+                        Icons.format_list_numbered,
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _steps.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 16),
+                        itemBuilder: (context, index) =>
+                            _buildStepItem(index, theme.colorScheme),
+                      ),
+                    _buildRecipeTimersSection(theme, l10n),
+                    const SizedBox(height: 48),
+                  ],
+                ),
+              ),
+              AnimatedSize(
+                duration: settings.animationsEnabled
+                    ? const Duration(milliseconds: 250)
+                    : Duration.zero,
+                curve: Curves.fastOutSlowIn,
+                alignment: Alignment.bottomCenter,
+                child: AnimatedSwitcher(
+                  duration: settings.animationsEnabled
+                      ? const Duration(milliseconds: 250)
+                      : Duration.zero,
+                  reverseDuration: settings.animationsEnabled
+                      ? const Duration(milliseconds: 200)
+                      : Duration.zero,
+                  layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                    return Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: <Widget>[
+                        ...previousChildren,
+                        ?currentChild,
+                      ],
+                    );
+                  },
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    final isIncoming = (child.key == const ValueKey('expanded_financials') && _showBottomFinancials) ||
+                                       (child.key == const ValueKey('collapsed_financials') && !_showBottomFinancials);
+                    
+                    final curvedAnimation = CurvedAnimation(
+                      parent: animation,
+                      curve: isIncoming ? Curves.easeOutCubic : Curves.easeInCubic,
+                    );
+
+                    return FadeTransition(
+                      opacity: curvedAnimation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.0, 0.3),
+                          end: Offset.zero,
+                        ).animate(curvedAnimation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _showBottomFinancials
+                      ? _buildBottomFinancials(context)
+                      : _buildCollapsedBottomFinancials(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBottomFinancials(BuildContext context) {
