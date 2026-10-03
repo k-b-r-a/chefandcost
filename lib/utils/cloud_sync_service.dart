@@ -43,7 +43,7 @@ class GoogleDriveSyncService {
 
   // Check if the current platform defaults to simulation mode
   bool get isDefaultSimulation =>
-      kIsWeb || Platform.isLinux || Platform.isWindows || Platform.isMacOS;
+      kIsWeb || (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS));
 
   final GoogleSignInAccount? _currentUser;
 
@@ -136,11 +136,41 @@ class GoogleDriveSyncService {
     return mockDir;
   }
 
+  static const _webSimBackupsKey = 'web_sim_backups_list';
+
+  Future<List<BackupFile>> _getWebSimBackups() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rawList = prefs.getStringList(_webSimBackupsKey) ?? [];
+    return rawList.map((entry) {
+      final parts = entry.split('|');
+      return BackupFile(
+        id: parts[0],
+        name: parts.length > 1 ? parts[1] : 'backup.sqlite',
+        sizeBytes: parts.length > 2 ? (int.tryParse(parts[2]) ?? 16384) : 16384,
+        dateCreated: parts.length > 3 ? (DateTime.tryParse(parts[3]) ?? DateTime.now()) : DateTime.now(),
+      );
+    }).toList();
+  }
+
+  Future<void> _saveWebSimBackups(List<BackupFile> list) async {
+    final prefs = await SharedPreferences.getInstance();
+    final rawList = list
+        .map((b) => '${b.id}|${b.name}|${b.sizeBytes}|${b.dateCreated.toIso8601String()}')
+        .toList();
+    await prefs.setStringList(_webSimBackupsKey, rawList);
+  }
+
   /// Lists all backups.
   Future<List<BackupFile>> getBackups() async {
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
       await Future.delayed(const Duration(milliseconds: 600));
+
+      if (kIsWeb) {
+        final list = await _getWebSimBackups();
+        list.sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
+        return list;
+      }
 
       final mockDir = await _getMockDriveDirectory();
       final List<BackupFile> list = [];
@@ -206,20 +236,38 @@ class GoogleDriveSyncService {
 
   /// Creates a backup of the current database.
   Future<bool> createBackup() async {
-    final dbFile = await _getDatabaseFile();
-    if (!await dbFile.exists()) return false;
-
     final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
     final backupFileName = 'backup_$timestamp.sqlite';
 
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
       await Future.delayed(const Duration(milliseconds: 1000));
+      if (kIsWeb) {
+        final list = await _getWebSimBackups();
+        list.add(
+          BackupFile(
+            id: 'web_backup_$timestamp',
+            name: backupFileName,
+            sizeBytes: 32768,
+            dateCreated: DateTime.now(),
+          ),
+        );
+        await _saveWebSimBackups(list);
+        return true;
+      }
+
+      final dbFile = await _getDatabaseFile();
+      if (!await dbFile.exists()) return false;
       final mockDir = await _getMockDriveDirectory();
       final backupDest = File(p.join(mockDir.path, backupFileName));
       await dbFile.copy(backupDest.path);
       return true;
     }
+
+    if (kIsWeb) return false;
+
+    final dbFile = await _getDatabaseFile();
+    if (!await dbFile.exists()) return false;
 
     try {
       final client = await _getGoogleClient();
@@ -248,17 +296,24 @@ class GoogleDriveSyncService {
 
   /// Restores the database from a backup.
   Future<bool> restoreBackup(String backupId) async {
-    final dbFile = await _getDatabaseFile();
-
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
       await Future.delayed(const Duration(milliseconds: 1200));
+      if (kIsWeb) {
+        return true;
+      }
+
+      final dbFile = await _getDatabaseFile();
       final sourceFile = File(backupId);
       if (!await sourceFile.exists()) return false;
 
       await sourceFile.copy(dbFile.path);
       return true;
     }
+
+    if (kIsWeb) return false;
+
+    final dbFile = await _getDatabaseFile();
 
     try {
       final client = await _getGoogleClient();
@@ -291,6 +346,13 @@ class GoogleDriveSyncService {
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
       await Future.delayed(const Duration(milliseconds: 500));
+      if (kIsWeb) {
+        final list = await _getWebSimBackups();
+        list.removeWhere((b) => b.id == backupId);
+        await _saveWebSimBackups(list);
+        return true;
+      }
+
       final file = File(backupId);
       if (await file.exists()) {
         await file.delete();
@@ -314,6 +376,7 @@ class GoogleDriveSyncService {
 
   /// Downloads/exports a backup file to a target local directory path.
   Future<File?> downloadBackupToLocal(String backupId, String fileName, String targetDirPath) async {
+    if (kIsWeb) return null;
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     final exportFile = File(p.join(targetDirPath, fileName));
 

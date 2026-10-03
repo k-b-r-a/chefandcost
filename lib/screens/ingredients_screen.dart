@@ -11,6 +11,7 @@ import '../utils/ui_utils.dart';
 import '../widgets/ingredient_filter_chips_row.dart';
 import 'add_ingredient_screen.dart';
 import '../provider/settings_provider.dart';
+import '../provider/web_layout_provider.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
   const IngredientsScreen({super.key});
@@ -37,6 +38,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final currentFilter = ref.watch(ingredientFilterProvider);
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
+    final isWide = MediaQuery.sizeOf(context).width >= 640;
+    final webLayout = isWide ? ref.watch(webLayoutProvider) : null;
 
     return Scaffold(
       body: CustomScrollView(
@@ -65,6 +68,21 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     filter: currentFilter,
                     searchQuery: searchQuery,
                   );
+
+                  if (isWide && filteredIngredients.isNotEmpty) {
+                    final currentWeb = ref.watch(webLayoutProvider);
+                    if (currentWeb.middleTab == WebMiddleTab.ingredients &&
+                        currentWeb.selectedIngredient == null &&
+                        currentWeb.rightPaneView == WebRightPaneView.ingredient) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted &&
+                            ref.read(webLayoutProvider).selectedIngredient == null &&
+                            ref.read(webLayoutProvider).rightPaneView == WebRightPaneView.ingredient) {
+                          ref.read(webLayoutProvider.notifier).openIngredient(filteredIngredients.first);
+                        }
+                      });
+                    }
+                  }
 
                   if (filteredIngredients.isEmpty) {
                     final emptyMsg = searchQuery.isEmpty &&
@@ -96,50 +114,75 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                         final unitSymbol = unit?.symbol ?? '';
                         final category = unit?.category;
 
+                        final isSelected = isWide &&
+                            webLayout?.rightPaneView == WebRightPaneView.ingredient &&
+                            webLayout?.selectedIngredient?.ingredientPk == ingredient.ingredientPk;
+
                         return RepaintBoundary(
-                          child: ListTile(
-                            title: Text(
-                              ingredient.name,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            subtitle: CurrencyText(
-                              l10n.ingredient_price_per_quantity(
-                                '${settings.currencySymbol}${RecipeUtils.formatNumber(ingredient.cost)}',
-                                RecipeUtils.formatNumber(
-                                  ingredient.quantityForCost,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 860),
+                              child: ListTile(
+                                selected: isSelected,
+                                selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: isSelected
+                                      ? BorderSide(color: theme.colorScheme.primary, width: 1.5)
+                                      : BorderSide.none,
                                 ),
-                                unitSymbol,
+                                title: Text(
+                                  ingredient.name,
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                subtitle: CurrencyText(
+                                  l10n.ingredient_price_per_quantity(
+                                    '${settings.currencySymbol}${RecipeUtils.formatNumber(ingredient.cost)}',
+                                    RecipeUtils.formatNumber(
+                                      ingredient.quantityForCost,
+                                    ),
+                                    unitSymbol,
+                                  ),
+                                  currencySymbol: settings.currencySymbol,
+                                ),
+                                leading: CircleAvatar(
+                                  backgroundColor: UnitUtils.getCategoryContainerColor(category, theme),
+                                  child: Icon(
+                                    UnitUtils.getCategoryIcon(category),
+                                    color: UnitUtils.getCategoryOnContainerColor(category, theme),
+                                    size: 20,
+                                  ),
+                                ),
+                                onTap: () {
+                                  if (isWide) {
+                                    ref.read(webLayoutProvider.notifier).openIngredient(ingredient);
+                                  } else {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AddIngredientScreen(ingredient: ingredient),
+                                      ),
+                                    );
+                                  }
+                                },
+                                onLongPress: () {
+                                  if (isWide) {
+                                    ref.read(webLayoutProvider.notifier).openIngredient(ingredient);
+                                  } else {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AddIngredientScreen(ingredient: ingredient),
+                                      ),
+                                    );
+                                  }
+                                },
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: () =>
+                                      _confirmDelete(context, ingredient),
+                                ),
                               ),
-                              currencySymbol: settings.currencySymbol,
-                            ),
-                            leading: CircleAvatar(
-                              backgroundColor: UnitUtils.getCategoryContainerColor(category, theme),
-                              child: Icon(
-                                UnitUtils.getCategoryIcon(category),
-                                color: UnitUtils.getCategoryOnContainerColor(category, theme),
-                                size: 20,
-                              ),
-                            ),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AddIngredientScreen(ingredient: ingredient),
-                                ),
-                              );
-                            },
-                            onLongPress: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AddIngredientScreen(ingredient: ingredient),
-                                ),
-                              );
-                            },
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () =>
-                                  _confirmDelete(context, ingredient),
                             ),
                           ),
                         );
@@ -172,6 +215,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     Ingredient ingredient,
   ) async {
     final l10n = AppLocalizations.of(context)!;
+    final isWide = MediaQuery.sizeOf(context).width >= 640;
     final confirmed = await AppDialogs.confirmDelete(
       context,
       title: l10n.delete_button,
@@ -182,6 +226,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
     if (confirmed) {
       await ref.read(databaseProvider).deleteIngredient(ingredient);
+      if (isWide && ref.read(webLayoutProvider).selectedIngredient?.ingredientPk == ingredient.ingredientPk) {
+        ref.read(webLayoutProvider.notifier).closeDetail();
+      }
     }
   }
 }

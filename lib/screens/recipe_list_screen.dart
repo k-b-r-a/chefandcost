@@ -9,6 +9,7 @@ import '../utils/dialog_utils.dart';
 import '../utils/recipe_utils.dart';
 import '../utils/ui_utils.dart';
 import '../widgets/floating_pill_app_bar.dart';
+import '../provider/web_layout_provider.dart';
 import 'recipe_editor_screen.dart';
 
 class RecipeListScreen extends ConsumerStatefulWidget {
@@ -51,6 +52,22 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 return item.recipe.name.toLowerCase().contains(searchQuery);
               }).toList();
 
+              final isWideWeb = MediaQuery.sizeOf(context).width >= 640;
+              if (isWideWeb && filteredRecipes.isNotEmpty) {
+                final webLayout = ref.watch(webLayoutProvider);
+                if (webLayout.middleTab == WebMiddleTab.recipes &&
+                    webLayout.selectedRecipeId == null &&
+                    webLayout.rightPaneView == WebRightPaneView.recipe) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted &&
+                        ref.read(webLayoutProvider).selectedRecipeId == null &&
+                        ref.read(webLayoutProvider).rightPaneView == WebRightPaneView.recipe) {
+                      ref.read(webLayoutProvider.notifier).openRecipe(filteredRecipes.first.recipe.recipePk);
+                    }
+                  });
+                }
+              }
+
               if (filteredRecipes.isEmpty) {
                 return SliverFillRemaining(
                   child: AppEmptyState(
@@ -77,37 +94,61 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                       fallback: theme.colorScheme.primary,
                     );
 
+                    final isWideWeb = MediaQuery.sizeOf(context).width >= 800;
+                    final selectedRecipeId = isWideWeb
+                        ? ref.watch(webLayoutProvider).selectedRecipeId
+                        : null;
+                    final isSelected = isWideWeb && selectedRecipeId == recipe.recipePk;
+
                     return RepaintBoundary(
-                      child: Card(
-                        margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(
-                          color: theme.colorScheme.outlineVariant.withValues(
-                            alpha: 0.3,
-                          ),
-                        ),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          if (isExpanded) {
-                            setState(() {
-                              _expandedRecipeId = null;
-                            });
-                          } else {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    RecipeEditorScreen(recipeId: recipe.recipePk),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 860),
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            color: isSelected
+                                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.25)
+                                : null,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.outlineVariant.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                width: isSelected ? 2.0 : 1.0,
                               ),
-                            );
-                          }
-                        },
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () async {
+                                if (isExpanded) {
+                                  setState(() {
+                                    _expandedRecipeId = null;
+                                  });
+                                } else {
+                                  if (isWideWeb) {
+                                    if (ref.read(webLayoutProvider).selectedRecipeId == recipe.recipePk) return;
+                                    final guard = ref.read(recipeCanLeaveGuardProvider);
+                                    if (guard != null && !await guard()) return;
+                                    ref
+                                        .read(webLayoutProvider.notifier)
+                                        .openRecipe(recipe.recipePk);
+                                  } else {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            RecipeEditorScreen(recipeId: recipe.recipePk),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
                         onLongPress: () {
                           setState(() {
                             _expandedRecipeId = isExpanded ? null : recipe.recipePk;
@@ -223,17 +264,30 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                                   context: context,
                                                   icon: Icons.edit_outlined,
                                                   label: l10n.edit_button,
-                                                  onTap: () {
-                                                    Navigator.of(context).push(
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            RecipeEditorScreen(recipeId: recipe.recipePk),
-                                                      ),
-                                                    ).then((_) {
+                                                  onTap: () async {
+                                                    if (isWideWeb) {
+                                                      if (ref.read(webLayoutProvider).selectedRecipeId != recipe.recipePk) {
+                                                        final guard = ref.read(recipeCanLeaveGuardProvider);
+                                                        if (guard != null && !await guard()) return;
+                                                      }
+                                                      ref
+                                                          .read(webLayoutProvider.notifier)
+                                                          .openRecipe(recipe.recipePk);
                                                       setState(() {
                                                         _expandedRecipeId = null;
                                                       });
-                                                    });
+                                                    } else {
+                                                      Navigator.of(context).push(
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              RecipeEditorScreen(recipeId: recipe.recipePk),
+                                                        ),
+                                                      ).then((_) {
+                                                        setState(() {
+                                                          _expandedRecipeId = null;
+                                                        });
+                                                      });
+                                                    }
                                                   },
                                                 ),
                                               ),
@@ -276,10 +330,12 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                               ),
                             ],
                           ),
+                          ),
                         ),
                       ),
                     ),
-                  );
+                  ),
+                );
                 }, childCount: filteredRecipes.length),
                 ),
               );
