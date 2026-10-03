@@ -13,9 +13,17 @@ import '../utils/unit_utils.dart';
 import '../utils/dialog_utils.dart';
 import '../utils/ui_utils.dart';
 import '../widgets/global_ingredient_picker_sheet.dart';
+import '../provider/web_layout_provider.dart';
 import 'add_ingredient_screen.dart';
 import 'kitchen_timers_screen.dart';
 import 'compare_ingredients_screen.dart';
+
+enum WebRecipeRightPanelMode {
+  financials,
+  ingredientPicker,
+  newIngredient,
+  editIngredient,
+}
 
 class InitialIngredientInput {
   final Ingredient ingredient;
@@ -185,6 +193,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   bool _isDescriptionExpanded = true;
   bool _showBottomFinancials = false;
   bool _isEditingName = false;
+  WebRecipeRightPanelMode _webRightPanelMode = WebRecipeRightPanelMode.financials;
+  WebRecipeRightPanelMode _previousRightPanelMode = WebRecipeRightPanelMode.financials;
+  Ingredient? _selectedIngredientForEdit;
+  late final Future<bool> Function() _guardFunction;
+  RecipeCanLeaveGuardNotifier? _guardNotifier;
   _RecipeSnapshot? _initialSnapshot;
 
   // controllers
@@ -196,6 +209,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   final _priceController = TextEditingController(text: '0');
   final _totalSaleController = TextEditingController(text: '0');
 
+  final _nameFocusNode = FocusNode();
+  final _webNameFocusNode = FocusNode();
   final _profitMarginFocusNode = FocusNode();
   final _priceFocusNode = FocusNode();
   final _totalSaleFocusNode = FocusNode();
@@ -266,10 +281,31 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     );
   }
 
+  void _onNameChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _isEditingName = widget.recipeId == null;
+    _guardFunction = () => _onPopRequested();
+    _guardNotifier = ref.read(recipeCanLeaveGuardProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _guardNotifier?.setGuard(_guardFunction);
+      }
+    });
+    final initialLayout = ref.read(webLayoutProvider);
+    if (initialLayout.selectedIngredient != null) {
+      _selectedIngredientForEdit = initialLayout.selectedIngredient;
+      _webRightPanelMode = WebRecipeRightPanelMode.editIngredient;
+    } else if (initialLayout.isCreatingIngredient) {
+      _webRightPanelMode = WebRecipeRightPanelMode.newIngredient;
+    }
+    _isEditingName = widget.recipeId == null && !widget.isTemporary;
+    _nameController.addListener(_onNameChanged);
     _isDescriptionExpanded = widget.recipeId == null && !widget.isTemporary;
     _yieldController.addListener(_calculateSummary);
     _priceController.addListener(_calculateSummary);
@@ -1281,27 +1317,19 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   ),
                   onTap: () async {
                     Navigator.of(ctx).pop();
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => AddIngredientScreen(ingredient: data.ingredient),
-                      ),
-                    );
-                    final db = ref.read(databaseProvider);
-                    final updatedIng = await db.getIngredientById(data.ingredient.ingredientPk);
-                    if (updatedIng != null && mounted) {
-                      setState(() {
-                        final updatedData = RecipeIngredientData(
-                          ingredient: updatedIng,
-                          initialAmount: data.amountController.text,
-                          sourceUnit: data.sourceUnit,
-                          targetUnit: data.targetUnit,
-                        );
-                        updatedData.amountController.addListener(_calculateSummary);
-                        _ingredients[index].amountController.removeListener(_calculateSummary);
-                        _ingredients[index].amountController.dispose();
-                        _ingredients[index] = updatedData;
-                        _calculateSummary();
-                      });
+                    if (MediaQuery.sizeOf(context).width >= 640) {
+                      _openIngredientInRightPanel(data.ingredient);
+                    } else {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => AddIngredientScreen(ingredient: data.ingredient),
+                        ),
+                      );
+                      final db = ref.read(databaseProvider);
+                      final updatedIng = await db.getIngredientById(data.ingredient.ingredientPk);
+                      if (updatedIng != null && mounted) {
+                        _updateIngredientInRecipe(updatedIng);
+                      }
                     }
                   },
                 ),
@@ -1358,6 +1386,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
   @override
   void dispose() {
+    _guardNotifier?.clearIf(_guardFunction);
+    _nameController.removeListener(_onNameChanged);
     _yieldController.removeListener(_calculateSummary);
     _priceController.removeListener(_calculateSummary);
     _profitMarginController.removeListener(_calculateSummary);
@@ -1369,6 +1399,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     _profitMarginController.dispose();
     _priceController.dispose();
     _totalSaleController.dispose();
+    _nameFocusNode.dispose();
+    _webNameFocusNode.dispose();
     _profitMarginFocusNode.dispose();
     _priceFocusNode.dispose();
     _totalSaleFocusNode.dispose();
@@ -1491,80 +1523,168 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     }
   }
 
-  Future<void> _saveRecipe() async {
-    if (_formKey.currentState!.validate()) {
-      _isSaving = true;
-      // Capture values IMMEDIATELY
-      final name = _nameController.text;
-      final description = _descriptionController.text;
-      final yieldVal = _yieldController.text;
-      final yieldName = _yieldNameController.text.isEmpty
-          ? 'portions'
-          : _yieldNameController.text;
-      final margin = _profitMarginController.text;
-      final price = _priceController.text;
+  Future<bool> _saveRecipe({bool popOnSuccess = true}) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.localeName == 'es'
+                ? 'Por favor, ingrese el nombre de la receta'
+                : 'Please enter a recipe name',
+          ),
+        ),
+      );
+      setState(() {
+        _isEditingName = true;
+      });
+      _nameFocusNode.requestFocus();
+      return false;
+    }
+    if (_formKey.currentState == null || !_formKey.currentState!.validate()) {
+      return false;
+    }
+    _isSaving = true;
+    // Capture values IMMEDIATELY
+    final name = _nameController.text;
+    final description = _descriptionController.text;
+    final yieldVal = _yieldController.text;
+    final yieldName = _yieldNameController.text.isEmpty
+        ? 'portions'
+        : _yieldNameController.text;
+    final margin = _profitMarginController.text;
+    final price = _priceController.text;
 
-      setState(() => _isLoading = true);
-      try {
-        final db = ref.read(databaseProvider);
+    setState(() => _isLoading = true);
+    try {
+      final db = ref.read(databaseProvider);
 
-        final List<RecipeStepData> stepsToSave = List.from(_steps);
-        if (_recipeTimers.isNotEmpty) {
-          final timerTags = _recipeTimers
-              .map((t) => '[timer:${t.nameController.text.trim().isEmpty ? 'Timer' : t.nameController.text.trim()}|${t.durationSeconds}]')
-              .join(' ');
-          
-          if (stepsToSave.isNotEmpty) {
-            final lastStep = stepsToSave.last;
-            final updatedInstruction = '${lastStep.instructionController.text.trim()} $timerTags'.trim();
-            stepsToSave[stepsToSave.length - 1] = RecipeStepData(
-              initialInstruction: updatedInstruction,
+      final List<RecipeStepData> stepsToSave = List.from(_steps);
+      if (_recipeTimers.isNotEmpty) {
+        final timerTags = _recipeTimers
+            .map((t) => '[timer:${t.nameController.text.trim().isEmpty ? 'Timer' : t.nameController.text.trim()}|${t.durationSeconds}]')
+            .join(' ');
+        
+        if (stepsToSave.isNotEmpty) {
+          final lastStep = stepsToSave.last;
+          final updatedInstruction = '${lastStep.instructionController.text.trim()} $timerTags'.trim();
+          stepsToSave[stepsToSave.length - 1] = RecipeStepData(
+            initialInstruction: updatedInstruction,
+            customController: IngredientTextEditingController(
+              text: updatedInstruction,
+              ingredients: _ingredients.map((e) => e.ingredient).toList(),
+              colorScheme: Theme.of(context).colorScheme,
+            ),
+          );
+        } else {
+          stepsToSave.add(
+            RecipeStepData(
+              initialInstruction: timerTags,
               customController: IngredientTextEditingController(
-                text: updatedInstruction,
+                text: timerTags,
                 ingredients: _ingredients.map((e) => e.ingredient).toList(),
                 colorScheme: Theme.of(context).colorScheme,
               ),
-            );
-          } else {
-            stepsToSave.add(
-              RecipeStepData(
-                initialInstruction: timerTags,
-                customController: IngredientTextEditingController(
-                  text: timerTags,
-                  ingredients: _ingredients.map((e) => e.ingredient).toList(),
-                  colorScheme: Theme.of(context).colorScheme,
+            ),
+          );
+        }
+      }
+
+      await RecipeUtils.saveRecipe(
+        db: db,
+        recipePk: widget.recipeId,
+        name: name,
+        description: description,
+        yieldText: yieldVal,
+        yieldName: yieldName,
+        profitMarginText: margin,
+        priceText: price,
+        ingredients: _ingredients,
+        steps: stepsToSave,
+      );
+      _initialSnapshot = _createSnapshot();
+      if (mounted && popOnSuccess) {
+        if (widget.onClose != null) {
+          widget.onClose!();
+        } else {
+          Navigator.of(context).pop();
+        }
+      }
+      return true;
+    } catch (e) {
+      // error handling
+      if (mounted) setState(() => _isSaving = false);
+      return false;
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<bool> _onPopRequested() async {
+    if (!_hasUnsavedChanges()) return true;
+
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.help_outline_rounded,
+              color: theme.colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.unsaved_changes_title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            );
-          }
-        }
+            ),
+          ],
+        ),
+        content: Text(
+          l10n.unsaved_changes_body,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop('discard'),
+            child: Text(
+              l10n.discard_button,
+              style: TextStyle(
+                color: theme.colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop('save'),
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(l10n.save_button),
+          ),
+        ],
+      ),
+    );
 
-        await RecipeUtils.saveRecipe(
-          db: db,
-          recipePk: widget.recipeId,
-          name: name,
-          description: description,
-          yieldText: yieldVal,
-          yieldName: yieldName,
-          profitMarginText: margin,
-          priceText: price,
-          ingredients: _ingredients,
-          steps: stepsToSave,
-        );
-        if (mounted) {
-          if (widget.onClose != null) {
-            widget.onClose!();
-          } else {
-            Navigator.of(context).pop();
-          }
-        }
-      } catch (e) {
-        // error handling
-        if (mounted) setState(() => _isSaving = false);
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
+    if (result == 'save') {
+      final success = await _saveRecipe(popOnSuccess: false);
+      return success;
     }
+    return result == 'discard';
   }
 
   @override
@@ -1574,6 +1694,42 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final unitsAsync = ref.watch(unitsProvider);
     final settings = ref.watch(settingsProvider);
 
+    ref.listen<AsyncValue<List<Ingredient>>>(
+      ingredientsStreamProvider,
+      (previous, next) {
+        next.whenData((allIngredients) {
+          final map = {for (var i in allIngredients) i.ingredientPk: i};
+          bool changed = false;
+          for (int idx = 0; idx < _ingredients.length; idx++) {
+            final current = _ingredients[idx];
+            final updated = map[current.ingredient.ingredientPk];
+            if (updated != null &&
+                (updated.cost != current.ingredient.cost ||
+                 updated.name != current.ingredient.name ||
+                 updated.unitFk != current.ingredient.unitFk ||
+                 updated.quantityForCost != current.ingredient.quantityForCost)) {
+              final updatedData = RecipeIngredientData(
+                ingredient: updated,
+                initialAmount: current.amountController.text,
+                sourceUnit: current.sourceUnit,
+                targetUnit: current.targetUnit,
+              );
+              updatedData.amountController.addListener(_calculateSummary);
+              current.amountController.removeListener(_calculateSummary);
+              current.amountController.dispose();
+              _ingredients[idx] = updatedData;
+              changed = true;
+            }
+          }
+          if (changed && mounted) {
+            setState(() {
+              _calculateSummary();
+            });
+          }
+        });
+      },
+    );
+
     if (_yieldNameController.text.isEmpty) {
       _yieldNameController.text = l10n.unit_portions.toLowerCase();
     }
@@ -1582,81 +1738,17 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         ? (_nameController.text.isEmpty
               ? l10n.recipe_title
               : _nameController.text)
-        : (widget.recipeId == null
-              ? l10n.new_recipe_title
-              : (_nameController.text.isEmpty
-                    ? l10n.recipe_title
-                    : _nameController.text));
-
-    Future<bool> onPopRequested() async {
-      if (!_hasUnsavedChanges()) return true;
-
-      final result = await showDialog<String>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.help_outline_rounded,
-                color: theme.colorScheme.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.unsaved_changes_title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            l10n.unsaved_changes_body,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop('discard'),
-              child: Text(
-                l10n.discard_button,
-                style: TextStyle(
-                  color: theme.colorScheme.error,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop('save'),
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(l10n.save_button),
-            ),
-          ],
-        ),
-      );
-
-      if (result == 'save') {
-        await _saveRecipe();
-        return false; // _saveRecipe pops itself on success
-      }
-      return result == 'discard';
-    }
+        : (_nameController.text.isEmpty
+              ? (widget.recipeId == null
+                    ? l10n.new_recipe_title
+                    : l10n.recipe_title)
+              : _nameController.text);
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        final shouldPop = await onPopRequested();
+        final shouldPop = await _onPopRequested();
         if (shouldPop && context.mounted) {
           if (widget.onClose != null) {
             widget.onClose!();
@@ -1675,7 +1767,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   icon: const Icon(Icons.arrow_back),
                   tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
                   onPressed: () async {
-                    final shouldPop = await onPopRequested();
+                    final shouldPop = await _onPopRequested();
                     if (shouldPop && context.mounted) {
                       widget.onClose!();
                     }
@@ -1683,56 +1775,109 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 )
               : const BackButton(),
           centerTitle: true,
-          title: InkWell(
-            onTap: () {
-              if (widget.recipeId != null && !widget.isTemporary) {
-                setState(() {
-                  _isEditingName = !_isEditingName;
-                });
-              }
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          appBarTitle,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                        ),
-                        if (widget.recipeId != null && !widget.isTemporary && !_isEditingName) ...[
-                          const SizedBox(width: 6),
-                          Icon(
-                            Icons.edit_outlined,
-                            size: 16,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ],
-                      ],
+          title: _isEditingName && !widget.isTemporary
+              ? ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: TextField(
+                    controller: _nameController,
+                    focusNode: _nameFocusNode,
+                    autofocus: true,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    if (widget.isTemporary)
-                      Text(
-                        l10n.temporary_view_title,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    decoration: InputDecoration(
+                      hintText: l10n.recipe_name,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                  ],
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.check, size: 18),
+                        tooltip: l10n.save_button,
+                        onPressed: () {
+                          setState(() {
+                            _isEditingName = false;
+                          });
+                        },
+                      ),
+                    ),
+                    onSubmitted: (_) {
+                      setState(() {
+                        _isEditingName = false;
+                      });
+                    },
+                  ),
+                )
+              : InkWell(
+                  onTap: () {
+                    if (!widget.isTemporary) {
+                      setState(() {
+                        _isEditingName = true;
+                      });
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          _nameFocusNode.requestFocus();
+                          if (_nameController.text.isNotEmpty) {
+                            _nameController.selection = TextSelection(
+                              baseOffset: 0,
+                              extentOffset: _nameController.text.length,
+                            );
+                          }
+                        }
+                      });
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                appBarTitle,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (!widget.isTemporary) ...[
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 16,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (widget.isTemporary)
+                            Text(
+                              l10n.temporary_view_title,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
           actions: [
             if (!widget.isTemporary) ...[
+              if (widget.recipeId != null) ...[
+                IconButton(
+                  icon: const Icon(Icons.copy_rounded),
+                  tooltip: l10n.duplicate_button,
+                  onPressed: _duplicateCurrentRecipe,
+                ),
+              ],
               IconButton(
                 icon: const Icon(Icons.check),
                 onPressed: _isLoading ? null : _saveRecipe,
@@ -1753,7 +1898,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       l10n,
                       unitsAsync,
                       constraints,
-                      onPopRequested,
+                      _onPopRequested,
                     );
                   }
                   return _buildMobileLayout(
@@ -2728,62 +2873,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             ),
           ),
 
-        // Prominent Recipe Name Card
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.restaurant_menu_rounded,
-                    size: 18,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.recipe_name,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (widget.recipeId != null && !widget.isTemporary)
-                    _buildWebDuplicateButton(theme, l10n),
-                ],
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _nameController,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                decoration: InputDecoration(
-                  hintText: l10n.recipe_name,
-                  hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                  ),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty) ? l10n.recipe_name : null,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
         // Description Card
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -2812,6 +2901,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  const Spacer(),
+                  if (widget.recipeId != null && !widget.isTemporary)
+                    _buildWebDuplicateButton(theme, l10n),
                 ],
               ),
               const SizedBox(height: 6),
@@ -2972,6 +3064,130 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     );
   }
 
+  void _openIngredientInRightPanel(Ingredient ingredient) {
+    setState(() {
+      _previousRightPanelMode = _webRightPanelMode == WebRecipeRightPanelMode.ingredientPicker
+          ? WebRecipeRightPanelMode.ingredientPicker
+          : WebRecipeRightPanelMode.financials;
+      _selectedIngredientForEdit = ingredient;
+      _webRightPanelMode = WebRecipeRightPanelMode.editIngredient;
+    });
+  }
+
+  void _updateIngredientInRecipe(Ingredient updated) {
+    bool changed = false;
+    for (int i = 0; i < _ingredients.length; i++) {
+      if (_ingredients[i].ingredient.ingredientPk == updated.ingredientPk) {
+        final old = _ingredients[i];
+        final updatedData = RecipeIngredientData(
+          ingredient: updated,
+          initialAmount: old.amountController.text,
+          sourceUnit: old.sourceUnit,
+          targetUnit: old.targetUnit,
+        );
+        updatedData.amountController.addListener(_calculateSummary);
+        old.amountController.removeListener(_calculateSummary);
+        old.amountController.dispose();
+        _ingredients[i] = updatedData;
+        changed = true;
+      }
+    }
+    if (changed) {
+      _calculateSummary();
+    }
+  }
+
+  Widget _buildDesktopWebRightPanel(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+    Future<bool> Function() onPopRequested,
+  ) {
+    switch (_webRightPanelMode) {
+      case WebRecipeRightPanelMode.financials:
+        return _buildWebPersistentFinancialPanel(
+          context,
+          theme,
+          l10n,
+          onPopRequested,
+        );
+      case WebRecipeRightPanelMode.ingredientPicker:
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+          ),
+          child: GlobalIngredientPickerSheet(
+            isPanel: true,
+            currentIngredients: _ingredients,
+            showPickerIngredientOptionsModal: _showPickerIngredientOptionsModal,
+            onClose: () {
+              setState(() {
+                _webRightPanelMode = WebRecipeRightPanelMode.financials;
+              });
+            },
+            onOpenNewIngredient: () {
+              setState(() {
+                _previousRightPanelMode = WebRecipeRightPanelMode.ingredientPicker;
+                _webRightPanelMode = WebRecipeRightPanelMode.newIngredient;
+              });
+            },
+            onAddIngredients: (selectedResults) {
+              _addSelectedIngredients(selectedResults);
+              setState(() {
+                _webRightPanelMode = WebRecipeRightPanelMode.financials;
+              });
+            },
+          ),
+        );
+      case WebRecipeRightPanelMode.newIngredient:
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+          ),
+          child: AddIngredientScreen(
+            onClose: () {
+              ref.read(webLayoutProvider.notifier).closeIngredientDetail();
+              if (mounted) {
+                setState(() {
+                  _webRightPanelMode = _previousRightPanelMode == WebRecipeRightPanelMode.ingredientPicker
+                      ? WebRecipeRightPanelMode.ingredientPicker
+                      : WebRecipeRightPanelMode.financials;
+                });
+              }
+            },
+          ),
+        );
+      case WebRecipeRightPanelMode.editIngredient:
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+          ),
+          child: AddIngredientScreen(
+            key: ValueKey('edit_ing_${_selectedIngredientForEdit?.ingredientPk}'),
+            ingredient: _selectedIngredientForEdit,
+            onClose: () async {
+              if (_selectedIngredientForEdit != null) {
+                final db = ref.read(databaseProvider);
+                final updated = await db.getIngredientById(_selectedIngredientForEdit!.ingredientPk);
+                if (updated != null && mounted) {
+                  _updateIngredientInRecipe(updated);
+                }
+              }
+              ref.read(webLayoutProvider.notifier).closeIngredientDetail();
+              if (mounted) {
+                setState(() {
+                  _selectedIngredientForEdit = null;
+                  _webRightPanelMode = _previousRightPanelMode == WebRecipeRightPanelMode.ingredientPicker
+                      ? WebRecipeRightPanelMode.ingredientPicker
+                      : WebRecipeRightPanelMode.financials;
+                });
+              }
+            },
+          ),
+        );
+    }
+  }
+
   Widget _buildDesktopWebLayout(
     BuildContext context,
     ThemeData theme,
@@ -2980,9 +3196,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     BoxConstraints constraints,
     Future<bool> Function() onPopRequested,
   ) {
-    final double financialPanelWidth = constraints.maxWidth < 820
-        ? 320.0
-        : (constraints.maxWidth < 1100 ? 350.0 : 380.0);
+    final double rightPanelWidth = constraints.maxWidth < 820
+        ? 340.0
+        : (constraints.maxWidth < 1100 ? 380.0 : 420.0);
 
     return Form(
       key: _formKey,
@@ -2998,8 +3214,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
           ),
           SizedBox(
-            width: financialPanelWidth,
-            child: _buildWebPersistentFinancialPanel(
+            width: rightPanelWidth,
+            child: _buildDesktopWebRightPanel(
               context,
               theme,
               l10n,
@@ -3062,18 +3278,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 22.0),
                   children: [
                     const SizedBox(height: 16),
-                    if (!widget.isTemporary && (widget.recipeId == null || _isEditingName)) ...[
-                      _buildCustomTextField(
-                        controller: _nameController,
-                        label: l10n.recipe_name,
-                        hint: l10n.recipe_name,
-                        validator: (value) =>
-                            (value == null || value.isEmpty)
-                            ? l10n.recipe_name
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -4187,6 +4391,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
     return GestureDetector(
       onLongPress: () => _showIngredientOptionsModal(index, units),
+      onTap: () {
+        if (MediaQuery.sizeOf(context).width >= 640) {
+          _openIngredientInRightPanel(data.ingredient);
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
@@ -4388,8 +4597,57 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     );
   }
 
+  void _addSelectedIngredients(List<(Ingredient, double)> selectedResults) {
+    setState(() {
+      final settings = ref.read(settingsProvider);
+      final units = ref.read(unitsProvider).value ?? [];
+      for (var item in selectedResults) {
+        final ing = item.$1;
+        final amountInSource = item.$2;
+        if (!_ingredients.any(
+          (i) => i.ingredient.ingredientPk == ing.ingredientPk,
+        )) {
+          final sourceUnit = units
+              .where((u) => u.unitPk == ing.unitFk)
+              .firstOrNull;
+          final targetUnit = sourceUnit != null
+              ? UnitUtils.getTargetUnit(sourceUnit, units, settings)
+              : null;
+
+          final data = RecipeIngredientData(
+            ingredient: ing,
+            initialAmount: RecipeUtils.formatNumber(amountInSource),
+            sourceUnit: sourceUnit,
+            targetUnit: targetUnit,
+          );
+          data.amountController.addListener(_calculateSummary);
+          _ingredients.add(data);
+        }
+      }
+
+      final allIngs = _ingredients.map((e) => e.ingredient).toList();
+      for (var step in _steps) {
+        if (step.instructionController
+            is IngredientTextEditingController) {
+          (step.instructionController
+                  as IngredientTextEditingController)
+              .updateIngredients(allIngs);
+        }
+      }
+
+      _calculateSummary();
+    });
+  }
+
   void _showGlobalIngredientPicker() {
     ref.read(searchQueryProvider.notifier).setQuery('');
+    final isDesktopWeb = MediaQuery.sizeOf(context).width >= 640;
+    if (isDesktopWeb) {
+      setState(() {
+        _webRightPanelMode = WebRecipeRightPanelMode.ingredientPicker;
+      });
+      return;
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -4398,47 +4656,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       builder: (modalContext) => GlobalIngredientPickerSheet(
         currentIngredients: _ingredients,
         showPickerIngredientOptionsModal: _showPickerIngredientOptionsModal,
-        onAddIngredients: (selectedResults) {
-          setState(() {
-            final settings = ref.read(settingsProvider);
-            final units = ref.read(unitsProvider).value ?? [];
-            for (var item in selectedResults) {
-              final ing = item.$1;
-              final amountInSource = item.$2;
-              if (!_ingredients.any(
-                (i) => i.ingredient.ingredientPk == ing.ingredientPk,
-              )) {
-                final sourceUnit = units
-                    .where((u) => u.unitPk == ing.unitFk)
-                    .firstOrNull;
-                final targetUnit = sourceUnit != null
-                    ? UnitUtils.getTargetUnit(sourceUnit, units, settings)
-                    : null;
-
-                final data = RecipeIngredientData(
-                  ingredient: ing,
-                  initialAmount: RecipeUtils.formatNumber(amountInSource),
-                  sourceUnit: sourceUnit,
-                  targetUnit: targetUnit,
-                );
-                data.amountController.addListener(_calculateSummary);
-                _ingredients.add(data);
-              }
-            }
-
-            final allIngs = _ingredients.map((e) => e.ingredient).toList();
-            for (var step in _steps) {
-              if (step.instructionController
-                  is IngredientTextEditingController) {
-                (step.instructionController
-                        as IngredientTextEditingController)
-                    .updateIngredients(allIngs);
-              }
-            }
-
-            _calculateSummary();
-          });
-        },
+        onAddIngredients: _addSelectedIngredients,
       ),
     ).whenComplete(() {
       ref.read(searchQueryProvider.notifier).setQuery('');
@@ -4858,12 +5076,16 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   ),
                   onTap: () async {
                     Navigator.of(ctx).pop();
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => AddIngredientScreen(ingredient: ing),
-                      ),
-                    );
-                    setModalState(() {});
+                    if (MediaQuery.sizeOf(context).width >= 640) {
+                      _openIngredientInRightPanel(ing);
+                    } else {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => AddIngredientScreen(ingredient: ing),
+                        ),
+                      );
+                      setModalState(() {});
+                    }
                   },
                 ),
                 const Divider(),

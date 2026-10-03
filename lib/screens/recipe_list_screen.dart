@@ -126,13 +126,16 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                             ),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
-                              onTap: () {
+                              onTap: () async {
                                 if (isExpanded) {
                                   setState(() {
                                     _expandedRecipeId = null;
                                   });
                                 } else {
                                   if (isWideWeb) {
+                                    if (ref.read(webLayoutProvider).selectedRecipeId == recipe.recipePk) return;
+                                    final guard = ref.read(recipeCanLeaveGuardProvider);
+                                    if (guard != null && !await guard()) return;
                                     ref
                                         .read(webLayoutProvider.notifier)
                                         .openRecipe(recipe.recipePk);
@@ -261,8 +264,12 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                                   context: context,
                                                   icon: Icons.edit_outlined,
                                                   label: l10n.edit_button,
-                                                  onTap: () {
+                                                  onTap: () async {
                                                     if (isWideWeb) {
+                                                      if (ref.read(webLayoutProvider).selectedRecipeId != recipe.recipePk) {
+                                                        final guard = ref.read(recipeCanLeaveGuardProvider);
+                                                        if (guard != null && !await guard()) return;
+                                                      }
                                                       ref
                                                           .read(webLayoutProvider.notifier)
                                                           .openRecipe(recipe.recipePk);

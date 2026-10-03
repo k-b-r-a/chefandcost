@@ -29,6 +29,9 @@ class WebLayoutState {
   final Ingredient? selectedIngredient;
   final int? selectedToolIndex;
   final bool isHomeActive;
+  final bool isCreatingIngredient;
+  final Ingredient? leftPaneIngredient;
+  final bool isCreatingLeftPaneIngredient;
 
   const WebLayoutState({
     this.middleTab = WebMiddleTab.recipes,
@@ -37,6 +40,9 @@ class WebLayoutState {
     this.selectedIngredient,
     this.selectedToolIndex,
     this.isHomeActive = true,
+    this.isCreatingIngredient = false,
+    this.leftPaneIngredient,
+    this.isCreatingLeftPaneIngredient = false,
   });
 
   WebLayoutState copyWith({
@@ -49,6 +55,10 @@ class WebLayoutState {
     int? selectedToolIndex,
     bool clearTool = false,
     bool? isHomeActive,
+    bool? isCreatingIngredient,
+    Ingredient? leftPaneIngredient,
+    bool clearLeftPaneIngredient = false,
+    bool? isCreatingLeftPaneIngredient,
   }) {
     return WebLayoutState(
       middleTab: middleTab ?? this.middleTab,
@@ -61,6 +71,12 @@ class WebLayoutState {
       selectedToolIndex:
           clearTool ? null : (selectedToolIndex ?? this.selectedToolIndex),
       isHomeActive: isHomeActive ?? this.isHomeActive,
+      isCreatingIngredient: isCreatingIngredient ?? this.isCreatingIngredient,
+      leftPaneIngredient: clearLeftPaneIngredient
+          ? null
+          : (leftPaneIngredient ?? this.leftPaneIngredient),
+      isCreatingLeftPaneIngredient: isCreatingLeftPaneIngredient ??
+          this.isCreatingLeftPaneIngredient,
     );
   }
 }
@@ -83,14 +99,17 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
         rightPaneView: isAlreadySettingsView ? state.rightPaneView : WebRightPaneView.settingsGeneral,
         clearRecipeId: true,
         clearIngredient: true,
+        isCreatingIngredient: false,
+        clearLeftPaneIngredient: true,
+        isCreatingLeftPaneIngredient: false,
         clearTool: true,
         isHomeActive: false,
       );
       return;
     }
 
-    // If a recipe is currently open in the right pane, keep it open
-    // while allowing the middle column to browse recipes, ingredients, or tools.
+    // If a recipe is currently open, keep it open while allowing
+    // the middle column to browse recipes, ingredients, or tools.
     final isRecipeActive = (state.rightPaneView == WebRightPaneView.recipe &&
             state.selectedRecipeId != null) ||
         state.rightPaneView == WebRightPaneView.newRecipe;
@@ -98,49 +117,21 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
     if (isRecipeActive) {
       state = state.copyWith(
         middleTab: tab,
+        clearLeftPaneIngredient: tab != WebMiddleTab.ingredients,
+        isCreatingLeftPaneIngredient:
+            tab == WebMiddleTab.ingredients ? state.isCreatingLeftPaneIngredient : false,
         isHomeActive: false,
       );
       return;
     }
 
-    if (tab == WebMiddleTab.recipes) {
-      state = state.copyWith(
-        middleTab: tab,
-        rightPaneView: WebRightPaneView.recipe,
-        clearIngredient: true,
-        clearTool: true,
-        isHomeActive: false,
-      );
-      return;
-    }
-
-    if (tab == WebMiddleTab.ingredients) {
-      state = state.copyWith(
-        middleTab: tab,
-        rightPaneView: WebRightPaneView.ingredient,
-        clearRecipeId: true,
-        clearTool: true,
-        isHomeActive: false,
-      );
-      return;
-    }
-
-    if (tab == WebMiddleTab.tools) {
-      final isToolView = state.rightPaneView == WebRightPaneView.tool;
-      state = state.copyWith(
-        middleTab: tab,
-        rightPaneView: isToolView ? state.rightPaneView : WebRightPaneView.tool,
-        selectedToolIndex: state.selectedToolIndex ?? 0,
-        clearRecipeId: true,
-        clearIngredient: true,
-        isHomeActive: false,
-      );
-      return;
-    }
-
+    // When no recipe is active, just switch the middle tab.
     state = state.copyWith(
       middleTab: tab,
-      isHomeActive: false,
+      clearLeftPaneIngredient: tab != WebMiddleTab.ingredients,
+      isCreatingLeftPaneIngredient:
+          tab == WebMiddleTab.ingredients ? state.isCreatingLeftPaneIngredient : false,
+      isHomeActive: state.rightPaneView == WebRightPaneView.home,
     );
   }
 
@@ -149,6 +140,9 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
       rightPaneView: WebRightPaneView.home,
       clearRecipeId: true,
       clearIngredient: true,
+      isCreatingIngredient: false,
+      clearLeftPaneIngredient: true,
+      isCreatingLeftPaneIngredient: false,
       clearTool: true,
       isHomeActive: true,
     );
@@ -160,6 +154,9 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
       rightPaneView: WebRightPaneView.recipe,
       selectedRecipeId: recipeId,
       clearIngredient: true,
+      isCreatingIngredient: false,
+      clearLeftPaneIngredient: true,
+      isCreatingLeftPaneIngredient: false,
       clearTool: true,
       isHomeActive: false,
     );
@@ -171,6 +168,9 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
       rightPaneView: WebRightPaneView.newRecipe,
       clearRecipeId: true,
       clearIngredient: true,
+      isCreatingIngredient: false,
+      clearLeftPaneIngredient: true,
+      isCreatingLeftPaneIngredient: false,
       clearTool: true,
       isHomeActive: false,
     );
@@ -179,9 +179,10 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
   void openIngredient(Ingredient ingredient) {
     state = state.copyWith(
       middleTab: WebMiddleTab.ingredients,
-      rightPaneView: WebRightPaneView.ingredient,
-      selectedIngredient: ingredient,
-      clearRecipeId: true,
+      leftPaneIngredient: ingredient,
+      isCreatingLeftPaneIngredient: false,
+      clearIngredient: true,
+      isCreatingIngredient: false,
       clearTool: true,
       isHomeActive: false,
     );
@@ -190,11 +191,28 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
   void openNewIngredient() {
     state = state.copyWith(
       middleTab: WebMiddleTab.ingredients,
-      rightPaneView: WebRightPaneView.newIngredient,
-      clearRecipeId: true,
+      clearLeftPaneIngredient: true,
+      isCreatingLeftPaneIngredient: true,
       clearIngredient: true,
+      isCreatingIngredient: false,
       clearTool: true,
       isHomeActive: false,
+    );
+  }
+
+  void closeLeftPaneIngredient() {
+    state = state.copyWith(
+      clearLeftPaneIngredient: true,
+      isCreatingLeftPaneIngredient: false,
+    );
+  }
+
+  void closeIngredientDetail() {
+    state = state.copyWith(
+      clearLeftPaneIngredient: true,
+      isCreatingLeftPaneIngredient: false,
+      clearIngredient: true,
+      isCreatingIngredient: false,
     );
   }
 
@@ -205,6 +223,7 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
       selectedToolIndex: toolIndex,
       clearRecipeId: true,
       clearIngredient: true,
+      isCreatingIngredient: false,
       isHomeActive: false,
     );
   }
@@ -215,6 +234,7 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
       rightPaneView: view,
       clearRecipeId: true,
       clearIngredient: true,
+      isCreatingIngredient: false,
       clearTool: true,
       isHomeActive: false,
     );
@@ -225,6 +245,7 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
       rightPaneView: WebRightPaneView.home,
       clearRecipeId: true,
       clearIngredient: true,
+      isCreatingIngredient: false,
       clearTool: true,
       isHomeActive: true,
     );
@@ -233,3 +254,27 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
 
 final webLayoutProvider =
     NotifierProvider<WebLayoutNotifier, WebLayoutState>(WebLayoutNotifier.new);
+
+class RecipeCanLeaveGuardNotifier extends Notifier<Future<bool> Function()?> {
+  @override
+  Future<bool> Function()? build() => null;
+
+  void setGuard(Future<bool> Function()? guard) {
+    state = guard;
+  }
+
+  void clearIf(Future<bool> Function()? guard) {
+    Future.microtask(() {
+      if (!ref.mounted) return;
+      if (state == guard) {
+        state = null;
+      }
+    });
+  }
+}
+
+final recipeCanLeaveGuardProvider =
+    NotifierProvider<RecipeCanLeaveGuardNotifier, Future<bool> Function()?>(
+  RecipeCanLeaveGuardNotifier.new,
+);
+

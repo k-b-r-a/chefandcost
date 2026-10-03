@@ -345,7 +345,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     return NavigationRail(
       selectedIndex: selectedIndex,
-      onDestinationSelected: (index) {
+      onDestinationSelected: (index) async {
+        if (index == 0 || index == 4) {
+          final guard = ref.read(recipeCanLeaveGuardProvider);
+          if (guard != null && !await guard()) return;
+        }
+
         if (_webSearchController.text.isNotEmpty) {
           _webSearchController.clear();
           ref.read(searchQueryProvider.notifier).setQuery('');
@@ -377,7 +382,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         padding: const EdgeInsets.symmetric(vertical: 20.0),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => webNotifier.showHome(),
+          onTap: () async {
+            final guard = ref.read(recipeCanLeaveGuardProvider);
+            if (guard != null && !await guard()) return;
+            webNotifier.showHome();
+          },
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -475,6 +484,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     WebLayoutState webLayout,
     WebLayoutNotifier webNotifier,
   ) {
+    if (webLayout.middleTab == WebMiddleTab.ingredients &&
+        (webLayout.leftPaneIngredient != null || webLayout.isCreatingLeftPaneIngredient)) {
+      return AddIngredientScreen(
+        key: webLayout.leftPaneIngredient != null
+            ? ValueKey('left_pane_ing_${webLayout.leftPaneIngredient!.ingredientPk}')
+            : const ValueKey('left_pane_ing_new'),
+        ingredient: webLayout.leftPaneIngredient,
+        onClose: () => webNotifier.closeIngredientDetail(),
+      );
+    }
+
     Widget listWidget;
     switch (webLayout.middleTab) {
       case WebMiddleTab.recipes:
@@ -536,7 +556,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                         icon: const Icon(Icons.arrow_back, size: 18),
                         tooltip: l10n.recipes_title,
                         visualDensity: VisualDensity.compact,
-                        onPressed: () => webNotifier.setMiddleTab(WebMiddleTab.recipes),
+                        onPressed: () async {
+                          final guard = ref.read(recipeCanLeaveGuardProvider);
+                          if (guard != null && !await guard()) return;
+                          webNotifier.setMiddleTab(WebMiddleTab.recipes);
+                        },
                       ),
                     ],
                   ),
@@ -580,14 +604,20 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           icon: const Icon(Icons.add, size: 18),
                           tooltip: l10n.new_recipe_title,
                           visualDensity: VisualDensity.compact,
-                          onPressed: () => webNotifier.openNewRecipe(),
+                          onPressed: () async {
+                            final guard = ref.read(recipeCanLeaveGuardProvider);
+                            if (guard != null && !await guard()) return;
+                            webNotifier.openNewRecipe();
+                          },
                         ),
                       ] else if (webLayout.middleTab == WebMiddleTab.ingredients) ...[
                         IconButton.filledTonal(
                           icon: const Icon(Icons.add, size: 18),
                           tooltip: l10n.new_ingredient_button,
                           visualDensity: VisualDensity.compact,
-                          onPressed: () => webNotifier.openNewIngredient(),
+                          onPressed: () {
+                            webNotifier.openNewIngredient();
+                          },
                         ),
                       ],
                     ],
@@ -651,7 +681,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     WebLayoutState webLayout,
     WebLayoutNotifier webNotifier,
   ) {
-    if (webLayout.rightPaneView == WebRightPaneView.recipe) {
+    if (webLayout.selectedRecipeId != null ||
+        webLayout.rightPaneView == WebRightPaneView.newRecipe) {
       if (webLayout.selectedRecipeId != null) {
         return RecipeEditorScreen(
           key: ValueKey('recipe_${webLayout.selectedRecipeId}'),
@@ -665,31 +696,57 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       );
     }
 
-    if (webLayout.rightPaneView == WebRightPaneView.newRecipe) {
-      return RecipeEditorScreen(
-        key: const ValueKey('recipe_new'),
-        onClose: () => webNotifier.closeDetail(),
-      );
-    }
+    if (webLayout.rightPaneView == WebRightPaneView.ingredient ||
+        webLayout.rightPaneView == WebRightPaneView.newIngredient) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= 600) {
+            final double rightPanelWidth =
+                (constraints.maxWidth * 0.42).clamp(340.0, 420.0);
+            return Row(
+              children: [
+                Expanded(
+                  child: HomeScreen(
+                    onNavigateToTab: (index) {
+                      if (index == 1) {
+                        webNotifier.setMiddleTab(WebMiddleTab.recipes);
+                      } else if (index == 2) {
+                        webNotifier.setMiddleTab(WebMiddleTab.ingredients);
+                      } else if (index == 3) {
+                        webNotifier.setMiddleTab(WebMiddleTab.tools);
+                      } else if (index == 4) {
+                        webNotifier.openSettingsDetail(WebRightPaneView.settingsGeneral);
+                      }
+                    },
+                  ),
+                ),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                ),
+                SizedBox(
+                  width: rightPanelWidth,
+                  child: AddIngredientScreen(
+                    key: webLayout.selectedIngredient != null
+                        ? ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}')
+                        : const ValueKey('ingredient_new'),
+                    ingredient: webLayout.selectedIngredient,
+                    onClose: () => webNotifier.closeIngredientDetail(),
+                  ),
+                ),
+              ],
+            );
+          }
 
-    if (webLayout.rightPaneView == WebRightPaneView.ingredient) {
-      if (webLayout.selectedIngredient != null) {
-        return AddIngredientScreen(
-          key: ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}'),
-          ingredient: webLayout.selectedIngredient,
-          onClose: () => webNotifier.closeDetail(),
-        );
-      }
-      return AddIngredientScreen(
-        key: const ValueKey('ingredient_new'),
-        onClose: () => webNotifier.closeDetail(),
-      );
-    }
-
-    if (webLayout.rightPaneView == WebRightPaneView.newIngredient) {
-      return AddIngredientScreen(
-        key: const ValueKey('ingredient_new'),
-        onClose: () => webNotifier.closeDetail(),
+          return AddIngredientScreen(
+            key: webLayout.selectedIngredient != null
+                ? ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}')
+                : const ValueKey('ingredient_new'),
+            ingredient: webLayout.selectedIngredient,
+            onClose: () => webNotifier.closeIngredientDetail(),
+          );
+        },
       );
     }
 
@@ -796,13 +853,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         : Duration.zero;
 
     return SafeArea(
+      top: false,
       child: RepaintBoundary(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          child: Center(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            heightFactor: 1.0,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: SizedBox(
+                width: double.infinity,
                 height: pillHeight,
                 child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),

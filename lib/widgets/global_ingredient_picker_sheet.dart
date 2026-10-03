@@ -27,11 +27,18 @@ class GlobalIngredientPickerSheet extends ConsumerStatefulWidget {
     StateSetter setModalState,
   ) showPickerIngredientOptionsModal;
 
+  final VoidCallback? onClose;
+  final VoidCallback? onOpenNewIngredient;
+  final bool isPanel;
+
   const GlobalIngredientPickerSheet({
     super.key,
     required this.currentIngredients,
     required this.onAddIngredients,
     required this.showPickerIngredientOptionsModal,
+    this.onClose,
+    this.onOpenNewIngredient,
+    this.isPanel = false,
   });
 
   @override
@@ -76,30 +83,34 @@ class _GlobalIngredientPickerSheetState
     final currency = settings.currencySymbol;
 
     return Container(
-      height: MediaQuery.sizeOf(context).height * 0.9,
+      height: widget.isPanel ? null : MediaQuery.sizeOf(context).height * 0.9,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+        borderRadius: widget.isPanel
+            ? BorderRadius.zero
+            : const BorderRadius.vertical(top: Radius.circular(25)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
         children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+          if (!widget.isPanel) ...[
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Text(
                   l10n.select_ingredient_recipe_title,
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -110,7 +121,11 @@ class _GlobalIngredientPickerSheetState
                 onPressed: () {
                   FocusManager.instance.primaryFocus?.unfocus();
                   SystemChannels.textInput.invokeMethod('TextInput.hide');
-                  Navigator.of(context).pop();
+                  if (widget.onClose != null) {
+                    widget.onClose!();
+                  } else {
+                    Navigator.of(context).pop();
+                  }
                 },
               ),
             ],
@@ -156,6 +171,10 @@ class _GlobalIngredientPickerSheetState
               const SizedBox(width: 8),
               IconButton(
                 onPressed: () async {
+                  if (widget.onOpenNewIngredient != null) {
+                    widget.onOpenNewIngredient!();
+                    return;
+                  }
                   await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const AddIngredientScreen(),
@@ -617,7 +636,11 @@ class _GlobalIngredientPickerSheetState
                     });
 
                     widget.onAddIngredients(results);
-                    Navigator.of(context).pop();
+                    if (widget.onClose != null) {
+                      widget.onClose!();
+                    } else {
+                      Navigator.of(context).pop();
+                    }
                   },
                   icon: const Icon(Icons.add_task),
                   label: Text(

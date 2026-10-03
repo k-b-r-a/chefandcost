@@ -151,7 +151,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
         leading: widget.onClose != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                tooltip: l10n.localeName == 'es' ? 'Volver' : 'Back',
                 onPressed: widget.onClose,
               )
             : null,

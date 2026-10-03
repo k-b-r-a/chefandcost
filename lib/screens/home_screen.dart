@@ -11,6 +11,7 @@ import '../utils/recipe_utils.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../widgets/tool_card.dart';
 import '../provider/web_layout_provider.dart';
+import '../database/sample_data.dart';
 
 import 'recipe_editor_screen.dart';
 import 'add_ingredient_screen.dart';
@@ -464,20 +465,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: () {
-                        if (MediaQuery.sizeOf(context).width >= 640) {
-                          ref.read(webLayoutProvider.notifier).openNewRecipe();
-                        } else {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const RecipeEditorScreen(),
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(l10n.new_recipe_title),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: () {
+                            if (MediaQuery.sizeOf(context).width >= 640) {
+                              ref.read(webLayoutProvider.notifier).openNewRecipe();
+                            } else {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const RecipeEditorScreen(),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text(l10n.new_recipe_title),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            final db = ref.read(databaseProvider);
+                            final isEs = l10n.localeName == 'es';
+                            final res = await loadSampleData(db, clearFirst: false);
+                            ref.invalidate(recipesStreamProvider);
+                            ref.invalidate(recipesWithFinancialsStreamProvider);
+                            ref.invalidate(ingredientsStreamProvider);
+                            ref.invalidate(unitsProvider);
+                            ref.invalidate(unitsStreamProvider);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isEs
+                                        ? 'Datos de ejemplo cargados: ${res.recipesAdded} recetas y ${res.ingredientsAdded} ingredientes'
+                                        : 'Sample data loaded: ${res.recipesAdded} recipes and ${res.ingredientsAdded} ingredients',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.science_outlined, size: 18),
+                          label: Text(
+                            l10n.localeName == 'es'
+                                ? 'Cargar datos de ejemplo'
+                                : 'Load sample data',
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

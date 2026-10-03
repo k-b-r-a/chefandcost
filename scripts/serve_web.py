@@ -25,8 +25,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return 'application/javascript'
         return super().guess_type(path)
 
+class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+    daemon_threads = True
+
 if __name__ == '__main__':
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+    with ThreadingHTTPServer(("", PORT), Handler) as httpd:
         print(f"Serving RecipeTools Web at http://localhost:{PORT}")
         httpd.serve_forever()

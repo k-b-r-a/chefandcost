@@ -7,6 +7,7 @@ import '../provider/settings_provider.dart';
 import '../provider/database_provider.dart';
 import 'cloud_sync_screen.dart';
 import '../provider/web_layout_provider.dart';
+import '../database/sample_data.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -248,6 +249,103 @@ class SettingsGeneralScreen extends ConsumerWidget {
     );
   }
 
+  void _showLoadSampleConfirmation(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isEs = l10n.localeName == 'es';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(Icons.science_outlined, size: 40, color: theme.colorScheme.primary),
+        title: Text(isEs ? 'Cargar datos de ejemplo' : 'Load sample data'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isEs
+                  ? 'Esta acción cargará ingredientes culinarios y recetas completas (con pasos, temporizadores y márgenes de ganancia) para probar la aplicación.'
+                  : 'This will load culinary ingredients and full recipes (with steps, timers, and profit margins) to test the application.',
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isEs
+                  ? '¿Cómo deseas cargar los datos?'
+                  : 'How would you like to load the data?',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              isEs ? 'Cancelar' : 'Cancel',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+          OutlinedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _executeLoadSample(context, ref, clearFirst: false);
+            },
+            child: Text(isEs ? 'Añadir a los actuales' : 'Add to current'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _executeLoadSample(context, ref, clearFirst: true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+            ),
+            child: Text(isEs ? 'Reemplazar todo' : 'Replace all'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _executeLoadSample(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool clearFirst,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final settings = ref.read(settingsProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final isEs = l10n.localeName == 'es';
+
+    try {
+      if (settings.hapticFeedbackEnabled) {
+        HapticFeedback.mediumImpact();
+      }
+      final db = ref.read(databaseProvider);
+      final result = await loadSampleData(db, clearFirst: clearFirst);
+      ref.invalidate(recipesStreamProvider);
+      ref.invalidate(recipesWithFinancialsStreamProvider);
+      ref.invalidate(ingredientsStreamProvider);
+      ref.invalidate(unitsProvider);
+      ref.invalidate(unitsStreamProvider);
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            isEs
+                ? 'Datos de ejemplo cargados: ${result.recipesAdded} recetas y ${result.ingredientsAdded} ingredientes'
+                : 'Sample data loaded: ${result.recipesAdded} recipes and ${result.ingredientsAdded} ingredients',
+          ),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -306,6 +404,32 @@ class SettingsGeneralScreen extends ConsumerWidget {
                       if (value) {
                         HapticFeedback.mediumImpact();
                       }
+                    },
+                  ),
+                  const Divider(height: 1, indent: 20, endIndent: 20),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                      child: Icon(Icons.science_outlined, color: theme.colorScheme.primary),
+                    ),
+                    title: Text(
+                      l10n.localeName == 'es' ? 'Cargar datos de ejemplo' : 'Load sample data',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      l10n.localeName == 'es'
+                          ? 'Carga ingredientes y recetas de prueba para evaluar la app'
+                          : 'Load test ingredients and recipes to evaluate the app',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    onTap: () {
+                      if (settings.hapticFeedbackEnabled) {
+                        HapticFeedback.lightImpact();
+                      }
+                      _showLoadSampleConfirmation(context, ref);
                     },
                   ),
                   const Divider(height: 1, indent: 20, endIndent: 20),

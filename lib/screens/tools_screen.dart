@@ -52,7 +52,10 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                           title: l10n.timers_title,
                           subtitle: l10n.timers_desc,
                           icon: Icons.timer_outlined,
-                          onTap: () {
+                          onTap: () async {
+                            final guard = ref.read(recipeCanLeaveGuardProvider);
+                            if (guard != null && !await guard()) return;
+                            if (!context.mounted) return;
                             if (MediaQuery.sizeOf(context).width >= 800) {
                               ref.read(webLayoutProvider.notifier).openTool(0);
                             } else {
@@ -74,7 +77,10 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                           title: l10n.rule_of_three_title,
                           subtitle: l10n.rule_of_three_desc,
                           icon: Icons.calculate_outlined,
-                          onTap: () {
+                          onTap: () async {
+                            final guard = ref.read(recipeCanLeaveGuardProvider);
+                            if (guard != null && !await guard()) return;
+                            if (!context.mounted) return;
                             if (MediaQuery.sizeOf(context).width >= 800) {
                               ref.read(webLayoutProvider.notifier).openTool(1);
                             } else {
@@ -96,7 +102,10 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                           title: l10n.unit_converter_title,
                           subtitle: l10n.unit_converter_desc,
                           icon: Icons.swap_horiz_rounded,
-                          onTap: () {
+                          onTap: () async {
+                            final guard = ref.read(recipeCanLeaveGuardProvider);
+                            if (guard != null && !await guard()) return;
+                            if (!context.mounted) return;
                             if (MediaQuery.sizeOf(context).width >= 800) {
                               ref.read(webLayoutProvider.notifier).openTool(2);
                             } else {
