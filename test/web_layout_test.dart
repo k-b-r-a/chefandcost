@@ -57,6 +57,42 @@ void main() {
       expect(state.middleTab, WebMiddleTab.ingredients);
     });
 
+    test('when a recipe is open, setMiddleTab keeps recipe open in right pane', () {
+      final container = ProviderContainer();
+      container.read(webLayoutProvider.notifier).openRecipe('recipe_123');
+
+      // Change to ingredients tab
+      container.read(webLayoutProvider.notifier).setMiddleTab(WebMiddleTab.ingredients);
+      var state = container.read(webLayoutProvider);
+      expect(state.middleTab, WebMiddleTab.ingredients);
+      expect(state.rightPaneView, WebRightPaneView.recipe);
+      expect(state.selectedRecipeId, 'recipe_123');
+
+      // Change to tools tab
+      container.read(webLayoutProvider.notifier).setMiddleTab(WebMiddleTab.tools);
+      state = container.read(webLayoutProvider);
+      expect(state.middleTab, WebMiddleTab.tools);
+      expect(state.rightPaneView, WebRightPaneView.recipe);
+      expect(state.selectedRecipeId, 'recipe_123');
+
+      // Change back to recipes tab
+      container.read(webLayoutProvider.notifier).setMiddleTab(WebMiddleTab.recipes);
+      state = container.read(webLayoutProvider);
+      expect(state.middleTab, WebMiddleTab.recipes);
+      expect(state.rightPaneView, WebRightPaneView.recipe);
+      expect(state.selectedRecipeId, 'recipe_123');
+    });
+
+    test('when a new recipe is open, setMiddleTab keeps newRecipe open in right pane', () {
+      final container = ProviderContainer();
+      container.read(webLayoutProvider.notifier).openNewRecipe();
+
+      container.read(webLayoutProvider.notifier).setMiddleTab(WebMiddleTab.ingredients);
+      final state = container.read(webLayoutProvider);
+      expect(state.middleTab, WebMiddleTab.ingredients);
+      expect(state.rightPaneView, WebRightPaneView.newRecipe);
+    });
+
     test('openTool changes right pane to tool and middle tab to tools', () {
       final container = ProviderContainer();
       container.read(webLayoutProvider.notifier).openTool(0);
@@ -158,8 +194,8 @@ void main() {
       // HomeScreen is present in the right pane
       expect(find.byType(HomeScreen), findsOneWidget);
 
-      // Top changer SegmentedButton is present in middle column
-      expect(find.byType(SegmentedButton<WebMiddleTab>), findsOneWidget);
+      // Redundant SegmentedButton navbar is removed from middle column
+      expect(find.byType(SegmentedButton<WebMiddleTab>), findsNothing);
     });
 
     testWidgets('Clicking Settings in NavigationRail opens SettingsScreen in middle and SettingsGeneralScreen in right',

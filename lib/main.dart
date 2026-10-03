@@ -346,6 +346,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     return NavigationRail(
       selectedIndex: selectedIndex,
       onDestinationSelected: (index) {
+        if (_webSearchController.text.isNotEmpty) {
+          _webSearchController.clear();
+          ref.read(searchQueryProvider.notifier).setQuery('');
+        }
         switch (index) {
           case 0:
             webNotifier.showHome();
@@ -538,70 +542,59 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   ),
                 )
               else ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: SegmentedButton<WebMiddleTab>(
-                        showSelectedIcon: false,
-                        style: ButtonStyle(
-                          visualDensity: VisualDensity.compact,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          webLayout.middleTab == WebMiddleTab.recipes
+                              ? Icons.menu_book_outlined
+                              : (webLayout.middleTab == WebMiddleTab.ingredients
+                                  ? Icons.egg_outlined
+                                  : Icons.handyman_outlined),
+                          size: 18,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          webLayout.middleTab == WebMiddleTab.recipes
+                              ? l10n.recipes_title
+                              : (webLayout.middleTab == WebMiddleTab.ingredients
+                                  ? l10n.ingredients_title
+                                  : l10n.tools_title),
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        segments: [
-                          ButtonSegment(
-                            value: WebMiddleTab.recipes,
-                            icon: const Icon(Icons.menu_book_outlined, size: 16),
-                            label: Text(
-                              l10n.recipes_title,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          ButtonSegment(
-                            value: WebMiddleTab.ingredients,
-                            icon: const Icon(Icons.egg_outlined, size: 16),
-                            label: Text(
-                              l10n.ingredients_title,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          ButtonSegment(
-                            value: WebMiddleTab.tools,
-                            icon: const Icon(Icons.handyman_outlined, size: 16),
-                            label: Text(
-                              l10n.tools_title,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                        selected: {webLayout.middleTab},
-                        onSelectionChanged: (set) {
-                          webNotifier.setMiddleTab(set.first);
-                        },
                       ),
-                    ),
-                    if (webLayout.middleTab == WebMiddleTab.recipes) ...[
-                      const SizedBox(width: 8),
-                      IconButton.filledTonal(
-                        icon: const Icon(Icons.add, size: 18),
-                        tooltip: l10n.new_recipe_title,
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () => webNotifier.openNewRecipe(),
-                      ),
-                    ] else if (webLayout.middleTab == WebMiddleTab.ingredients) ...[
-                      const SizedBox(width: 8),
-                      IconButton.filledTonal(
-                        icon: const Icon(Icons.add, size: 18),
-                        tooltip: l10n.new_ingredient_button,
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () => webNotifier.openNewIngredient(),
-                      ),
+                      if (webLayout.middleTab == WebMiddleTab.recipes) ...[
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.add, size: 18),
+                          tooltip: l10n.new_recipe_title,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => webNotifier.openNewRecipe(),
+                        ),
+                      ] else if (webLayout.middleTab == WebMiddleTab.ingredients) ...[
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.add, size: 18),
+                          tooltip: l10n.new_ingredient_button,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => webNotifier.openNewIngredient(),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 8),
+                if (webLayout.middleTab != WebMiddleTab.tools) ...[
+                  const SizedBox(height: 8),
                 SizedBox(
                   height: 36,
                   child: TextField(
@@ -640,7 +633,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 ),
               ],
             ],
-          ),
+          ],
+        ),
         ),
         Expanded(
           child: listWidget,

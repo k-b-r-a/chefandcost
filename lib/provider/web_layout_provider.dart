@@ -89,6 +89,20 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
       return;
     }
 
+    // If a recipe is currently open in the right pane, keep it open
+    // while allowing the middle column to browse recipes, ingredients, or tools.
+    final isRecipeActive = (state.rightPaneView == WebRightPaneView.recipe &&
+            state.selectedRecipeId != null) ||
+        state.rightPaneView == WebRightPaneView.newRecipe;
+
+    if (isRecipeActive) {
+      state = state.copyWith(
+        middleTab: tab,
+        isHomeActive: false,
+      );
+      return;
+    }
+
     if (tab == WebMiddleTab.recipes) {
       state = state.copyWith(
         middleTab: tab,
