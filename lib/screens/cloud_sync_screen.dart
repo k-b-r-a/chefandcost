@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -92,12 +93,16 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     if (syncState.signedIn) ...[
                       _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
                       const SizedBox(height: 24),
-                      _buildBackupsListHeader(theme, l10n),
-                      const SizedBox(height: 12),
-                      if (syncState.backups.isEmpty)
-                        _buildEmptyBackupsPlaceholder(theme, l10n)
-                      else
-                        _buildBackupsList(syncState, syncNotifier, theme, l10n),
+                      if (syncState.storageType != CloudSyncStorageType.firestore) ...[
+                        _buildBackupsListHeader(theme, l10n),
+                        const SizedBox(height: 12),
+                        if (syncState.backups.isEmpty)
+                          _buildEmptyBackupsPlaceholder(theme, l10n)
+                        else
+                          _buildBackupsList(syncState, syncNotifier, theme, l10n),
+                      ] else ...[
+                        _buildFirestoreSyncInfoCard(theme, l10n),
+                      ],
                     ],
                   ]),
                 ),
@@ -123,6 +128,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     AppLocalizations l10n,
   ) {
     final isGoogleDrive = state.storageType == CloudSyncStorageType.googleDrive;
+    final isFirestore = state.storageType == CloudSyncStorageType.firestore;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -148,6 +154,11 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             SegmentedButton<CloudSyncStorageType>(
               segments: [
                 ButtonSegment<CloudSyncStorageType>(
+                  value: CloudSyncStorageType.firestore,
+                  icon: const Icon(Icons.cloud_sync_outlined),
+                  label: const Text('Firestore'),
+                ),
+                ButtonSegment<CloudSyncStorageType>(
                   value: CloudSyncStorageType.googleDrive,
                   icon: const Icon(Icons.cloud_outlined),
                   label: const Text('Google Drive'),
@@ -163,7 +174,25 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 notifier.setStorageType(newSelection.first);
               },
             ),
-            if (!isGoogleDrive) ...[
+            if (isFirestore) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  l10n.localeName == 'es'
+                      ? 'Sincronización multiplataforma (Web y Móvil) mediante Cloud Firestore. Optimizado para el plan gratuito Spark (ingredientes integrados y consultas diferenciales).'
+                      : 'Cross-platform sync between Web and Mobile via Cloud Firestore. Optimized for Firebase Spark plan (embedded ingredients & differential queries).',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    height: 1.4,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ] else if (!isGoogleDrive) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(14),
@@ -195,6 +224,39 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     AppLocalizations l10n,
   ) {
     final isLocal = state.storageType == CloudSyncStorageType.localDirectory;
+    final isFirestore = state.storageType == CloudSyncStorageType.firestore;
+
+    IconData headerIcon;
+    if (isFirestore) {
+      headerIcon = state.signedIn ? Icons.cloud_sync : Icons.cloud_off_outlined;
+    } else if (isLocal) {
+      headerIcon = Icons.folder_shared_outlined;
+    } else {
+      headerIcon = state.signedIn ? Icons.cloud_done_outlined : Icons.backup_outlined;
+    }
+
+    String headerTitle;
+    if (isFirestore) {
+      headerTitle = state.signedIn
+          ? (l10n.localeName == 'es' ? 'Conectado a Firestore' : 'Connected to Firestore')
+          : (l10n.localeName == 'es' ? 'Firestore no conectado' : 'Firestore Not Connected');
+    } else if (isLocal) {
+      headerTitle = l10n.cloud_sync_sandbox_badge;
+    } else {
+      headerTitle = state.signedIn ? l10n.cloud_sync_connected : l10n.cloud_sync_disconnected;
+    }
+
+    String headerDesc;
+    if (isFirestore) {
+      headerDesc = l10n.localeName == 'es'
+          ? 'Sincronización manual bajo demanda con resolución de conflictos último-en-escribir (LWW). Los cambios locales recientes se conservan.'
+          : 'Manual on-demand sync with Last-Write-Wins (LWW) conflict resolution. Recent local edits are never wiped.';
+    } else if (isLocal) {
+      headerDesc = l10n.cloud_sync_sandbox_desc;
+    } else {
+      headerDesc = l10n.cloud_sync_desc;
+    }
+
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
@@ -212,18 +274,14 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               radius: 40,
               backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
               child: Icon(
-                isLocal
-                    ? Icons.folder_shared_outlined
-                    : (state.signedIn ? Icons.cloud_done_outlined : Icons.backup_outlined),
+                headerIcon,
                 color: theme.colorScheme.primary,
                 size: 40,
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              isLocal
-                  ? l10n.cloud_sync_sandbox_badge
-                  : (state.signedIn ? l10n.cloud_sync_connected : l10n.cloud_sync_disconnected),
+              headerTitle,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -240,17 +298,45 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               ),
             ] else if (state.signedIn && state.email != null) ...[
               const SizedBox(height: 4),
-              Text(
-                state.email!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      state.email!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isFirestore) ...[
+                    const SizedBox(width: 6),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 16),
+                      tooltip: l10n.localeName == 'es' ? 'Copiar ID' : 'Copy Sync ID',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: state.email ?? ''));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.localeName == 'es'
+                                ? 'ID copiado al portapapeles'
+                                : 'Sync ID copied to clipboard'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ],
               ),
             ],
             const SizedBox(height: 12),
             Text(
-              isLocal ? l10n.cloud_sync_sandbox_desc : l10n.cloud_sync_desc,
+              headerDesc,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                 height: 1.4,
@@ -260,22 +346,43 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             if (!isLocal) ...[
               const SizedBox(height: 20),
               if (!state.signedIn)
-                ElevatedButton.icon(
-                  onPressed: () => notifier.signIn(),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => notifier.signIn(),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.login),
+                      label: Text(
+                        isFirestore
+                            ? (l10n.localeName == 'es' ? 'Conectar sesión' : 'Connect session')
+                            : l10n.cloud_sync_connect_btn,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    elevation: 0,
-                  ),
-                  icon: const Icon(Icons.login),
-                  label: Text(
-                    l10n.cloud_sync_connect_btn,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                    if (isFirestore)
+                      OutlinedButton.icon(
+                        onPressed: () => _showSetSyncIdDialog(context, notifier, l10n),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: const Icon(Icons.pin_outlined),
+                        label: Text(l10n.localeName == 'es' ? 'Ingresar Sync ID' : 'Set Sync ID'),
+                      ),
+                  ],
                 )
               else
                 Wrap(
@@ -283,18 +390,32 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                   runSpacing: 12,
                   alignment: WrapAlignment.center,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: () => notifier.signIn(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                    if (isFirestore)
+                      OutlinedButton.icon(
+                        onPressed: () => _showSetSyncIdDialog(context, notifier, l10n),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
+                        icon: const Icon(Icons.sync_alt),
+                        label: Text(l10n.localeName == 'es' ? 'Cambiar Sync ID' : 'Change Sync ID'),
+                      )
+                    else
+                      OutlinedButton.icon(
+                        onPressed: () => notifier.signIn(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: const Icon(Icons.switch_account),
+                        label: Text(l10n.localeName == 'es' ? 'Cambiar cuenta' : 'Switch account'),
                       ),
-                      icon: const Icon(Icons.switch_account),
-                      label: Text(l10n.localeName == 'es' ? 'Cambiar cuenta' : 'Switch account'),
-                    ),
                     OutlinedButton.icon(
                       onPressed: () => notifier.signOut(),
                       style: OutlinedButton.styleFrom(
@@ -323,6 +444,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     AppLocalizations l10n,
   ) {
     final isSim = state.storageType == CloudSyncStorageType.localDirectory;
+    final isFirestore = state.storageType == CloudSyncStorageType.firestore;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -382,24 +504,128 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
           ),
           icon: const Icon(Icons.sync),
           label: Text(
-            l10n.cloud_sync_sync_btn,
+            isFirestore
+                ? (l10n.localeName == 'es' ? 'Sincronizar ahora (Bidireccional)' : 'Sync Now (Two-Way)')
+                : l10n.cloud_sync_sync_btn,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: () => _confirmBackup(context, notifier, l10n),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+        if (!isFirestore) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _confirmBackup(context, notifier, l10n),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            icon: const Icon(Icons.cloud_upload_outlined),
+            label: Text(
+              l10n.cloud_sync_backup_btn,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
             ),
           ),
-          icon: const Icon(Icons.cloud_upload_outlined),
-          label: Text(
-            l10n.cloud_sync_backup_btn,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildFirestoreSyncInfoCard(ThemeData theme, AppLocalizations l10n) {
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.bolt, color: theme.colorScheme.primary, size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.localeName == 'es'
+                      ? 'Arquitectura Spark Plan (Sin cargos)'
+                      : 'Spark Plan Architecture (Zero-cost)',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSyncFeatureRow(
+              theme,
+              icon: Icons.filter_alt_outlined,
+              title: l10n.localeName == 'es' ? 'Consultas Diferenciales' : 'Differential Queries',
+              description: l10n.localeName == 'es'
+                  ? 'Solo se consultan y transfieren los registros editados después de la última sincronización.'
+                  : 'Only records edited after the last sync are queried and transferred.',
+            ),
+            const SizedBox(height: 10),
+            _buildSyncFeatureRow(
+              theme,
+              icon: Icons.layers_outlined,
+              title: l10n.localeName == 'es' ? 'Ingredientes Integrados' : 'Embedded Ingredients',
+              description: l10n.localeName == 'es'
+                  ? 'Los ingredientes y pasos se integran dentro de cada receta para consumir 1 sola operación por receta.'
+                  : 'Ingredients and steps are embedded directly in each recipe document to consume only 1 doc read/write.',
+            ),
+            const SizedBox(height: 10),
+            _buildSyncFeatureRow(
+              theme,
+              icon: Icons.rule_outlined,
+              title: l10n.localeName == 'es' ? 'Resolución LWW No Destructiva' : 'Non-Destructive LWW',
+              description: l10n.localeName == 'es'
+                  ? 'Gana la última edición (updated_at). Las recetas y modificaciones locales más recientes nunca se borran.'
+                  : 'Last-write-wins based on updated_at. Newer local edits and un-synced recipes are never overwritten.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSyncFeatureRow(
+    ThemeData theme, {
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.secondary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
+                  height: 1.3,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -719,6 +945,53 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               notifier.deleteBackup(backupId);
             },
             child: Text(l10n.delete_button),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSetSyncIdDialog(BuildContext context, CloudSyncNotifier notifier, AppLocalizations l10n) {
+    final textController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.localeName == 'es' ? 'ID de Sincronización' : 'Sync ID / Pairing Code'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.localeName == 'es'
+                  ? 'Ingresa el mismo ID de sincronización en tu navegador Web y en tu teléfono móvil para vincular ambas instancias.'
+                  : 'Enter the same Sync ID on your Web browser and mobile phone to pair both devices.',
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: textController,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: l10n.localeName == 'es' ? 'ID de sincronización' : 'Sync ID',
+                hintText: 'e.g. my-kitchen-sync-123',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.discard_button),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = textController.text.trim();
+              if (text.isNotEmpty) {
+                notifier.setCustomFirestoreUserId(text);
+              }
+              Navigator.of(context).pop();
+            },
+            child: Text(l10n.save_button),
           ),
         ],
       ),

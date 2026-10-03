@@ -2,9 +2,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart' as p;
 import '../database/database.dart';
 import '../utils/cloud_sync_service.dart';
+import '../utils/firestore_sync_service.dart';
 import 'database_provider.dart';
 
 class CloudSyncState {
@@ -49,6 +51,7 @@ class CloudSyncState {
 
 class CloudSyncNotifier extends Notifier<CloudSyncState> {
   GoogleDriveSyncService get _syncService => ref.read(googleDriveSyncServiceProvider);
+  FirestoreSyncService get _firestoreService => ref.read(firestoreSyncServiceProvider);
 
   @override
   CloudSyncState build() {
@@ -62,6 +65,21 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     state = state.copyWith(loading: true);
     try {
       final storageType = await _syncService.getStorageType();
+
+      if (storageType == CloudSyncStorageType.firestore) {
+        final activeUid = await _firestoreService.getActiveUserId();
+        final signedIn = _firestoreService.isConfigured && (activeUid != null && activeUid.isNotEmpty);
+        final email = _firestoreService.authCurrentUser?.email ??
+            (activeUid != null ? 'Sync ID: $activeUid' : null);
+        state = state.copyWith(
+          signedIn: signedIn,
+          email: email,
+          backups: const [],
+          storageType: storageType,
+          loading: false,
+        );
+        return;
+      }
       
       GoogleSignInAccount? account;
       if (storageType == CloudSyncStorageType.googleDrive) {
@@ -101,6 +119,21 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     await _syncService.signOut(); // Sign out of existing connection
     await _syncService.setStorageType(type);
     
+    if (type == CloudSyncStorageType.firestore) {
+      final activeUid = await _firestoreService.getActiveUserId();
+      final signedIn = _firestoreService.isConfigured && (activeUid != null && activeUid.isNotEmpty);
+      final email = _firestoreService.authCurrentUser?.email ??
+          (activeUid != null ? 'Sync ID: $activeUid' : null);
+      state = CloudSyncState(
+        storageType: type,
+        signedIn: signedIn,
+        email: email,
+        backups: const [],
+        loading: false,
+      );
+      return;
+    }
+
     final backups = await _syncService.getBackups();
     
     state = CloudSyncState(
@@ -115,8 +148,44 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   Future<void> signIn() async {
     state = state.copyWith(loading: true);
     try {
-      final account = await _syncService.signIn();
       final storageType = await _syncService.getStorageType();
+      if (storageType == CloudSyncStorageType.firestore) {
+        if (!_firestoreService.isConfigured) {
+          state = state.copyWith(
+            loading: false,
+            errorMessage: 'Firebase is not initialized. Please configure firebase_options.dart.',
+          );
+          return;
+        }
+
+        // Try Google Sign In first if available
+        try {
+          final account = await _syncService.signIn();
+          if (account != null) {
+            await _firestoreService.linkGoogleAccount(account);
+            ref.read(googleUserProvider.notifier).setUser(account);
+            state = state.copyWith(
+              signedIn: true,
+              email: account.email,
+              loading: false,
+              successMessage: 'Connected to Firestore via Google: ${account.email}',
+            );
+            return;
+          }
+        } catch (_) {}
+
+        // Fallback to anonymous sign-in session
+        final uid = await _firestoreService.signInAnonymously();
+        state = state.copyWith(
+          signedIn: true,
+          email: 'Sync ID: $uid',
+          loading: false,
+          successMessage: 'Connected to Firestore session.',
+        );
+        return;
+      }
+
+      final account = await _syncService.signIn();
       if (storageType == CloudSyncStorageType.localDirectory) {
         final backups = await _syncService.getBackups();
         state = state.copyWith(
@@ -152,10 +221,23 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
 
   Future<void> signOut() async {
     state = state.copyWith(loading: true);
+    final storageType = await _syncService.getStorageType();
+    if (storageType == CloudSyncStorageType.firestore) {
+      await _firestoreService.clearCustomUserId();
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (_) {}
+      ref.read(googleUserProvider.notifier).setUser(null);
+      state = CloudSyncState(
+        storageType: storageType,
+        signedIn: false,
+        email: null,
+      );
+      return;
+    }
     await _syncService.signOut();
     ref.read(googleUserProvider.notifier).setUser(null);
     
-    final storageType = await _syncService.getStorageType();
     final list = storageType == CloudSyncStorageType.localDirectory
         ? await _syncService.getBackups()
         : const <BackupFile>[];
@@ -288,6 +370,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<SyncMergeResult?> syncTwoWay({String? targetBackupId}) async {
+    if (state.storageType == CloudSyncStorageType.firestore) {
+      return await syncFirestore();
+    }
+
     state = state.copyWith(loading: true);
     File? tempFile;
     AppDatabase? remoteDb;
@@ -383,6 +469,74 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         } catch (_) {}
       }
     }
+  }
+
+  Future<SyncMergeResult?> syncFirestore({String? customUserId}) async {
+    state = state.copyWith(loading: true);
+    try {
+      if (!_firestoreService.isConfigured) {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: 'Firebase is not configured. Please see firebase_options.dart setup instructions.',
+        );
+        return null;
+      }
+
+      String? activeUid = customUserId ?? await _firestoreService.getActiveUserId();
+      if (activeUid == null || activeUid.isEmpty) {
+        try {
+          activeUid = await _firestoreService.signInAnonymously();
+        } catch (e) {
+          state = state.copyWith(
+            loading: false,
+            errorMessage: 'Unable to start Firestore session: $e',
+          );
+          return null;
+        }
+      }
+
+      final localDb = ref.read(databaseProvider);
+      final mergeResult = await _firestoreService.syncTwoWay(
+        db: localDb,
+        userId: activeUid,
+      );
+
+      // Refresh database streams in the UI
+      ref.read(databaseProvider.notifier).refreshDatabase();
+
+      final buffer = StringBuffer('Firestore sync complete: ');
+      if (mergeResult.hasChanges) {
+        final parts = <String>[];
+        if (mergeResult.recipesAdded > 0) parts.add('${mergeResult.recipesAdded} recipes added');
+        if (mergeResult.recipesUpdated > 0) parts.add('${mergeResult.recipesUpdated} recipes updated');
+        if (mergeResult.ingredientsAdded > 0) parts.add('${mergeResult.ingredientsAdded} ingredients added');
+        if (mergeResult.ingredientsUpdated > 0) parts.add('${mergeResult.ingredientsUpdated} ingredients updated');
+        if (mergeResult.recipesKeptLocal > 0) parts.add('${mergeResult.recipesKeptLocal} local edits preserved');
+        buffer.write(parts.join(', '));
+      } else {
+        buffer.write('Database already up to date');
+      }
+
+      state = state.copyWith(
+        signedIn: true,
+        email: _firestoreService.authCurrentUser?.email ?? 'Sync ID: $activeUid',
+        loading: false,
+        successMessage: buffer.toString(),
+      );
+
+      return mergeResult;
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Firestore sync error: $e',
+      );
+      return null;
+    }
+  }
+
+  Future<void> setCustomFirestoreUserId(String userId) async {
+    await _firestoreService.setCustomUserId(userId);
+    await checkStatus();
   }
 }
 

@@ -275,6 +275,199 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<List<RecipeDetail>> getAllRecipeDetails({DateTime? modifiedSince}) async {
+    final query = select(recipes);
+    if (modifiedSince != null) {
+      query.where((t) =>
+          t.dateTimeModified.isBiggerOrEqualValue(modifiedSince) |
+          t.dateCreated.isBiggerOrEqualValue(modifiedSince));
+    }
+    final recipeList = await query.get();
+    final List<RecipeDetail> details = [];
+    for (final r in recipeList) {
+      details.add(await getRecipeDetail(r.recipePk));
+    }
+    return details;
+  }
+
+  Future<List<Ingredient>> getIngredientsModifiedSince(DateTime? modifiedSince) async {
+    final query = select(ingredients);
+    if (modifiedSince != null) {
+      query.where((t) =>
+          t.dateTimeModified.isBiggerOrEqualValue(modifiedSince) |
+          t.dateCreated.isBiggerOrEqualValue(modifiedSince));
+    }
+    return query.get();
+  }
+
+  Future<List<Unit>> getCustomUnitsModifiedSince(DateTime? modifiedSince) async {
+    final query = select(units)..where((t) => t.isMutable.equals(true));
+    return query.get();
+  }
+
+  /// Merges a single recipe and its embedded ingredients and steps from remote using LWW based on updated_at.
+  /// Returns: 1 if inserted, 2 if updated, 0 if kept local.
+  Future<int> mergeRecipeFromRemote({
+    required Recipe remoteRecipe,
+    required List<RecipeIngredient> remoteIngredients,
+    required List<RecipeStep> remoteSteps,
+  }) async {
+    return transaction(() async {
+      final localRecipe = await (select(recipes)
+            ..where((t) => t.recipePk.equals(remoteRecipe.recipePk)))
+          .getSingleOrNull();
+
+      if (localRecipe == null) {
+        await into(recipes).insert(
+          RecipesCompanion(
+            recipePk: Value(remoteRecipe.recipePk),
+            name: Value(remoteRecipe.name),
+            description: Value(remoteRecipe.description),
+            defaultYield: Value(remoteRecipe.defaultYield),
+            yieldName: Value(remoteRecipe.yieldName),
+            targetProfitMargin: Value(remoteRecipe.targetProfitMargin),
+            targetPricePerPortion: Value(remoteRecipe.targetPricePerPortion),
+            fixedOverheadCost: Value(remoteRecipe.fixedOverheadCost),
+            colour: Value(remoteRecipe.colour),
+            dateCreated: Value(remoteRecipe.dateCreated),
+            dateTimeModified: Value(remoteRecipe.dateTimeModified),
+            archived: Value(remoteRecipe.archived),
+          ),
+        );
+
+        for (final ri in remoteIngredients) {
+          await into(recipeIngredients).insert(
+            RecipeIngredientsCompanion(
+              recipeIngredientPk: Value(ri.recipeIngredientPk),
+              recipeFk: Value(ri.recipeFk),
+              ingredientFk: Value(ri.ingredientFk),
+              amountNeeded: Value(ri.amountNeeded),
+              dateTimeModified: Value(ri.dateTimeModified),
+            ),
+          );
+        }
+
+        for (final rs in remoteSteps) {
+          await into(recipeSteps).insert(
+            RecipeStepsCompanion(
+              stepPk: Value(rs.stepPk),
+              recipeFk: Value(rs.recipeFk),
+              stepNumber: Value(rs.stepNumber),
+              instruction: Value(rs.instruction),
+              dateTimeModified: Value(rs.dateTimeModified),
+            ),
+          );
+        }
+
+        return 1;
+      } else {
+        final localUpdatedAt = localRecipe.dateTimeModified ?? localRecipe.dateCreated;
+        final remoteUpdatedAt = remoteRecipe.dateTimeModified ?? remoteRecipe.dateCreated;
+
+        if (remoteUpdatedAt.isAfter(localUpdatedAt)) {
+          await (update(recipes)..where((t) => t.recipePk.equals(localRecipe.recipePk))).write(
+            RecipesCompanion(
+              name: Value(remoteRecipe.name),
+              description: Value(remoteRecipe.description),
+              defaultYield: Value(remoteRecipe.defaultYield),
+              yieldName: Value(remoteRecipe.yieldName),
+              targetProfitMargin: Value(remoteRecipe.targetProfitMargin),
+              targetPricePerPortion: Value(remoteRecipe.targetPricePerPortion),
+              fixedOverheadCost: Value(remoteRecipe.fixedOverheadCost),
+              colour: Value(remoteRecipe.colour),
+              dateTimeModified: Value(remoteRecipe.dateTimeModified),
+              archived: Value(remoteRecipe.archived),
+            ),
+          );
+
+          await (delete(recipeIngredients)..where((t) => t.recipeFk.equals(localRecipe.recipePk))).go();
+          for (final ri in remoteIngredients) {
+            await into(recipeIngredients).insert(
+              RecipeIngredientsCompanion(
+                recipeIngredientPk: Value(ri.recipeIngredientPk),
+                recipeFk: Value(ri.recipeFk),
+                ingredientFk: Value(ri.ingredientFk),
+                amountNeeded: Value(ri.amountNeeded),
+                dateTimeModified: Value(ri.dateTimeModified),
+              ),
+            );
+          }
+
+          await (delete(recipeSteps)..where((t) => t.recipeFk.equals(localRecipe.recipePk))).go();
+          for (final rs in remoteSteps) {
+            await into(recipeSteps).insert(
+              RecipeStepsCompanion(
+                stepPk: Value(rs.stepPk),
+                recipeFk: Value(rs.recipeFk),
+                stepNumber: Value(rs.stepNumber),
+                instruction: Value(rs.instruction),
+                dateTimeModified: Value(rs.dateTimeModified),
+              ),
+            );
+          }
+
+          return 2;
+        } else {
+          return 0;
+        }
+      }
+    });
+  }
+
+  /// Merges an ingredient from remote using LWW.
+  /// Returns: 1 if inserted, 2 if updated, 0 if kept local.
+  Future<int> mergeIngredientFromRemote(Ingredient remoteIngredient) async {
+    final localIng = await getIngredientById(remoteIngredient.ingredientPk);
+    if (localIng == null) {
+      await into(ingredients).insert(
+        IngredientsCompanion(
+          ingredientPk: Value(remoteIngredient.ingredientPk),
+          name: Value(remoteIngredient.name),
+          cost: Value(remoteIngredient.cost),
+          quantityForCost: Value(remoteIngredient.quantityForCost),
+          unitFk: Value(remoteIngredient.unitFk),
+          dateCreated: Value(remoteIngredient.dateCreated),
+          dateTimeModified: Value(remoteIngredient.dateTimeModified),
+        ),
+      );
+      return 1;
+    } else {
+      final localTime = localIng.dateTimeModified ?? localIng.dateCreated;
+      final remoteTime = remoteIngredient.dateTimeModified ?? remoteIngredient.dateCreated;
+      if (remoteTime.isAfter(localTime)) {
+        await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+          IngredientsCompanion(
+            name: Value(remoteIngredient.name),
+            cost: Value(remoteIngredient.cost),
+            quantityForCost: Value(remoteIngredient.quantityForCost),
+            unitFk: Value(remoteIngredient.unitFk),
+            dateTimeModified: Value(remoteIngredient.dateTimeModified ?? remoteIngredient.dateCreated),
+          ),
+        );
+        return 2;
+      }
+      return 0;
+    }
+  }
+
+  /// Merges a unit from remote (non-destructive insert if absent).
+  Future<void> mergeUnitFromRemote(Unit remoteUnit) async {
+    final localUnit = await (select(units)..where((t) => t.unitPk.equals(remoteUnit.unitPk))).getSingleOrNull();
+    if (localUnit == null) {
+      await into(units).insert(
+        UnitsCompanion(
+          unitPk: Value(remoteUnit.unitPk),
+          name: Value(remoteUnit.name),
+          symbol: Value(remoteUnit.symbol),
+          category: Value(remoteUnit.category),
+          factorToBase: Value(remoteUnit.factorToBase),
+          isMutable: Value(remoteUnit.isMutable),
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
+    }
+  }
+
   /// Performs a two-way, non-destructive merge of [remoteDb] into this database.
   /// Recipe conflicts are resolved using "last-write-wins" based on timestamps (updated_at).
   /// Local records and newer local edits are never wiped or overwritten.

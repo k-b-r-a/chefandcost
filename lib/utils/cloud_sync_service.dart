@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
-enum CloudSyncStorageType { googleDrive, localDirectory }
+enum CloudSyncStorageType { googleDrive, localDirectory, firestore }
 
 class GoogleAuthClient extends http.BaseClient {
   final Map<String, String> _headers;
