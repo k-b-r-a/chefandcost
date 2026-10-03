@@ -38,69 +38,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_WEB_API_KEY',
-        defaultValue: 'AIzaSyPlaceholderWebApiKeyForRecipetools'),
-    appId: String.fromEnvironment('FIREBASE_WEB_APP_ID',
-        defaultValue: '1:1234567890:web:abcdef123456'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
-        defaultValue: '1234567890'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID',
-        defaultValue: 'recipetools-placeholder'),
-    authDomain: 'recipetools-placeholder.firebaseapp.com',
-    storageBucket: 'recipetools-placeholder.firebasestorage.app',
+    apiKey: 'AIzaSyCG5zGoSlSwStPE-MxY33r0hZMeng28PcI',
+    appId: '1:194514517992:web:c03bc87d5fe1ce309bae5d',
+    messagingSenderId: '194514517992',
+    projectId: 'chefycost',
+    authDomain: 'chefycost.firebaseapp.com',
+    storageBucket: 'chefycost.firebasestorage.app',
+    measurementId: 'G-24JWL09P82',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_ANDROID_API_KEY',
-        defaultValue: 'AIzaSyPlaceholderAndroidApiKeyForRecipetools'),
-    appId: String.fromEnvironment('FIREBASE_ANDROID_APP_ID',
-        defaultValue: '1:1234567890:android:abcdef123456'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
-        defaultValue: '1234567890'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID',
-        defaultValue: 'recipetools-placeholder'),
-    storageBucket: 'recipetools-placeholder.firebasestorage.app',
+    apiKey: 'AIzaSyBLpYuok3dJhDJ7k4gOhL5pBeD1YgJ_ubU',
+    appId: '1:194514517992:android:d4202c981e2a718d9bae5d',
+    messagingSenderId: '194514517992',
+    projectId: 'chefycost',
+    storageBucket: 'chefycost.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY',
-        defaultValue: 'AIzaSyPlaceholderIosApiKeyForRecipetools'),
-    appId: String.fromEnvironment('FIREBASE_IOS_APP_ID',
-        defaultValue: '1:1234567890:ios:abcdef123456'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
-        defaultValue: '1234567890'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID',
-        defaultValue: 'recipetools-placeholder'),
-    storageBucket: 'recipetools-placeholder.firebasestorage.app',
+    apiKey: 'AIzaSyBJHjHLEqqsPKQI2joDupFBWJFXcztaFn4',
+    appId: '1:194514517992:ios:635a898ca8c7658e9bae5d',
+    messagingSenderId: '194514517992',
+    projectId: 'chefycost',
+    storageBucket: 'chefycost.firebasestorage.app',
     iosBundleId: 'com.example.recipetools',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY',
-        defaultValue: 'AIzaSyPlaceholderIosApiKeyForRecipetools'),
-    appId: String.fromEnvironment('FIREBASE_IOS_APP_ID',
-        defaultValue: '1:1234567890:ios:abcdef123456'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
-        defaultValue: '1234567890'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID',
-        defaultValue: 'recipetools-placeholder'),
-    storageBucket: 'recipetools-placeholder.firebasestorage.app',
+    apiKey: 'AIzaSyBJHjHLEqqsPKQI2joDupFBWJFXcztaFn4',
+    appId: '1:194514517992:ios:635a898ca8c7658e9bae5d',
+    messagingSenderId: '194514517992',
+    projectId: 'chefycost',
+    storageBucket: 'chefycost.firebasestorage.app',
     iosBundleId: 'com.example.recipetools',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_WINDOWS_API_KEY',
-        defaultValue: 'AIzaSyPlaceholderWindowsApiKey'),
-    appId: String.fromEnvironment('FIREBASE_WINDOWS_APP_ID',
-        defaultValue: '1:1234567890:web:abcdef123456'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
-        defaultValue: '1234567890'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID',
-        defaultValue: 'recipetools-placeholder'),
-    authDomain: 'recipetools-placeholder.firebaseapp.com',
-    storageBucket: 'recipetools-placeholder.firebasestorage.app',
+    apiKey: 'AIzaSyCG5zGoSlSwStPE-MxY33r0hZMeng28PcI',
+    appId: '1:194514517992:web:4c80178f12dd20069bae5d',
+    messagingSenderId: '194514517992',
+    projectId: 'chefycost',
+    authDomain: 'chefycost.firebaseapp.com',
+    storageBucket: 'chefycost.firebasestorage.app',
+    measurementId: 'G-H29Z1CV5N3',
   );
-
   static const FirebaseOptions linux = FirebaseOptions(
     apiKey: String.fromEnvironment('FIREBASE_LINUX_API_KEY',
         defaultValue: 'AIzaSyPlaceholderLinuxApiKey'),

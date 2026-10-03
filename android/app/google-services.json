@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "194514517992",
+    "project_id": "chefycost",
+    "storage_bucket": "chefycost.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:194514517992:android:d4202c981e2a718d9bae5d",
+        "android_client_info": {
+          "package_name": "com.example.recipetools"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLpYuok3dJhDJ7k4gOhL5pBeD1YgJ_ubU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
