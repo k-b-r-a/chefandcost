@@ -370,7 +370,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
           const SizedBox(height: 16),
         ],
         ElevatedButton.icon(
-          onPressed: () => _confirmBackup(context, notifier, l10n),
+          onPressed: () => _confirmSync(context, notifier, l10n),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
             backgroundColor: theme.colorScheme.primary,
@@ -380,10 +380,26 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             ),
             elevation: 0,
           ),
+          icon: const Icon(Icons.sync),
+          label: Text(
+            l10n.cloud_sync_sync_btn,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () => _confirmBackup(context, notifier, l10n),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
           icon: const Icon(Icons.cloud_upload_outlined),
           label: Text(
             l10n.cloud_sync_backup_btn,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
         ),
       ],
@@ -535,6 +551,11 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                       tooltip: l10n.localeName == 'es' ? 'Guardar copia en...' : 'Save backup to...',
                     ),
                     IconButton(
+                      icon: Icon(Icons.sync, color: theme.colorScheme.secondary),
+                      onPressed: () => _confirmSyncWithBackup(context, notifier, backup.id, l10n),
+                      tooltip: l10n.cloud_sync_merge_tooltip,
+                    ),
+                    IconButton(
                       icon: Icon(Icons.settings_backup_restore, color: theme.colorScheme.primary),
                       onPressed: () => _confirmRestore(context, notifier, backup.id, l10n),
                       tooltip: 'Restore',
@@ -551,6 +572,69 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _confirmSync(BuildContext context, CloudSyncNotifier notifier, AppLocalizations l10n) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.sync),
+            const SizedBox(width: 8),
+            Expanded(child: Text(l10n.cloud_sync_sync_confirm_title)),
+          ],
+        ),
+        content: Text(l10n.cloud_sync_sync_confirm_desc),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.discard_button),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              notifier.syncTwoWay();
+            },
+            child: Text(l10n.cloud_sync_sync_btn),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmSyncWithBackup(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    String backupId,
+    AppLocalizations l10n,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.sync),
+            const SizedBox(width: 8),
+            Expanded(child: Text(l10n.cloud_sync_sync_confirm_title)),
+          ],
+        ),
+        content: Text(l10n.cloud_sync_sync_with_backup_confirm_desc),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.discard_button),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              notifier.syncTwoWay(targetBackupId: backupId);
+            },
+            child: Text(l10n.cloud_sync_sync_btn),
+          ),
+        ],
+      ),
     );
   }
 

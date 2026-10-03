@@ -665,6 +665,23 @@ class AppLocalizationsMk extends AppLocalizations {
       'Data is backed up to a local directory on your device.';
 
   @override
+  String get cloud_sync_sync_btn => 'Two-Way Cloud Sync';
+
+  @override
+  String get cloud_sync_sync_confirm_title => 'Two-Way Cloud Sync';
+
+  @override
+  String get cloud_sync_sync_confirm_desc =>
+      'This will merge your local recipes and ingredients with your cloud backup. Conflicts are resolved using last-write-wins based on modification timestamps. Local records and newer edits will not be wiped.';
+
+  @override
+  String get cloud_sync_sync_with_backup_confirm_desc =>
+      'This will merge your local recipes and ingredients with this backup. Conflicts are resolved using last-write-wins based on modification timestamps. Local records and newer edits will not be wiped.';
+
+  @override
+  String get cloud_sync_merge_tooltip => 'Merge with local database';
+
+  @override
   String get timers_title => 'Kitchen Timers';
 
   @override

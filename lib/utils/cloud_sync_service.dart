@@ -349,6 +349,13 @@ class GoogleDriveSyncService {
     }
   }
 
+  /// Downloads a backup file to a temporary location for merging and inspection.
+  Future<File?> downloadBackupToTemp(String backupId) async {
+    final tempDir = await getTemporaryDirectory();
+    final fileName = 'sync_temp_${DateTime.now().millisecondsSinceEpoch}.sqlite';
+    return downloadBackupToLocal(backupId, fileName, tempDir.path);
+  }
+
   /// Authenticated HTTP client helper for Google API access.
   Future<http.Client?> _getGoogleClient() async {
     final account = _currentUser;

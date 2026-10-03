@@ -1452,6 +1452,36 @@ abstract class AppLocalizations {
   /// **'Data is backed up to a local directory on your device.'**
   String get cloud_sync_sandbox_desc;
 
+  /// No description provided for @cloud_sync_sync_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-Way Cloud Sync'**
+  String get cloud_sync_sync_btn;
+
+  /// No description provided for @cloud_sync_sync_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-Way Cloud Sync'**
+  String get cloud_sync_sync_confirm_title;
+
+  /// No description provided for @cloud_sync_sync_confirm_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'This will merge your local recipes and ingredients with your cloud backup. Conflicts are resolved using last-write-wins based on modification timestamps. Local records and newer edits will not be wiped.'**
+  String get cloud_sync_sync_confirm_desc;
+
+  /// No description provided for @cloud_sync_sync_with_backup_confirm_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'This will merge your local recipes and ingredients with this backup. Conflicts are resolved using last-write-wins based on modification timestamps. Local records and newer edits will not be wiped.'**
+  String get cloud_sync_sync_with_backup_confirm_desc;
+
+  /// No description provided for @cloud_sync_merge_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge with local database'**
+  String get cloud_sync_merge_tooltip;
+
   /// No description provided for @timers_title.
   ///
   /// In en, this message translates to:

@@ -668,6 +668,23 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las copias se guardan en un directorio local del dispositivo.';
 
   @override
+  String get cloud_sync_sync_btn => 'Sincronización Bidireccional';
+
+  @override
+  String get cloud_sync_sync_confirm_title => 'Sincronización Bidireccional';
+
+  @override
+  String get cloud_sync_sync_confirm_desc =>
+      'Esto combinará tus recetas e ingredientes locales con la copia en la nube. Los conflictos se resuelven dando prioridad a la última edición según su fecha de modificación. No se borrarán registros locales ni ediciones más recientes.';
+
+  @override
+  String get cloud_sync_sync_with_backup_confirm_desc =>
+      'Esto combinará tus recetas e ingredientes locales con esta copia de seguridad. Los conflictos se resuelven dando prioridad a la última edición según su fecha de modificación. No se borrarán registros locales ni ediciones más recientes.';
+
+  @override
+  String get cloud_sync_merge_tooltip => 'Combinar con base de datos local';
+
+  @override
   String get timers_title => 'Temporizadores de Cocina';
 
   @override

@@ -1,6 +1,9 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path/path.dart' as p;
+import '../database/database.dart';
 import '../utils/cloud_sync_service.dart';
 import 'database_provider.dart';
 
@@ -281,6 +284,104 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         errorMessage: 'Save operation error: $e',
       );
       return false;
+    }
+  }
+
+  Future<SyncMergeResult?> syncTwoWay({String? targetBackupId}) async {
+    state = state.copyWith(loading: true);
+    File? tempFile;
+    AppDatabase? remoteDb;
+    try {
+      final backups = await _syncService.getBackups();
+
+      // If there are no backups on the cloud, perform initial backup
+      if (backups.isEmpty && targetBackupId == null) {
+        final success = await _syncService.createBackup();
+        if (success) {
+          final updatedBackups = await _syncService.getBackups();
+          state = state.copyWith(
+            backups: updatedBackups,
+            loading: false,
+            successMessage: 'Initial sync complete: Cloud backup created.',
+          );
+          return const SyncMergeResult();
+        } else {
+          state = state.copyWith(
+            loading: false,
+            errorMessage: 'Failed to create initial cloud backup.',
+          );
+          return null;
+        }
+      }
+
+      final backupId = targetBackupId ?? backups.first.id;
+      tempFile = await _syncService.downloadBackupToTemp(backupId);
+      if (tempFile == null || !await tempFile.exists()) {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: 'Failed to download cloud backup for merging.',
+        );
+        return null;
+      }
+
+      remoteDb = AppDatabase.forFile(tempFile);
+      final localDb = ref.read(databaseProvider);
+      final mergeResult = await localDb.mergeWithDatabase(remoteDb);
+
+      await remoteDb.close();
+      remoteDb = null;
+
+      if (await tempFile.exists()) {
+        try {
+          await tempFile.delete();
+        } catch (_) {}
+      }
+
+      // Two-way sync: push the merged database back to cloud
+      final backupCreated = await _syncService.createBackup();
+      if (!backupCreated) {
+        debugPrint('Warning: Cloud backup of merged database failed.');
+      }
+
+      // Refresh database streams in the UI
+      ref.read(databaseProvider.notifier).refreshDatabase();
+
+      // Refresh backups list
+      final updatedBackups = await _syncService.getBackups();
+
+      final buffer = StringBuffer('Sync complete: ');
+      if (mergeResult.hasChanges) {
+        final parts = <String>[];
+        if (mergeResult.recipesAdded > 0) parts.add('${mergeResult.recipesAdded} recipes added');
+        if (mergeResult.recipesUpdated > 0) parts.add('${mergeResult.recipesUpdated} recipes updated');
+        if (mergeResult.ingredientsAdded > 0) parts.add('${mergeResult.ingredientsAdded} ingredients added');
+        if (mergeResult.ingredientsUpdated > 0) parts.add('${mergeResult.ingredientsUpdated} ingredients updated');
+        if (mergeResult.recipesKeptLocal > 0) parts.add('${mergeResult.recipesKeptLocal} local edits preserved');
+        buffer.write(parts.join(', '));
+      } else {
+        buffer.write('Database already in sync');
+      }
+
+      state = state.copyWith(
+        backups: updatedBackups,
+        loading: false,
+        successMessage: buffer.toString(),
+      );
+
+      return mergeResult;
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Sync error: $e',
+      );
+      return null;
+    } finally {
+      await remoteDb?.close();
+      if (tempFile != null && await tempFile.exists()) {
+        try {
+          await tempFile.delete();
+        } catch (_) {}
+      }
     }
   }
 }
