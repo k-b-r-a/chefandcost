@@ -116,12 +116,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                               _buildFirestoreConnectedCard(syncState, syncNotifier, theme, l10n),
                               const SizedBox(height: 24),
                               _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
-                              const SizedBox(height: 24),
-                              _buildFirestoreSyncInfoCard(theme, l10n),
                             ] else ...[
                               _buildFirestoreAuthCard(syncState, syncNotifier, theme, l10n),
-                              const SizedBox(height: 24),
-                              _buildFirestoreSyncInfoCard(theme, l10n),
                             ],
                           ] else ...[
                             _buildConnectionHeader(syncState, syncNotifier, theme, l10n),
@@ -253,8 +249,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 ),
                 child: Text(
                   l10n.localeName == 'es'
-                      ? 'Sincronización multiplataforma (Web y Móvil) mediante Cloud Firestore. Optimizado para el plan gratuito Spark (ingredientes integrados y consultas diferenciales).'
-                      : 'Cross-platform sync between Web and Mobile via Cloud Firestore. Optimized for Firebase Spark plan (embedded ingredients & differential queries).',
+                      ? 'Sincronización multiplataforma (Web y Móvil) en tiempo real mediante Cloud Firestore.'
+                      : 'Real-time cross-platform sync between Web and Mobile via Cloud Firestore.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     height: 1.4,
                     color: theme.colorScheme.onSurfaceVariant,
@@ -533,106 +529,6 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             ),
           ),
         ],
-      ],
-    );
-  }
-
-  Widget _buildFirestoreSyncInfoCard(ThemeData theme, AppLocalizations l10n) {
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: theme.colorScheme.surfaceContainerLowest,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.bolt, color: theme.colorScheme.primary, size: 22),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.localeName == 'es'
-                      ? 'Arquitectura Spark Plan (Sin cargos)'
-                      : 'Spark Plan Architecture (Zero-cost)',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildSyncFeatureRow(
-              theme,
-              icon: Icons.filter_alt_outlined,
-              title: l10n.localeName == 'es' ? 'Consultas Diferenciales' : 'Differential Queries',
-              description: l10n.localeName == 'es'
-                  ? 'Solo se consultan y transfieren los registros editados después de la última sincronización.'
-                  : 'Only records edited after the last sync are queried and transferred.',
-            ),
-            const SizedBox(height: 10),
-            _buildSyncFeatureRow(
-              theme,
-              icon: Icons.layers_outlined,
-              title: l10n.localeName == 'es' ? 'Ingredientes Integrados' : 'Embedded Ingredients',
-              description: l10n.localeName == 'es'
-                  ? 'Los ingredientes y pasos se integran dentro de cada receta para consumir 1 sola operación por receta.'
-                  : 'Ingredients and steps are embedded directly in each recipe document to consume only 1 doc read/write.',
-            ),
-            const SizedBox(height: 10),
-            _buildSyncFeatureRow(
-              theme,
-              icon: Icons.rule_outlined,
-              title: l10n.localeName == 'es' ? 'Resolución LWW No Destructiva' : 'Non-Destructive LWW',
-              description: l10n.localeName == 'es'
-                  ? 'Gana la última edición (updated_at). Las recetas y modificaciones locales más recientes nunca se borran.'
-                  : 'Last-write-wins based on updated_at. Newer local edits and un-synced recipes are never overwritten.',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSyncFeatureRow(
-    ThemeData theme, {
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: theme.colorScheme.secondary),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 11,
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

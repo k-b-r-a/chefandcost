@@ -446,11 +446,8 @@ void main() {
       expect(find.textContaining('Sync ID: user-test-123'), findsOneWidget);
       expect(find.text('Sign Out'), findsOneWidget);
 
-      // Verify Spark architecture info
-      expect(find.textContaining('Spark Plan Architecture'), findsOneWidget);
-      expect(find.textContaining('Differential Queries'), findsOneWidget);
-      expect(find.textContaining('Embedded Ingredients'), findsOneWidget);
-      expect(find.textContaining('Non-Destructive LWW'), findsOneWidget);
+      // Verify sync action button is visible
+      expect(find.textContaining('Sync Now (Two-Way)'), findsOneWidget);
     });
 
     testWidgets('Selecting Firestore tab when NOT signed in displays inline Auth Card with Google & Email', (tester) async {
