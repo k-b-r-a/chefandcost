@@ -17,6 +17,7 @@ import 'screens/settings_screen.dart';
 import 'screens/cloud_sync_screen.dart';
 import 'provider/settings_provider.dart';
 import 'provider/web_layout_provider.dart';
+import 'provider/cloud_sync_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -337,6 +338,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     WebLayoutState webLayout,
     WebLayoutNotifier webNotifier,
   ) {
+    final syncState = ref.watch(cloudSyncProvider);
+    final isCloudSyncActive = webLayout.rightPaneView == WebRightPaneView.settingsCloudSync;
+
     int selectedIndex = 0;
     if (webLayout.isHomeActive) {
       selectedIndex = 0;
@@ -441,21 +445,67 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           alignment: Alignment.bottomCenter,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
-            child: IconButton(
-              icon: Icon(
-                settings.themeMode == ThemeMode.dark
-                    ? Icons.dark_mode_outlined
-                    : settings.themeMode == ThemeMode.light
-                        ? Icons.light_mode_outlined
-                        : Icons.brightness_auto_outlined,
-              ),
-              tooltip: 'Toggle Theme',
-              onPressed: () {
-                final nextMode = settings.themeMode == ThemeMode.dark
-                    ? ThemeMode.light
-                    : ThemeMode.dark;
-                ref.read(settingsProvider.notifier).setThemeMode(nextMode);
-              },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: isCloudSyncActive
+                        ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                        : null,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: syncState.signedIn
+                        ? CircleAvatar(
+                            radius: 13,
+                            backgroundColor: theme.colorScheme.primary,
+                            child: Text(
+                              (syncState.email?.isNotEmpty == true
+                                      ? syncState.email![0]
+                                      : 'U')
+                                  .toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            Icons.account_circle_outlined,
+                            color: isCloudSyncActive
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                    tooltip: syncState.signedIn
+                        ? (syncState.email ?? (l10n.localeName == 'es' ? 'Cuenta conectada' : 'Connected account'))
+                        : (l10n.localeName == 'es' ? 'Iniciar sesión' : 'Sign In'),
+                    onPressed: () async {
+                      final guard = ref.read(recipeCanLeaveGuardProvider);
+                      if (guard != null && !await guard()) return;
+                      webNotifier.openSettingsDetail(WebRightPaneView.settingsCloudSync);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                IconButton(
+                  icon: Icon(
+                    settings.themeMode == ThemeMode.dark
+                        ? Icons.dark_mode_outlined
+                        : settings.themeMode == ThemeMode.light
+                            ? Icons.light_mode_outlined
+                            : Icons.brightness_auto_outlined,
+                  ),
+                  tooltip: 'Toggle Theme',
+                  onPressed: () {
+                    final nextMode = settings.themeMode == ThemeMode.dark
+                        ? ThemeMode.light
+                        : ThemeMode.dark;
+                    ref.read(settingsProvider.notifier).setThemeMode(nextMode);
+                  },
+                ),
+              ],
             ),
           ),
         ),

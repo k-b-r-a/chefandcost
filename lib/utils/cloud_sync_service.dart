@@ -167,8 +167,6 @@ class GoogleDriveSyncService {
   Future<List<BackupFile>> getBackups() async {
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
-      await Future.delayed(const Duration(milliseconds: 600));
-
       if (kIsWeb) {
         final list = await _getWebSimBackups();
         list.sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
@@ -244,7 +242,6 @@ class GoogleDriveSyncService {
 
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
-      await Future.delayed(const Duration(milliseconds: 1000));
       if (kIsWeb) {
         final list = await _getWebSimBackups();
         list.add(
@@ -301,7 +298,6 @@ class GoogleDriveSyncService {
   Future<bool> restoreBackup(String backupId) async {
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
-      await Future.delayed(const Duration(milliseconds: 1200));
       if (kIsWeb) {
         return true;
       }
@@ -348,7 +344,6 @@ class GoogleDriveSyncService {
   Future<bool> deleteBackup(String backupId) async {
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
-      await Future.delayed(const Duration(milliseconds: 500));
       if (kIsWeb) {
         final list = await _getWebSimBackups();
         list.removeWhere((b) => b.id == backupId);

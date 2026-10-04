@@ -506,7 +506,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
           icon: const Icon(Icons.sync),
           label: Text(
             isFirestore
-                ? (l10n.localeName == 'es' ? 'Sincronizar ahora (Bidireccional)' : 'Sync Now (Two-Way)')
+                ? (l10n.localeName == 'es' ? 'Sincronizar ahora' : 'Sync Now')
                 : l10n.cloud_sync_sync_btn,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),

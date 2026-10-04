@@ -53,23 +53,37 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   GoogleDriveSyncService get _syncService => ref.read(googleDriveSyncServiceProvider);
   FirestoreSyncService get _firestoreService => ref.read(firestoreSyncServiceProvider);
 
+  bool _disposed = false;
+
   @override
   CloudSyncState build() {
+    _disposed = false;
+    ref.onDispose(() {
+      _disposed = true;
+    });
+
     // Check initial connection status asynchronously
-    Future.microtask(() => checkStatus());
+    Future.microtask(() {
+      if (!_disposed) {
+        checkStatus();
+      }
+    });
 
     return CloudSyncState();
   }
 
   Future<void> checkStatus() async {
+    if (_disposed) return;
     state = state.copyWith(loading: true);
     try {
       final storageType = await _syncService.getStorageType();
+      if (_disposed) return;
 
       if (storageType == CloudSyncStorageType.firestore) {
         final user = _firestoreService.authCurrentUser;
         final signedIn = _firestoreService.isConfigured && user != null;
         final email = user?.email;
+        if (_disposed) return;
         state = state.copyWith(
           signedIn: signedIn,
           email: email,
@@ -89,7 +103,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
               serverClientId: GoogleDriveSyncService.defaultServerClientId,
             );
             account = await GoogleSignIn.instance.attemptLightweightAuthentication();
-            ref.read(googleUserProvider.notifier).setUser(account);
+            if (!_disposed) {
+              ref.read(googleUserProvider.notifier).setUser(account);
+            }
           } catch (_) {}
         }
       }
@@ -101,6 +117,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       }
       
       final backups = await _syncService.getBackups();
+      if (_disposed) return;
       
       state = state.copyWith(
         signedIn: signedIn,
@@ -110,6 +127,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         loading: false,
       );
     } catch (e) {
+      if (_disposed) return;
       state = state.copyWith(
         loading: false,
         errorMessage: 'Failed to verify cloud sync connection status.',

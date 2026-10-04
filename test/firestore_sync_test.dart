@@ -447,7 +447,7 @@ void main() {
       expect(find.text('Sign Out'), findsOneWidget);
 
       // Verify sync action button is visible
-      expect(find.textContaining('Sync Now (Two-Way)'), findsOneWidget);
+      expect(find.textContaining('Sync Now'), findsOneWidget);
     });
 
     testWidgets('Selecting Firestore tab when NOT signed in displays inline Auth Card with Google & Email', (tester) async {
