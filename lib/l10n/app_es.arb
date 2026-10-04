@@ -50,6 +50,7 @@
   "delete_recipe_title": "Eliminar Receta",
   "delete_recipe_message": "¿Estás seguro de que deseas eliminar esta receta? Esta acción no se puede deshacer.",
   "discard_button": "Descartar",
+  "cancel_button": "Cancelar",
   "unsaved_changes_title": "Cambios sin guardar",
   "unsaved_changes_body": "¿Quieres guardar o descartar esta receta?",
   "new_ingredient_button": "Nuevo Ingrediente",
@@ -236,5 +237,51 @@
   "filter_solids": "Secos",
   "filter_liquids": "Líquidos",
   "filter_pieces": "Piezas",
-  "filter_tooltip": "Filtrar ingredientes"
+  "filter_tooltip": "Filtrar ingredientes",
+  "sort_by": "Ordenar:",
+  "sort_default": "Por defecto",
+  "sort_type": "Tipo (Sólidos / Líquidos / Piezas)",
+  "sort_alphabetical": "Alfabético",
+  "sort_solids": "Sólidos",
+  "sort_liquids": "Líquidos",
+  "sort_pieces": "Piezas",
+  "staged_ingredients_title": "¿Guardar ingredientes seleccionados?",
+  "staged_ingredients_body": "Tienes ingredientes seleccionados. ¿Deseas agregarlos a la receta o descartar los cambios?",
+  "add_custom_ingredient": "Agregar '{name}'",
+  "@add_custom_ingredient": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "total_weight": "Peso Total",
+  "total_volume": "Volumen Total",
+  "scale_by_ingredient": "Escalar por Ingrediente",
+  "scale_by_ingredient_desc": "Ajustar cantidades de la receta según la cantidad objetivo de un ingrediente",
+  "target_quantity": "Cantidad Objetivo",
+  "current_quantity": "Cantidad Actual",
+  "scale_factor_label": "Factor de Escala: {factor}x",
+  "@scale_factor_label": {
+    "placeholders": {
+      "factor": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_preview_button": "Vista Previa",
+  "select_ingredient": "Seleccionar Ingrediente",
+  "scale_temporary_title": "Vista Escalada Temporal ({multiplier}x)",
+  "@scale_temporary_title": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_temporary_notice": "Este escalado es temporal y no modifica la receta real en la base de datos.",
+  "scale_revert_button": "Restablecer Original",
+  "scale_save_as_real_button": "Guardar como Receta Real",
+  "scale_reverted_toast": "Receta restablecida a las cantidades originales",
+  "scale_saved_toast": "Cantidades escaladas guardadas en la receta real"
 }

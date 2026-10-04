@@ -186,7 +186,8 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _currentIndex = 0;
   late PageController _pageController;
-  final TextEditingController _webSearchController = TextEditingController();
+  final TextEditingController _recipeSearchController = TextEditingController();
+  final TextEditingController _ingredientSearchController = TextEditingController();
   bool _isSearching = false;
   bool _showSearchContent = false;
   bool _isSearchHovered = false;
@@ -200,7 +201,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         _currentIndex = index;
         _isSearching = false;
         _showSearchContent = false;
-        ref.read(searchQueryProvider.notifier).setQuery('');
       });
       if (ref.read(settingsProvider).animationsEnabled) {
         _pageController.animateToPage(
@@ -229,7 +229,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   @override
   void dispose() {
-    _webSearchController.dispose();
+    _recipeSearchController.dispose();
+    _ingredientSearchController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -255,7 +256,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           _currentIndex = index;
           _isSearching = false;
           _showSearchContent = false;
-          ref.read(searchQueryProvider.notifier).setQuery('');
         });
       },
       children: _screens,
@@ -351,10 +351,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           if (guard != null && !await guard()) return;
         }
 
-        if (_webSearchController.text.isNotEmpty) {
-          _webSearchController.clear();
-          ref.read(searchQueryProvider.notifier).setQuery('');
-        }
         switch (index) {
           case 0:
             webNotifier.showHome();
@@ -489,8 +485,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       return AddIngredientScreen(
         key: webLayout.leftPaneIngredient != null
             ? ValueKey('left_pane_ing_${webLayout.leftPaneIngredient!.ingredientPk}')
-            : const ValueKey('left_pane_ing_new'),
+            : ValueKey('left_pane_ing_new_${webLayout.newIngredientInitialName ?? "empty"}'),
         ingredient: webLayout.leftPaneIngredient,
+        initialName: webLayout.newIngredientInitialName,
         onClose: () => webNotifier.closeIngredientDetail(),
       );
     }
@@ -625,43 +622,76 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 ),
                 if (webLayout.middleTab != WebMiddleTab.tools) ...[
                   const SizedBox(height: 8),
-                SizedBox(
-                  height: 36,
-                  child: TextField(
-                    controller: _webSearchController,
-                    onChanged: (val) => ref.read(searchQueryProvider.notifier).setQuery(val),
-                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: l10n.localeName == 'es' ? 'Buscar en lista...' : 'Search list...',
-                      hintStyle: TextStyle(
-                        fontSize: 13,
-                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                      ),
-                      prefixIcon: const Icon(Icons.search, size: 16),
-                      prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      suffixIcon: _webSearchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 14),
-                              padding: EdgeInsets.zero,
-                              visualDensity: VisualDensity.compact,
-                              onPressed: () {
-                                _webSearchController.clear();
-                                ref.read(searchQueryProvider.notifier).setQuery('');
-                                setState(() {});
-                              },
-                            )
-                          : null,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final isRecipes = webLayout.middleTab == WebMiddleTab.recipes;
+                      final controller = isRecipes
+                          ? _recipeSearchController
+                          : _ingredientSearchController;
+                      final hintText = isRecipes
+                          ? (l10n.localeName == 'es' ? 'Buscar recetas...' : 'Search recipes...')
+                          : (l10n.localeName == 'es' ? 'Buscar ingredientes...' : 'Search ingredients...');
+
+                      return SizedBox(
+                        height: 36,
+                        child: TextField(
+                          key: ValueKey('web_search_${webLayout.middleTab}'),
+                          controller: controller,
+                          textCapitalization: TextCapitalization.sentences,
+                          onChanged: (val) {
+                            if (isRecipes) {
+                              ref
+                                  .read(recipeSearchQueryProvider.notifier)
+                                  .setQuery(val);
+                            } else {
+                              ref
+                                  .read(ingredientSearchQueryProvider.notifier)
+                                  .setQuery(val);
+                            }
+                            setState(() {});
+                          },
+                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: hintText,
+                            hintStyle: TextStyle(
+                              fontSize: 13,
+                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                            ),
+                            prefixIcon: const Icon(Icons.search, size: 16),
+                            prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            suffixIcon: controller.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 14),
+                                    padding: EdgeInsets.zero,
+                                    visualDensity: VisualDensity.compact,
+                                    onPressed: () {
+                                      controller.clear();
+                                      if (isRecipes) {
+                                        ref
+                                            .read(recipeSearchQueryProvider.notifier)
+                                            .setQuery('');
+                                      } else {
+                                        ref
+                                            .read(ingredientSearchQueryProvider.notifier)
+                                            .setQuery('');
+                                      }
+                                      setState(() {});
+                                    },
+                                  )
+                                : null,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                            filled: true,
+                            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ),
-              ],
+                ],
             ],
           ],
         ),
@@ -930,7 +960,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                         _currentIndex = index;
                                         _isSearching = false;
                                         _showSearchContent = false;
-                                        ref.read(searchQueryProvider.notifier).setQuery('');
                                       });
                                       if (settings.animationsEnabled) {
                                         _pageController.animateToPage(
@@ -1086,58 +1115,87 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                               ? AnimatedOpacity(
                               duration: anim200,
                               opacity: _showSearchContent ? 1.0 : 0.0,
-                              child: TextField(
-                                  key: const ValueKey('search_field'),
-                                  autofocus: true,
-                                  onChanged: (value) {
-                                    ref
-                                        .read(searchQueryProvider.notifier)
-                                        .setQuery(value);
-                                  },
-                                  style: theme.textTheme.bodyLarge,
-                                  textAlignVertical: TextAlignVertical.center,
-                                  decoration: InputDecoration(
-                                    hintText: l10n.search_hint,
-                                    hintStyle: theme.textTheme.bodyLarge
-                                        ?.copyWith(
-                                          color: theme.colorScheme.onSurface
-                                              .withValues(alpha: 0.5),
-                                        ),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.only(
-                                      left: 16,
-                                      right: 8,
-                                      bottom: 4,
+                              child: Builder(
+                                builder: (context) {
+                                  final isRecipes = _currentIndex == 1;
+                                  final controller = isRecipes
+                                      ? _recipeSearchController
+                                      : _ingredientSearchController;
+                                  final hintText = isRecipes
+                                      ? (l10n.localeName == 'es' ? 'Buscar recetas...' : 'Search recipes...')
+                                      : (l10n.localeName == 'es' ? 'Buscar ingredientes...' : 'Search ingredients...');
+
+                                  return TextField(
+                                    key: ValueKey('search_field_$_currentIndex'),
+                                    controller: controller,
+                                    autofocus: true,
+                                    textCapitalization: TextCapitalization.sentences,
+                                    onChanged: (value) {
+                                      if (isRecipes) {
+                                        ref
+                                            .read(recipeSearchQueryProvider.notifier)
+                                            .setQuery(value);
+                                      } else {
+                                        ref
+                                            .read(ingredientSearchQueryProvider.notifier)
+                                            .setQuery(value);
+                                      }
+                                    },
+                                    style: theme.textTheme.bodyLarge,
+                                    textAlignVertical: TextAlignVertical.center,
+                                    decoration: InputDecoration(
+                                      hintText: hintText,
+                                      hintStyle: theme.textTheme.bodyLarge
+                                          ?.copyWith(
+                                            color: theme.colorScheme.onSurface
+                                                .withValues(alpha: 0.5),
+                                          ),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.only(
+                                        left: 16,
+                                        right: 8,
+                                        bottom: 4,
+                                      ),
+                                      prefixIconConstraints: const BoxConstraints(
+                                        minWidth: 40,
+                                      ),
+                                      prefixIcon: Icon(
+                                        Icons.search,
+                                        size: 18,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      suffixIconConstraints: const BoxConstraints(
+                                        minWidth: 40,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        padding: EdgeInsets.zero,
+                                        icon: const Icon(Icons.close, size: 18),
+                                        onPressed: () {
+                                          setState(() {
+                                            _isSearching = false;
+                                            _showSearchContent = false;
+                                            _isSearchHovered = false;
+                                            controller.clear();
+                                            if (isRecipes) {
+                                              ref
+                                                  .read(
+                                                    recipeSearchQueryProvider.notifier,
+                                                  )
+                                                  .setQuery('');
+                                            } else {
+                                              ref
+                                                  .read(
+                                                    ingredientSearchQueryProvider.notifier,
+                                                  )
+                                                  .setQuery('');
+                                            }
+                                          });
+                                        },
+                                      ),
                                     ),
-                                    prefixIconConstraints: const BoxConstraints(
-                                      minWidth: 40,
-                                    ),
-                                    prefixIcon: Icon(
-                                      Icons.search,
-                                      size: 18,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                    suffixIconConstraints: const BoxConstraints(
-                                      minWidth: 40,
-                                    ),
-                                    suffixIcon: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      icon: const Icon(Icons.close, size: 18),
-                                      onPressed: () {
-                                        setState(() {
-                                          _isSearching = false;
-                                          _showSearchContent = false;
-                                          _isSearchHovered = false;
-                                          ref
-                                              .read(
-                                                searchQueryProvider.notifier,
-                                              )
-                                              .setQuery('');
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ),
+                                  );
+                                },
+                              ),
                               )
                             : InkWell(
                                 key: const ValueKey('search_button'),

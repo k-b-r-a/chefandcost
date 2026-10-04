@@ -50,6 +50,7 @@
   "delete_recipe_title": "Delete Recipe",
   "delete_recipe_message": "Are you sure you want to delete this recipe? This cannot be undone.",
   "discard_button": "Discard",
+  "cancel_button": "Cancel",
   "unsaved_changes_title": "Unsaved changes",
   "unsaved_changes_body": "Do you want to save or discard this recipe?",
   "new_ingredient_button": "New Ingredient",
@@ -263,5 +264,51 @@
   "filter_solids": "Dry",
   "filter_liquids": "Liquids",
   "filter_pieces": "Pieces",
-  "filter_tooltip": "Filter ingredients"
+  "filter_tooltip": "Filter ingredients",
+  "sort_by": "Sort:",
+  "sort_default": "Default",
+  "sort_type": "Type (Solid / Liquid / Pieces)",
+  "sort_alphabetical": "Alphabetical",
+  "sort_solids": "Solids",
+  "sort_liquids": "Liquids",
+  "sort_pieces": "Pieces",
+  "staged_ingredients_title": "Save selected ingredients?",
+  "staged_ingredients_body": "You have staged ingredients. Do you want to add them to the recipe or discard changes?",
+  "add_custom_ingredient": "Add '{name}'",
+  "@add_custom_ingredient": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "total_weight": "Total Weight",
+  "total_volume": "Total Volume",
+  "scale_by_ingredient": "Scale by Ingredient",
+  "scale_by_ingredient_desc": "Adjust recipe quantities based on target amount of an ingredient",
+  "target_quantity": "Target Quantity",
+  "current_quantity": "Current Quantity",
+  "scale_factor_label": "Scale Factor: {factor}x",
+  "@scale_factor_label": {
+    "placeholders": {
+      "factor": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_preview_button": "Preview Scaling",
+  "select_ingredient": "Select Ingredient",
+  "scale_temporary_title": "Temporary Scaled View ({multiplier}x)",
+  "@scale_temporary_title": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_temporary_notice": "This scaling is temporary and does not change your real recipe in the database.",
+  "scale_revert_button": "Revert to Original",
+  "scale_save_as_real_button": "Save as Real Recipe",
+  "scale_reverted_toast": "Recipe reverted to original quantities",
+  "scale_saved_toast": "Scaled quantities saved to the real recipe"
 }

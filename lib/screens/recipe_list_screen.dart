@@ -33,7 +33,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final recipesAsync = ref.watch(recipesWithFinancialsStreamProvider);
-    final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
+    final searchQuery = ref.watch(recipeSearchQueryProvider).toLowerCase();
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
 

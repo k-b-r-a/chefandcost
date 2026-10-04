@@ -32,6 +32,7 @@ class WebLayoutState {
   final bool isCreatingIngredient;
   final Ingredient? leftPaneIngredient;
   final bool isCreatingLeftPaneIngredient;
+  final String? newIngredientInitialName;
 
   const WebLayoutState({
     this.middleTab = WebMiddleTab.recipes,
@@ -43,6 +44,7 @@ class WebLayoutState {
     this.isCreatingIngredient = false,
     this.leftPaneIngredient,
     this.isCreatingLeftPaneIngredient = false,
+    this.newIngredientInitialName,
   });
 
   WebLayoutState copyWith({
@@ -59,6 +61,8 @@ class WebLayoutState {
     Ingredient? leftPaneIngredient,
     bool clearLeftPaneIngredient = false,
     bool? isCreatingLeftPaneIngredient,
+    String? newIngredientInitialName,
+    bool clearNewIngredientInitialName = false,
   }) {
     return WebLayoutState(
       middleTab: middleTab ?? this.middleTab,
@@ -77,6 +81,9 @@ class WebLayoutState {
           : (leftPaneIngredient ?? this.leftPaneIngredient),
       isCreatingLeftPaneIngredient: isCreatingLeftPaneIngredient ??
           this.isCreatingLeftPaneIngredient,
+      newIngredientInitialName: clearNewIngredientInitialName
+          ? null
+          : (newIngredientInitialName ?? this.newIngredientInitialName),
     );
   }
 }
@@ -188,11 +195,12 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
     );
   }
 
-  void openNewIngredient() {
+  void openNewIngredient({String? initialName}) {
     state = state.copyWith(
       middleTab: WebMiddleTab.ingredients,
       clearLeftPaneIngredient: true,
       isCreatingLeftPaneIngredient: true,
+      newIngredientInitialName: initialName,
       clearIngredient: true,
       isCreatingIngredient: false,
       clearTool: true,
@@ -204,6 +212,7 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
     state = state.copyWith(
       clearLeftPaneIngredient: true,
       isCreatingLeftPaneIngredient: false,
+      clearNewIngredientInitialName: true,
     );
   }
 
@@ -213,6 +222,7 @@ class WebLayoutNotifier extends Notifier<WebLayoutState> {
       isCreatingLeftPaneIngredient: false,
       clearIngredient: true,
       isCreatingIngredient: false,
+      clearNewIngredientInitialName: true,
     );
   }
 

@@ -160,6 +160,9 @@ class AppLocalizationsSk extends AppLocalizations {
   String get discard_button => 'Discard';
 
   @override
+  String get cancel_button => 'Cancel';
+
+  @override
   String get unsaved_changes_title => 'Unsaved changes';
 
   @override
@@ -703,4 +706,88 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get filter_tooltip => 'Filter ingredients';
+
+  @override
+  String get sort_by => 'Sort:';
+
+  @override
+  String get sort_default => 'Default';
+
+  @override
+  String get sort_type => 'Type (Solid / Liquid / Pieces)';
+
+  @override
+  String get sort_alphabetical => 'Alphabetical';
+
+  @override
+  String get sort_solids => 'Solids';
+
+  @override
+  String get sort_liquids => 'Liquids';
+
+  @override
+  String get sort_pieces => 'Pieces';
+
+  @override
+  String get staged_ingredients_title => 'Save selected ingredients?';
+
+  @override
+  String get staged_ingredients_body =>
+      'You have staged ingredients. Do you want to add them to the recipe or discard changes?';
+
+  @override
+  String add_custom_ingredient(String name) {
+    return 'Add \'$name\'';
+  }
+
+  @override
+  String get total_weight => 'Total Weight';
+
+  @override
+  String get total_volume => 'Total Volume';
+
+  @override
+  String get scale_by_ingredient => 'Scale by Ingredient';
+
+  @override
+  String get scale_by_ingredient_desc =>
+      'Adjust recipe quantities based on target amount of an ingredient';
+
+  @override
+  String get target_quantity => 'Target Quantity';
+
+  @override
+  String get current_quantity => 'Current Quantity';
+
+  @override
+  String scale_factor_label(String factor) {
+    return 'Scale Factor: ${factor}x';
+  }
+
+  @override
+  String get scale_preview_button => 'Preview Scaling';
+
+  @override
+  String get select_ingredient => 'Select Ingredient';
+
+  @override
+  String scale_temporary_title(String multiplier) {
+    return 'Temporary Scaled View (${multiplier}x)';
+  }
+
+  @override
+  String get scale_temporary_notice =>
+      'This scaling is temporary and does not change your real recipe in the database.';
+
+  @override
+  String get scale_revert_button => 'Revert to Original';
+
+  @override
+  String get scale_save_as_real_button => 'Save as Real Recipe';
+
+  @override
+  String get scale_reverted_toast => 'Recipe reverted to original quantities';
+
+  @override
+  String get scale_saved_toast => 'Scaled quantities saved to the real recipe';
 }

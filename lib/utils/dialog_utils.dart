@@ -103,6 +103,7 @@ class AppDialogs {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
+          textCapitalization: TextCapitalization.sentences,
           decoration: InputDecoration(
             labelText: labelText,
           ),

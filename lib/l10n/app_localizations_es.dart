@@ -160,6 +160,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get discard_button => 'Descartar';
 
   @override
+  String get cancel_button => 'Cancelar';
+
+  @override
   String get unsaved_changes_title => 'Cambios sin guardar';
 
   @override
@@ -707,4 +710,90 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get filter_tooltip => 'Filtrar ingredientes';
+
+  @override
+  String get sort_by => 'Ordenar:';
+
+  @override
+  String get sort_default => 'Por defecto';
+
+  @override
+  String get sort_type => 'Tipo (Sólidos / Líquidos / Piezas)';
+
+  @override
+  String get sort_alphabetical => 'Alfabético';
+
+  @override
+  String get sort_solids => 'Sólidos';
+
+  @override
+  String get sort_liquids => 'Líquidos';
+
+  @override
+  String get sort_pieces => 'Piezas';
+
+  @override
+  String get staged_ingredients_title => '¿Guardar ingredientes seleccionados?';
+
+  @override
+  String get staged_ingredients_body =>
+      'Tienes ingredientes seleccionados. ¿Deseas agregarlos a la receta o descartar los cambios?';
+
+  @override
+  String add_custom_ingredient(String name) {
+    return 'Agregar \'$name\'';
+  }
+
+  @override
+  String get total_weight => 'Peso Total';
+
+  @override
+  String get total_volume => 'Volumen Total';
+
+  @override
+  String get scale_by_ingredient => 'Escalar por Ingrediente';
+
+  @override
+  String get scale_by_ingredient_desc =>
+      'Ajustar cantidades de la receta según la cantidad objetivo de un ingrediente';
+
+  @override
+  String get target_quantity => 'Cantidad Objetivo';
+
+  @override
+  String get current_quantity => 'Cantidad Actual';
+
+  @override
+  String scale_factor_label(String factor) {
+    return 'Factor de Escala: ${factor}x';
+  }
+
+  @override
+  String get scale_preview_button => 'Vista Previa';
+
+  @override
+  String get select_ingredient => 'Seleccionar Ingrediente';
+
+  @override
+  String scale_temporary_title(String multiplier) {
+    return 'Vista Escalada Temporal (${multiplier}x)';
+  }
+
+  @override
+  String get scale_temporary_notice =>
+      'Este escalado es temporal y no modifica la receta real en la base de datos.';
+
+  @override
+  String get scale_revert_button => 'Restablecer Original';
+
+  @override
+  String get scale_save_as_real_button => 'Guardar como Receta Real';
+
+  @override
+  String get scale_reverted_toast =>
+      'Receta restablecida a las cantidades originales';
+
+  @override
+  String get scale_saved_toast =>
+      'Cantidades escaladas guardadas en la receta real';
 }

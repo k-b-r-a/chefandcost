@@ -530,6 +530,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: nameController,
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         labelText: l10n.timers_timer_name,
                         hintText: l10n.localeName == 'es' ? 'ej. Hervir Papas' : 'e.g. Boil Potatoes',

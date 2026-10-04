@@ -12,8 +12,14 @@ import '../provider/settings_provider.dart';
 
 class AddIngredientScreen extends ConsumerStatefulWidget {
   final Ingredient? ingredient;
+  final String? initialName;
   final VoidCallback? onClose;
-  const AddIngredientScreen({super.key, this.ingredient, this.onClose});
+  const AddIngredientScreen({
+    super.key,
+    this.ingredient,
+    this.initialName,
+    this.onClose,
+  });
 
   @override
   ConsumerState<AddIngredientScreen> createState() =>
@@ -26,14 +32,16 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
   late TextEditingController _costController;
   late TextEditingController _quantityController;
   String? _selectedUnitPk;
+  String? _initialUnitPk;
   bool _isLoading = false;
   String _searchQuery = '';
+  bool _isDismissing = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(
-      text: widget.ingredient?.name ?? '',
+      text: widget.ingredient?.name ?? widget.initialName ?? '',
     );
     // automatic load: trigger search if opening existing ingredient
     _searchQuery = _nameController.text.trim();
@@ -50,6 +58,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
       text: widget.ingredient != null ? RecipeUtils.formatNumber(widget.ingredient!.quantityForCost) : '',
     );
     _selectedUnitPk = widget.ingredient?.unitFk;
+    _initialUnitPk = widget.ingredient?.unitFk;
   }
 
   @override
@@ -93,6 +102,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
         }
 
         if (mounted) {
+          _isDismissing = true;
           if (widget.onClose != null) {
             widget.onClose!();
           } else {
@@ -110,6 +120,114 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
       if (mounted) {
         AppSnackBar.showError(context, l10n.error_select_unit);
       }
+    }
+  }
+
+  bool _hasChanges() {
+    if (widget.ingredient == null) {
+      final initialName = widget.initialName?.trim() ?? '';
+      return _nameController.text.trim() != initialName ||
+          _costController.text.trim().isNotEmpty ||
+          _quantityController.text.trim().isNotEmpty ||
+          (_initialUnitPk != null && _selectedUnitPk != _initialUnitPk);
+    } else {
+      final ing = widget.ingredient!;
+      return _nameController.text.trim() != ing.name ||
+          RecipeUtils.parseFormattedNumber(_costController.text) != ing.cost ||
+          RecipeUtils.parseFormattedNumber(_quantityController.text) !=
+              ing.quantityForCost ||
+          _selectedUnitPk != ing.unitFk;
+    }
+  }
+
+  void _dismiss() {
+    _isDismissing = true;
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _handleCloseOrBack() async {
+    if (!_hasChanges()) {
+      _dismiss();
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        key: const ValueKey('unsaved_ingredient_dialog'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.help_outline_rounded,
+              color: theme.colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.unsaved_changes_title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          l10n.localeName == 'es'
+              ? '¿Deseas guardar los cambios del ingrediente o descartarlos?'
+              : 'Do you want to save or discard changes to this ingredient?',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        actions: [
+          TextButton(
+            key: const ValueKey('unsaved_ingredient_cancel'),
+            onPressed: () => Navigator.of(dialogCtx).pop('cancel'),
+            child: Text(l10n.cancel_button),
+          ),
+          TextButton(
+            key: const ValueKey('unsaved_ingredient_discard'),
+            onPressed: () => Navigator.of(dialogCtx).pop('discard'),
+            child: Text(
+              l10n.discard_button,
+              style: TextStyle(
+                color: theme.colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          FilledButton(
+            key: const ValueKey('unsaved_ingredient_save'),
+            onPressed: () => Navigator.of(dialogCtx).pop('save'),
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(l10n.save_button),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == 'discard') {
+      _dismiss();
+    } else if (result == 'save') {
+      await _save();
     }
   }
 
@@ -146,15 +264,21 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: widget.onClose != null
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                tooltip: l10n.localeName == 'es' ? 'Volver' : 'Back',
-                onPressed: widget.onClose,
-              )
-            : null,
+    return PopScope(
+      canPop: _isDismissing || !_hasChanges(),
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _handleCloseOrBack();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: widget.onClose != null || Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: l10n.localeName == 'es' ? 'Volver' : 'Back',
+                  onPressed: _handleCloseOrBack,
+                )
+              : null,
         title: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
@@ -183,6 +307,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                   children: [
                     TextFormField(
                       controller: _nameController,
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         labelText: l10n.ingredient_name,
                         border: const OutlineInputBorder(),
@@ -233,6 +358,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                       data: (units) {
                         if (_selectedUnitPk == null && units.isNotEmpty) {
                           _selectedUnitPk = units.first.unitPk;
+                          _initialUnitPk ??= _selectedUnitPk;
                         }
                         return DropdownButtonFormField<String>(
                           initialValue: _selectedUnitPk,
@@ -362,6 +488,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
             ),
           ),
         ),
+      ),
     );
   }
 }

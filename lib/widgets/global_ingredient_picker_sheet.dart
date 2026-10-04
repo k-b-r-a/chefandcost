@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -28,7 +29,7 @@ class GlobalIngredientPickerSheet extends ConsumerStatefulWidget {
   ) showPickerIngredientOptionsModal;
 
   final VoidCallback? onClose;
-  final VoidCallback? onOpenNewIngredient;
+  final void Function([String? initialName])? onOpenNewIngredient;
   final bool isPanel;
 
   const GlobalIngredientPickerSheet({
@@ -53,6 +54,7 @@ class _GlobalIngredientPickerSheetState
       _selectedInModal = {};
   IngredientFilterType _modalFilter = IngredientFilterType.all;
   String? _focusedIngredientPk;
+  bool _isDismissing = false;
 
   @override
   void initState() {
@@ -60,7 +62,7 @@ class _GlobalIngredientPickerSheetState
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(searchQueryProvider.notifier).setQuery('');
+        ref.read(ingredientSearchQueryProvider.notifier).setQuery('');
       }
     });
   }
@@ -75,6 +77,262 @@ class _GlobalIngredientPickerSheetState
     super.dispose();
   }
 
+  void _dismissPicker() {
+    _isDismissing = true;
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _saveAndAddIngredients() {
+    _isDismissing = true;
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+
+    final settings = ref.read(settingsProvider);
+    final units = ref.read(unitsProvider).value ?? [];
+    final List<(Ingredient, double)> results = [];
+
+    _selectedInModal.forEach((_, value) {
+      final ing = value.$1;
+      final controller = value.$2;
+      final sourceUnit = units
+          .where((u) => u.unitPk == ing.unitFk)
+          .firstOrNull;
+      final targetUnit = sourceUnit != null
+          ? UnitUtils.getTargetUnit(
+              sourceUnit,
+              units,
+              settings,
+            )
+          : null;
+
+      double amountInSource =
+          RecipeUtils.parseFormattedNumber(
+        controller.text,
+      );
+      if (sourceUnit != null &&
+          targetUnit != null &&
+          sourceUnit.category == targetUnit.category &&
+          sourceUnit.category != null) {
+        final base =
+            amountInSource * targetUnit.factorToBase;
+        amountInSource = base / sourceUnit.factorToBase;
+      }
+
+      results.add((ing, amountInSource));
+    });
+
+    widget.onAddIngredients(results);
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _handleCloseOrBack() async {
+    if (_selectedInModal.isEmpty) {
+      _dismissPicker();
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        key: const ValueKey('staged_ingredients_dialog'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.help_outline_rounded,
+              color: theme.colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.staged_ingredients_title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          l10n.staged_ingredients_body,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        actions: [
+          TextButton(
+            key: const ValueKey('staged_ingredients_cancel'),
+            onPressed: () => Navigator.of(dialogCtx).pop('cancel'),
+            child: Text(l10n.cancel_button),
+          ),
+          TextButton(
+            key: const ValueKey('staged_ingredients_discard'),
+            onPressed: () => Navigator.of(dialogCtx).pop('discard'),
+            child: Text(
+              l10n.discard_button,
+              style: TextStyle(
+                color: theme.colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          FilledButton(
+            key: const ValueKey('staged_ingredients_save'),
+            onPressed: () => Navigator.of(dialogCtx).pop('save'),
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(l10n.add_button),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == 'discard') {
+      _dismissPicker();
+    } else if (result == 'save') {
+      _saveAndAddIngredients();
+    }
+  }
+
+  Future<void> _handleOpenNewIngredient([String? initialName]) async {
+    if (widget.onOpenNewIngredient != null) {
+      widget.onOpenNewIngredient!(initialName);
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddIngredientScreen(initialName: initialName),
+      ),
+    );
+  }
+
+  Widget _buildCreateNewIngredientCard(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+    String query, {
+    bool shouldDim = false,
+    Duration animDuration = Duration.zero,
+  }) {
+    Widget cardContent = Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const ValueKey('create_new_ingredient_card'),
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _handleOpenNewIngredient(query),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor:
+                      theme.colorScheme.primary.withValues(alpha: 0.2),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.add_custom_ingredient(query),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.new_ingredient_button,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (shouldDim) {
+      return Stack(
+        children: [
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+            child: AnimatedOpacity(
+              duration: animDuration,
+              opacity: 0.35,
+              child: cardContent,
+            ),
+          ),
+          Positioned.fill(
+            child: GestureDetector(
+              key: const ValueKey('dismiss_blur_create_new'),
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                FocusScope.of(context).unfocus();
+                SystemChannels.textInput.invokeMethod('TextInput.hide');
+                setState(() {
+                  _focusedIngredientPk = null;
+                });
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    return cardContent;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -82,54 +340,53 @@ class _GlobalIngredientPickerSheetState
     final settings = ref.watch(settingsProvider);
     final currency = settings.currencySymbol;
 
-    return Container(
-      height: widget.isPanel ? null : MediaQuery.sizeOf(context).height * 0.9,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: widget.isPanel
-            ? BorderRadius.zero
-            : const BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: Column(
-        children: [
-          if (!widget.isPanel) ...[
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.select_ingredient_recipe_title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+    return PopScope(
+      canPop: _isDismissing || (!widget.isPanel && _selectedInModal.isEmpty),
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _handleCloseOrBack();
+      },
+      child: Container(
+        height: widget.isPanel ? null : MediaQuery.sizeOf(context).height * 0.9,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: widget.isPanel
+              ? BorderRadius.zero
+              : const BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          children: [
+            if (!widget.isPanel) ...[
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  SystemChannels.textInput.invokeMethod('TextInput.hide');
-                  if (widget.onClose != null) {
-                    widget.onClose!();
-                  } else {
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
+              const SizedBox(height: 12),
             ],
-          ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.select_ingredient_recipe_title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  key: const ValueKey('picker_close_button'),
+                  icon: const Icon(Icons.close),
+                  onPressed: _handleCloseOrBack,
+                ),
+              ],
+            ),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -139,8 +396,9 @@ class _GlobalIngredientPickerSheetState
                   builder: (context, value, _) {
                     return TextField(
                       controller: _searchController,
+                      textCapitalization: TextCapitalization.sentences,
                       onChanged: (val) => ref
-                          .read(searchQueryProvider.notifier)
+                          .read(ingredientSearchQueryProvider.notifier)
                           .setQuery(val),
                       decoration: InputDecoration(
                         hintText: l10n.search_hint,
@@ -151,7 +409,7 @@ class _GlobalIngredientPickerSheetState
                                 onPressed: () {
                                   _searchController.clear();
                                   ref
-                                      .read(searchQueryProvider.notifier)
+                                      .read(ingredientSearchQueryProvider.notifier)
                                       .setQuery('');
                                 },
                               )
@@ -170,17 +428,7 @@ class _GlobalIngredientPickerSheetState
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: () async {
-                  if (widget.onOpenNewIngredient != null) {
-                    widget.onOpenNewIngredient!();
-                    return;
-                  }
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const AddIngredientScreen(),
-                    ),
-                  );
-                },
+                onPressed: () => _handleOpenNewIngredient(),
                 icon: const Icon(Icons.add),
                 tooltip: l10n.new_ingredient_button,
                 style: IconButton.styleFrom(
@@ -201,7 +449,12 @@ class _GlobalIngredientPickerSheetState
           IngredientFilterChipsRow(
             currentFilter: _modalFilter,
             onFilterSelected: (filter) {
+              if (_focusedIngredientPk != null) {
+                FocusScope.of(context).unfocus();
+                SystemChannels.textInput.invokeMethod('TextInput.hide');
+              }
               setState(() {
+                _focusedIngredientPk = null;
                 _modalFilter = filter;
               });
             },
@@ -210,7 +463,7 @@ class _GlobalIngredientPickerSheetState
           Expanded(
             child: Consumer(
               builder: (context, ref, _) {
-                final query = ref.watch(searchQueryProvider);
+                final query = ref.watch(ingredientSearchQueryProvider);
                 final ingredientsAsync = query.isEmpty
                     ? ref.watch(ingredientsStreamProvider)
                     : ref.watch(relatedIngredientsProvider(query));
@@ -229,7 +482,42 @@ class _GlobalIngredientPickerSheetState
                           searchQuery: query,
                         );
 
+                        final trimmedQuery = query.trim();
+                        final bool hasExactMatch = trimmedQuery.isNotEmpty &&
+                            displayedIngredients.any(
+                              (ing) =>
+                                  ing.name.trim().toLowerCase() ==
+                                  trimmedQuery.toLowerCase(),
+                            );
+                        final bool showCreateNewCard =
+                            trimmedQuery.isNotEmpty && !hasExactMatch;
+
                         if (displayedIngredients.isEmpty) {
+                          if (showCreateNewCard) {
+                            return ListView(
+                              physics: const AlwaysScrollableScrollPhysics(
+                                parent: BouncingScrollPhysics(),
+                              ),
+                              padding: const EdgeInsets.only(
+                                top: 16,
+                                bottom: 24,
+                              ),
+                              children: [
+                                AppEmptyState(
+                                  icon: Icons.search_off_rounded,
+                                  message: l10n.no_ingredients_found,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildCreateNewIngredientCard(
+                                  context,
+                                  theme,
+                                  l10n,
+                                  trimmedQuery,
+                                ),
+                              ],
+                            );
+                          }
+
                           final category = _modalFilter ==
                                   IngredientFilterType.liquids
                               ? 'volume'
@@ -247,6 +535,9 @@ class _GlobalIngredientPickerSheetState
                           );
                         }
 
+                        final totalItemCount = displayedIngredients.length +
+                            (showCreateNewCard ? 1 : 0);
+
                         return NotificationListener<ScrollNotification>(
                           onNotification: (notification) {
                             if (notification is UserScrollNotification &&
@@ -263,46 +554,66 @@ class _GlobalIngredientPickerSheetState
                             }
                             return false;
                           },
-                          child: ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            itemCount: displayedIngredients.length,
-                            itemBuilder: (context, index) {
-                              final ing = displayedIngredients[index];
-                              final isAlreadyInRecipe = widget.currentIngredients
-                                  .any(
-                                (i) =>
-                                    i.ingredient.ingredientPk ==
-                                    ing.ingredientPk,
-                              );
-                              final isSelected = _selectedInModal.containsKey(
-                                ing.ingredientPk,
-                              );
-                              final itemColor = RecipeUtils.getIngredientColor(
-                                ing.name,
-                                theme.colorScheme,
-                              );
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onTap: () {
+                              if (_focusedIngredientPk != null) {
+                                FocusScope.of(context).unfocus();
+                                SystemChannels.textInput
+                                    .invokeMethod('TextInput.hide');
+                                setState(() {
+                                  _focusedIngredientPk = null;
+                                });
+                              }
+                            },
+                            child: ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(
+                                parent: BouncingScrollPhysics(),
+                              ),
+                              itemCount: totalItemCount,
+                              itemBuilder: (context, index) {
+                                if (index == displayedIngredients.length) {
+                                  final animDuration = settings.animationsEnabled
+                                      ? const Duration(milliseconds: 150)
+                                      : Duration.zero;
+                                  return _buildCreateNewIngredientCard(
+                                    context,
+                                    theme,
+                                    l10n,
+                                    trimmedQuery,
+                                    shouldDim: _focusedIngredientPk != null,
+                                    animDuration: animDuration,
+                                  );
+                                }
 
-                              final bool hasFocus =
-                                  _focusedIngredientPk != null;
-                              final bool isThisFocused =
-                                  _focusedIngredientPk == ing.ingredientPk;
-                              final bool shouldDim =
-                                  hasFocus && !isThisFocused;
+                                final ing = displayedIngredients[index];
+                                final isAlreadyInRecipe = widget.currentIngredients
+                                    .any(
+                                  (i) =>
+                                      i.ingredient.ingredientPk ==
+                                      ing.ingredientPk,
+                                );
+                                final isSelected = _selectedInModal.containsKey(
+                                  ing.ingredientPk,
+                                );
+                                final itemColor = RecipeUtils.getIngredientColor(
+                                  ing.name,
+                                  theme.colorScheme,
+                                );
 
-                              final animDuration = settings.animationsEnabled
-                                  ? const Duration(milliseconds: 150)
-                                  : Duration.zero;
+                                final bool hasFocus =
+                                    _focusedIngredientPk != null;
+                                final bool isThisFocused =
+                                    _focusedIngredientPk == ing.ingredientPk;
+                                final bool shouldDim =
+                                    hasFocus && !isThisFocused;
 
-                              return RepaintBoundary(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: AnimatedOpacity(
-                                    duration: animDuration,
-                                    opacity: shouldDim ? 0.35 : 1.0,
-                                    child: AnimatedContainer(
-                                      duration: animDuration,
+                                final animDuration = settings.animationsEnabled
+                                    ? const Duration(milliseconds: 150)
+                                    : Duration.zero;
+
+                                Widget itemContent = AnimatedContainer(
+                                  duration: animDuration,
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? theme.colorScheme.primaryContainer
@@ -570,99 +881,102 @@ class _GlobalIngredientPickerSheetState
                                         });
                                       },
                                     ),
-                                  ),
-                                ),
+                                  );
+
+                                  if (shouldDim) {
+                                    itemContent = Stack(
+                                      children: [
+                                        ImageFiltered(
+                                          imageFilter: ImageFilter.blur(
+                                            sigmaX: 3.0,
+                                            sigmaY: 3.0,
+                                          ),
+                                          child: AnimatedOpacity(
+                                            duration: animDuration,
+                                            opacity: 0.35,
+                                            child: itemContent,
+                                          ),
+                                        ),
+                                        Positioned.fill(
+                                          child: GestureDetector(
+                                            key: ValueKey(
+                                              'dismiss_blur_${ing.ingredientPk}',
+                                            ),
+                                            behavior: HitTestBehavior.opaque,
+                                            onTap: () {
+                                              FocusScope.of(context).unfocus();
+                                              SystemChannels.textInput
+                                                  .invokeMethod('TextInput.hide');
+                                              setState(() {
+                                                _focusedIngredientPk = null;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  } else {
+                                    itemContent = AnimatedOpacity(
+                                      duration: animDuration,
+                                      opacity: 1.0,
+                                      child: itemContent,
+                                    );
+                                  }
+
+                                  return RepaintBoundary(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 8.0),
+                                      child: itemContent,
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                            },
-                          ),
-                        );
-                      },
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(child: Text(e.toString())),
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text(e.toString())),
-                );
-              },
-            ),
-          ),
-          if (_selectedInModal.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                    SystemChannels.textInput.invokeMethod('TextInput.hide');
-
-                    final settings = ref.read(settingsProvider);
-                    final units = ref.read(unitsProvider).value ?? [];
-                    final List<(Ingredient, double)> results = [];
-
-                    _selectedInModal.forEach((_, value) {
-                      final ing = value.$1;
-                      final controller = value.$2;
-                      final sourceUnit = units
-                          .where((u) => u.unitPk == ing.unitFk)
-                          .firstOrNull;
-                      final targetUnit = sourceUnit != null
-                          ? UnitUtils.getTargetUnit(
-                              sourceUnit,
-                              units,
-                              settings,
-                            )
-                          : null;
-
-                      double amountInSource =
-                          RecipeUtils.parseFormattedNumber(
-                        controller.text,
+                            ),
+                          );
+                        },
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (e, _) => Center(child: Text(e.toString())),
                       );
-                      if (sourceUnit != null &&
-                          targetUnit != null &&
-                          sourceUnit.category == targetUnit.category &&
-                          sourceUnit.category != null) {
-                        final base =
-                            amountInSource * targetUnit.factorToBase;
-                        amountInSource = base / sourceUnit.factorToBase;
-                      }
-
-                      results.add((ing, amountInSource));
-                    });
-
-                    widget.onAddIngredients(results);
-                    if (widget.onClose != null) {
-                      widget.onClose!();
-                    } else {
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  icon: const Icon(Icons.add_task),
-                  label: Text(
-                    "${l10n.add_button} (${_selectedInModal.length})"
-                        .toUpperCase(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text(e.toString())),
+                  );
+                },
+              ),
+            ),
+            if (_selectedInModal.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    key: const ValueKey('picker_add_staged_button'),
+                    onPressed: _saveAndAddIngredients,
+                    icon: const Icon(Icons.add_task),
+                    label: Text(
+                      "${l10n.add_button} (${_selectedInModal.length})"
+                          .toUpperCase(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
                     ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

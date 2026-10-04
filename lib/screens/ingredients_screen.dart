@@ -34,7 +34,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final ingredientsAsync = ref.watch(ingredientsStreamProvider);
     final unitsAsync = ref.watch(unitsStreamProvider);
-    final searchQuery = ref.watch(searchQueryProvider);
+    final searchQuery = ref.watch(ingredientSearchQueryProvider);
     final currentFilter = ref.watch(ingredientFilterProvider);
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
@@ -84,7 +84,52 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     }
                   }
 
+                  final trimmedQuery = searchQuery.trim();
+                  final bool hasExactMatch = trimmedQuery.isNotEmpty &&
+                      filteredIngredients.any(
+                        (ing) =>
+                            ing.name.trim().toLowerCase() ==
+                            trimmedQuery.toLowerCase(),
+                      );
+                  final bool showCreateNewCard =
+                      trimmedQuery.isNotEmpty && !hasExactMatch;
+
                   if (filteredIngredients.isEmpty) {
+                    if (showCreateNewCard) {
+                      return SliverPadding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 20,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 860),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AppEmptyState(
+                                      icon: Icons.search_off_rounded,
+                                      message: l10n.no_ingredients_found,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildCreateNewCard(
+                                      context,
+                                      theme,
+                                      l10n,
+                                      trimmedQuery,
+                                      isWide: isWide,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      );
+                    }
+
                     final emptyMsg = searchQuery.isEmpty &&
                             currentFilter == IngredientFilterType.all
                         ? l10n.no_ingredients
@@ -105,10 +150,34 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     );
                   }
 
+                  final totalItemCount = filteredIngredients.length +
+                      (showCreateNewCard ? 1 : 0);
+
                   return SliverPadding(
                     padding: const EdgeInsets.only(bottom: 100, top: 4),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
+                        if (index == filteredIngredients.length) {
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 860),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 6,
+                                ),
+                                child: _buildCreateNewCard(
+                                  context,
+                                  theme,
+                                  l10n,
+                                  trimmedQuery,
+                                  isWide: isWide,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
                         final ingredient = filteredIngredients[index];
                         final unit = unitMap[ingredient.unitFk];
                         final unitSymbol = unit?.symbol ?? '';
@@ -186,7 +255,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                             ),
                           ),
                         );
-                      }, childCount: filteredIngredients.length),
+                      }, childCount: totalItemCount),
                     ),
                   );
                 },
@@ -208,6 +277,94 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildCreateNewCard(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+    String query, {
+    required bool isWide,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const ValueKey('create_new_ingredient_card'),
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openCreateNewIngredient(context, query, isWide),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.35),
+              width: 1.2,
+            ),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor:
+                    theme.colorScheme.primary.withValues(alpha: 0.2),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.add_custom_ingredient(query),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.new_ingredient_button,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: theme.colorScheme.primary.withValues(alpha: 0.7),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openCreateNewIngredient(
+    BuildContext context,
+    String initialName,
+    bool isWide,
+  ) {
+    if (isWide) {
+      ref.read(webLayoutProvider.notifier).openNewIngredient(initialName: initialName);
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AddIngredientScreen(initialName: initialName),
+        ),
+      );
+    }
   }
 
   Future<void> _confirmDelete(
