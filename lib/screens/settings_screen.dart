@@ -1235,10 +1235,11 @@ class SettingsAboutScreen extends ConsumerWidget {
                   backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
                   child: Icon(Icons.info_outline, color: theme.colorScheme.primary),
                 ),
-                title: Text(
-                  l10n.settings_about,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                title: const Text(
+                  'Chef&Cost',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
+                subtitle: Text(l10n.settings_about),
                 trailing: Text(
                   '${l10n.settings_version} 1.0.0+1',
                   style: theme.textTheme.bodyMedium?.copyWith(

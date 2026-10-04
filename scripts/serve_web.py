@@ -32,5 +32,5 @@ class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 if __name__ == '__main__':
     socketserver.TCPServer.allow_reuse_address = True
     with ThreadingHTTPServer(("", PORT), Handler) as httpd:
-        print(f"Serving RecipeTools Web at http://localhost:{PORT}")
+        print(f"Serving Chef&Cost Web at http://localhost:{PORT}")
         httpd.serve_forever()

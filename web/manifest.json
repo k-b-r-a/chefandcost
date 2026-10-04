@@ -1,11 +1,11 @@
 {
-    "name": "RecipeTools",
-    "short_name": "RecipeTools",
+    "name": "Chef&Cost",
+    "short_name": "Chef&Cost",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#121212",
     "theme_color": "#0175C2",
-    "description": "Recipe & Kitchen Cost Manager - recipes, ingredient costs, margins, and culinary tools.",
+    "description": "Chef&Cost - recipes, ingredient costs, margins, and culinary tools.",
     "orientation": "any",
     "prefer_related_applications": false,
     "icons": [

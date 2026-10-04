@@ -47,7 +47,7 @@ void main() async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
       ],
-      child: const RecipetoolsApp(),
+      child: const ChefAndCostApp(),
     ),
   );
 }
@@ -90,8 +90,10 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
   }
 }
 
-class RecipetoolsApp extends ConsumerWidget {
-  const RecipetoolsApp({super.key});
+typedef RecipetoolsApp = ChefAndCostApp;
+
+class ChefAndCostApp extends ConsumerWidget {
+  const ChefAndCostApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -169,7 +171,8 @@ class RecipetoolsApp extends ConsumerWidget {
     }
 
     return MaterialApp(
-      onGenerateTitle: (context) => AppLocalizations.of(context)!.recipes_title,
+      title: 'Chef&Cost',
+      onGenerateTitle: (context) => 'Chef&Cost',
       locale: settings.locale,
       themeMode: settings.themeMode,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -425,7 +428,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'RecipeTools',
+                'Chef&Cost',
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
