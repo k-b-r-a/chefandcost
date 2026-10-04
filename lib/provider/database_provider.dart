@@ -84,14 +84,35 @@ final relatedIngredientsProvider =
   return db.searchIngredients(query);
 });
 
-/// Notifier for the global search query.
-class SearchQueryNotifier extends Notifier<String> {
+/// Notifier for the recipe search query.
+class RecipeSearchQueryNotifier extends Notifier<String> {
   @override
   String build() => '';
 
   void setQuery(String query) => state = query;
 }
 
-/// State provider for the global search query using Notifier.
-final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(SearchQueryNotifier.new);
+/// State provider for the recipe search query using Notifier.
+final recipeSearchQueryProvider =
+    NotifierProvider<RecipeSearchQueryNotifier, String>(
+  RecipeSearchQueryNotifier.new,
+);
+
+/// Notifier for the ingredient search query.
+class IngredientSearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void setQuery(String query) => state = query;
+}
+
+/// State provider for the ingredient search query using Notifier.
+final ingredientSearchQueryProvider =
+    NotifierProvider<IngredientSearchQueryNotifier, String>(
+  IngredientSearchQueryNotifier.new,
+);
+
+/// Backward compatibility aliases for the legacy search query provider.
+typedef SearchQueryNotifier = RecipeSearchQueryNotifier;
+final searchQueryProvider = recipeSearchQueryProvider;
 

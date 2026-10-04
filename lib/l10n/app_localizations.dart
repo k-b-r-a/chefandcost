@@ -506,6 +506,12 @@ abstract class AppLocalizations {
   /// **'Discard'**
   String get discard_button;
 
+  /// No description provided for @cancel_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel_button;
+
   /// No description provided for @unsaved_changes_title.
   ///
   /// In en, this message translates to:
@@ -1559,6 +1565,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filter ingredients'**
   String get filter_tooltip;
+
+  /// No description provided for @sort_by.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort:'**
+  String get sort_by;
+
+  /// No description provided for @sort_default.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get sort_default;
+
+  /// No description provided for @sort_type.
+  ///
+  /// In en, this message translates to:
+  /// **'Type (Solid / Liquid / Pieces)'**
+  String get sort_type;
+
+  /// No description provided for @sort_alphabetical.
+  ///
+  /// In en, this message translates to:
+  /// **'Alphabetical'**
+  String get sort_alphabetical;
+
+  /// No description provided for @sort_solids.
+  ///
+  /// In en, this message translates to:
+  /// **'Solids'**
+  String get sort_solids;
+
+  /// No description provided for @sort_liquids.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquids'**
+  String get sort_liquids;
+
+  /// No description provided for @sort_pieces.
+  ///
+  /// In en, this message translates to:
+  /// **'Pieces'**
+  String get sort_pieces;
+
+  /// No description provided for @staged_ingredients_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Save selected ingredients?'**
+  String get staged_ingredients_title;
+
+  /// No description provided for @staged_ingredients_body.
+  ///
+  /// In en, this message translates to:
+  /// **'You have staged ingredients. Do you want to add them to the recipe or discard changes?'**
+  String get staged_ingredients_body;
+
+  /// No description provided for @add_custom_ingredient.
+  ///
+  /// In en, this message translates to:
+  /// **'Add \'{name}\''**
+  String add_custom_ingredient(String name);
+
+  /// No description provided for @total_weight.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Weight'**
+  String get total_weight;
+
+  /// No description provided for @total_volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Volume'**
+  String get total_volume;
+
+  /// No description provided for @scale_by_ingredient.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale by Ingredient'**
+  String get scale_by_ingredient;
+
+  /// No description provided for @scale_by_ingredient_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust recipe quantities based on target amount of an ingredient'**
+  String get scale_by_ingredient_desc;
+
+  /// No description provided for @target_quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Quantity'**
+  String get target_quantity;
+
+  /// No description provided for @current_quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Quantity'**
+  String get current_quantity;
+
+  /// No description provided for @scale_factor_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale Factor: {factor}x'**
+  String scale_factor_label(String factor);
+
+  /// No description provided for @scale_preview_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview Scaling'**
+  String get scale_preview_button;
+
+  /// No description provided for @select_ingredient.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Ingredient'**
+  String get select_ingredient;
+
+  /// No description provided for @scale_temporary_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary Scaled View ({multiplier}x)'**
+  String scale_temporary_title(String multiplier);
+
+  /// No description provided for @scale_temporary_notice.
+  ///
+  /// In en, this message translates to:
+  /// **'This scaling is temporary and does not change your real recipe in the database.'**
+  String get scale_temporary_notice;
+
+  /// No description provided for @scale_revert_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert to Original'**
+  String get scale_revert_button;
+
+  /// No description provided for @scale_save_as_real_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Real Recipe'**
+  String get scale_save_as_real_button;
+
+  /// No description provided for @scale_reverted_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe reverted to original quantities'**
+  String get scale_reverted_toast;
+
+  /// No description provided for @scale_saved_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Scaled quantities saved to the real recipe'**
+  String get scale_saved_toast;
 }
 
 class _AppLocalizationsDelegate

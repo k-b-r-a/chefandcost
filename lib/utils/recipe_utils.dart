@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:intl/intl.dart';
 import '../database/database.dart';
 import '../l10n/app_localizations.dart';
+import 'unit_utils.dart';
 
 const uuid = Uuid();
 
@@ -81,8 +82,126 @@ class RecipeFinancialSummary {
   });
 }
 
+/// Sorting criteria for recipe ingredients in the recipe screen.
+enum RecipeIngredientSort {
+  defaultOrder,
+  type,
+  alphabetical,
+}
+
 class RecipeUtils {
   static int defaultDecimalDigits = 2;
+
+  /// Returns the type rank for an ingredient:
+  /// 0 for Solid (mass)
+  /// 1 for Liquid (volume)
+  /// 2 for Pieces (count)
+  /// 3 for Other (unspecified/unknown)
+  static int getIngredientTypeRank(RecipeIngredientData data, List<Unit> units) {
+    final category = data.targetUnit?.category ??
+        data.sourceUnit?.category ??
+        units.where((u) => u.unitPk == data.ingredient.unitFk).firstOrNull?.category;
+    if (UnitUtils.isMass(category)) return 0;
+    if (UnitUtils.isVolume(category)) return 1;
+    if (UnitUtils.isCount(category)) return 2;
+    return 3;
+  }
+
+  /// Returns a sorted list of original indices into [ingredients] based on [sort],
+  /// WITHOUT mutating the original [ingredients] list.
+  static List<int> getSortedIngredientIndices({
+    required List<RecipeIngredientData> ingredients,
+    required RecipeIngredientSort sort,
+    required List<Unit> units,
+  }) {
+    final indices = List<int>.generate(ingredients.length, (i) => i);
+    switch (sort) {
+      case RecipeIngredientSort.defaultOrder:
+        return indices;
+      case RecipeIngredientSort.type:
+        indices.sort((i, j) {
+          final a = ingredients[i];
+          final b = ingredients[j];
+          final rankA = getIngredientTypeRank(a, units);
+          final rankB = getIngredientTypeRank(b, units);
+          final cmp = rankA.compareTo(rankB);
+          if (cmp != 0) return cmp;
+          final nameCmp = a.ingredient.name.toLowerCase().compareTo(b.ingredient.name.toLowerCase());
+          if (nameCmp != 0) return nameCmp;
+          return i.compareTo(j);
+        });
+        return indices;
+      case RecipeIngredientSort.alphabetical:
+        indices.sort((i, j) {
+          final a = ingredients[i];
+          final b = ingredients[j];
+          final nameCmp = a.ingredient.name.toLowerCase().compareTo(b.ingredient.name.toLowerCase());
+          if (nameCmp != 0) return nameCmp;
+          return i.compareTo(j);
+        });
+        return indices;
+    }
+  }
+
+  /// Calculates total weight (grams) and total volume (milliliters) from recipe ingredients.
+  static ({double totalWeightGrams, double totalVolumeMl}) calculateTotalWeightAndVolume({
+    required List<RecipeIngredientData> ingredients,
+    required List<Unit> units,
+  }) {
+    double weightGrams = 0.0;
+    double volumeMl = 0.0;
+
+    for (var data in ingredients) {
+      final unit = data.targetUnit ??
+          data.sourceUnit ??
+          units.where((u) => u.unitPk == data.ingredient.unitFk).firstOrNull;
+      if (unit == null || unit.category == null) continue;
+
+      final parsed = parseFormattedNumber(data.amountController.text);
+      if (parsed <= 0) continue;
+
+      final baseAmount = parsed * unit.factorToBase;
+      if (UnitUtils.isMass(unit.category)) {
+        weightGrams += baseAmount;
+      } else if (UnitUtils.isVolume(unit.category)) {
+        volumeMl += baseAmount;
+      }
+    }
+
+    return (totalWeightGrams: weightGrams, totalVolumeMl: volumeMl);
+  }
+
+  /// Formats weight in grams or kilograms appropriately
+  static String formatWeight(double grams) {
+    if (grams <= 0) return '0 g';
+    if (grams >= 1000) {
+      final kg = grams / 1000;
+      final digits = kg % 1 == 0 ? 0 : (kg * 10 % 1 == 0 ? 1 : 2);
+      return '${formatNumber(kg, decimalDigits: digits)} kg';
+    }
+    return '${formatNumber(grams, decimalDigits: grams % 1 == 0 ? 0 : 1)} g';
+  }
+
+  /// Formats volume in milliliters or liters appropriately
+  static String formatVolume(double ml) {
+    if (ml <= 0) return '0 ml';
+    if (ml >= 1000) {
+      final l = ml / 1000;
+      final digits = l % 1 == 0 ? 0 : (l * 10 % 1 == 0 ? 1 : 2);
+      return '${formatNumber(l, decimalDigits: digits)} l';
+    }
+    return '${formatNumber(ml, decimalDigits: ml % 1 == 0 ? 0 : 1)} ml';
+  }
+
+  /// Calculates scale factor when setting a target quantity for an ingredient.
+  /// Returns 1.0 if current or target amount is invalid or <= 0.
+  static double calculateScaleMultiplier({
+    required double currentAmount,
+    required double targetAmount,
+  }) {
+    if (currentAmount <= 0 || targetAmount <= 0) return 1.0;
+    return targetAmount / currentAmount;
+  }
 
   /// formats numbers with dots as thousands separator (e.g. 1.000)
   static String formatNumber(num value, {int? decimalDigits}) {
