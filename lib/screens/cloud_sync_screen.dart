@@ -181,11 +181,13 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                   value: CloudSyncStorageType.googleDrive,
                   icon: const Icon(Icons.cloud_outlined),
                   label: const Text('Google Drive'),
+                  enabled: !kIsWeb,
                 ),
                 ButtonSegment<CloudSyncStorageType>(
                   value: CloudSyncStorageType.localDirectory,
                   icon: const Icon(Icons.folder_open),
                   label: Text(l10n.localeName == 'es' ? 'Directorio Local' : 'Local Directory'),
+                  enabled: !kIsWeb,
                 ),
               ],
               selected: {state.storageType},
@@ -193,7 +195,34 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 notifier.setStorageType(newSelection.first);
               },
             ),
-            if (isFirestore) ...[
+            if (kIsWeb) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, size: 20, color: theme.colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.localeName == 'es'
+                            ? 'En la Web, la sincronización se realiza mediante Cloud Firestore para sincronizar datos en tiempo real entre tu navegador y la aplicación móvil. Los respaldos en archivo de Google Drive están disponibles en dispositivos móviles y de escritorio.'
+                            : 'On Web, sync is powered by Cloud Firestore to synchronize data in real-time between your browser and mobile app. Google Drive file backups are available on mobile and desktop devices.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          height: 1.4,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (isFirestore) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(14),

@@ -83,8 +83,12 @@ class FirestoreSyncService {
     await prefs.remove('${prefLastSyncKey}_$userId');
   }
 
+  bool _persistenceInitialized = false;
+
   /// Initializes offline persistence if supported on this platform.
   Future<void> initPersistence() async {
+    if (_persistenceInitialized || kIsWeb) return;
+    _persistenceInitialized = true;
     try {
       _firestore.settings = const Settings(
         persistenceEnabled: true,

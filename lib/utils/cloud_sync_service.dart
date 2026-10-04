@@ -51,6 +51,9 @@ class GoogleDriveSyncService {
 
   /// Gets the current storage type from settings.
   Future<CloudSyncStorageType> getStorageType() async {
+    if (kIsWeb) {
+      return CloudSyncStorageType.firestore;
+    }
     final prefs = await SharedPreferences.getInstance();
     final index = prefs.getInt(_storageTypeKey) ?? (isDefaultSimulation ? 1 : 0);
     return CloudSyncStorageType.values[index];

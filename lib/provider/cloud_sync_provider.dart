@@ -83,12 +83,16 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       
       GoogleSignInAccount? account;
       if (storageType == CloudSyncStorageType.googleDrive) {
-        await GoogleSignIn.instance.initialize(
-          clientId: GoogleDriveSyncService.defaultClientId,
-          serverClientId: GoogleDriveSyncService.defaultServerClientId,
-        );
-        account = await GoogleSignIn.instance.attemptLightweightAuthentication();
-        ref.read(googleUserProvider.notifier).setUser(account);
+        if (!kIsWeb) {
+          try {
+            await GoogleSignIn.instance.initialize(
+              clientId: GoogleDriveSyncService.defaultClientId,
+              serverClientId: GoogleDriveSyncService.defaultServerClientId,
+            );
+            account = await GoogleSignIn.instance.attemptLightweightAuthentication();
+            ref.read(googleUserProvider.notifier).setUser(account);
+          } catch (_) {}
+        }
       }
       
       final signedIn = storageType == CloudSyncStorageType.localDirectory || account != null;
@@ -158,23 +162,25 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           return;
         }
 
-        // Try Google Sign In first if available
-        try {
-          final account = await _syncService.signIn();
-          if (account != null) {
-            await _firestoreService.linkGoogleAccount(account);
-            ref.read(googleUserProvider.notifier).setUser(account);
-            state = state.copyWith(
-              signedIn: true,
-              email: account.email,
-              loading: false,
-              successMessage: 'Connected to Firestore via Google: ${account.email}',
-            );
-            return;
-          }
-        } catch (_) {}
+        // Try Google Sign In first if available on mobile/desktop
+        if (!kIsWeb) {
+          try {
+            final account = await _syncService.signIn();
+            if (account != null) {
+              await _firestoreService.linkGoogleAccount(account);
+              ref.read(googleUserProvider.notifier).setUser(account);
+              state = state.copyWith(
+                signedIn: true,
+                email: account.email,
+                loading: false,
+                successMessage: 'Connected to Firestore via Google: ${account.email}',
+              );
+              return;
+            }
+          } catch (_) {}
+        }
 
-        // Fallback to anonymous sign-in session
+        // Direct anonymous sign-in session for web and mobile fallback
         final uid = await _firestoreService.signInAnonymously();
         state = state.copyWith(
           signedIn: true,
