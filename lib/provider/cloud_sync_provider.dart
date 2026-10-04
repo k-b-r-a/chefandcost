@@ -149,6 +149,111 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     );
   }
 
+  /// Signs in with Email and Password (or registers if isRegister is true)
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+    bool isRegister = false,
+  }) async {
+    state = state.copyWith(loading: true);
+    try {
+      if (!_firestoreService.isConfigured) {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: 'Firebase is not initialized. Please configure firebase_options.dart.',
+        );
+        return;
+      }
+      final cred = isRegister
+          ? await _firestoreService.registerWithEmail(email, password)
+          : await _firestoreService.signInWithEmail(email, password);
+      final userEmail = cred.user?.email ?? email.trim();
+      state = state.copyWith(
+        signedIn: true,
+        email: userEmail,
+        loading: false,
+        successMessage: isRegister
+            ? 'Account created and connected: $userEmail'
+            : 'Signed in as $userEmail',
+      );
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Authentication failed: ${_formatAuthError(e)}',
+      );
+    }
+  }
+
+  /// Signs in with Google account (native popup on web, GoogleSignIn on mobile)
+  Future<void> signInWithGoogle() async {
+    state = state.copyWith(loading: true);
+    try {
+      if (!_firestoreService.isConfigured) {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: 'Firebase is not initialized. Please configure firebase_options.dart.',
+        );
+        return;
+      }
+      final cred = await _firestoreService.signInWithGoogle();
+      final userEmail = cred?.user?.email ?? 'Google User';
+      state = state.copyWith(
+        signedIn: true,
+        email: userEmail,
+        loading: false,
+        successMessage: 'Connected to Firestore via Google: $userEmail',
+      );
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Google Sign-In failed: ${_formatAuthError(e)}',
+      );
+    }
+  }
+
+  /// Sends a password reset email
+  Future<void> sendPasswordReset(String email) async {
+    state = state.copyWith(loading: true);
+    try {
+      await _firestoreService.sendPasswordReset(email);
+      state = state.copyWith(
+        loading: false,
+        successMessage: 'Password reset link sent to $email',
+      );
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Password reset failed: ${_formatAuthError(e)}',
+      );
+    }
+  }
+
+  String _formatAuthError(Object error) {
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'user-not-found':
+          return 'No account found with this email.';
+        case 'wrong-password':
+          return 'Incorrect password.';
+        case 'invalid-credential':
+          return 'Invalid email or password.';
+        case 'email-already-in-use':
+          return 'An account already exists for this email.';
+        case 'weak-password':
+          return 'Password should be at least 6 characters.';
+        case 'invalid-email':
+          return 'Invalid email address.';
+        case 'operation-not-allowed':
+          return 'This sign-in method is not enabled in the Firebase Console.';
+        case 'popup-closed-by-user':
+          return 'Sign-in cancelled by user.';
+        default:
+          return error.message ?? error.code;
+      }
+    }
+    return error.toString();
+  }
+
   Future<void> signIn() async {
     state = state.copyWith(loading: true);
     try {
@@ -162,31 +267,13 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           return;
         }
 
-        // Try Google Sign In first if available on mobile/desktop
-        if (!kIsWeb) {
-          try {
-            final account = await _syncService.signIn();
-            if (account != null) {
-              await _firestoreService.linkGoogleAccount(account);
-              ref.read(googleUserProvider.notifier).setUser(account);
-              state = state.copyWith(
-                signedIn: true,
-                email: account.email,
-                loading: false,
-                successMessage: 'Connected to Firestore via Google: ${account.email}',
-              );
-              return;
-            }
-          } catch (_) {}
-        }
-
-        // Direct anonymous sign-in session for web and mobile fallback
+        // Direct anonymous sign-in session for guest sync
         final uid = await _firestoreService.signInAnonymously();
         state = state.copyWith(
           signedIn: true,
           email: 'Sync ID: $uid',
           loading: false,
-          successMessage: 'Connected to Firestore session.',
+          successMessage: 'Connected to Firestore guest session.',
         );
         return;
       }
@@ -220,7 +307,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     } catch (e) {
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Connection failed: $e',
+        errorMessage: 'Connection failed: ${_formatAuthError(e)}',
       );
     }
   }

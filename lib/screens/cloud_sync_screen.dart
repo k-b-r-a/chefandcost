@@ -394,44 +394,95 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             if (!isLocal) ...[
               const SizedBox(height: 20),
               if (!state.signedIn)
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => notifier.signIn(),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
+                if (isFirestore)
+                  Column(
+                    children: [
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => _showEmailAuthDialog(context, notifier, l10n),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.email_outlined),
+                            label: Text(
+                              l10n.localeName == 'es' ? 'Acceder con Email' : 'Sign in with Email',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          FilledButton.tonalIcon(
+                            onPressed: () => notifier.signInWithGoogle(),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            icon: const Icon(Icons.g_mobiledata, size: 28),
+                            label: Text(
+                              l10n.localeName == 'es' ? 'Continuar con Google' : 'Continue with Google',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       ),
-                      icon: const Icon(Icons.login),
-                      label: Text(
-                        isFirestore
-                            ? (l10n.localeName == 'es' ? 'Conectar sesión' : 'Connect session')
-                            : l10n.cloud_sync_connect_btn,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => notifier.signIn(),
+                            icon: const Icon(Icons.person_outline, size: 18),
+                            label: Text(
+                              l10n.localeName == 'es' ? 'Entrar como Invitado' : 'Continue as Guest',
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => _showSetSyncIdDialog(context, notifier, l10n),
+                            icon: const Icon(Icons.pin_outlined, size: 18),
+                            label: Text(
+                              l10n.localeName == 'es' ? 'Ingresar Sync ID' : 'Set Sync ID',
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    if (isFirestore)
-                      OutlinedButton.icon(
-                        onPressed: () => _showSetSyncIdDialog(context, notifier, l10n),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ],
+                  )
+                else
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => notifier.signIn(),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
+                          elevation: 0,
                         ),
-                        icon: const Icon(Icons.pin_outlined),
-                        label: Text(l10n.localeName == 'es' ? 'Ingresar Sync ID' : 'Set Sync ID'),
+                        icon: const Icon(Icons.login),
+                        label: Text(
+                          l10n.cloud_sync_connect_btn,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                  ],
-                )
+                    ],
+                  )
               else
                 Wrap(
                   spacing: 12,
@@ -468,13 +519,17 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                       onPressed: () => notifier.signOut(),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+                        foregroundColor: theme.colorScheme.error,
+                        side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       icon: const Icon(Icons.logout),
-                      label: Text(l10n.cloud_sync_disconnect_btn),
+                      label: Text(
+                        l10n.localeName == 'es' ? 'Cerrar sesión' : 'Sign Out',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
@@ -996,6 +1051,171 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             child: Text(l10n.delete_button),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEmailAuthDialog(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+  ) {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    bool isRegister = false;
+    bool obscurePassword = true;
+    String? localError;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final isEs = l10n.localeName == 'es';
+          return AlertDialog(
+            title: Text(
+              isRegister
+                  ? (isEs ? 'Crear cuenta' : 'Create Account')
+                  : (isEs ? 'Iniciar sesión con Email' : 'Sign in with Email'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SegmentedButton<bool>(
+                    segments: [
+                      ButtonSegment<bool>(
+                        value: false,
+                        label: Text(isEs ? 'Iniciar sesión' : 'Sign In'),
+                      ),
+                      ButtonSegment<bool>(
+                        value: true,
+                        label: Text(isEs ? 'Registrarse' : 'Register'),
+                      ),
+                    ],
+                    selected: {isRegister},
+                    onSelectionChanged: (Set<bool> newSelection) {
+                      setDialogState(() {
+                        isRegister = newSelection.first;
+                        localError = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: isEs ? 'Correo electrónico' : 'Email address',
+                      hintText: 'ejemplo@correo.com',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: isEs ? 'Contraseña' : 'Password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setDialogState(() {
+                            obscurePassword = !obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  if (localError != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      localError!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                  if (!isRegister) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          final email = emailController.text.trim();
+                          if (email.isEmpty || !email.contains('@')) {
+                            setDialogState(() {
+                              localError = isEs
+                                  ? 'Ingresa tu correo para restablecer la contraseña.'
+                                  : 'Enter your email to reset your password.';
+                            });
+                            return;
+                          }
+                          Navigator.of(context).pop();
+                          notifier.sendPasswordReset(email);
+                        },
+                        child: Text(
+                          isEs ? '¿Olvidaste tu contraseña?' : 'Forgot password?',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.discard_button),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final email = emailController.text.trim();
+                  final password = passwordController.text;
+
+                  if (email.isEmpty || !email.contains('@')) {
+                    setDialogState(() {
+                      localError = isEs
+                          ? 'Por favor ingresa un correo electrónico válido.'
+                          : 'Please enter a valid email address.';
+                    });
+                    return;
+                  }
+
+                  if (password.length < 6) {
+                    setDialogState(() {
+                      localError = isEs
+                          ? 'La contraseña debe tener al menos 6 caracteres.'
+                          : 'Password must be at least 6 characters.';
+                    });
+                    return;
+                  }
+
+                  Navigator.of(context).pop();
+                  notifier.signInWithEmail(
+                    email: email,
+                    password: password,
+                    isRegister: isRegister,
+                  );
+                },
+                child: Text(
+                  isRegister
+                      ? (isEs ? 'Crear cuenta' : 'Create Account')
+                      : (isEs ? 'Ingresar' : 'Sign In'),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

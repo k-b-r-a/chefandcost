@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
+import 'cloud_sync_service.dart';
 
 /// Service responsible for purely manual, on-demand, differential cross-platform sync
 /// with Cloud Firestore. Optimized for Firebase Spark plan limits by embedding
@@ -108,6 +109,84 @@ class FirestoreSyncService {
     final uid = cred.user!.uid;
     await setCustomUserId(uid);
     return uid;
+  }
+
+  /// Signs in with Email and Password.
+  Future<UserCredential> signInWithEmail(String email, String password) async {
+    if (!isConfigured) {
+      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+    }
+    final cred = await _auth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final uid = cred.user?.uid;
+    if (uid != null) {
+      await setCustomUserId(uid);
+    }
+    return cred;
+  }
+
+  /// Registers a new account with Email and Password.
+  Future<UserCredential> registerWithEmail(String email, String password) async {
+    if (!isConfigured) {
+      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+    }
+    final cred = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final uid = cred.user?.uid;
+    if (uid != null) {
+      await setCustomUserId(uid);
+    }
+    return cred;
+  }
+
+  /// Sends a password reset email.
+  Future<void> sendPasswordReset(String email) async {
+    if (!isConfigured) {
+      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+    }
+    await _auth.sendPasswordResetEmail(email: email.trim());
+  }
+
+  /// Signs in with Google account (native popup on web, GoogleSignIn on mobile).
+  Future<UserCredential?> signInWithGoogle() async {
+    if (!isConfigured) {
+      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+    }
+    UserCredential cred;
+    if (kIsWeb) {
+      final googleProvider = GoogleAuthProvider();
+      googleProvider.addScope('email');
+      googleProvider.setCustomParameters({'prompt': 'select_account'});
+      cred = await _auth.signInWithPopup(googleProvider);
+    } else {
+      await GoogleSignIn.instance.initialize(
+        clientId: GoogleDriveSyncService.defaultClientId,
+        serverClientId: GoogleDriveSyncService.defaultServerClientId,
+      );
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final auth = googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        idToken: auth.idToken,
+      );
+      cred = await _auth.signInWithCredential(credential);
+    }
+    final uid = cred.user?.uid;
+    if (uid != null) {
+      await setCustomUserId(uid);
+    }
+    return cred;
+  }
+
+  /// Disconnects from Firebase Auth and clears the stored Sync ID.
+  Future<void> signOut() async {
+    try {
+      await _auth.signOut();
+    } catch (_) {}
+    await clearCustomUserId();
   }
 
   /// Connects with Google account using existing GoogleSignInAccount credential.
