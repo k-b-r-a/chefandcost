@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
@@ -11,8 +10,13 @@ import 'screens/recipe_list_screen.dart';
 import 'screens/ingredients_screen.dart';
 import 'screens/add_ingredient_screen.dart';
 import 'screens/tools_screen.dart';
+import 'screens/kitchen_timers_screen.dart';
+import 'screens/rule_of_three_screen.dart';
+import 'screens/unit_converter_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/cloud_sync_screen.dart';
 import 'provider/settings_provider.dart';
+import 'provider/web_layout_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -64,6 +68,14 @@ class NoTransitionsBuilder extends PageTransitionsBuilder {
 class CustomScrollBehavior extends MaterialScrollBehavior {
   final String physicsType;
   const CustomScrollBehavior(this.physicsType);
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
@@ -188,6 +200,7 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _currentIndex = 0;
   late PageController _pageController;
+  final TextEditingController _webSearchController = TextEditingController();
   bool _isSearching = false;
   bool _showSearchContent = false;
   bool _isSearchHovered = false;
@@ -230,6 +243,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   @override
   void dispose() {
+    _webSearchController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -239,29 +253,597 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = screenWidth >= 640;
+    final double middleWidth = screenWidth < 900
+        ? 300.0
+        : (screenWidth < 1200 ? 340.0 : 380.0);
+
+    final pageView = PageView(
+      controller: _pageController,
+      physics: settings.animationsEnabled
+          ? const PageScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
+      onPageChanged: (index) {
+        setState(() {
+          _currentIndex = index;
+          _isSearching = false;
+          _showSearchContent = false;
+          ref.read(searchQueryProvider.notifier).setQuery('');
+        });
+      },
+      children: _screens,
+    );
+
+    if (isWide) {
+      final webLayout = ref.watch(webLayoutProvider);
+      final webNotifier = ref.read(webLayoutProvider.notifier);
+
+      return Scaffold(
+        body: Row(
+          children: [
+            _buildWebNavigationRail(
+              context,
+              settings,
+              l10n,
+              theme,
+              webLayout,
+              webNotifier,
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            SizedBox(
+              width: middleWidth,
+              child: _buildWebMiddleColumn(
+                context,
+                settings,
+                l10n,
+                theme,
+                webLayout,
+                webNotifier,
+              ),
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(
+              child: _buildWebRightPane(
+                context,
+                settings,
+                l10n,
+                theme,
+                webLayout,
+                webNotifier,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       extendBody: true,
-      body: PageView(
-        controller: _pageController,
-        physics: settings.animationsEnabled
-            ? const PageScrollPhysics()
-            : const NeverScrollableScrollPhysics(),
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-            _isSearching = false;
-            _showSearchContent = false;
-            ref.read(searchQueryProvider.notifier).setQuery('');
-          });
-        },
-        children: _screens,
-      ),
+      body: pageView,
       floatingActionButtonLocation: settings.leftHandedMode
           ? FloatingActionButtonLocation.startFloat
           : FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildFab(context, settings),
+      floatingActionButton: _buildFab(context, settings, isWide: false),
       bottomNavigationBar: _buildFloatingNavBar(context, settings, l10n, theme),
+    );
+  }
+
+  Widget _buildWebNavigationRail(
+    BuildContext context,
+    SettingsState settings,
+    AppLocalizations l10n,
+    ThemeData theme,
+    WebLayoutState webLayout,
+    WebLayoutNotifier webNotifier,
+  ) {
+    int selectedIndex = 0;
+    if (webLayout.isHomeActive) {
+      selectedIndex = 0;
+    } else {
+      switch (webLayout.middleTab) {
+        case WebMiddleTab.recipes:
+          selectedIndex = 1;
+          break;
+        case WebMiddleTab.ingredients:
+          selectedIndex = 2;
+          break;
+        case WebMiddleTab.tools:
+          selectedIndex = 3;
+          break;
+        case WebMiddleTab.settings:
+          selectedIndex = 4;
+          break;
+      }
+    }
+
+    return NavigationRail(
+      selectedIndex: selectedIndex,
+      onDestinationSelected: (index) async {
+        if (index == 0 || index == 4) {
+          final guard = ref.read(recipeCanLeaveGuardProvider);
+          if (guard != null && !await guard()) return;
+        }
+
+        if (_webSearchController.text.isNotEmpty) {
+          _webSearchController.clear();
+          ref.read(searchQueryProvider.notifier).setQuery('');
+        }
+        switch (index) {
+          case 0:
+            webNotifier.showHome();
+            break;
+          case 1:
+            webNotifier.setMiddleTab(WebMiddleTab.recipes);
+            break;
+          case 2:
+            webNotifier.setMiddleTab(WebMiddleTab.ingredients);
+            break;
+          case 3:
+            webNotifier.setMiddleTab(WebMiddleTab.tools);
+            break;
+          case 4:
+            webNotifier.openSettingsDetail(WebRightPaneView.settingsGeneral);
+            break;
+        }
+      },
+      labelType: settings.showNavBarLabels
+          ? NavigationRailLabelType.all
+          : NavigationRailLabelType.none,
+      minWidth: 72,
+      minExtendedWidth: 200,
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20.0),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            final guard = ref.read(recipeCanLeaveGuardProvider);
+            if (guard != null && !await guard()) return;
+            webNotifier.showHome();
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.restaurant_menu,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'RecipeTools',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      trailing: Expanded(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: IconButton(
+              icon: Icon(
+                settings.themeMode == ThemeMode.dark
+                    ? Icons.dark_mode_outlined
+                    : settings.themeMode == ThemeMode.light
+                        ? Icons.light_mode_outlined
+                        : Icons.brightness_auto_outlined,
+              ),
+              tooltip: 'Toggle Theme',
+              onPressed: () {
+                final nextMode = settings.themeMode == ThemeMode.dark
+                    ? ThemeMode.light
+                    : ThemeMode.dark;
+                ref.read(settingsProvider.notifier).setThemeMode(nextMode);
+              },
+            ),
+          ),
+        ),
+      ),
+      destinations: [
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(0, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(0, true, settings.iconStyle)),
+          label: Text(l10n.home_title),
+        ),
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(1, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(1, true, settings.iconStyle)),
+          label: Text(l10n.recipes_title),
+        ),
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(2, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(2, true, settings.iconStyle)),
+          label: Text(l10n.ingredients_title),
+        ),
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(3, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(3, true, settings.iconStyle)),
+          label: Text(l10n.tools_title),
+        ),
+        NavigationRailDestination(
+          icon: Icon(getNavBarIcon(4, false, settings.iconStyle)),
+          selectedIcon: Icon(getNavBarIcon(4, true, settings.iconStyle)),
+          label: Text(l10n.config_button),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebMiddleColumn(
+    BuildContext context,
+    SettingsState settings,
+    AppLocalizations l10n,
+    ThemeData theme,
+    WebLayoutState webLayout,
+    WebLayoutNotifier webNotifier,
+  ) {
+    if (webLayout.middleTab == WebMiddleTab.ingredients &&
+        (webLayout.leftPaneIngredient != null || webLayout.isCreatingLeftPaneIngredient)) {
+      return AddIngredientScreen(
+        key: webLayout.leftPaneIngredient != null
+            ? ValueKey('left_pane_ing_${webLayout.leftPaneIngredient!.ingredientPk}')
+            : const ValueKey('left_pane_ing_new'),
+        ingredient: webLayout.leftPaneIngredient,
+        onClose: () => webNotifier.closeIngredientDetail(),
+      );
+    }
+
+    Widget listWidget;
+    switch (webLayout.middleTab) {
+      case WebMiddleTab.recipes:
+        listWidget = const RecipeListScreen(key: ValueKey('web_recipes_list'));
+        break;
+      case WebMiddleTab.ingredients:
+        listWidget = const IngredientsScreen(key: ValueKey('web_ingredients_list'));
+        break;
+      case WebMiddleTab.tools:
+        listWidget = const ToolsScreen(key: ValueKey('web_tools_list'));
+        break;
+      case WebMiddleTab.settings:
+        listWidget = const SettingsScreen(key: ValueKey('web_settings_list'));
+        break;
+    }
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border(
+              bottom: BorderSide(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+              ),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (webLayout.middleTab == WebMiddleTab.settings)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.settings_outlined,
+                          size: 18,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          l10n.config_button,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        tooltip: l10n.recipes_title,
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () async {
+                          final guard = ref.read(recipeCanLeaveGuardProvider);
+                          if (guard != null && !await guard()) return;
+                          webNotifier.setMiddleTab(WebMiddleTab.recipes);
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          webLayout.middleTab == WebMiddleTab.recipes
+                              ? Icons.menu_book_outlined
+                              : (webLayout.middleTab == WebMiddleTab.ingredients
+                                  ? Icons.egg_outlined
+                                  : Icons.handyman_outlined),
+                          size: 18,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          webLayout.middleTab == WebMiddleTab.recipes
+                              ? l10n.recipes_title
+                              : (webLayout.middleTab == WebMiddleTab.ingredients
+                                  ? l10n.ingredients_title
+                                  : l10n.tools_title),
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (webLayout.middleTab == WebMiddleTab.recipes) ...[
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.add, size: 18),
+                          tooltip: l10n.new_recipe_title,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () async {
+                            final guard = ref.read(recipeCanLeaveGuardProvider);
+                            if (guard != null && !await guard()) return;
+                            webNotifier.openNewRecipe();
+                          },
+                        ),
+                      ] else if (webLayout.middleTab == WebMiddleTab.ingredients) ...[
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.add, size: 18),
+                          tooltip: l10n.new_ingredient_button,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () {
+                            webNotifier.openNewIngredient();
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (webLayout.middleTab != WebMiddleTab.tools) ...[
+                  const SizedBox(height: 8),
+                SizedBox(
+                  height: 36,
+                  child: TextField(
+                    controller: _webSearchController,
+                    onChanged: (val) => ref.read(searchQueryProvider.notifier).setQuery(val),
+                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: l10n.localeName == 'es' ? 'Buscar en lista...' : 'Search list...',
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      ),
+                      prefixIcon: const Icon(Icons.search, size: 16),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      suffixIcon: _webSearchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 14),
+                              padding: EdgeInsets.zero,
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () {
+                                _webSearchController.clear();
+                                ref.read(searchQueryProvider.notifier).setQuery('');
+                                setState(() {});
+                              },
+                            )
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
+        ),
+        Expanded(
+          child: listWidget,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebRightPane(
+    BuildContext context,
+    SettingsState settings,
+    AppLocalizations l10n,
+    ThemeData theme,
+    WebLayoutState webLayout,
+    WebLayoutNotifier webNotifier,
+  ) {
+    if (webLayout.selectedRecipeId != null ||
+        webLayout.rightPaneView == WebRightPaneView.newRecipe) {
+      if (webLayout.selectedRecipeId != null) {
+        return RecipeEditorScreen(
+          key: ValueKey('recipe_${webLayout.selectedRecipeId}'),
+          recipeId: webLayout.selectedRecipeId,
+          onClose: () => webNotifier.closeDetail(),
+        );
+      }
+      return RecipeEditorScreen(
+        key: const ValueKey('recipe_new'),
+        onClose: () => webNotifier.closeDetail(),
+      );
+    }
+
+    if (webLayout.rightPaneView == WebRightPaneView.ingredient ||
+        webLayout.rightPaneView == WebRightPaneView.newIngredient) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= 600) {
+            final double rightPanelWidth =
+                (constraints.maxWidth * 0.42).clamp(340.0, 420.0);
+            return Row(
+              children: [
+                Expanded(
+                  child: HomeScreen(
+                    onNavigateToTab: (index) {
+                      if (index == 1) {
+                        webNotifier.setMiddleTab(WebMiddleTab.recipes);
+                      } else if (index == 2) {
+                        webNotifier.setMiddleTab(WebMiddleTab.ingredients);
+                      } else if (index == 3) {
+                        webNotifier.setMiddleTab(WebMiddleTab.tools);
+                      } else if (index == 4) {
+                        webNotifier.openSettingsDetail(WebRightPaneView.settingsGeneral);
+                      }
+                    },
+                  ),
+                ),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                ),
+                SizedBox(
+                  width: rightPanelWidth,
+                  child: AddIngredientScreen(
+                    key: webLayout.selectedIngredient != null
+                        ? ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}')
+                        : const ValueKey('ingredient_new'),
+                    ingredient: webLayout.selectedIngredient,
+                    onClose: () => webNotifier.closeIngredientDetail(),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return AddIngredientScreen(
+            key: webLayout.selectedIngredient != null
+                ? ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}')
+                : const ValueKey('ingredient_new'),
+            ingredient: webLayout.selectedIngredient,
+            onClose: () => webNotifier.closeIngredientDetail(),
+          );
+        },
+      );
+    }
+
+    if (webLayout.rightPaneView == WebRightPaneView.tool &&
+        webLayout.selectedToolIndex != null) {
+      Widget toolWidget;
+      switch (webLayout.selectedToolIndex) {
+        case 0:
+          toolWidget = const KitchenTimersScreen();
+          break;
+        case 1:
+          toolWidget = const RuleOfThreeScreen();
+          break;
+        case 2:
+          toolWidget = const UnitConverterScreen();
+          break;
+        default:
+          toolWidget = const HomeScreen();
+      }
+      return Stack(
+        children: [
+          toolWidget,
+          Positioned(
+            top: 14,
+            left: 14,
+            child: IconButton.filledTonal(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+              onPressed: () => webNotifier.showHome(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (webLayout.rightPaneView == WebRightPaneView.settingsGeneral) {
+      return SettingsGeneralScreen(
+        key: const ValueKey('settings_general'),
+        onClose: () => webNotifier.showHome(),
+      );
+    }
+
+    if (webLayout.rightPaneView == WebRightPaneView.settingsCloudSync) {
+      return CloudSyncScreen(
+        key: const ValueKey('settings_cloud_sync'),
+        onClose: () => webNotifier.showHome(),
+      );
+    }
+
+    if (webLayout.rightPaneView == WebRightPaneView.settingsStyles) {
+      return SettingsStylesScreen(
+        key: const ValueKey('settings_styles'),
+        onClose: () => webNotifier.showHome(),
+      );
+    }
+
+    if (webLayout.rightPaneView == WebRightPaneView.settingsLocale) {
+      return SettingsLocaleScreen(
+        key: const ValueKey('settings_locale'),
+        onClose: () => webNotifier.showHome(),
+      );
+    }
+
+    if (webLayout.rightPaneView == WebRightPaneView.settingsAbout) {
+      return SettingsAboutScreen(
+        key: const ValueKey('settings_about'),
+        onClose: () => webNotifier.showHome(),
+      );
+    }
+
+    // Always Home by default!
+    return HomeScreen(
+      onNavigateToTab: (index) {
+        if (index == 1) {
+          webNotifier.setMiddleTab(WebMiddleTab.recipes);
+        } else if (index == 2) {
+          webNotifier.setMiddleTab(WebMiddleTab.ingredients);
+        } else if (index == 3) {
+          webNotifier.setMiddleTab(WebMiddleTab.tools);
+        } else if (index == 4) {
+          webNotifier.openSettingsDetail(WebRightPaneView.settingsGeneral);
+        }
+      },
     );
   }
 
@@ -285,12 +867,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         : Duration.zero;
 
     return SafeArea(
+      top: false,
       child: RepaintBoundary(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          child: SizedBox(
-            height: pillHeight,
-            child: Container(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            heightFactor: 1.0,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: SizedBox(
+                width: double.infinity,
+                height: pillHeight,
+                child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface.withValues(alpha: 0.94),
@@ -427,10 +1016,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
-  Widget? _buildFab(BuildContext context, SettingsState settings) {
+  Widget? _buildFab(BuildContext context, SettingsState settings, {bool isWide = false}) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.sizeOf(context).width;
@@ -438,15 +1029,24 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     // determine visibility based on current screen (Recipes: 1, Ingredients: 2)
     final bool showFab = _currentIndex == 1 || _currentIndex == 2;
+    if (!showFab && isWide) return null;
+
     final anim400 = settings.animationsEnabled ? const Duration(milliseconds: 250) : Duration.zero;
     final anim300 = settings.animationsEnabled ? const Duration(milliseconds: 200) : Duration.zero;
     final anim200 = settings.animationsEnabled ? const Duration(milliseconds: 150) : Duration.zero;
 
+    final double searchWidth = isWide ? 320.0 : screenWidth - 48;
+    final double containerWidth = isWide
+        ? (_isSearching ? 400.0 : 130.0)
+        : screenWidth;
+
     return RepaintBoundary(
-      child: Container(
-        width: screenWidth,
+      child: AnimatedContainer(
+        duration: anim400,
+        curve: Curves.fastOutSlowIn,
+        width: containerWidth,
         height: 120, // enough height for the "jump" animation
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        padding: EdgeInsets.symmetric(horizontal: isWide ? 0 : 24.0),
         child: IgnorePointer(
           ignoring: !showFab,
           child: Stack(
@@ -466,7 +1066,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   child: AnimatedContainer(
                     duration: anim400,
                     curve: Curves.fastOutSlowIn,
-                    width: _isSearching ? screenWidth - 48 : 40,
+                    width: _isSearching ? searchWidth : 40,
                     height: _isSearching ? 44 : 40,
                     decoration: BoxDecoration(
                       color: _isSearching

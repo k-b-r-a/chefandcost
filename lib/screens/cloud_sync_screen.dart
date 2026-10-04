@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,8 @@ import '../utils/cloud_sync_service.dart';
 import '../widgets/floating_pill_app_bar.dart';
 
 class CloudSyncScreen extends ConsumerStatefulWidget {
-  const CloudSyncScreen({super.key});
+  final VoidCallback? onClose;
+  const CloudSyncScreen({super.key, this.onClose});
 
   @override
   ConsumerState<CloudSyncScreen> createState() => _CloudSyncScreenState();
@@ -81,30 +83,47 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 context: context,
                 title: l10n.cloud_sync_title,
                 controller: _scrollController,
+                leading: widget.onClose != null
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        tooltip: l10n.localeName == 'es'
+                            ? 'Volver al Inicio'
+                            : 'Back to Home',
+                        onPressed: widget.onClose,
+                      )
+                    : null,
               ),
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 16.0),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _buildSettingsCard(syncState, syncNotifier, theme, l10n),
-                    const SizedBox(height: 24),
-                    _buildConnectionHeader(syncState, syncNotifier, theme, l10n),
-                    const SizedBox(height: 24),
-                    if (syncState.signedIn) ...[
-                      _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
-                      const SizedBox(height: 24),
-                      if (syncState.storageType != CloudSyncStorageType.firestore) ...[
-                        _buildBackupsListHeader(theme, l10n),
-                        const SizedBox(height: 12),
-                        if (syncState.backups.isEmpty)
-                          _buildEmptyBackupsPlaceholder(theme, l10n)
-                        else
-                          _buildBackupsList(syncState, syncNotifier, theme, l10n),
-                      ] else ...[
-                        _buildFirestoreSyncInfoCard(theme, l10n),
-                      ],
-                    ],
-                  ]),
+                sliver: SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 820),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildSettingsCard(syncState, syncNotifier, theme, l10n),
+                          const SizedBox(height: 24),
+                          _buildConnectionHeader(syncState, syncNotifier, theme, l10n),
+                          const SizedBox(height: 24),
+                          if (syncState.signedIn) ...[
+                            _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
+                            const SizedBox(height: 24),
+                            if (syncState.storageType != CloudSyncStorageType.firestore) ...[
+                              _buildBackupsListHeader(theme, l10n),
+                              const SizedBox(height: 12),
+                              if (syncState.backups.isEmpty)
+                                _buildEmptyBackupsPlaceholder(theme, l10n)
+                              else
+                                _buildBackupsList(syncState, syncNotifier, theme, l10n),
+                            ] else ...[
+                              _buildFirestoreSyncInfoCard(theme, l10n),
+                            ],
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -762,20 +781,21 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: Icon(Icons.file_download_outlined, color: theme.colorScheme.secondary),
-                      onPressed: () async {
-                        final selectedDirectory = await FilePicker.platform.getDirectoryPath(
-                          dialogTitle: l10n.localeName == 'es'
-                              ? 'Seleccionar carpeta para guardar la copia'
-                              : 'Select folder to save backup',
-                        );
-                        if (selectedDirectory != null) {
-                          notifier.downloadBackup(backup.id, backup.name, selectedDirectory);
-                        }
-                      },
-                      tooltip: l10n.localeName == 'es' ? 'Guardar copia en...' : 'Save backup to...',
-                    ),
+                    if (!kIsWeb)
+                      IconButton(
+                        icon: Icon(Icons.file_download_outlined, color: theme.colorScheme.secondary),
+                        onPressed: () async {
+                          final selectedDirectory = await FilePicker.platform.getDirectoryPath(
+                            dialogTitle: l10n.localeName == 'es'
+                                ? 'Seleccionar carpeta para guardar la copia'
+                                : 'Select folder to save backup',
+                          );
+                          if (selectedDirectory != null) {
+                            notifier.downloadBackup(backup.id, backup.name, selectedDirectory);
+                          }
+                        },
+                        tooltip: l10n.localeName == 'es' ? 'Guardar copia en...' : 'Save backup to...',
+                      ),
                     IconButton(
                       icon: Icon(Icons.sync, color: theme.colorScheme.secondary),
                       onPressed: () => _confirmSyncWithBackup(context, notifier, backup.id, l10n),

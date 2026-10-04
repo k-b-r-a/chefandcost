@@ -126,9 +126,12 @@ class _CompareIngredientsScreenState
           final diff = (price1 - price2AtSameQuantity).abs();
           final formattedDiff = RecipeUtils.formatNumber(diff);
 
-          return Column(
-            children: [
-              Expanded(
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 860),
+              child: Column(
+                children: [
+                  Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 32, 16, 32),
@@ -232,8 +235,10 @@ class _CompareIngredientsScreenState
                   ),
                 ),
             ],
-          );
-        },
+          ),
+        ),
+      );
+    },
         loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

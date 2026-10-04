@@ -410,7 +410,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         return null;
       }
 
-      remoteDb = AppDatabase.forFile(tempFile);
+      remoteDb = AppDatabase.forPath(tempFile.path);
       final localDb = ref.read(databaseProvider);
       final mergeResult = await localDb.mergeWithDatabase(remoteDb);
 

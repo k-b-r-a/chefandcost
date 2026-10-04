@@ -18,6 +18,10 @@ class NotificationService {
   bool _initialized = false;
 
   Future<void> initialize() async {
+    if (kIsWeb) {
+      _initialized = true;
+      return;
+    }
     if (_initialized) return;
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -101,6 +105,7 @@ class NotificationService {
       macOS: darwinDetails,
     );
 
+    if (kIsWeb) return;
     try {
       await _notificationsPlugin.show(
         id,
@@ -114,6 +119,7 @@ class NotificationService {
   }
 
   Future<void> cancelNotification(int id) async {
+    if (kIsWeb) return;
     try {
       await _notificationsPlugin.cancel(id);
     } catch (e) {

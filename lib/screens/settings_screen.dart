@@ -6,6 +6,8 @@ import '../widgets/floating_pill_app_bar.dart';
 import '../provider/settings_provider.dart';
 import '../provider/database_provider.dart';
 import 'cloud_sync_screen.dart';
+import '../provider/web_layout_provider.dart';
+import '../database/sample_data.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -16,6 +18,8 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final ScrollController scrollController = ScrollController();
     final settings = ref.watch(settingsProvider);
+    final isWide = MediaQuery.sizeOf(context).width >= 640;
+    final webLayout = isWide ? ref.watch(webLayoutProvider) : null;
 
     return Scaffold(
       body: CustomScrollView(
@@ -28,76 +32,94 @@ class SettingsScreen extends ConsumerWidget {
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 16.0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            sliver: SliverToBoxAdapter(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 820),
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildMenuTile(
+                          context,
+                          ref: ref,
+                          settings: settings,
+                          title: l10n.settings_general,
+                          subtitle: l10n.localeName == 'es' ? 'Gestión de datos de la app' : 'App data management',
+                          icon: Icons.settings_applications_outlined,
+                          iconColor: theme.colorScheme.primary,
+                          bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                          destination: const SettingsGeneralScreen(),
+                          webView: WebRightPaneView.settingsGeneral,
+                          isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsGeneral,
+                        ),
+                        const Divider(height: 1, indent: 20, endIndent: 20),
+                        _buildMenuTile(
+                          context,
+                          ref: ref,
+                          settings: settings,
+                          title: l10n.cloud_sync_title,
+                          subtitle: l10n.localeName == 'es' ? 'Respaldar y restaurar en Google Drive' : 'Back up and restore on Google Drive',
+                          icon: Icons.cloud_sync_outlined,
+                          iconColor: Colors.orange,
+                          bgColor: Colors.orange.withValues(alpha: 0.15),
+                          destination: const CloudSyncScreen(),
+                          webView: WebRightPaneView.settingsCloudSync,
+                          isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsCloudSync,
+                        ),
+                        const Divider(height: 1, indent: 20, endIndent: 20),
+                        _buildMenuTile(
+                          context,
+                          ref: ref,
+                          settings: settings,
+                          title: l10n.settings_styles_title,
+                          subtitle: l10n.localeName == 'es' ? 'Temas, colores y tamaño de letra' : 'Themes, colors and font size',
+                          icon: Icons.palette_outlined,
+                          iconColor: Colors.deepPurple,
+                          bgColor: Colors.deepPurple.withValues(alpha: 0.15),
+                          destination: const SettingsStylesScreen(),
+                          webView: WebRightPaneView.settingsStyles,
+                          isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsStyles,
+                        ),
+                        const Divider(height: 1, indent: 20, endIndent: 20),
+                        _buildMenuTile(
+                          context,
+                          ref: ref,
+                          settings: settings,
+                          title: l10n.settings_locale_title,
+                          subtitle: l10n.localeName == 'es' ? 'Idioma y formato numérico' : 'Language and number formatting',
+                          icon: Icons.translate,
+                          iconColor: Colors.teal,
+                          bgColor: Colors.teal.withValues(alpha: 0.15),
+                          destination: const SettingsLocaleScreen(),
+                          webView: WebRightPaneView.settingsLocale,
+                          isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsLocale,
+                        ),
+                        const Divider(height: 1, indent: 20, endIndent: 20),
+                        _buildMenuTile(
+                          context,
+                          ref: ref,
+                          settings: settings,
+                          title: l10n.settings_about_app_title,
+                          subtitle: l10n.localeName == 'es' ? 'Versión e información' : 'Version and information',
+                          icon: Icons.info_outline,
+                          iconColor: Colors.blue,
+                          bgColor: Colors.blue.withValues(alpha: 0.15),
+                          destination: const SettingsAboutScreen(),
+                          webView: WebRightPaneView.settingsAbout,
+                          isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsAbout,
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      _buildMenuTile(
-                        context,
-                        settings: settings,
-                        title: l10n.settings_general,
-                        subtitle: l10n.localeName == 'es' ? 'Gestión de datos de la app' : 'App data management',
-                        icon: Icons.settings_applications_outlined,
-                        iconColor: theme.colorScheme.primary,
-                        bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-                        destination: const SettingsGeneralScreen(),
-                      ),
-                      const Divider(height: 1, indent: 20, endIndent: 20),
-                      _buildMenuTile(
-                        context,
-                        settings: settings,
-                        title: l10n.cloud_sync_title,
-                        subtitle: l10n.localeName == 'es' ? 'Respaldar y restaurar en Google Drive' : 'Back up and restore on Google Drive',
-                        icon: Icons.cloud_sync_outlined,
-                        iconColor: Colors.orange,
-                        bgColor: Colors.orange.withValues(alpha: 0.15),
-                        destination: const CloudSyncScreen(),
-                      ),
-                      const Divider(height: 1, indent: 20, endIndent: 20),
-                      _buildMenuTile(
-                        context,
-                        settings: settings,
-                        title: l10n.settings_styles_title,
-                        subtitle: l10n.localeName == 'es' ? 'Temas, colores y tamaño de letra' : 'Themes, colors and font size',
-                        icon: Icons.palette_outlined,
-                        iconColor: Colors.deepPurple,
-                        bgColor: Colors.deepPurple.withValues(alpha: 0.15),
-                        destination: const SettingsStylesScreen(),
-                      ),
-                      const Divider(height: 1, indent: 20, endIndent: 20),
-                      _buildMenuTile(
-                        context,
-                        settings: settings,
-                        title: l10n.settings_locale_title,
-                        subtitle: l10n.localeName == 'es' ? 'Idioma y formato numérico' : 'Language and number formatting',
-                        icon: Icons.translate,
-                        iconColor: Colors.teal,
-                        bgColor: Colors.teal.withValues(alpha: 0.15),
-                        destination: const SettingsLocaleScreen(),
-                      ),
-                      const Divider(height: 1, indent: 20, endIndent: 20),
-                      _buildMenuTile(
-                        context,
-                        settings: settings,
-                        title: l10n.settings_about_app_title,
-                        subtitle: l10n.localeName == 'es' ? 'Versión e información' : 'Version and information',
-                        icon: Icons.info_outline,
-                        iconColor: Colors.blue,
-                        bgColor: Colors.blue.withValues(alpha: 0.15),
-                        destination: const SettingsAboutScreen(),
-                      ),
-                    ],
-                  ),
                 ),
-              ]),
+              ),
             ),
           ),
         ],
@@ -107,6 +129,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildMenuTile(
     BuildContext context, {
+    required WidgetRef ref,
     required SettingsState settings,
     required String title,
     required String subtitle,
@@ -114,9 +137,19 @@ class SettingsScreen extends ConsumerWidget {
     required Color iconColor,
     required Color bgColor,
     required Widget destination,
+    WebRightPaneView? webView,
+    bool isSelected = false,
   }) {
     final theme = Theme.of(context);
     return ListTile(
+      selected: isSelected,
+      selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isSelected
+            ? BorderSide(color: theme.colorScheme.primary, width: 1.5)
+            : BorderSide.none,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       leading: CircleAvatar(
         backgroundColor: bgColor,
@@ -140,16 +173,22 @@ class SettingsScreen extends ConsumerWidget {
         if (settings.hapticFeedbackEnabled) {
           HapticFeedback.lightImpact();
         }
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => destination),
-        );
+        final isWide = MediaQuery.sizeOf(context).width >= 640;
+        if (isWide && webView != null) {
+          ref.read(webLayoutProvider.notifier).openSettingsDetail(webView);
+        } else {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => destination),
+          );
+        }
       },
     );
   }
 }
 
 class SettingsGeneralScreen extends ConsumerWidget {
-  const SettingsGeneralScreen({super.key});
+  final VoidCallback? onClose;
+  const SettingsGeneralScreen({super.key, this.onClose});
 
   void _showResetConfirmation(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -210,6 +249,103 @@ class SettingsGeneralScreen extends ConsumerWidget {
     );
   }
 
+  void _showLoadSampleConfirmation(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isEs = l10n.localeName == 'es';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(Icons.science_outlined, size: 40, color: theme.colorScheme.primary),
+        title: Text(isEs ? 'Cargar datos de ejemplo' : 'Load sample data'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isEs
+                  ? 'Esta acción cargará ingredientes culinarios y recetas completas (con pasos, temporizadores y márgenes de ganancia) para probar la aplicación.'
+                  : 'This will load culinary ingredients and full recipes (with steps, timers, and profit margins) to test the application.',
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isEs
+                  ? '¿Cómo deseas cargar los datos?'
+                  : 'How would you like to load the data?',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              isEs ? 'Cancelar' : 'Cancel',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+          OutlinedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _executeLoadSample(context, ref, clearFirst: false);
+            },
+            child: Text(isEs ? 'Añadir a los actuales' : 'Add to current'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _executeLoadSample(context, ref, clearFirst: true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+            ),
+            child: Text(isEs ? 'Reemplazar todo' : 'Replace all'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _executeLoadSample(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool clearFirst,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final settings = ref.read(settingsProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final isEs = l10n.localeName == 'es';
+
+    try {
+      if (settings.hapticFeedbackEnabled) {
+        HapticFeedback.mediumImpact();
+      }
+      final db = ref.read(databaseProvider);
+      final result = await loadSampleData(db, clearFirst: clearFirst);
+      ref.invalidate(recipesStreamProvider);
+      ref.invalidate(recipesWithFinancialsStreamProvider);
+      ref.invalidate(ingredientsStreamProvider);
+      ref.invalidate(unitsProvider);
+      ref.invalidate(unitsStreamProvider);
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            isEs
+                ? 'Datos de ejemplo cargados: ${result.recipesAdded} recetas y ${result.ingredientsAdded} ingredientes'
+                : 'Sample data loaded: ${result.recipesAdded} recipes and ${result.ingredientsAdded} ingredients',
+          ),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -221,10 +357,20 @@ class SettingsGeneralScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.settings_general),
         centerTitle: true,
+        leading: onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                onPressed: onClose,
+              )
+            : null,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(22.0),
-        child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 820),
+            child: Column(
           children: [
             Card(
               elevation: 0,
@@ -264,6 +410,32 @@ class SettingsGeneralScreen extends ConsumerWidget {
                   ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                      child: Icon(Icons.science_outlined, color: theme.colorScheme.primary),
+                    ),
+                    title: Text(
+                      l10n.localeName == 'es' ? 'Cargar datos de ejemplo' : 'Load sample data',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      l10n.localeName == 'es'
+                          ? 'Carga ingredientes y recetas de prueba para evaluar la app'
+                          : 'Load test ingredients and recipes to evaluate the app',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    onTap: () {
+                      if (settings.hapticFeedbackEnabled) {
+                        HapticFeedback.lightImpact();
+                      }
+                      _showLoadSampleConfirmation(context, ref);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 20, endIndent: 20),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    leading: CircleAvatar(
                       backgroundColor: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
                       child: Icon(Icons.delete_forever, color: theme.colorScheme.error),
                     ),
@@ -290,12 +462,15 @@ class SettingsGeneralScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
 
 class SettingsStylesScreen extends ConsumerWidget {
-  const SettingsStylesScreen({super.key});
+  final VoidCallback? onClose;
+  const SettingsStylesScreen({super.key, this.onClose});
 
   final List<Color> _accentColors = const [
     Colors.deepPurple,
@@ -390,10 +565,20 @@ class SettingsStylesScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.settings_styles_title),
         centerTitle: true,
+        leading: onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                onPressed: onClose,
+              )
+            : null,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 820),
+            child: Column(
           children: [
             // 1. Theme & Color Palette
             buildSectionCard(
@@ -758,12 +943,15 @@ class SettingsStylesScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
 
 class SettingsLocaleScreen extends ConsumerWidget {
-  const SettingsLocaleScreen({super.key});
+  final VoidCallback? onClose;
+  const SettingsLocaleScreen({super.key, this.onClose});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -776,10 +964,20 @@ class SettingsLocaleScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.settings_locale_title),
         centerTitle: true,
+        leading: onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                onPressed: onClose,
+              )
+            : null,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(22.0),
-        child: Card(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 820),
+            child: Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -991,12 +1189,15 @@ class SettingsLocaleScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
 
 class SettingsAboutScreen extends ConsumerWidget {
-  const SettingsAboutScreen({super.key});
+  final VoidCallback? onClose;
+  const SettingsAboutScreen({super.key, this.onClose});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1007,31 +1208,43 @@ class SettingsAboutScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.settings_about_app_title),
         centerTitle: true,
+        leading: onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                onPressed: onClose,
+              )
+            : null,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(22.0),
-        child: Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-            ),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-              child: Icon(Icons.info_outline, color: theme.colorScheme.primary),
-            ),
-            title: Text(
-              l10n.settings_about,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            trailing: Text(
-              '${l10n.settings_version} 1.0.0+1',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 820),
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                ),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: CircleAvatar(
+                  backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                  child: Icon(Icons.info_outline, color: theme.colorScheme.primary),
+                ),
+                title: Text(
+                  l10n.settings_about,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                trailing: Text(
+                  '${l10n.settings_version} 1.0.0+1',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
             ),
           ),
