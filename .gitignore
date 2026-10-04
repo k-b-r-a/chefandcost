@@ -48,3 +48,4 @@ app.*.map.json
 .aider.tags.cache.v4
 .agents
 .firebase/
+*.apk
