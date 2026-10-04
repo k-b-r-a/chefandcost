@@ -1,1 +1,68 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"chefycost","appId":"1:194514517992:android:d4202c981e2a718d9bae5d","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"chefycost","configurations":{"android":"1:194514517992:android:d4202c981e2a718d9bae5d","ios":"1:194514517992:ios:635a898ca8c7658e9bae5d","macos":"1:194514517992:ios:635a898ca8c7658e9bae5d","web":"1:194514517992:web:c03bc87d5fe1ce309bae5d","windows":"1:194514517992:web:4c80178f12dd20069bae5d"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "chefycost",
+          "appId": "1:194514517992:android:d4202c981e2a718d9bae5d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "chefycost",
+          "configurations": {
+            "android": "1:194514517992:android:d4202c981e2a718d9bae5d",
+            "ios": "1:194514517992:ios:635a898ca8c7658e9bae5d",
+            "macos": "1:194514517992:ios:635a898ca8c7658e9bae5d",
+            "web": "1:194514517992:web:c03bc87d5fe1ce309bae5d",
+            "windows": "1:194514517992:web:4c80178f12dd20069bae5d"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Cross-Origin-Opener-Policy",
+            "value": "same-origin-allow-popups"
+          }
+        ]
+      },
+      {
+        "source": "index.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "flutter_service_worker.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

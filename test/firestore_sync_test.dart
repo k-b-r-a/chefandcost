@@ -26,6 +26,21 @@ class MockFirestoreCloudSyncNotifier extends CloudSyncNotifier {
   Future<void> checkStatus() async {}
 }
 
+class MockFirestoreLoggedOutCloudSyncNotifier extends CloudSyncNotifier {
+  @override
+  CloudSyncState build() {
+    return CloudSyncState(
+      signedIn: false,
+      email: null,
+      loading: false,
+      storageType: CloudSyncStorageType.firestore,
+    );
+  }
+
+  @override
+  Future<void> checkStatus() async {}
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -404,7 +419,7 @@ void main() {
   });
 
   group('CloudSyncScreen Firestore UI Integration', () {
-    testWidgets('Selecting Firestore tab displays Spark architecture info', (tester) async {
+    testWidgets('Selecting Firestore tab when signed in displays profile card and sync info', (tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -426,11 +441,61 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Verify Firestore UI elements appear
+      // Verify Firestore connected card elements appear
+      expect(find.textContaining('Connected to Firestore'), findsOneWidget);
+      expect(find.textContaining('Sync ID: user-test-123'), findsOneWidget);
+      expect(find.text('Sign Out'), findsOneWidget);
+
+      // Verify Spark architecture info
       expect(find.textContaining('Spark Plan Architecture'), findsOneWidget);
       expect(find.textContaining('Differential Queries'), findsOneWidget);
       expect(find.textContaining('Embedded Ingredients'), findsOneWidget);
       expect(find.textContaining('Non-Destructive LWW'), findsOneWidget);
+    });
+
+    testWidgets('Selecting Firestore tab when NOT signed in displays inline Auth Card with Google & Email', (tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            cloudSyncProvider.overrideWith(MockFirestoreLoggedOutCloudSyncNotifier.new),
+          ],
+          child: const MaterialApp(
+            locale: Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: CloudSyncScreen(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Verify inline auth card elements appear
+      expect(find.text('Connect Your Account'), findsOneWidget);
+      expect(find.text('Continue with Google'), findsOneWidget);
+      expect(find.text('Sign In'), findsNWidgets(2)); // Segmented toggle & submit button
+      expect(find.text('Create Account'), findsOneWidget);
+      expect(find.text('Email address'), findsOneWidget);
+      expect(find.text('Password'), findsOneWidget);
+      expect(find.text('Forgot password?'), findsOneWidget);
+
+      // Tap 'Create Account' in segmented button
+      await tester.tap(find.text('Create Account'));
+      await tester.pump();
+
+      // Forgot password link should disappear in Register mode
+      expect(find.text('Forgot password?'), findsNothing);
+
+      // Trigger submit with empty fields to verify inline error validation
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Account'));
+      await tester.pump();
+
+      expect(find.text('Please enter a valid email address.'), findsOneWidget);
     });
   });
 }

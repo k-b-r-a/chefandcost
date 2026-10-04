@@ -100,16 +100,6 @@ class FirestoreSyncService {
     }
   }
 
-  /// Signs in anonymously to establish a unique cloud sync session.
-  Future<String> signInAnonymously() async {
-    if (!isConfigured) {
-      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
-    }
-    final cred = await _auth.signInAnonymously();
-    final uid = cred.user!.uid;
-    await setCustomUserId(uid);
-    return uid;
-  }
 
   /// Signs in with Email and Password.
   Future<UserCredential> signInWithEmail(String email, String password) async {

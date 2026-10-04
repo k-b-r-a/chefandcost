@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -20,10 +19,18 @@ class CloudSyncScreen extends ConsumerStatefulWidget {
 
 class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isRegisterMode = false;
+  bool _obscurePassword = true;
+  String? _localError;
+  String? _localSuccess;
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -104,20 +111,30 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                         children: [
                           _buildSettingsCard(syncState, syncNotifier, theme, l10n),
                           const SizedBox(height: 24),
-                          _buildConnectionHeader(syncState, syncNotifier, theme, l10n),
-                          const SizedBox(height: 24),
-                          if (syncState.signedIn) ...[
-                            _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
+                          if (syncState.storageType == CloudSyncStorageType.firestore) ...[
+                            if (syncState.signedIn) ...[
+                              _buildFirestoreConnectedCard(syncState, syncNotifier, theme, l10n),
+                              const SizedBox(height: 24),
+                              _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
+                              const SizedBox(height: 24),
+                              _buildFirestoreSyncInfoCard(theme, l10n),
+                            ] else ...[
+                              _buildFirestoreAuthCard(syncState, syncNotifier, theme, l10n),
+                              const SizedBox(height: 24),
+                              _buildFirestoreSyncInfoCard(theme, l10n),
+                            ],
+                          ] else ...[
+                            _buildConnectionHeader(syncState, syncNotifier, theme, l10n),
                             const SizedBox(height: 24),
-                            if (syncState.storageType != CloudSyncStorageType.firestore) ...[
+                            if (syncState.signedIn) ...[
+                              _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
+                              const SizedBox(height: 24),
                               _buildBackupsListHeader(theme, l10n),
                               const SizedBox(height: 12),
                               if (syncState.backups.isEmpty)
                                 _buildEmptyBackupsPlaceholder(theme, l10n)
                               else
                                 _buildBackupsList(syncState, syncNotifier, theme, l10n),
-                            ] else ...[
-                              _buildFirestoreSyncInfoCard(theme, l10n),
                             ],
                           ],
                         ],
@@ -192,6 +209,10 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               ],
               selected: {state.storageType},
               onSelectionChanged: (Set<CloudSyncStorageType> newSelection) {
+                setState(() {
+                  _localError = null;
+                  _localSuccess = null;
+                });
                 notifier.setStorageType(newSelection.first);
               },
             ),
@@ -272,38 +293,18 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     AppLocalizations l10n,
   ) {
     final isLocal = state.storageType == CloudSyncStorageType.localDirectory;
-    final isFirestore = state.storageType == CloudSyncStorageType.firestore;
 
-    IconData headerIcon;
-    if (isFirestore) {
-      headerIcon = state.signedIn ? Icons.cloud_sync : Icons.cloud_off_outlined;
-    } else if (isLocal) {
-      headerIcon = Icons.folder_shared_outlined;
-    } else {
-      headerIcon = state.signedIn ? Icons.cloud_done_outlined : Icons.backup_outlined;
-    }
+    final IconData headerIcon = isLocal
+        ? Icons.folder_shared_outlined
+        : (state.signedIn ? Icons.cloud_done_outlined : Icons.backup_outlined);
 
-    String headerTitle;
-    if (isFirestore) {
-      headerTitle = state.signedIn
-          ? (l10n.localeName == 'es' ? 'Conectado a Firestore' : 'Connected to Firestore')
-          : (l10n.localeName == 'es' ? 'Firestore no conectado' : 'Firestore Not Connected');
-    } else if (isLocal) {
-      headerTitle = l10n.cloud_sync_sandbox_badge;
-    } else {
-      headerTitle = state.signedIn ? l10n.cloud_sync_connected : l10n.cloud_sync_disconnected;
-    }
+    final String headerTitle = isLocal
+        ? l10n.cloud_sync_sandbox_badge
+        : (state.signedIn ? l10n.cloud_sync_connected : l10n.cloud_sync_disconnected);
 
-    String headerDesc;
-    if (isFirestore) {
-      headerDesc = l10n.localeName == 'es'
-          ? 'Sincronización manual bajo demanda con resolución de conflictos último-en-escribir (LWW). Los cambios locales recientes se conservan.'
-          : 'Manual on-demand sync with Last-Write-Wins (LWW) conflict resolution. Recent local edits are never wiped.';
-    } else if (isLocal) {
-      headerDesc = l10n.cloud_sync_sandbox_desc;
-    } else {
-      headerDesc = l10n.cloud_sync_desc;
-    }
+    final String headerDesc = isLocal
+        ? l10n.cloud_sync_sandbox_desc
+        : l10n.cloud_sync_desc;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -349,6 +350,12 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Icon(
+                    Icons.account_circle_outlined,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       state.email!,
@@ -360,25 +367,6 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (isFirestore) ...[
-                    const SizedBox(width: 6),
-                    IconButton(
-                      icon: const Icon(Icons.copy, size: 16),
-                      tooltip: l10n.localeName == 'es' ? 'Copiar ID' : 'Copy Sync ID',
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: state.email ?? ''));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(l10n.localeName == 'es'
-                                ? 'ID copiado al portapapeles'
-                                : 'Sync ID copied to clipboard'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
                 ],
               ),
             ],
@@ -394,127 +382,41 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             if (!isLocal) ...[
               const SizedBox(height: 20),
               if (!state.signedIn)
-                if (isFirestore)
-                  Column(
-                    children: [
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () => _showEmailAuthDialog(context, notifier, l10n),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
-                            ),
-                            icon: const Icon(Icons.email_outlined),
-                            label: Text(
-                              l10n.localeName == 'es' ? 'Acceder con Email' : 'Sign in with Email',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          FilledButton.tonalIcon(
-                            onPressed: () => notifier.signInWithGoogle(),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            icon: const Icon(Icons.g_mobiledata, size: 28),
-                            label: Text(
-                              l10n.localeName == 'es' ? 'Continuar con Google' : 'Continue with Google',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          TextButton.icon(
-                            onPressed: () => notifier.signIn(),
-                            icon: const Icon(Icons.person_outline, size: 18),
-                            label: Text(
-                              l10n.localeName == 'es' ? 'Entrar como Invitado' : 'Continue as Guest',
-                            ),
-                          ),
-                          TextButton.icon(
-                            onPressed: () => _showSetSyncIdDialog(context, notifier, l10n),
-                            icon: const Icon(Icons.pin_outlined, size: 18),
-                            label: Text(
-                              l10n.localeName == 'es' ? 'Ingresar Sync ID' : 'Set Sync ID',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                else
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () => notifier.signIn(),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        icon: const Icon(Icons.login),
-                        label: Text(
-                          l10n.cloud_sync_connect_btn,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  )
+                ElevatedButton.icon(
+                  onPressed: () => notifier.signIn(),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.login),
+                  label: Text(
+                    l10n.cloud_sync_connect_btn,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
               else
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   alignment: WrapAlignment.center,
                   children: [
-                    if (isFirestore)
-                      OutlinedButton.icon(
-                        onPressed: () => _showSetSyncIdDialog(context, notifier, l10n),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                    OutlinedButton.icon(
+                      onPressed: () => notifier.signIn(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        icon: const Icon(Icons.sync_alt),
-                        label: Text(l10n.localeName == 'es' ? 'Cambiar Sync ID' : 'Change Sync ID'),
-                      )
-                    else
-                      OutlinedButton.icon(
-                        onPressed: () => notifier.signIn(),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        icon: const Icon(Icons.switch_account),
-                        label: Text(l10n.localeName == 'es' ? 'Cambiar cuenta' : 'Switch account'),
                       ),
+                      icon: const Icon(Icons.switch_account),
+                      label: Text(l10n.localeName == 'es' ? 'Cambiar cuenta' : 'Switch account'),
+                    ),
                     OutlinedButton.icon(
                       onPressed: () => notifier.signOut(),
                       style: OutlinedButton.styleFrom(
@@ -1055,197 +957,468 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     );
   }
 
-  void _showEmailAuthDialog(
-    BuildContext context,
+  Widget _buildFirestoreAuthCard(
+    CloudSyncState state,
     CloudSyncNotifier notifier,
+    ThemeData theme,
     AppLocalizations l10n,
   ) {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    bool isRegister = false;
-    bool obscurePassword = true;
-    String? localError;
+    final isEs = l10n.localeName == 'es';
+    final hasError = _localError != null || (state.errorMessage != null && !state.signedIn);
+    final errorText = _localError ?? state.errorMessage;
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          final isEs = l10n.localeName == 'es';
-          return AlertDialog(
-            title: Text(
-              isRegister
-                  ? (isEs ? 'Crear cuenta' : 'Create Account')
-                  : (isEs ? 'Iniciar sesión con Email' : 'Sign in with Email'),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SegmentedButton<bool>(
-                    segments: [
-                      ButtonSegment<bool>(
-                        value: false,
-                        label: Text(isEs ? 'Iniciar sesión' : 'Sign In'),
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top branding / header
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
+                  child: Icon(
+                    Icons.cloud_sync_outlined,
+                    color: theme.colorScheme.primary,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isEs ? 'Conecta tu cuenta' : 'Connect Your Account',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      ButtonSegment<bool>(
-                        value: true,
-                        label: Text(isEs ? 'Registrarse' : 'Register'),
+                      const SizedBox(height: 2),
+                      Text(
+                        isEs
+                            ? 'Sincroniza tus recetas automáticamente entre Web y Móvil'
+                            : 'Sync your recipes in real-time across Web and Mobile',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
-                    selected: {isRegister},
-                    onSelectionChanged: (Set<bool> newSelection) {
-                      setDialogState(() {
-                        isRegister = newSelection.first;
-                        localError = null;
-                      });
-                    },
                   ),
-                  const SizedBox(height: 18),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      labelText: isEs ? 'Correo electrónico' : 'Email address',
-                      hintText: 'ejemplo@correo.com',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      border: const OutlineInputBorder(),
-                    ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+
+            // Google Sign-In Button
+            SizedBox(
+              height: 48,
+              child: OutlinedButton(
+                onPressed: state.loading
+                    ? null
+                    : () {
+                        setState(() {
+                          _localError = null;
+                          _localSuccess = null;
+                        });
+                        notifier.signInWithGoogle();
+                      },
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: isEs ? 'Contraseña' : 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        ),
-                        onPressed: () {
-                          setDialogState(() {
-                            obscurePassword = !obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
+                  side: BorderSide(
+                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.7),
                   ),
-                  if (localError != null) ...[
-                    const SizedBox(height: 10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildGoogleIcon(),
+                    const SizedBox(width: 12),
                     Text(
-                      localError!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                        fontSize: 13,
+                      isEs ? 'Continuar con Google' : 'Continue with Google',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
-                  if (!isRegister) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          final email = emailController.text.trim();
-                          if (email.isEmpty || !email.contains('@')) {
-                            setDialogState(() {
-                              localError = isEs
-                                  ? 'Ingresa tu correo para restablecer la contraseña.'
-                                  : 'Enter your email to reset your password.';
-                            });
-                            return;
-                          }
-                          Navigator.of(context).pop();
-                          notifier.sendPasswordReset(email);
-                        },
-                        child: Text(
-                          isEs ? '¿Olvidaste tu contraseña?' : 'Forgot password?',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.discard_button),
+            const SizedBox(height: 20),
+
+            // Divider
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  child: Text(
+                    isEs ? 'o con correo electrónico' : 'or with email',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // Mode Toggle (Iniciar Sesión vs Registrarse)
+            SegmentedButton<bool>(
+              segments: [
+                ButtonSegment<bool>(
+                  value: false,
+                  icon: const Icon(Icons.login, size: 18),
+                  label: Text(isEs ? 'Iniciar Sesión' : 'Sign In'),
+                ),
+                ButtonSegment<bool>(
+                  value: true,
+                  icon: const Icon(Icons.person_add_outlined, size: 18),
+                  label: Text(isEs ? 'Crear Cuenta' : 'Create Account'),
+                ),
+              ],
+              selected: {_isRegisterMode},
+              onSelectionChanged: (newSelection) {
+                setState(() {
+                  _isRegisterMode = newSelection.first;
+                  _localError = null;
+                  _localSuccess = null;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Email Field
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                labelText: isEs ? 'Correo electrónico' : 'Email address',
+                hintText: 'ejemplo@correo.com',
+                prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                suffixIcon: _emailController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          setState(() {
+                            _emailController.clear();
+                          });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  final email = emailController.text.trim();
-                  final password = passwordController.text;
+              onChanged: (_) {
+                if (_localError != null) setState(() => _localError = null);
+              },
+            ),
+            const SizedBox(height: 12),
 
-                  if (email.isEmpty || !email.contains('@')) {
-                    setDialogState(() {
-                      localError = isEs
-                          ? 'Por favor ingresa un correo electrónico válido.'
-                          : 'Please enter a valid email address.';
+            // Password Field
+            TextField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _handleEmailAuth(notifier, isEs),
+              decoration: InputDecoration(
+                labelText: isEs ? 'Contraseña' : 'Password',
+                hintText: isEs ? 'Mínimo 6 caracteres' : 'At least 6 characters',
+                prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
                     });
-                    return;
-                  }
+                  },
+                ),
+              ),
+              onChanged: (_) {
+                if (_localError != null) setState(() => _localError = null);
+              },
+            ),
 
-                  if (password.length < 6) {
-                    setDialogState(() {
-                      localError = isEs
-                          ? 'La contraseña debe tener al menos 6 caracteres.'
-                          : 'Password must be at least 6 characters.';
-                    });
-                    return;
-                  }
-
-                  Navigator.of(context).pop();
-                  notifier.signInWithEmail(
-                    email: email,
-                    password: password,
-                    isRegister: isRegister,
-                  );
-                },
-                child: Text(
-                  isRegister
-                      ? (isEs ? 'Crear cuenta' : 'Create Account')
-                      : (isEs ? 'Ingresar' : 'Sign In'),
+            // Forgot Password (only in Sign In mode)
+            if (!_isRegisterMode) ...[
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: state.loading ? null : () => _handleForgotPassword(notifier, isEs),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                  child: Text(
+                    isEs ? '¿Olvidaste tu contraseña?' : 'Forgot password?',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ],
-          );
-        },
+
+            // Local or Server Error Banner
+            if (hasError && errorText != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.colorScheme.error.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 18,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        errorText,
+                        style: TextStyle(
+                          color: theme.colorScheme.error,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Local Success Banner
+            if (_localSuccess != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      size: 18,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _localSuccess!,
+                        style: TextStyle(
+                          color: Colors.green.shade800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 18),
+
+            // Submit Button
+            SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: state.loading ? null : () => _handleEmailAuth(notifier, isEs),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                icon: state.loading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(
+                        _isRegisterMode ? Icons.person_add_outlined : Icons.login,
+                        size: 20,
+                      ),
+                label: Text(
+                  _isRegisterMode
+                      ? (isEs ? 'Crear Cuenta' : 'Create Account')
+                      : (isEs ? 'Iniciar Sesión' : 'Sign In'),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _showSetSyncIdDialog(BuildContext context, CloudSyncNotifier notifier, AppLocalizations l10n) {
-    final textController = TextEditingController();
+  Widget _buildFirestoreConnectedCard(
+    CloudSyncState state,
+    CloudSyncNotifier notifier,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    final isEs = l10n.localeName == 'es';
+    final email = state.email ?? (isEs ? 'Usuario autenticado' : 'Authenticated user');
+    final initial = email.isNotEmpty ? email[0].toUpperCase() : 'U';
+
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: theme.colorScheme.primaryContainer,
+              child: Text(
+                initial,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        isEs ? 'Conectado a Firestore' : 'Connected to Firestore',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.error,
+                side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              icon: const Icon(Icons.logout, size: 18),
+              label: Text(
+                isEs ? 'Cerrar sesión' : 'Sign Out',
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+              onPressed: () => _showSignOutConfirmDialog(context, notifier, l10n),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSignOutConfirmDialog(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+  ) {
+    final isEs = l10n.localeName == 'es';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.localeName == 'es' ? 'ID de Sincronización' : 'Sync ID / Pairing Code'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.localeName == 'es'
-                  ? 'Ingresa el mismo ID de sincronización en tu navegador Web y en tu teléfono móvil para vincular ambas instancias.'
-                  : 'Enter the same Sync ID on your Web browser and mobile phone to pair both devices.',
-              style: const TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: textController,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: l10n.localeName == 'es' ? 'ID de sincronización' : 'Sync ID',
-                hintText: 'e.g. my-kitchen-sync-123',
-              ),
-            ),
-          ],
+        title: Text(isEs ? 'Cerrar sesión' : 'Sign Out'),
+        content: Text(
+          isEs
+              ? '¿Deseas desconectar tu cuenta de este dispositivo? Las recetas locales no se borrarán.'
+              : 'Do you want to disconnect your account from this device? Local recipes will not be deleted.',
         ),
         actions: [
           TextButton(
@@ -1253,16 +1426,98 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             child: Text(l10n.discard_button),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
             onPressed: () {
-              final text = textController.text.trim();
-              if (text.isNotEmpty) {
-                notifier.setCustomFirestoreUserId(text);
-              }
               Navigator.of(context).pop();
+              notifier.signOut();
             },
-            child: Text(l10n.save_button),
+            child: Text(isEs ? 'Cerrar sesión' : 'Sign Out'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _handleEmailAuth(CloudSyncNotifier notifier, bool isEs) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() {
+        _localError = isEs
+            ? 'Por favor ingresa un correo electrónico válido.'
+            : 'Please enter a valid email address.';
+        _localSuccess = null;
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      setState(() {
+        _localError = isEs
+            ? 'La contraseña debe tener al menos 6 caracteres.'
+            : 'Password must be at least 6 characters.';
+        _localSuccess = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _localError = null;
+      _localSuccess = null;
+    });
+
+    notifier.signInWithEmail(
+      email: email,
+      password: password,
+      isRegister: _isRegisterMode,
+    );
+  }
+
+  void _handleForgotPassword(CloudSyncNotifier notifier, bool isEs) {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() {
+        _localError = isEs
+            ? 'Ingresa tu correo arriba para recibir el enlace de restablecimiento.'
+            : 'Enter your email above to receive the password reset link.';
+        _localSuccess = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _localError = null;
+      _localSuccess = isEs
+          ? 'Enlace enviado a $email. Revisa tu bandeja de entrada o spam.'
+          : 'Reset link sent to $email. Check your inbox or spam.';
+    });
+
+    notifier.sendPasswordReset(email);
+  }
+
+  Widget _buildGoogleIcon() {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey.shade300, width: 0.5),
+      ),
+      child: const Center(
+        child: Text(
+          'G',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF4285F4),
+            fontFamily: 'sans-serif',
+          ),
+        ),
       ),
     );
   }

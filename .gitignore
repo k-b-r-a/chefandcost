@@ -47,3 +47,4 @@ app.*.map.json
 .env
 .aider.tags.cache.v4
 .agents
+.firebase/

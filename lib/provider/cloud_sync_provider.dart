@@ -67,10 +67,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       final storageType = await _syncService.getStorageType();
 
       if (storageType == CloudSyncStorageType.firestore) {
-        final activeUid = await _firestoreService.getActiveUserId();
-        final signedIn = _firestoreService.isConfigured && (activeUid != null && activeUid.isNotEmpty);
-        final email = _firestoreService.authCurrentUser?.email ??
-            (activeUid != null ? 'Sync ID: $activeUid' : null);
+        final user = _firestoreService.authCurrentUser;
+        final signedIn = _firestoreService.isConfigured && user != null;
+        final email = user?.email;
         state = state.copyWith(
           signedIn: signedIn,
           email: email,
@@ -124,10 +123,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     await _syncService.setStorageType(type);
     
     if (type == CloudSyncStorageType.firestore) {
-      final activeUid = await _firestoreService.getActiveUserId();
-      final signedIn = _firestoreService.isConfigured && (activeUid != null && activeUid.isNotEmpty);
-      final email = _firestoreService.authCurrentUser?.email ??
-          (activeUid != null ? 'Sync ID: $activeUid' : null);
+      final user = _firestoreService.authCurrentUser;
+      final signedIn = _firestoreService.isConfigured && user != null;
+      final email = user?.email;
       state = CloudSyncState(
         storageType: type,
         signedIn: signedIn,
@@ -173,13 +171,13 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         email: userEmail,
         loading: false,
         successMessage: isRegister
-            ? 'Account created and connected: $userEmail'
-            : 'Signed in as $userEmail',
+            ? '¡Cuenta creada exitosamente! ($userEmail)'
+            : 'Sesión iniciada como $userEmail',
       );
     } catch (e) {
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Authentication failed: ${_formatAuthError(e)}',
+        errorMessage: _formatAuthError(e),
       );
     }
   }
@@ -201,12 +199,12 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         signedIn: true,
         email: userEmail,
         loading: false,
-        successMessage: 'Connected to Firestore via Google: $userEmail',
+        successMessage: 'Conectado a Firestore con Google: $userEmail',
       );
     } catch (e) {
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Google Sign-In failed: ${_formatAuthError(e)}',
+        errorMessage: _formatAuthError(e),
       );
     }
   }
@@ -218,12 +216,12 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       await _firestoreService.sendPasswordReset(email);
       state = state.copyWith(
         loading: false,
-        successMessage: 'Password reset link sent to $email',
+        successMessage: 'Enlace para restablecer contraseña enviado a $email',
       );
     } catch (e) {
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Password reset failed: ${_formatAuthError(e)}',
+        errorMessage: _formatAuthError(e),
       );
     }
   }
@@ -232,21 +230,24 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'user-not-found':
-          return 'No account found with this email.';
+          return 'No existe ninguna cuenta con este correo. Cambia a "Crear cuenta" para registrarte.';
         case 'wrong-password':
-          return 'Incorrect password.';
+          return 'Contraseña incorrecta. Por favor verifica tus datos.';
         case 'invalid-credential':
-          return 'Invalid email or password.';
+          return 'Correo o contraseña incorrectos. Si aún no tienes cuenta, selecciona "Crear cuenta".';
         case 'email-already-in-use':
-          return 'An account already exists for this email.';
+          return 'Ya existe una cuenta con este correo electrónico. Cambia a "Iniciar sesión".';
         case 'weak-password':
-          return 'Password should be at least 6 characters.';
+          return 'La contraseña debe tener al menos 6 caracteres.';
         case 'invalid-email':
-          return 'Invalid email address.';
+          return 'El formato del correo electrónico es inválido.';
+        case 'admin-restricted-operation':
         case 'operation-not-allowed':
-          return 'This sign-in method is not enabled in the Firebase Console.';
+          return 'Este método no está activado en Firebase. En Firebase Console > Authentication > Sign-in method activa "Correo/Contraseña" o "Google".';
         case 'popup-closed-by-user':
-          return 'Sign-in cancelled by user.';
+          return 'Inicio de sesión con Google cancelado.';
+        case 'user-disabled':
+          return 'Esta cuenta ha sido inhabilitada.';
         default:
           return error.message ?? error.code;
       }
@@ -259,21 +260,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     try {
       final storageType = await _syncService.getStorageType();
       if (storageType == CloudSyncStorageType.firestore) {
-        if (!_firestoreService.isConfigured) {
-          state = state.copyWith(
-            loading: false,
-            errorMessage: 'Firebase is not initialized. Please configure firebase_options.dart.',
-          );
-          return;
-        }
-
-        // Direct anonymous sign-in session for guest sync
-        final uid = await _firestoreService.signInAnonymously();
         state = state.copyWith(
-          signedIn: true,
-          email: 'Sync ID: $uid',
           loading: false,
-          successMessage: 'Connected to Firestore guest session.',
+          errorMessage: 'Please sign in with Email or Google.',
         );
         return;
       }
@@ -575,18 +564,16 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         return null;
       }
 
-      String? activeUid = customUserId ?? await _firestoreService.getActiveUserId();
-      if (activeUid == null || activeUid.isEmpty) {
-        try {
-          activeUid = await _firestoreService.signInAnonymously();
-        } catch (e) {
-          state = state.copyWith(
-            loading: false,
-            errorMessage: 'Unable to start Firestore session: $e',
-          );
-          return null;
-        }
+      final currentUser = _firestoreService.authCurrentUser;
+      if (currentUser == null) {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: 'Please sign in with Email or Google before syncing.',
+        );
+        return null;
       }
+
+      final activeUid = customUserId ?? currentUser.uid;
 
       final localDb = ref.read(databaseProvider);
       final mergeResult = await _firestoreService.syncTwoWay(
