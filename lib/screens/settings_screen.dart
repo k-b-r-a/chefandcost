@@ -8,6 +8,7 @@ import '../provider/database_provider.dart';
 import 'cloud_sync_screen.dart';
 import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
+import '../widgets/app_logo.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -1233,7 +1234,12 @@ class SettingsAboutScreen extends ConsumerWidget {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 leading: CircleAvatar(
                   backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-                  child: Icon(Icons.info_outline, color: theme.colorScheme.primary),
+                  child: Center(
+                    child: AppLogo(
+                      size: 24,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
                 ),
                 title: const Text(
                   'Chef&Cost',

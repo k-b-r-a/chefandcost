@@ -18,6 +18,7 @@ import 'screens/cloud_sync_screen.dart';
 import 'provider/settings_provider.dart';
 import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
+import 'widgets/app_logo.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -420,10 +421,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  Icons.restaurant_menu,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  size: 26,
+                child: Center(
+                  child: AppLogo(
+                    size: 28,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
