@@ -695,7 +695,7 @@ class _GlobalIngredientPickerSheetState
                                           );
                                         },
                                         loading: () => const Text('...'),
-                                        error: (_, _) => const Text('Error'),
+                                        error: (_, _) => Text(l10n.error_text),
                                       ),
                                       trailing: isAlreadyInRecipe
                                           ? const Icon(

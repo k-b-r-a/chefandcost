@@ -52,7 +52,7 @@ class SettingsScreen extends ConsumerWidget {
                           ref: ref,
                           settings: settings,
                           title: l10n.settings_general,
-                          subtitle: l10n.localeName == 'es' ? 'Gestión de datos de la app' : 'App data management',
+                          subtitle: l10n.settings_category_data_subtitle,
                           icon: Icons.settings_applications_outlined,
                           iconColor: theme.colorScheme.primary,
                           bgColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
@@ -66,7 +66,7 @@ class SettingsScreen extends ConsumerWidget {
                           ref: ref,
                           settings: settings,
                           title: l10n.cloud_sync_title,
-                          subtitle: l10n.localeName == 'es' ? 'Respaldar y restaurar en Google Drive' : 'Back up and restore on Google Drive',
+                          subtitle: l10n.settings_category_backup_subtitle,
                           icon: Icons.cloud_sync_outlined,
                           iconColor: Colors.orange,
                           bgColor: Colors.orange.withValues(alpha: 0.15),
@@ -80,7 +80,7 @@ class SettingsScreen extends ConsumerWidget {
                           ref: ref,
                           settings: settings,
                           title: l10n.settings_styles_title,
-                          subtitle: l10n.localeName == 'es' ? 'Temas, colores y tamaño de letra' : 'Themes, colors and font size',
+                          subtitle: l10n.settings_category_themes_subtitle,
                           icon: Icons.palette_outlined,
                           iconColor: Colors.deepPurple,
                           bgColor: Colors.deepPurple.withValues(alpha: 0.15),
@@ -94,7 +94,7 @@ class SettingsScreen extends ConsumerWidget {
                           ref: ref,
                           settings: settings,
                           title: l10n.settings_locale_title,
-                          subtitle: l10n.localeName == 'es' ? 'Idioma y formato numérico' : 'Language and number formatting',
+                          subtitle: l10n.settings_category_locale_subtitle,
                           icon: Icons.translate,
                           iconColor: Colors.teal,
                           bgColor: Colors.teal.withValues(alpha: 0.15),
@@ -108,7 +108,7 @@ class SettingsScreen extends ConsumerWidget {
                           ref: ref,
                           settings: settings,
                           title: l10n.settings_about_app_title,
-                          subtitle: l10n.localeName == 'es' ? 'Versión e información' : 'Version and information',
+                          subtitle: l10n.settings_category_info_subtitle,
                           icon: Icons.info_outline,
                           iconColor: Colors.blue,
                           bgColor: Colors.blue.withValues(alpha: 0.15),
@@ -210,7 +210,8 @@ class SettingsGeneralScreen extends ConsumerWidget {
               Navigator.pop(context);
             },
             child: Text(
-              l10n.localeName == 'es' ? 'Cancelar' : 'Cancel',
+              l10n.discard_button,
+              softWrap: true,
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ),
@@ -231,11 +232,11 @@ class SettingsGeneralScreen extends ConsumerWidget {
                 ref.invalidate(unitsProvider);
 
                 messenger.showSnackBar(
-                  SnackBar(content: Text(successText)),
+                  SnackBar(content: Text(successText, softWrap: true)),
                 );
               } catch (e) {
                 messenger.showSnackBar(
-                  SnackBar(content: Text('Error: ${e.toString()}')),
+                  SnackBar(content: Text(l10n.error_prefix(e.toString()), softWrap: true)),
                 );
               }
             },
@@ -243,7 +244,7 @@ class SettingsGeneralScreen extends ConsumerWidget {
               backgroundColor: theme.colorScheme.error,
               foregroundColor: theme.colorScheme.onError,
             ),
-            child: Text(l10n.settings_reset_db),
+            child: Text(l10n.settings_reset_db, softWrap: true),
           ),
         ],
       ),
@@ -253,36 +254,22 @@ class SettingsGeneralScreen extends ConsumerWidget {
   void _showLoadSampleConfirmation(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final isEs = l10n.localeName == 'es';
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         icon: Icon(Icons.science_outlined, size: 40, color: theme.colorScheme.primary),
-        title: Text(isEs ? 'Cargar datos de ejemplo' : 'Load sample data'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isEs
-                  ? 'Esta acción cargará ingredientes culinarios y recetas completas (con pasos, temporizadores y márgenes de ganancia) para probar la aplicación.'
-                  : 'This will load culinary ingredients and full recipes (with steps, timers, and profit margins) to test the application.',
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isEs
-                  ? '¿Cómo deseas cargar los datos?'
-                  : 'How would you like to load the data?',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
+        title: Text(l10n.load_sample_data, softWrap: true),
+        content: Text(
+          l10n.settings_sample_data_dialog_message,
+          softWrap: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              isEs ? 'Cancelar' : 'Cancel',
+              l10n.discard_button,
+              softWrap: true,
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ),
@@ -291,7 +278,7 @@ class SettingsGeneralScreen extends ConsumerWidget {
               Navigator.pop(context);
               await _executeLoadSample(context, ref, clearFirst: false);
             },
-            child: Text(isEs ? 'Añadir a los actuales' : 'Add to current'),
+            child: Text(l10n.settings_sample_data_add_button, softWrap: true),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -302,7 +289,7 @@ class SettingsGeneralScreen extends ConsumerWidget {
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
             ),
-            child: Text(isEs ? 'Reemplazar todo' : 'Replace all'),
+            child: Text(l10n.settings_sample_data_replace_button, softWrap: true),
           ),
         ],
       ),
@@ -317,7 +304,6 @@ class SettingsGeneralScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.read(settingsProvider);
     final messenger = ScaffoldMessenger.of(context);
-    final isEs = l10n.localeName == 'es';
 
     try {
       if (settings.hapticFeedbackEnabled) {
@@ -331,18 +317,27 @@ class SettingsGeneralScreen extends ConsumerWidget {
       ref.invalidate(unitsProvider);
       ref.invalidate(unitsStreamProvider);
 
+      final snackbarMessage = clearFirst
+          ? l10n.settings_sample_data_replaced_snackbar(
+              result.recipesAdded,
+              result.ingredientsAdded,
+            )
+          : l10n.sample_data_loaded_snackbar(
+              result.recipesAdded,
+              result.ingredientsAdded,
+            );
+
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            isEs
-                ? 'Datos de ejemplo cargados: ${result.recipesAdded} recetas y ${result.ingredientsAdded} ingredientes'
-                : 'Sample data loaded: ${result.recipesAdded} recipes and ${result.ingredientsAdded} ingredients',
+            snackbarMessage,
+            softWrap: true,
           ),
         ),
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text(l10n.error_prefix(e.toString()), softWrap: true)),
       );
     }
   }
@@ -361,7 +356,7 @@ class SettingsGeneralScreen extends ConsumerWidget {
         leading: onClose != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                tooltip: l10n.back_to_home_tooltip,
                 onPressed: onClose,
               )
             : null,
@@ -391,10 +386,12 @@ class SettingsGeneralScreen extends ConsumerWidget {
                     ),
                     title: Text(
                       l10n.settings_haptic_feedback,
+                      softWrap: true,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
                       l10n.settings_haptic_feedback_desc,
+                      softWrap: true,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -415,13 +412,13 @@ class SettingsGeneralScreen extends ConsumerWidget {
                       child: Icon(Icons.science_outlined, color: theme.colorScheme.primary),
                     ),
                     title: Text(
-                      l10n.localeName == 'es' ? 'Cargar datos de ejemplo' : 'Load sample data',
+                      l10n.load_sample_data,
+                      softWrap: true,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      l10n.localeName == 'es'
-                          ? 'Carga ingredientes y recetas de prueba para evaluar la app'
-                          : 'Load test ingredients and recipes to evaluate the app',
+                      l10n.settings_sample_data_subtitle,
+                      softWrap: true,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -569,7 +566,7 @@ class SettingsStylesScreen extends ConsumerWidget {
         leading: onClose != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                tooltip: l10n.back_to_home_tooltip,
                 onPressed: onClose,
               )
             : null,
@@ -588,6 +585,7 @@ class SettingsStylesScreen extends ConsumerWidget {
               children: [
                 Text(
                   l10n.settings_theme_mode,
+                  softWrap: true,
                   style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -598,17 +596,17 @@ class SettingsStylesScreen extends ConsumerWidget {
                       ButtonSegment(
                         value: ThemeMode.system,
                         icon: const Icon(Icons.brightness_auto),
-                        label: Text(l10n.settings_theme_system),
+                        label: Text(l10n.settings_theme_system, softWrap: true),
                       ),
                       ButtonSegment(
                         value: ThemeMode.light,
                         icon: const Icon(Icons.light_mode),
-                        label: Text(l10n.settings_theme_light),
+                        label: Text(l10n.settings_theme_light, softWrap: true),
                       ),
                       ButtonSegment(
                         value: ThemeMode.dark,
                         icon: const Icon(Icons.dark_mode),
-                        label: Text(l10n.settings_theme_dark),
+                        label: Text(l10n.settings_theme_dark, softWrap: true),
                       ),
                     ],
                     selected: {settings.themeMode},
@@ -625,6 +623,7 @@ class SettingsStylesScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 Text(
                   l10n.settings_theme_color,
+                  softWrap: true,
                   style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -680,9 +679,8 @@ class SettingsStylesScreen extends ConsumerWidget {
                             const ChefAndCostText(fontSize: 16.5),
                             const SizedBox(height: 3),
                             Text(
-                              l10n.localeName == 'es'
-                                  ? 'El icono y la marca se adaptan al tema seleccionado'
-                                  : 'The icon and branding adapt to your selected theme',
+                              l10n.settings_brand_theme_adapt_notice,
+                              softWrap: true,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -1002,7 +1000,7 @@ class SettingsLocaleScreen extends ConsumerWidget {
         leading: onClose != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                tooltip: l10n.back_to_home_tooltip,
                 onPressed: onClose,
               )
             : null,
@@ -1246,7 +1244,7 @@ class SettingsAboutScreen extends ConsumerWidget {
         leading: onClose != null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                tooltip: l10n.back_to_home_tooltip,
                 onPressed: onClose,
               )
             : null,

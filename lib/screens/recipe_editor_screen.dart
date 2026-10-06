@@ -485,9 +485,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            l10n.localeName == 'es'
-                ? 'Agregue ingredientes a la receta para escalar'
-                : 'Add ingredients to recipe before scaling',
+            l10n.recipe_editor_add_ingredients_to_scale,
+            softWrap: true,
           ),
         ),
       );
@@ -730,7 +729,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(l10n.localeName == 'es' ? 'Cancelar' : 'Cancel'),
+                  child: Text(l10n.discard_button, softWrap: true),
                 ),
                 TextButton(
                   onPressed: isValid && multiplier > 0
@@ -739,7 +738,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           _showScaledRecipeDialog(multiplier);
                         }
                       : null,
-                  child: Text(l10n.scale_preview_button),
+                  child: Text(l10n.scale_preview_button, softWrap: true),
                 ),
                 FilledButton(
                   key: const ValueKey('apply_scale_by_ingredient_button'),
@@ -750,7 +749,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         }
                       : null,
                   child: Text(
-                    l10n.localeName == 'es' ? 'Aplicar' : 'Apply',
+                    l10n.apply_button,
+                    softWrap: true,
                   ),
                 ),
               ],
@@ -877,7 +877,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       const SizedBox(width: 4),
                       IconButton(
                         icon: const Icon(Icons.close, size: 20),
-                        tooltip: l10n.localeName == 'es' ? 'Cerrar' : 'Close',
+                        tooltip: l10n.close_button,
                         onPressed: () => Navigator.of(dialogContext).pop(),
                       ),
                     ],
@@ -914,6 +914,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                   l10n.temporary_view_banner(
                                     RecipeUtils.formatNumber(multiplier),
                                   ),
+                                  softWrap: true,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: theme.colorScheme.onSurface,
@@ -928,7 +929,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
                         // Financial Summary Grid
                         Text(
-                          l10n.localeName == 'es' ? 'Resumen Financiero' : 'Financial Summary',
+                          l10n.financial_summary_title,
+                          softWrap: true,
                           style: theme.textTheme.labelMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.onSurfaceVariant,
@@ -1112,16 +1114,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     children: [
                       TextButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
-                        child: Text(l10n.localeName == 'es' ? 'Cerrar' : 'Close'),
+                        child: Text(l10n.close_button, softWrap: true),
                       ),
                       const SizedBox(width: 10),
                       FilledButton.icon(
                         key: const ValueKey('apply_scaled_recipe_button'),
                         icon: const Icon(Icons.check_rounded, size: 18),
                         label: Text(
-                          l10n.localeName == 'es'
-                              ? 'Aplicar a la Receta'
-                              : 'Apply to Recipe',
+                          l10n.apply_to_recipe_button,
+                          softWrap: true,
                         ),
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
@@ -1384,9 +1385,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         if (mounted) {
           AppSnackBar.showSuccess(
             context,
-            l10n.localeName == 'es'
-                ? 'Receta duplicada con éxito'
-                : 'Recipe duplicated successfully',
+            l10n.recipe_duplicated_success,
           );
         }
       } catch (e) {
@@ -1563,12 +1562,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
     final confirm = await AppDialogs.confirmDelete(
       context,
-      title: l10n.localeName == 'es' ? '¿Eliminar ingrediente?' : 'Delete Ingredient?',
-      message: l10n.localeName == 'es'
-          ? '¿Estás seguro de que deseas eliminar "$ingName" de esta receta?'
-          : 'Are you sure you want to remove "$ingName" from this recipe?',
-      cancelText: l10n.localeName == 'es' ? 'Cancelar' : 'Cancel',
-      confirmText: l10n.localeName == 'es' ? 'Eliminar' : 'Delete',
+      title: l10n.delete_ingredient_title,
+      message: l10n.delete_ingredient_confirm(ingName),
+      cancelText: l10n.discard_button,
+      confirmText: l10n.delete_button,
     );
 
     if (confirm) {
@@ -1592,9 +1589,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            l10n.localeName == 'es'
-                ? 'No hay otros ingredientes en esta receta para combinar.'
-                : 'No other ingredients in this recipe to merge into.',
+            l10n.merge_no_other_ingredients,
+            softWrap: true,
           ),
         ),
       );
@@ -1616,7 +1612,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      l10n.localeName == 'es' ? 'Combinar Ingrediente' : 'Merge Ingredient',
+                      l10n.merge_ingredient_title,
+                      softWrap: true,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                   ),
@@ -1627,9 +1624,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l10n.localeName == 'es'
-                        ? 'Combinar "${sourceData.ingredient.name}" en:'
-                        : 'Merge "${sourceData.ingredient.name}" into:',
+                    l10n.merge_ingredient_into_prompt(sourceData.ingredient.name),
+                    softWrap: true,
                     style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 12),
@@ -1683,13 +1679,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(null),
-                  child: Text(l10n.localeName == 'es' ? 'Cancelar' : 'Cancel'),
+                  child: Text(l10n.discard_button, softWrap: true),
                 ),
                 FilledButton(
                   onPressed: selectedTargetIndex != null
                       ? () => Navigator.of(ctx).pop(selectedTargetIndex)
                       : null,
-                  child: Text(l10n.localeName == 'es' ? 'Combinar' : 'Merge'),
+                  child: Text(l10n.merge_button, softWrap: true),
                 ),
               ],
             );
@@ -1754,13 +1750,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       child: Icon(Icons.edit_outlined, color: theme.colorScheme.onSecondaryContainer),
                     ),
                     title: Text(
-                      l10n.localeName == 'es' ? 'Editar ingrediente' : 'Edit ingredient',
+                      l10n.edit_ingredient_action,
+                      softWrap: true,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      l10n.localeName == 'es'
-                          ? 'Modificar nombre, costo, cantidad o unidad en la base de datos'
-                          : 'Modify name, cost, quantity or unit in the database',
+                      l10n.edit_ingredient_action_desc,
+                      softWrap: true,
                     ),
                     onTap: () async {
                       Navigator.of(ctx).pop();
@@ -1788,10 +1784,12 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     ),
                     title: Text(
                       l10n.scale_by_ingredient,
+                      softWrap: true,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
                       l10n.scale_by_ingredient_desc,
+                      softWrap: true,
                     ),
                     onTap: () {
                       Navigator.of(ctx).pop();
@@ -1805,13 +1803,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       child: Icon(Icons.merge_type_rounded, color: theme.colorScheme.primary),
                     ),
                     title: Text(
-                      l10n.localeName == 'es' ? 'Combinar / Fusionar ingrediente' : 'Merge ingredient',
+                      l10n.merge_ingredient_action,
+                      softWrap: true,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      l10n.localeName == 'es'
-                          ? 'Sumar cantidad a otro ingrediente de esta receta'
-                          : 'Add amount into another ingredient in this recipe',
+                      l10n.merge_ingredient_action_desc,
+                      softWrap: true,
                     ),
                     onTap: () {
                       Navigator.of(ctx).pop();
@@ -1825,16 +1823,16 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       child: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
                     ),
                     title: Text(
-                      l10n.localeName == 'es' ? 'Eliminar ingrediente' : 'Delete ingredient',
+                      l10n.delete_ingredient_action,
+                      softWrap: true,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.error,
                       ),
                     ),
                     subtitle: Text(
-                      l10n.localeName == 'es'
-                          ? 'Quitar ingrediente de esta receta'
-                          : 'Remove ingredient from this recipe',
+                      l10n.delete_ingredient_action_desc,
+                      softWrap: true,
                     ),
                     onTap: () {
                       Navigator.of(ctx).pop();
@@ -2013,9 +2011,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            l10n.localeName == 'es'
-                ? 'Por favor, ingrese el nombre de la receta'
-                : 'Please enter a recipe name',
+            l10n.recipe_editor_please_enter_name,
+            softWrap: true,
           ),
         ),
       );
@@ -2254,7 +2251,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           leading: widget.onClose != null
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+                  tooltip: l10n.back_to_home_tooltip,
                   onPressed: () async {
                     final shouldPop = await _onPopRequested();
                     if (shouldPop && context.mounted) {
@@ -3032,7 +3029,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    l10n.localeName == 'es' ? 'Resumen Financiero' : 'Financial Summary',
+                    l10n.financial_summary_title,
+                    softWrap: true,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -3063,7 +3061,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        l10n.localeName == 'es' ? 'En vivo' : 'Live',
+                        l10n.recipe_editor_live,
+                        softWrap: true,
                         style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.bold,
@@ -3085,7 +3084,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 // SECTION 1: COSTOS
                 _buildFinancialSectionHeader(
                   theme: theme,
-                  title: l10n.localeName == 'es' ? 'Costos' : 'Costs',
+                  title: l10n.financial_costs_section,
                 ),
                 _buildFinancialDataRow(
                   context: context,
@@ -3115,7 +3114,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 // SECTION 2: MARGEN Y PRECIOS
                 _buildFinancialSectionHeader(
                   theme: theme,
-                  title: l10n.localeName == 'es' ? 'Margen y Precios' : 'Margin & Pricing',
+                  title: l10n.financial_margin_pricing_section,
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -3201,7 +3200,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 // SECTION 3: RESULTADOS
                 _buildFinancialSectionHeader(
                   theme: theme,
-                  title: l10n.localeName == 'es' ? 'Resultados' : 'Results',
+                  title: l10n.financial_results_section,
                 ),
                 // Highlighted Gross Profit row
                 _buildFinancialDataRow(
@@ -3232,7 +3231,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   theme: theme,
                   icon: Icons.account_balance_wallet_outlined,
                   iconColor: theme.colorScheme.secondary,
-                  label: l10n.localeName == 'es' ? 'Ingreso bruto total' : 'Total Gross Revenue',
+                  label: l10n.financial_total_revenue,
                   value: '$currency${RecipeUtils.formatNumber(_currentTotalRevenue)}',
                 ),
 
@@ -3242,7 +3241,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 // SECTION 4: DATOS DE RECETA
                 _buildFinancialSectionHeader(
                   theme: theme,
-                  title: l10n.localeName == 'es' ? 'Datos de Receta' : 'Recipe Stats',
+                  title: l10n.recipe_stats_section,
                 ),
                 _buildFinancialDataRow(
                   context: context,
@@ -3283,7 +3282,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   theme: theme,
                   icon: Icons.timer_outlined,
                   iconColor: theme.colorScheme.onSurfaceVariant,
-                  label: l10n.localeName == 'es' ? 'Temporizadores' : 'Timers',
+                  label: l10n.recipe_timers_title,
                   value: '${_recipeTimers.length}',
                 ),
                 const SizedBox(height: 12),
@@ -3332,7 +3331,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                      label: Text(l10n.localeName == 'es' ? 'Volver' : 'Back'),
+                      label: Text(l10n.back_button, softWrap: true),
                       onPressed: () async {
                         final ok = await onPopRequested();
                         if (ok && context.mounted) {
@@ -3806,7 +3805,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        l10n.localeName == 'es' ? '+ Temporizador' : '+ Timer',
+                                        l10n.recipe_timer_add_badge,
+                                        softWrap: true,
                                         style: theme.textTheme.labelLarge?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           color: theme.colorScheme.secondary,
@@ -3818,7 +3818,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                               )
                             else
                               PopupMenuButton<RecipeTimerData>(
-                                tooltip: l10n.localeName == 'es' ? 'Iniciar temporizador' : 'Start timer',
+                                tooltip: l10n.start_timer_tooltip,
                                 onSelected: (timerData) {
                                   final timerName = timerData.nameController.text.trim().isEmpty
                                       ? (_nameController.text.isEmpty ? 'Recipe Timer' : _nameController.text)
@@ -3832,12 +3832,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        l10n.localeName == 'es'
-                                            ? 'Temporizador iniciado: $timerName (${timerData.formattedDuration})'
-                                            : 'Timer started: $timerName (${timerData.formattedDuration})',
+                                        l10n.timer_started_snackbar(timerName, timerData.formattedDuration),
+                                        softWrap: true,
                                       ),
                                       action: SnackBarAction(
-                                        label: l10n.localeName == 'es' ? 'Ver' : 'View',
+                                        label: l10n.view_button,
                                         onPressed: () {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
@@ -3894,7 +3893,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        '${l10n.localeName == 'es' ? 'Temporizador' : 'Timer'} (${_recipeTimers.length})',
+                                        '${l10n.recipe_timer_single} (${_recipeTimers.length})',
+                                        softWrap: true,
                                         style: theme.textTheme.labelLarge?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           color: theme.colorScheme.primary,
@@ -4251,7 +4251,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    l10n.localeName == 'es' ? 'Ocultar Resumen Financiero' : 'Hide Financial Summary',
+                    l10n.hide_financial_summary,
+                    softWrap: true,
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -4589,12 +4590,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  l10n.localeName == 'es' ? 'Mostrar Resumen Financiero' : 'Show Financial Summary',
+                  l10n.show_financial_summary,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
+                  softWrap: true,
                 ),
                 const SizedBox(width: 4),
                 Icon(
@@ -4610,17 +4612,17 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               children: [
                 _buildCollapsedMetric(
                   context,
-                  l10n.localeName == 'es' ? 'Costo Total' : 'Total Cost',
+                  l10n.total_cost,
                   totalCostStr,
                 ),
                 _buildCollapsedMetric(
                   context,
-                  l10n.localeName == 'es' ? 'Precio/Porción' : 'Price/Portion',
+                  l10n.price_per_portion,
                   pricePerPortionStr,
                 ),
                 _buildCollapsedMetric(
                   context,
-                  l10n.localeName == 'es' ? 'Ganancia/Porción' : 'Gain/Portion',
+                  l10n.gain_per_portion,
                   profitPerPortionStr,
                   valueColor: theme.colorScheme.primary,
                 ),
@@ -4960,7 +4962,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         theme.colorScheme.tertiary,
       ),
       _ => (
-        l10n.localeName == 'es' ? 'Otros' : 'Other',
+        l10n.recipe_editor_other_category,
         Icons.inventory_2_outlined,
         theme.colorScheme.outline,
       ),
@@ -5466,7 +5468,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           children: [
             Expanded(
               child: _buildSectionHeader(
-                l10n.localeName == 'es' ? 'Temporizadores de la Receta' : 'Recipe Timers',
+                l10n.recipe_timers_section,
               ),
             ),
             const SizedBox(width: 8),
@@ -5502,6 +5504,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.primary,
                       ),
+                      softWrap: true,
                     ),
                   ],
                 ),
@@ -5514,9 +5517,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         const SizedBox(height: 16),
         if (_recipeTimers.isEmpty)
           _buildEmptyPlaceholder(
-            l10n.localeName == 'es'
-                ? 'No hay temporizadores agregados a esta receta.'
-                : 'No timer presets added to this recipe.',
+            l10n.no_timers_in_recipe,
             Icons.timer_off_outlined,
           )
         else
@@ -5559,12 +5560,14 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        l10n.localeName == 'es'
-                                            ? 'Temporizador iniciado: $timerName (${timerData.formattedDuration})'
-                                            : 'Timer started: $timerName (${timerData.formattedDuration})',
+                                        l10n.timer_started_snackbar(
+                                          timerName,
+                                          timerData.formattedDuration,
+                                        ),
+                                        softWrap: true,
                                       ),
                                       action: SnackBarAction(
-                                        label: l10n.localeName == 'es' ? 'Ver' : 'View',
+                                        label: l10n.view_button,
                                         onPressed: () {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
@@ -5582,6 +5585,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                   style: const TextStyle(fontWeight: FontWeight.bold),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
+                                  softWrap: true,
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -5597,7 +5601,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                             IconButton(
                               icon: Icon(Icons.edit_outlined, size: 18, color: theme.colorScheme.primary),
                               onPressed: () => _showAddRecipeTimerDialog(theme, l10n, existingTimer: timerData),
-                              tooltip: l10n.localeName == 'es' ? 'Editar' : 'Edit',
+                              tooltip: l10n.edit_button,
                               visualDensity: VisualDensity.compact,
                             ),
                             IconButton(
@@ -5607,7 +5611,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                   _recipeTimers.remove(timerData);
                                 });
                               },
-                              tooltip: l10n.localeName == 'es' ? 'Eliminar' : 'Delete',
+                              tooltip: l10n.delete_button,
                               visualDensity: VisualDensity.compact,
                             ),
                           ],
@@ -5659,19 +5663,20 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   children: [
                     Text(
                       existingTimer != null
-                          ? (l10n.localeName == 'es' ? 'Editar Temporizador' : 'Edit Recipe Timer')
-                          : (l10n.localeName == 'es' ? 'Agregar Temporizador' : 'Add Recipe Timer'),
+                          ? l10n.recipe_timer_edit_title
+                          : l10n.recipe_timer_add_title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
+                      softWrap: true,
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: timerNameController,
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
-                        labelText: l10n.localeName == 'es' ? 'Nombre del temporizador' : 'Timer label',
-                        hintText: l10n.localeName == 'es' ? 'ej. Hervir Pasta, Hornear' : 'e.g. Boil Noodles, Bake',
+                        labelText: l10n.recipe_timer_name_label,
+                        hintText: l10n.recipe_timer_name_hint,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -5707,7 +5712,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                 if (selectedMins > 0) selectedMins--;
                               }),
                             ),
-                            Text('Min', style: theme.textTheme.bodySmall),
+                            Text(l10n.recipe_timer_min, style: theme.textTheme.bodySmall, softWrap: true),
                           ],
                         ),
                         const Padding(
@@ -5741,7 +5746,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                 if (selectedSecs >= 5) selectedSecs -= 5;
                               }),
                             ),
-                            Text('Seg', style: theme.textTheme.bodySmall),
+                            Text(l10n.recipe_timer_sec, style: theme.textTheme.bodySmall, softWrap: true),
                           ],
                         ),
                       ],
@@ -5799,9 +5804,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       ),
                       child: Text(
                         existingTimer != null
-                            ? (l10n.localeName == 'es' ? 'Guardar Cambios' : 'Save Changes')
-                            : (l10n.localeName == 'es' ? 'Guardar Temporizador' : 'Add Timer Preset'),
+                            ? l10n.save_changes_button
+                            : l10n.add_timer_preset_button,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        softWrap: true,
                       ),
                     ),
                   ],
@@ -5858,13 +5864,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     child: Icon(Icons.edit_outlined, color: theme.colorScheme.onSecondaryContainer),
                   ),
                   title: Text(
-                    l10n.localeName == 'es' ? 'Editar ingrediente' : 'Edit ingredient',
+                    l10n.edit_ingredient_action,
                     style: const TextStyle(fontWeight: FontWeight.bold),
+                    softWrap: true,
                   ),
                   subtitle: Text(
-                    l10n.localeName == 'es'
-                        ? 'Modificar nombre, costo, cantidad o unidad en la base de datos'
-                        : 'Modify name, cost, quantity or unit in the database',
+                    l10n.edit_ingredient_action_desc,
+                    softWrap: true,
                   ),
                   onTap: () async {
                     Navigator.of(ctx).pop();
@@ -5887,13 +5893,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     child: Icon(Icons.merge_type_rounded, color: theme.colorScheme.primary),
                   ),
                   title: Text(
-                    l10n.localeName == 'es' ? 'Combinar / Fusionar ingrediente' : 'Merge ingredient',
+                    l10n.merge_ingredient_action,
                     style: const TextStyle(fontWeight: FontWeight.bold),
+                    softWrap: true,
                   ),
                   subtitle: Text(
-                    l10n.localeName == 'es'
-                        ? 'Fusionar con otro ingrediente en la base de datos'
-                        : 'Merge into another ingredient in the database',
+                    l10n.merge_ingredient_action_db_desc,
+                    softWrap: true,
                   ),
                   onTap: () {
                     Navigator.of(ctx).pop();
@@ -5907,16 +5913,16 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     child: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
                   ),
                   title: Text(
-                    l10n.localeName == 'es' ? 'Eliminar ingrediente' : 'Delete ingredient',
+                    l10n.delete_ingredient_action,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.error,
                     ),
+                    softWrap: true,
                   ),
                   subtitle: Text(
-                    l10n.localeName == 'es'
-                        ? 'Eliminar permanentemente de la base de datos'
-                        : 'Permanently delete from database',
+                    l10n.delete_ingredient_permanent_desc,
+                    softWrap: true,
                   ),
                   onTap: () {
                     Navigator.of(ctx).pop();
@@ -5940,12 +5946,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   ) async {
     final confirm = await AppDialogs.confirmDelete(
       context,
-      title: l10n.localeName == 'es' ? '¿Eliminar ingrediente?' : 'Delete Ingredient?',
-      message: l10n.localeName == 'es'
-          ? '¿Estás seguro de que deseas eliminar "${ing.name}" de la base de datos?'
-          : 'Are you sure you want to delete "${ing.name}" from the database?',
-      cancelText: l10n.localeName == 'es' ? 'Cancelar' : 'Cancel',
-      confirmText: l10n.localeName == 'es' ? 'Eliminar' : 'Delete',
+      title: l10n.delete_ingredient_title,
+      message: l10n.delete_ingredient_confirm(ing.name),
+      cancelText: l10n.cancel_button,
+      confirmText: l10n.delete_button,
     );
 
     if (confirm) {
@@ -5956,9 +5960,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       if (context.mounted) {
         AppSnackBar.show(
           context,
-          l10n.localeName == 'es'
-              ? 'Ingrediente "${ing.name}" eliminado.'
-              : 'Ingredient "${ing.name}" deleted.',
+          l10n.ingredient_deleted_snackbar(ing.name),
         );
       }
     }
@@ -5980,9 +5982,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            l10n.localeName == 'es'
-                ? 'No hay otros ingredientes en la base de datos para combinar.'
-                : 'No other ingredients in the database to merge into.',
+            l10n.merge_no_other_database_ingredients,
+            softWrap: true,
           ),
         ),
       );
@@ -6004,8 +6005,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      l10n.localeName == 'es' ? 'Combinar Ingrediente' : 'Merge Ingredient',
+                      l10n.merge_ingredient_title,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      softWrap: true,
                     ),
                   ),
                 ],
@@ -6016,10 +6018,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.localeName == 'es'
-                          ? 'Combinar "${sourceIng.name}" en:'
-                          : 'Merge "${sourceIng.name}" into:',
+                      l10n.merge_ingredient_into_prompt(sourceIng.name),
                       style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      softWrap: true,
                     ),
                     const SizedBox(height: 12),
                     ...otherIngredients.map((targetIng) {
@@ -6062,13 +6063,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(null),
-                  child: Text(l10n.localeName == 'es' ? 'Cancelar' : 'Cancel'),
+                  child: Text(l10n.cancel_button),
                 ),
                 FilledButton(
                   onPressed: selectedTarget != null
                       ? () => Navigator.of(ctx).pop(selectedTarget)
                       : null,
-                  child: Text(l10n.localeName == 'es' ? 'Combinar' : 'Merge'),
+                  child: Text(l10n.merge_button),
                 ),
               ],
             );

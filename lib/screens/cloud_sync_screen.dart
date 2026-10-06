@@ -93,9 +93,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 leading: widget.onClose != null
                     ? IconButton(
                         icon: const Icon(Icons.arrow_back),
-                        tooltip: l10n.localeName == 'es'
-                            ? 'Volver al Inicio'
-                            : 'Back to Home',
+                        tooltip: l10n.back_to_home_tooltip,
                         onPressed: widget.onClose,
                       )
                     : null,
@@ -177,7 +175,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              l10n.localeName == 'es' ? 'Destino de Sincronización' : 'Sync Target',
+              l10n.cloud_sync_sync_target,
+              softWrap: true,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -188,18 +187,18 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 ButtonSegment<CloudSyncStorageType>(
                   value: CloudSyncStorageType.firestore,
                   icon: const Icon(Icons.cloud_sync_outlined),
-                  label: const Text('Firestore'),
+                  label: Text(l10n.cloud_sync_target_firestore, softWrap: true),
                 ),
                 ButtonSegment<CloudSyncStorageType>(
                   value: CloudSyncStorageType.googleDrive,
                   icon: const Icon(Icons.cloud_outlined),
-                  label: const Text('Google Drive'),
+                  label: Text(l10n.cloud_sync_target_drive, softWrap: true),
                   enabled: !kIsWeb,
                 ),
                 ButtonSegment<CloudSyncStorageType>(
                   value: CloudSyncStorageType.localDirectory,
                   icon: const Icon(Icons.folder_open),
-                  label: Text(l10n.localeName == 'es' ? 'Directorio Local' : 'Local Directory'),
+                  label: Text(l10n.cloud_sync_target_local, softWrap: true),
                   enabled: !kIsWeb,
                 ),
               ],
@@ -227,9 +226,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        l10n.localeName == 'es'
-                            ? 'En la Web, la sincronización se realiza mediante Cloud Firestore para sincronizar datos en tiempo real entre tu navegador y la aplicación móvil. Los respaldos en archivo de Google Drive están disponibles en dispositivos móviles y de escritorio.'
-                            : 'On Web, sync is powered by Cloud Firestore to synchronize data in real-time between your browser and mobile app. Google Drive file backups are available on mobile and desktop devices.',
+                        l10n.cloud_sync_desc_web,
+                        softWrap: true,
                         style: theme.textTheme.bodySmall?.copyWith(
                           height: 1.4,
                           color: theme.colorScheme.onSurfaceVariant,
@@ -248,9 +246,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  l10n.localeName == 'es'
-                      ? 'Sincronización multiplataforma (Web y Móvil) en tiempo real mediante Cloud Firestore.'
-                      : 'Real-time cross-platform sync between Web and Mobile via Cloud Firestore.',
+                  l10n.cloud_sync_desc_firestore,
+                  softWrap: true,
                   style: theme.textTheme.bodySmall?.copyWith(
                     height: 1.4,
                     color: theme.colorScheme.onSurfaceVariant,
@@ -266,9 +263,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  l10n.localeName == 'es'
-                      ? 'El modo Directorio Local guarda tus respaldos en el almacenamiento local del dispositivo. No requiere conexión a Internet ni una cuenta de Google.'
-                      : 'Local Directory mode stores your backups in the device\'s local storage. It does not require internet connection or a Google Account.',
+                  l10n.cloud_sync_desc_local,
+                  softWrap: true,
                   style: theme.textTheme.bodySmall?.copyWith(
                     height: 1.4,
                     color: theme.colorScheme.onSurfaceVariant,
@@ -335,7 +331,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             if (isLocal) ...[
               const SizedBox(height: 4),
               Text(
-                l10n.localeName == 'es' ? 'Copia Local' : 'Local Backup',
+                l10n.cloud_sync_sandbox_badge,
+                softWrap: true,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -369,6 +366,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             const SizedBox(height: 12),
             Text(
               headerDesc,
+              softWrap: true,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                 height: 1.4,
@@ -392,6 +390,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                   icon: const Icon(Icons.login),
                   label: Text(
                     l10n.cloud_sync_connect_btn,
+                    softWrap: true,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 )
@@ -411,7 +410,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                         ),
                       ),
                       icon: const Icon(Icons.switch_account),
-                      label: Text(l10n.localeName == 'es' ? 'Cambiar cuenta' : 'Switch account'),
+                      label: Text(l10n.cloud_sync_switch_account, softWrap: true),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => notifier.signOut(),
@@ -425,7 +424,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                       ),
                       icon: const Icon(Icons.logout),
                       label: Text(
-                        l10n.localeName == 'es' ? 'Cerrar sesión' : 'Sign Out',
+                        l10n.cloud_sync_disconnect_btn,
+                        softWrap: true,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -470,6 +470,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     children: [
                       Text(
                         l10n.cloud_sync_sandbox_badge,
+                        softWrap: true,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,
@@ -478,6 +479,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                       const SizedBox(height: 2),
                       Text(
                         l10n.cloud_sync_sandbox_desc,
+                        softWrap: true,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           fontSize: 11,
@@ -506,8 +508,9 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
           icon: const Icon(Icons.sync),
           label: Text(
             isFirestore
-                ? (l10n.localeName == 'es' ? 'Sincronizar ahora' : 'Sync Now')
+                ? l10n.cloud_sync_sync_now
                 : l10n.cloud_sync_sync_btn,
+            softWrap: true,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
@@ -525,6 +528,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             icon: const Icon(Icons.cloud_upload_outlined),
             label: Text(
               l10n.cloud_sync_backup_btn,
+              softWrap: true,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
             ),
           ),
@@ -668,15 +672,13 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                         icon: Icon(Icons.file_download_outlined, color: theme.colorScheme.secondary),
                         onPressed: () async {
                           final selectedDirectory = await FilePicker.platform.getDirectoryPath(
-                            dialogTitle: l10n.localeName == 'es'
-                                ? 'Seleccionar carpeta para guardar la copia'
-                                : 'Select folder to save backup',
+                            dialogTitle: l10n.cloud_sync_save_copy_dialog_title,
                           );
                           if (selectedDirectory != null) {
                             notifier.downloadBackup(backup.id, backup.name, selectedDirectory);
                           }
                         },
-                        tooltip: l10n.localeName == 'es' ? 'Guardar copia en...' : 'Save backup to...',
+                        tooltip: l10n.cloud_sync_save_copy_tooltip,
                       ),
                     IconButton(
                       icon: Icon(Icons.sync, color: theme.colorScheme.secondary),
@@ -686,12 +688,12 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     IconButton(
                       icon: Icon(Icons.settings_backup_restore, color: theme.colorScheme.primary),
                       onPressed: () => _confirmRestore(context, notifier, backup.id, l10n),
-                      tooltip: 'Restore',
+                      tooltip: l10n.cloud_sync_restore_tooltip,
                     ),
                     IconButton(
                       icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
                       onPressed: () => _confirmDelete(context, notifier, backup.id, l10n),
-                      tooltip: 'Delete',
+                      tooltip: l10n.cloud_sync_delete_tooltip,
                     ),
                   ],
                 ),
@@ -859,7 +861,6 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    final isEs = l10n.localeName == 'es';
     final hasError = _localError != null || (state.errorMessage != null && !state.signedIn);
     final errorText = _localError ?? state.errorMessage;
 
@@ -895,16 +896,16 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isEs ? 'Conecta tu cuenta' : 'Connect Your Account',
+                        l10n.cloud_sync_connect_account_title,
+                        softWrap: true,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isEs
-                            ? 'Sincroniza tus recetas automáticamente entre Web y Móvil'
-                            : 'Sync your recipes in real-time across Web and Mobile',
+                        l10n.cloud_sync_connect_account_subtitle,
+                        softWrap: true,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -943,7 +944,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     _buildGoogleIcon(),
                     const SizedBox(width: 12),
                     Text(
-                      isEs ? 'Continuar con Google' : 'Continue with Google',
+                      l10n.cloud_sync_continue_google,
+                      softWrap: true,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -965,7 +967,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14.0),
                   child: Text(
-                    isEs ? 'o con correo electrónico' : 'or with email',
+                    l10n.cloud_sync_or_email,
+                    softWrap: true,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       fontSize: 12,
@@ -987,12 +990,12 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 ButtonSegment<bool>(
                   value: false,
                   icon: const Icon(Icons.login, size: 18),
-                  label: Text(isEs ? 'Iniciar Sesión' : 'Sign In'),
+                  label: Text(l10n.sign_in_button, softWrap: true),
                 ),
                 ButtonSegment<bool>(
                   value: true,
                   icon: const Icon(Icons.person_add_outlined, size: 18),
-                  label: Text(isEs ? 'Crear Cuenta' : 'Create Account'),
+                  label: Text(l10n.cloud_sync_create_account, softWrap: true),
                 ),
               ],
               selected: {_isRegisterMode},
@@ -1012,8 +1015,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(
-                labelText: isEs ? 'Correo electrónico' : 'Email address',
-                hintText: 'ejemplo@correo.com',
+                labelText: l10n.cloud_sync_email_label,
+                hintText: l10n.cloud_sync_email_hint,
                 prefixIcon: const Icon(Icons.email_outlined, size: 20),
                 suffixIcon: _emailController.text.isNotEmpty
                     ? IconButton(
@@ -1041,10 +1044,10 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               controller: _passwordController,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _handleEmailAuth(notifier, isEs),
+              onSubmitted: (_) => _handleEmailAuth(notifier, l10n),
               decoration: InputDecoration(
-                labelText: isEs ? 'Contraseña' : 'Password',
-                hintText: isEs ? 'Mínimo 6 caracteres' : 'At least 6 characters',
+                labelText: l10n.cloud_sync_password_label,
+                hintText: l10n.cloud_sync_password_hint,
                 prefixIcon: const Icon(Icons.lock_outline, size: 20),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -1073,13 +1076,14 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: state.loading ? null : () => _handleForgotPassword(notifier, isEs),
+                  onPressed: state.loading ? null : () => _handleForgotPassword(notifier, l10n),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   ),
                   child: Text(
-                    isEs ? '¿Olvidaste tu contraseña?' : 'Forgot password?',
+                    l10n.cloud_sync_forgot_password,
+                    softWrap: true,
                     style: TextStyle(
                       fontSize: 12,
                       color: theme.colorScheme.primary,
@@ -1114,6 +1118,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     Expanded(
                       child: Text(
                         errorText,
+                        softWrap: true,
                         style: TextStyle(
                           color: theme.colorScheme.error,
                           fontSize: 13,
@@ -1150,6 +1155,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     Expanded(
                       child: Text(
                         _localSuccess!,
+                        softWrap: true,
                         style: TextStyle(
                           color: Colors.green.shade800,
                           fontSize: 13,
@@ -1168,7 +1174,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             SizedBox(
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: state.loading ? null : () => _handleEmailAuth(notifier, isEs),
+                onPressed: state.loading ? null : () => _handleEmailAuth(notifier, l10n),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
@@ -1192,8 +1198,9 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                       ),
                 label: Text(
                   _isRegisterMode
-                      ? (isEs ? 'Crear Cuenta' : 'Create Account')
-                      : (isEs ? 'Iniciar Sesión' : 'Sign In'),
+                      ? l10n.cloud_sync_create_account
+                      : l10n.sign_in_button,
+                  softWrap: true,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -1213,8 +1220,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    final isEs = l10n.localeName == 'es';
-    final email = state.email ?? (isEs ? 'Usuario autenticado' : 'Authenticated user');
+    final email = state.email ?? l10n.cloud_sync_authenticated_user;
     final initial = email.isNotEmpty ? email[0].toUpperCase() : 'U';
 
     return Card(
@@ -1259,7 +1265,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isEs ? 'Conectado a Firestore' : 'Connected to Firestore',
+                        l10n.cloud_sync_connected_to_firestore,
+                        softWrap: true,
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: Colors.green.shade700,
                           fontWeight: FontWeight.bold,
@@ -1270,6 +1277,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                   const SizedBox(height: 4),
                   Text(
                     email,
+                    softWrap: true,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -1290,7 +1298,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               ),
               icon: const Icon(Icons.logout, size: 18),
               label: Text(
-                isEs ? 'Cerrar sesión' : 'Sign Out',
+                l10n.cloud_sync_disconnect_btn,
+                softWrap: true,
                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               ),
               onPressed: () => _showSignOutConfirmDialog(context, notifier, l10n),
@@ -1306,20 +1315,18 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     CloudSyncNotifier notifier,
     AppLocalizations l10n,
   ) {
-    final isEs = l10n.localeName == 'es';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isEs ? 'Cerrar sesión' : 'Sign Out'),
+        title: Text(l10n.cloud_sync_sign_out_confirm_title, softWrap: true),
         content: Text(
-          isEs
-              ? '¿Deseas desconectar tu cuenta de este dispositivo? Las recetas locales no se borrarán.'
-              : 'Do you want to disconnect your account from this device? Local recipes will not be deleted.',
+          l10n.cloud_sync_sign_out_confirm_message,
+          softWrap: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.discard_button),
+            child: Text(l10n.discard_button, softWrap: true),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -1330,22 +1337,20 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               Navigator.of(context).pop();
               notifier.signOut();
             },
-            child: Text(isEs ? 'Cerrar sesión' : 'Sign Out'),
+            child: Text(l10n.cloud_sync_sign_out_confirm_title, softWrap: true),
           ),
         ],
       ),
     );
   }
 
-  void _handleEmailAuth(CloudSyncNotifier notifier, bool isEs) {
+  void _handleEmailAuth(CloudSyncNotifier notifier, AppLocalizations l10n) {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     if (email.isEmpty || !email.contains('@')) {
       setState(() {
-        _localError = isEs
-            ? 'Por favor ingresa un correo electrónico válido.'
-            : 'Please enter a valid email address.';
+        _localError = l10n.cloud_sync_error_invalid_email;
         _localSuccess = null;
       });
       return;
@@ -1353,9 +1358,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
 
     if (password.length < 6) {
       setState(() {
-        _localError = isEs
-            ? 'La contraseña debe tener al menos 6 caracteres.'
-            : 'Password must be at least 6 characters.';
+        _localError = l10n.cloud_sync_error_short_password;
         _localSuccess = null;
       });
       return;
@@ -1373,13 +1376,11 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     );
   }
 
-  void _handleForgotPassword(CloudSyncNotifier notifier, bool isEs) {
+  void _handleForgotPassword(CloudSyncNotifier notifier, AppLocalizations l10n) {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
       setState(() {
-        _localError = isEs
-            ? 'Ingresa tu correo arriba para recibir el enlace de restablecimiento.'
-            : 'Enter your email above to receive the password reset link.';
+        _localError = l10n.cloud_sync_error_invalid_email;
         _localSuccess = null;
       });
       return;
@@ -1387,9 +1388,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
 
     setState(() {
       _localError = null;
-      _localSuccess = isEs
-          ? 'Enlace enviado a $email. Revisa tu bandeja de entrada o spam.'
-          : 'Reset link sent to $email. Check your inbox or spam.';
+      _localSuccess = l10n.cloud_sync_reset_email_sent;
     });
 
     notifier.sendPasswordReset(email);

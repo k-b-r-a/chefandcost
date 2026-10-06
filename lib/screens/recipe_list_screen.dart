@@ -473,7 +473,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   void _duplicateRecipeFromList(BuildContext context, Recipe recipe) async {
     final l10n = AppLocalizations.of(context)!;
     final db = ref.read(databaseProvider);
-    final defaultNewName = "${recipe.name} (${l10n.duplicate_button})";
+    final defaultNewName = l10n.recipe_duplicate_name(recipe.name, l10n.duplicate_button);
 
     final newName = await AppDialogs.promptText(
       context,
@@ -492,7 +492,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         });
       } catch (e) {
         if (context.mounted) {
-          AppSnackBar.showError(context, "Error: $e");
+          AppSnackBar.showError(context, "${l10n.error_prefix}: $e");
         }
       }
     }
@@ -518,7 +518,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         });
       } catch (e) {
         if (context.mounted) {
-          AppSnackBar.showError(context, "Error: $e");
+          AppSnackBar.showError(context, "${l10n.error_prefix}: $e");
         }
       }
     }
@@ -531,7 +531,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.scale_button),
+        title: Text(l10n.scale_button, softWrap: true),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -546,7 +546,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                     Navigator.of(context).pop();
                     _openTemporaryScaledRecipeFromList(context, recipe, multiplier);
                   },
-                  child: Text('x${RecipeUtils.formatNumber(multiplier)}'),
+                  child: Text(
+                    l10n.scale_multiplier_button(RecipeUtils.formatNumber(multiplier)),
+                    softWrap: true,
+                  ),
                 );
               }).toList(),
             ),
@@ -556,7 +559,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                 labelText: l10n.ingredient_quantity,
-                hintText: 'e.g. 1.5',
+                hintText: l10n.scale_custom_multiplier_hint,
                 border: const OutlineInputBorder(),
                 suffixText: 'x',
               ),
@@ -566,7 +569,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.discard_button),
+            child: Text(l10n.discard_button, softWrap: true),
           ),
           ElevatedButton(
             onPressed: () {
@@ -576,7 +579,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 _openTemporaryScaledRecipeFromList(context, recipe, val);
               }
             },
-            child: Text(l10n.save_button),
+            child: Text(l10n.save_button, softWrap: true),
           ),
         ],
       ),
@@ -584,6 +587,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   }
 
   void _openTemporaryScaledRecipeFromList(BuildContext context, Recipe recipe, double multiplier) async {
+    final l10n = AppLocalizations.of(context)!;
     final db = ref.read(databaseProvider);
 
     showDialog(
@@ -618,7 +622,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
           builder: (context) => RecipeEditorScreen(
             isTemporary: true,
             multiplier: multiplier,
-            initialName: "${recipe.name} (x${RecipeUtils.formatNumber(multiplier)})",
+            initialName: l10n.scaled_recipe_name(recipe.name, RecipeUtils.formatNumber(multiplier)),
             initialDescription: recipe.description,
             initialYield: RecipeUtils.formatNumber(scaledYield),
             initialYieldName: recipe.yieldName,

@@ -103,7 +103,7 @@
     }
   },
   "search_hint": "Search...",
-  "search_ingredients_hint": "Type to search ingredients...",
+  "search_ingredients_hint": "Search ingredients...",
   "no_ingredients_found": "No ingredients found.",
   "no_recipes_found": "No recipes found.",
   "related_ingredients": "Related",
@@ -315,5 +315,252 @@
   "scale_revert_button": "Revert to Original",
   "scale_save_as_real_button": "Save as Real Recipe",
   "scale_reverted_toast": "Recipe reverted to original quantities",
-  "scale_saved_toast": "Scaled quantities saved to the real recipe"
+  "scale_saved_toast": "Scaled quantities saved to the real recipe",
+  "brand_home_tooltip": "Chef&Cost - Home",
+  "back_to_home_tooltip": "Back to Home",
+  "back_button": "Back",
+  "close_button": "Close",
+  "apply_button": "Apply",
+  "save_changes_button": "Save Changes",
+  "view_button": "View",
+  "sign_in_button": "Sign In",
+  "toggle_theme_tooltip": "Toggle Theme",
+  "search_recipes_hint": "Search recipes...",
+  "sample_data_loaded_snackbar": "Sample data loaded: {recipes} recipes and {ingredients} ingredients",
+  "@sample_data_loaded_snackbar": {
+    "placeholders": {
+      "recipes": {
+        "type": "int"
+      },
+      "ingredients": {
+        "type": "int"
+      }
+    }
+  },
+  "load_sample_data": "Load sample data",
+  "timer_finished_banner": "Timer Finished!",
+  "timer_finished_at": "Finished at {time}",
+  "@timer_finished_at": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "delete_ingredient_title": "Delete Ingredient?",
+  "delete_ingredient_confirm": "Are you sure you want to delete \"{name}\" from the database?",
+  "@delete_ingredient_confirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unsaved_changes_ingredient_body": "Do you want to save or discard changes to this ingredient?",
+  "recipe_editor_add_ingredients_to_scale": "Add ingredients to recipe before scaling",
+  "recipe_editor_please_enter_name": "Please enter a recipe name",
+  "recipe_duplicated_success": "Recipe duplicated successfully",
+  "apply_to_recipe_button": "Apply to Recipe",
+  "recipe_duplicate_name": "{name} ({copyLabel})",
+  "@recipe_duplicate_name": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "copyLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "financial_summary_title": "Financial Summary",
+  "financial_costs_section": "Costs",
+  "financial_margin_pricing_section": "Margin & Pricing",
+  "financial_results_section": "Results",
+  "financial_total_revenue": "Total Gross Revenue",
+  "recipe_stats_section": "Recipe Stats",
+  "hide_financial_summary": "Hide Financial Summary",
+  "show_financial_summary": "Show Financial Summary",
+  "recipe_editor_live": "Live",
+  "recipe_editor_other_category": "Other",
+  "recipe_timers_section": "Recipe Timers",
+  "recipe_timer_single": "Timer",
+  "recipe_timers_title": "Timers",
+  "recipe_timer_add_badge": "+ Timer",
+  "start_timer_tooltip": "Start timer",
+  "timer_started_snackbar": "Timer started: {name} ({duration})",
+  "@timer_started_snackbar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "recipe_timer_edit_title": "Edit Recipe Timer",
+  "recipe_timer_add_title": "Add Recipe Timer",
+  "recipe_timer_name_label": "Timer label",
+  "recipe_timer_name_hint": "e.g. Boil Noodles, Bake",
+  "add_timer_preset_button": "Add Timer Preset",
+  "edit_ingredient_action": "Edit ingredient",
+  "edit_ingredient_action_desc": "Modify name, cost, quantity or unit in the database",
+  "merge_ingredient_action": "Merge ingredient",
+  "merge_ingredient_action_desc": "Add amount into another ingredient in this recipe",
+  "delete_ingredient_action": "Delete ingredient",
+  "delete_ingredient_action_desc": "Remove ingredient from this recipe",
+  "merge_ingredient_title": "Merge Ingredient",
+  "merge_ingredient_into_prompt": "Merge \"{name}\" into:",
+  "@merge_ingredient_into_prompt": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_merged_success": "Merged successfully",
+  "compare_no_units_error": "DATABASE ERROR: No units loaded. Please restart the app.",
+  "compare_more_costly": "+{amount} MORE",
+  "@compare_more_costly": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_less_costly": "-{amount} LESS",
+  "@compare_less_costly": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_loading": "Loading comparison data...",
+  "timers_running": "Running",
+  "timers_paused": "Paused",
+  "timers_stop_alarm": "STOP ALARM",
+  "timers_reset": "Reset",
+  "timers_pause": "Pause",
+  "timers_start": "Start",
+  "timers_start_timer": "Start Timer",
+  "timers_edit_title": "Edit Timer",
+  "timers_hint": "e.g. Boil Potatoes",
+  "timers_min": "Min",
+  "timers_sec": "Sec",
+  "timers_add_minutes": "+{minutes}m",
+  "@timers_add_minutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "rule_of_three_error_zero": "Initial value cannot be zero",
+  "rule_of_three_explanation": "If {a} corresponds to {b}, then {c} will correspond to {result}.",
+  "@rule_of_three_explanation": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "cloud_sync_sync_target": "Sync Target",
+  "cloud_sync_target_firestore": "Firestore",
+  "cloud_sync_target_drive": "Google Drive",
+  "cloud_sync_target_local": "Local Directory",
+  "cloud_sync_desc_web": "On Web, sync is powered by Cloud Firestore to synchronize data in real-time between your browser and mobile app. Google Drive file backups are available on mobile and desktop devices.",
+  "cloud_sync_desc_firestore": "Real-time cross-platform sync between Web and Mobile via Cloud Firestore.",
+  "cloud_sync_desc_local": "Local Directory mode stores your backups in the device's local storage. It does not require internet connection or a Google Account.",
+  "cloud_sync_switch_account": "Switch account",
+  "cloud_sync_sync_now": "Sync Now",
+  "cloud_sync_save_copy_dialog_title": "Select folder to save backup",
+  "cloud_sync_save_copy_tooltip": "Save backup to...",
+  "cloud_sync_restore_tooltip": "Restore",
+  "cloud_sync_delete_tooltip": "Delete",
+  "cloud_sync_connect_account_title": "Connect Your Account",
+  "cloud_sync_connect_account_subtitle": "Sync your recipes in real-time across Web and Mobile",
+  "cloud_sync_continue_google": "Continue with Google",
+  "cloud_sync_or_email": "or with email",
+  "cloud_sync_create_account": "Create Account",
+  "cloud_sync_email_label": "Email address",
+  "cloud_sync_email_hint": "example@mail.com",
+  "cloud_sync_password_label": "Password",
+  "cloud_sync_password_hint": "At least 6 characters",
+  "cloud_sync_forgot_password": "Forgot password?",
+  "cloud_sync_connected_to_firestore": "Connected to Firestore",
+  "cloud_sync_authenticated_user": "Authenticated user",
+  "cloud_sync_sign_out_confirm_title": "Sign Out",
+  "cloud_sync_sign_out_confirm_message": "Are you sure you want to sign out from Firestore sync?",
+  "cloud_sync_error_invalid_email": "Please enter a valid email address.",
+  "cloud_sync_error_short_password": "Password must be at least 6 characters.",
+  "cloud_sync_reset_email_sent": "Password reset email sent! Check your inbox.",
+  "cloud_sync_connected_account": "Connected account",
+  "settings_category_data_subtitle": "App data management",
+  "settings_category_backup_subtitle": "Back up and restore on Google Drive",
+  "settings_category_themes_subtitle": "Themes, colors and font size",
+  "settings_category_locale_subtitle": "Language and number formatting",
+  "settings_category_info_subtitle": "Version and information",
+  "settings_sample_data_dialog_message": "Do you want to add the sample recipes to your existing list, or replace all current database contents?",
+  "settings_sample_data_add_button": "Add to current",
+  "settings_sample_data_replace_button": "Replace all",
+  "settings_sample_data_replaced_snackbar": "Database replaced with sample data ({recipes} recipes, {ingredients} ingredients)",
+  "@settings_sample_data_replaced_snackbar": {
+    "placeholders": {
+      "recipes": {
+        "type": "int"
+      },
+      "ingredients": {
+        "type": "int"
+      }
+    }
+  },
+  "settings_sample_data_subtitle": "Load test ingredients and recipes to evaluate the app",
+  "settings_brand_theme_adapt_notice": "The icon and branding adapt to your selected theme",
+  "scale_multiplier_button": "x{multiplier}",
+  "@scale_multiplier_button": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_custom_multiplier_hint": "e.g. 1.5",
+  "scaled_recipe_name": "{name} (x{multiplier})",
+  "@scaled_recipe_name": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "merge_no_other_ingredients": "No other ingredients in this recipe to merge into.",
+  "merge_no_other_database_ingredients": "No other ingredients in the database to merge into.",
+  "merge_ingredient_action_db_desc": "Merge into another ingredient in the database",
+  "delete_ingredient_permanent_desc": "Permanently delete from database",
+  "ingredient_deleted_snackbar": "Ingredient \"{name}\" deleted.",
+  "@ingredient_deleted_snackbar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "no_timers_in_recipe": "No timer presets added to this recipe.",
+  "recipe_timer_min": "Min",
+  "recipe_timer_sec": "Sec",
+  "gain_per_portion": "Gain/Portion",
+  "price_per_portion": "Price/Portion"
 }

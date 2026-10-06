@@ -317,13 +317,13 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                     IconButton(
                       icon: Icon(Icons.edit_outlined, size: 20, color: accentColor),
                       onPressed: () => _showAddTimerDialog(context, notifier, l10n, existingTimer: timer),
-                      tooltip: l10n.localeName == 'es' ? 'Editar' : 'Edit',
+                      tooltip: l10n.edit_button,
                       visualDensity: VisualDensity.compact,
                     ),
                     IconButton(
                       icon: Icon(Icons.close, size: 20, color: theme.colorScheme.onSurfaceVariant),
                       onPressed: () => notifier.deleteTimer(timer.id),
-                      tooltip: l10n.localeName == 'es' ? 'Eliminar' : 'Delete',
+                      tooltip: l10n.delete_button,
                       visualDensity: VisualDensity.compact,
                     ),
                   ],
@@ -387,8 +387,9 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                                       ? '${l10n.timers_finished} (${timer.formattedFinishedTime})'
                                       : l10n.timers_finished)
                                   : (timer.isRunning
-                                      ? (l10n.localeName == 'es' ? 'En marcha' : 'Running')
-                                      : (l10n.localeName == 'es' ? 'Pausado' : 'Paused')),
+                                      ? l10n.timers_running
+                                      : l10n.timers_paused),
+                              softWrap: true,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 11,
@@ -415,7 +416,8 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       },
                       icon: const Icon(Icons.stop_circle_outlined, size: 22),
                       label: Text(
-                        l10n.localeName == 'es' ? 'DETENER ALARMA' : 'STOP ALARM',
+                        l10n.timers_stop_alarm,
+                        softWrap: true,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -436,7 +438,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       OutlinedButton.icon(
                         onPressed: () => notifier.addMinutes(timer.id, 1),
                         icon: const Icon(Icons.add, size: 16),
-                        label: const Text('+1m'),
+                        label: Text(l10n.timers_add_minutes(1), softWrap: true),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           shape: RoundedRectangleBorder(
@@ -447,7 +449,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       OutlinedButton.icon(
                         onPressed: () => notifier.resetTimer(timer.id),
                         icon: const Icon(Icons.refresh, size: 16),
-                        label: Text(l10n.localeName == 'es' ? 'Reiniciar' : 'Reset'),
+                        label: Text(l10n.timers_reset, softWrap: true),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           shape: RoundedRectangleBorder(
@@ -458,9 +460,10 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       ElevatedButton.icon(
                         onPressed: () => notifier.toggleTimer(timer.id),
                         icon: Icon(timer.isRunning ? Icons.pause : Icons.play_arrow, size: 18),
-                        label: Text(timer.isRunning
-                            ? (l10n.localeName == 'es' ? 'Pausar' : 'Pause')
-                            : (l10n.localeName == 'es' ? 'Iniciar' : 'Start')),
+                        label: Text(
+                          timer.isRunning ? l10n.timers_pause : l10n.timers_start,
+                          softWrap: true,
+                        ),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           backgroundColor: accentColor,
@@ -521,11 +524,12 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                   children: [
                     Text(
                       existingTimer != null
-                          ? (l10n.localeName == 'es' ? 'Editar Temporizador' : 'Edit Timer')
+                          ? l10n.timers_edit_title
                           : l10n.timers_add_title,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
+                      softWrap: true,
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -533,7 +537,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         labelText: l10n.timers_timer_name,
-                        hintText: l10n.localeName == 'es' ? 'ej. Hervir Papas' : 'e.g. Boil Potatoes',
+                        hintText: l10n.timers_hint,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -546,6 +550,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
+                      softWrap: true,
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -553,7 +558,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       children: [
                         _buildTimePickerColumn(
                           theme: theme,
-                          label: l10n.localeName == 'es' ? 'Min' : 'Min',
+                          label: l10n.timers_min,
                           value: selectedMinutes,
                           onIncrement: () => setModalState(() => selectedMinutes++),
                           onDecrement: () => setModalState(() {
@@ -566,7 +571,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                         ),
                         _buildTimePickerColumn(
                           theme: theme,
-                          label: l10n.localeName == 'es' ? 'Seg' : 'Sec',
+                          label: l10n.timers_sec,
                           value: selectedSeconds,
                           onIncrement: () => setModalState(() {
                             if (selectedSeconds < 55) selectedSeconds += 5;
@@ -583,7 +588,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       alignment: WrapAlignment.center,
                       children: [1, 3, 5, 10, 15, 30, 45, 60].map((m) {
                         return ChoiceChip(
-                          label: Text('+$m m'),
+                          label: Text(l10n.timers_add_minutes(m)),
                           selected: selectedMinutes == m && selectedSeconds == 0,
                           onSelected: (_) {
                             setModalState(() {
@@ -651,8 +656,9 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       icon: Icon(existingTimer != null ? Icons.check : Icons.play_arrow),
                       label: Text(
                         existingTimer != null
-                            ? (l10n.localeName == 'es' ? 'Guardar Cambios' : 'Save Changes')
-                            : (l10n.localeName == 'es' ? 'Iniciar Temporizador' : 'Start Timer'),
+                            ? l10n.save_changes_button
+                            : l10n.timers_start_timer,
+                        softWrap: true,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ),
@@ -700,6 +706,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
         ),
         Text(
           label,
+          softWrap: true,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

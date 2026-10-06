@@ -184,9 +184,8 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
           ],
         ),
         content: Text(
-          l10n.localeName == 'es'
-              ? '¿Deseas guardar los cambios del ingrediente o descartarlos?'
-              : 'Do you want to save or discard changes to this ingredient?',
+          l10n.unsaved_changes_ingredient_body,
+          softWrap: true,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -275,7 +274,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
           leading: widget.onClose != null || Navigator.canPop(context)
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  tooltip: l10n.localeName == 'es' ? 'Volver' : 'Back',
+                  tooltip: l10n.back_button,
                   onPressed: _handleCloseOrBack,
                 )
               : null,

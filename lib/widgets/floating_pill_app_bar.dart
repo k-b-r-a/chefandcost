@@ -81,6 +81,7 @@ Widget buildFloatingPillAppBar({
                                         fontSize: 16 + (4 * percentage.clamp(0, 1)),
                                       ),
                                       textAlign: TextAlign.center,
+                                      softWrap: true,
                                     ),
                                     if (trailing != null) ...[
                                       const SizedBox(width: 8),

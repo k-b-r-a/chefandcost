@@ -375,10 +375,10 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final isWide = MediaQuery.sizeOf(context).width >= 640;
     final confirmed = await AppDialogs.confirmDelete(
       context,
-      title: l10n.delete_button,
-      message: '${l10n.delete_button} ${ingredient.name}?',
+      title: l10n.delete_ingredient_title,
+      message: l10n.delete_ingredient_confirm(ingredient.name),
       confirmText: l10n.delete_button,
-      cancelText: l10n.done_button,
+      cancelText: l10n.cancel_button,
     );
 
     if (confirmed) {

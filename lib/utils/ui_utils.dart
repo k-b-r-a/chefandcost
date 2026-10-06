@@ -16,7 +16,7 @@ class AppSnackBar {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, softWrap: true),
         backgroundColor: isError ? theme.colorScheme.error : null,
         duration: duration,
         behavior: SnackBarBehavior.floating,
@@ -80,6 +80,7 @@ class AppEmptyState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
+              softWrap: true,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

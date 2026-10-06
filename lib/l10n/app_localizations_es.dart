@@ -271,7 +271,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get search_hint => 'Buscar...';
 
   @override
-  String get search_ingredients_hint => 'Escribe para buscar ingredientes...';
+  String get search_ingredients_hint => 'Buscar ingredientes...';
 
   @override
   String get no_ingredients_found => 'Ingredientes no encontrados';
@@ -813,4 +813,437 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get scale_saved_toast =>
       'Cantidades escaladas guardadas en la receta real';
+
+  @override
+  String get brand_home_tooltip => 'Chef&Cost - Inicio';
+
+  @override
+  String get back_to_home_tooltip => 'Volver al Inicio';
+
+  @override
+  String get back_button => 'Volver';
+
+  @override
+  String get close_button => 'Cerrar';
+
+  @override
+  String get apply_button => 'Aplicar';
+
+  @override
+  String get save_changes_button => 'Guardar Cambios';
+
+  @override
+  String get view_button => 'Ver';
+
+  @override
+  String get sign_in_button => 'Iniciar Sesión';
+
+  @override
+  String get toggle_theme_tooltip => 'Cambiar tema';
+
+  @override
+  String get search_recipes_hint => 'Buscar recetas...';
+
+  @override
+  String sample_data_loaded_snackbar(int recipes, int ingredients) {
+    return 'Datos de ejemplo cargados: $recipes recetas y $ingredients ingredientes';
+  }
+
+  @override
+  String get load_sample_data => 'Cargar datos de ejemplo';
+
+  @override
+  String get timer_finished_banner => '¡Temporizador finalizado!';
+
+  @override
+  String timer_finished_at(String time) {
+    return 'Terminado a las $time';
+  }
+
+  @override
+  String get delete_ingredient_title => '¿Eliminar ingrediente?';
+
+  @override
+  String delete_ingredient_confirm(String name) {
+    return '¿Estás seguro de que deseas eliminar \"$name\" de la base de datos?';
+  }
+
+  @override
+  String get unsaved_changes_ingredient_body =>
+      '¿Deseas guardar los cambios del ingrediente o descartarlos?';
+
+  @override
+  String get recipe_editor_add_ingredients_to_scale =>
+      'Agregue ingredientes a la receta para escalar';
+
+  @override
+  String get recipe_editor_please_enter_name =>
+      'Por favor, ingrese el nombre de la receta';
+
+  @override
+  String get recipe_duplicated_success => 'Receta duplicada con éxito';
+
+  @override
+  String get apply_to_recipe_button => 'Aplicar a la Receta';
+
+  @override
+  String recipe_duplicate_name(String name, String copyLabel) {
+    return '$name ($copyLabel)';
+  }
+
+  @override
+  String get financial_summary_title => 'Resumen Financiero';
+
+  @override
+  String get financial_costs_section => 'Costos';
+
+  @override
+  String get financial_margin_pricing_section => 'Margen y Precios';
+
+  @override
+  String get financial_results_section => 'Resultados';
+
+  @override
+  String get financial_total_revenue => 'Ingreso bruto total';
+
+  @override
+  String get recipe_stats_section => 'Datos de Receta';
+
+  @override
+  String get hide_financial_summary => 'Ocultar Resumen Financiero';
+
+  @override
+  String get show_financial_summary => 'Mostrar Resumen Financiero';
+
+  @override
+  String get recipe_editor_live => 'En vivo';
+
+  @override
+  String get recipe_editor_other_category => 'Otros';
+
+  @override
+  String get recipe_timers_section => 'Temporizadores de la Receta';
+
+  @override
+  String get recipe_timer_single => 'Temporizador';
+
+  @override
+  String get recipe_timers_title => 'Temporizadores';
+
+  @override
+  String get recipe_timer_add_badge => '+ Temporizador';
+
+  @override
+  String get start_timer_tooltip => 'Iniciar temporizador';
+
+  @override
+  String timer_started_snackbar(String name, String duration) {
+    return 'Temporizador iniciado: $name ($duration)';
+  }
+
+  @override
+  String get recipe_timer_edit_title => 'Editar Temporizador';
+
+  @override
+  String get recipe_timer_add_title => 'Agregar Temporizador';
+
+  @override
+  String get recipe_timer_name_label => 'Nombre del temporizador';
+
+  @override
+  String get recipe_timer_name_hint => 'ej. Hervir Pasta, Hornear';
+
+  @override
+  String get add_timer_preset_button => 'Guardar Temporizador';
+
+  @override
+  String get edit_ingredient_action => 'Editar ingrediente';
+
+  @override
+  String get edit_ingredient_action_desc =>
+      'Modificar nombre, costo, cantidad o unidad en la base de datos';
+
+  @override
+  String get merge_ingredient_action => 'Combinar / Fusionar ingrediente';
+
+  @override
+  String get merge_ingredient_action_desc =>
+      'Sumar cantidad a otro ingrediente de esta receta';
+
+  @override
+  String get delete_ingredient_action => 'Eliminar ingrediente';
+
+  @override
+  String get delete_ingredient_action_desc =>
+      'Quitar ingrediente de esta receta';
+
+  @override
+  String get merge_ingredient_title => 'Combinar Ingrediente';
+
+  @override
+  String merge_ingredient_into_prompt(String name) {
+    return 'Combinar \"$name\" en:';
+  }
+
+  @override
+  String get compare_merged_success => 'Ingredientes combinados con éxito';
+
+  @override
+  String get compare_no_units_error => 'ERROR: No hay unidades cargadas.';
+
+  @override
+  String compare_more_costly(String amount) {
+    return '+$amount MÁS COSTOSO';
+  }
+
+  @override
+  String compare_less_costly(String amount) {
+    return '-$amount MÁS ECONÓMICO';
+  }
+
+  @override
+  String get compare_loading => 'Cargando datos de comparación...';
+
+  @override
+  String get timers_running => 'En marcha';
+
+  @override
+  String get timers_paused => 'Pausado';
+
+  @override
+  String get timers_stop_alarm => 'DETENER ALARMA';
+
+  @override
+  String get timers_reset => 'Reiniciar';
+
+  @override
+  String get timers_pause => 'Pausar';
+
+  @override
+  String get timers_start => 'Iniciar';
+
+  @override
+  String get timers_start_timer => 'Iniciar Temporizador';
+
+  @override
+  String get timers_edit_title => 'Editar Temporizador';
+
+  @override
+  String get timers_hint => 'ej. Hervir Papas';
+
+  @override
+  String get timers_min => 'Min';
+
+  @override
+  String get timers_sec => 'Seg';
+
+  @override
+  String timers_add_minutes(int minutes) {
+    return '+${minutes}m';
+  }
+
+  @override
+  String get rule_of_three_error_zero => 'El valor inicial no puede ser cero';
+
+  @override
+  String rule_of_three_explanation(
+    String a,
+    String b,
+    String c,
+    String result,
+  ) {
+    return 'Si $a equivale a $b, entonces $c equivale a $result.';
+  }
+
+  @override
+  String get cloud_sync_sync_target => 'Destino de Sincronización';
+
+  @override
+  String get cloud_sync_target_firestore => 'Firestore';
+
+  @override
+  String get cloud_sync_target_drive => 'Google Drive';
+
+  @override
+  String get cloud_sync_target_local => 'Directorio Local';
+
+  @override
+  String get cloud_sync_desc_web =>
+      'En la Web, la sincronización se realiza mediante Cloud Firestore para sincronizar datos en tiempo real entre tu navegador y la aplicación móvil. Los respaldos en archivo de Google Drive están disponibles en dispositivos móviles y de escritorio.';
+
+  @override
+  String get cloud_sync_desc_firestore =>
+      'Sincronización multiplataforma (Web y Móvil) en tiempo real mediante Cloud Firestore.';
+
+  @override
+  String get cloud_sync_desc_local =>
+      'El modo Directorio Local guarda tus respaldos en el almacenamiento local del dispositivo. No requiere conexión a Internet ni una cuenta de Google.';
+
+  @override
+  String get cloud_sync_switch_account => 'Cambiar cuenta';
+
+  @override
+  String get cloud_sync_sync_now => 'Sincronizar ahora';
+
+  @override
+  String get cloud_sync_save_copy_dialog_title =>
+      'Seleccionar carpeta para guardar la copia';
+
+  @override
+  String get cloud_sync_save_copy_tooltip => 'Guardar copia en...';
+
+  @override
+  String get cloud_sync_restore_tooltip => 'Restaurar';
+
+  @override
+  String get cloud_sync_delete_tooltip => 'Eliminar';
+
+  @override
+  String get cloud_sync_connect_account_title => 'Conecta tu cuenta';
+
+  @override
+  String get cloud_sync_connect_account_subtitle =>
+      'Sincroniza tus recetas automáticamente entre Web y Móvil';
+
+  @override
+  String get cloud_sync_continue_google => 'Continuar con Google';
+
+  @override
+  String get cloud_sync_or_email => 'o con correo electrónico';
+
+  @override
+  String get cloud_sync_create_account => 'Crear Cuenta';
+
+  @override
+  String get cloud_sync_email_label => 'Correo electrónico';
+
+  @override
+  String get cloud_sync_email_hint => 'ejemplo@correo.com';
+
+  @override
+  String get cloud_sync_password_label => 'Contraseña';
+
+  @override
+  String get cloud_sync_password_hint => 'Mínimo 6 caracteres';
+
+  @override
+  String get cloud_sync_forgot_password => '¿Olvidaste tu contraseña?';
+
+  @override
+  String get cloud_sync_connected_to_firestore => 'Conectado a Firestore';
+
+  @override
+  String get cloud_sync_authenticated_user => 'Usuario autenticado';
+
+  @override
+  String get cloud_sync_sign_out_confirm_title => 'Cerrar sesión';
+
+  @override
+  String get cloud_sync_sign_out_confirm_message =>
+      '¿Estás seguro de que deseas cerrar sesión de Firestore?';
+
+  @override
+  String get cloud_sync_error_invalid_email =>
+      'Por favor, introduce un correo electrónico válido.';
+
+  @override
+  String get cloud_sync_error_short_password =>
+      'La contraseña debe tener al menos 6 caracteres.';
+
+  @override
+  String get cloud_sync_reset_email_sent =>
+      '¡Enlace enviado! Revisa tu correo electrónico para restablecer tu contraseña.';
+
+  @override
+  String get cloud_sync_connected_account => 'Cuenta conectada';
+
+  @override
+  String get settings_category_data_subtitle => 'Gestión de datos de la app';
+
+  @override
+  String get settings_category_backup_subtitle =>
+      'Respaldar y restaurar en Google Drive';
+
+  @override
+  String get settings_category_themes_subtitle =>
+      'Temas, colores y tamaño de letra';
+
+  @override
+  String get settings_category_locale_subtitle => 'Idioma y formato numérico';
+
+  @override
+  String get settings_category_info_subtitle => 'Versión e información';
+
+  @override
+  String get settings_sample_data_dialog_message =>
+      '¿Deseas añadir las recetas de ejemplo a las existentes o reemplazar todo el contenido actual de la base de datos?';
+
+  @override
+  String get settings_sample_data_add_button => 'Añadir a los actuales';
+
+  @override
+  String get settings_sample_data_replace_button => 'Reemplazar todo';
+
+  @override
+  String settings_sample_data_replaced_snackbar(int recipes, int ingredients) {
+    return 'Base de datos reemplazada con datos de ejemplo ($recipes recetas, $ingredients ingredientes)';
+  }
+
+  @override
+  String get settings_sample_data_subtitle =>
+      'Carga ingredientes y recetas de prueba para evaluar la app';
+
+  @override
+  String get settings_brand_theme_adapt_notice =>
+      'El icono y la marca se adaptan al tema seleccionado';
+
+  @override
+  String scale_multiplier_button(String multiplier) {
+    return 'x$multiplier';
+  }
+
+  @override
+  String get scale_custom_multiplier_hint => 'ej. 1.5';
+
+  @override
+  String scaled_recipe_name(String name, String multiplier) {
+    return '$name (x$multiplier)';
+  }
+
+  @override
+  String get merge_no_other_ingredients =>
+      'No hay otros ingredientes en esta receta para combinar.';
+
+  @override
+  String get merge_no_other_database_ingredients =>
+      'No hay otros ingredientes en la base de datos para combinar.';
+
+  @override
+  String get merge_ingredient_action_db_desc =>
+      'Fusionar con otro ingrediente en la base de datos';
+
+  @override
+  String get delete_ingredient_permanent_desc =>
+      'Eliminar permanentemente de la base de datos';
+
+  @override
+  String ingredient_deleted_snackbar(String name) {
+    return 'Ingrediente \"$name\" eliminado.';
+  }
+
+  @override
+  String get no_timers_in_recipe =>
+      'No hay temporizadores agregados a esta receta.';
+
+  @override
+  String get recipe_timer_min => 'Min';
+
+  @override
+  String get recipe_timer_sec => 'Seg';
+
+  @override
+  String get gain_per_portion => 'Ganancia/Porción';
+
+  @override
+  String get price_per_portion => 'Precio/Porción';
 }

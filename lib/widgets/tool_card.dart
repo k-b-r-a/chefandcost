@@ -78,6 +78,8 @@ class ToolCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
                         style: (isCompact
                                 ? theme.textTheme.titleSmall
                                 : theme.textTheme.titleMedium)
@@ -89,6 +91,7 @@ class ToolCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
+                        softWrap: true,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.2,
