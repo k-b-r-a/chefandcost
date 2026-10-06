@@ -35,8 +35,10 @@ class BackupFile {
 }
 
 class GoogleDriveSyncService {
-  static const defaultClientId = '942605231744-g6uaakf2kns45evmlgm3s467rkkii7ms.apps.googleusercontent.com';
-  static const defaultServerClientId = '942605231744-c77i5tmm6767i2k0rktbavaklv60foka.apps.googleusercontent.com';
+  static const defaultAndroidClientId = '194514517992-748uug2nkb8n29obqlfil2ue7t5ih97o.apps.googleusercontent.com';
+  static const defaultWebClientId = '194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com';
+  static const defaultClientId = kIsWeb ? defaultWebClientId : defaultAndroidClientId;
+  static const defaultServerClientId = defaultWebClientId;
   static const _storageTypeKey = 'google_drive_storage_type';
   static const _simSignInKey = 'google_drive_sim_signed_in';
   static const _simEmailKey = 'google_drive_sim_email';
@@ -228,7 +230,7 @@ class GoogleDriveSyncService {
       final errorStr = e.toString();
       if (errorStr.contains('403') || errorStr.contains('disabled') || errorStr.contains('drive.googleapis.com')) {
         throw Exception(
-          'Google Drive API is disabled for project 942605231744. Enable it at: https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=942605231744',
+          'Google Drive API is disabled for project 194514517992. Enable it at: https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=194514517992',
         );
       }
       throw Exception('Google Drive error: $e');

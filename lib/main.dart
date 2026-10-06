@@ -394,50 +394,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       labelType: settings.showNavBarLabels
           ? NavigationRailLabelType.all
           : NavigationRailLabelType.none,
-      minWidth: 72,
+      minWidth: 80,
       minExtendedWidth: 200,
       leading: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20.0),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: ChefAndCostBrand(
+          badgeSize: 46,
+          compactWidth: 72,
+          tooltip: l10n.localeName == 'es' ? 'Chef&Cost - Inicio' : 'Chef&Cost - Home',
           onTap: () async {
             final guard = ref.read(recipeCanLeaveGuardProvider);
             if (guard != null && !await guard()) return;
             webNotifier.showHome();
           },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: AppLogo(
-                    size: 28,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Chef&Cost',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
       trailing: Expanded(
