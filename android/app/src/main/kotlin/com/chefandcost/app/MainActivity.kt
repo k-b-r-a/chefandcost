@@ -1,4 +1,4 @@
-package com.example.recipetools
+package com.chefandcost.app
 
 import android.media.Ringtone
 import android.media.RingtoneManager
@@ -7,7 +7,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.example.recipetools/alarm"
+    private val CHANNEL = "com.chefandcost.app/alarm"
     private var ringtone: Ringtone? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

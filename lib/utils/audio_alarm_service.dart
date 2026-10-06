@@ -8,7 +8,7 @@ class AudioAlarmService {
   factory AudioAlarmService() => _instance;
   AudioAlarmService._internal();
 
-  static const MethodChannel _platform = MethodChannel('com.example.recipetools/alarm');
+  static const MethodChannel _platform = MethodChannel('com.chefandcost.app/alarm');
   AudioPlayer? _player;
   Timer? _loopTimer;
   bool _isPlaying = false;
