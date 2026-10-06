@@ -1,4 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
+// Chef&Cost official vector icon template string.
+// Derived from assets/images/icon.svg.
+// Used for high-performance, synchronous dynamic palette rendering.
+
+const String kAppIconSvgTemplate = '''<?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 28.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="59 72 1154 1154" style="enable-background:new 0 0 1280 1280;" xml:space="preserve">
@@ -97,3 +101,4 @@
 	c0-3.4,0.8-5,4.3-8.5c2.3-2.4,5.3-4.3,6.6-4.3C608.9,880.2,609,880.7,609,894z M632.1,942.5c5.5,2.9,9.4,9,9.3,14.8
 	c-0.1,6.3-2.8,10.6-8.3,13.4c-7.7,3.9-7.6,4-7.6-13.9C625.5,939.3,625.6,939.1,632.1,942.5z"/>
 </svg>
+''';

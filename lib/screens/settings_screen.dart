@@ -659,6 +659,40 @@ class SettingsStylesScreen extends ConsumerWidget {
                     );
                   }).toList(),
                 ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const AppIcon(size: 46),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const ChefAndCostText(fontSize: 16.5),
+                            const SizedBox(height: 3),
+                            Text(
+                              l10n.localeName == 'es'
+                                  ? 'El icono y la marca se adaptan al tema seleccionado'
+                                  : 'The icon and branding adapt to your selected theme',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
 
