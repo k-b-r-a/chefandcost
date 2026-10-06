@@ -8,6 +8,7 @@ import '../provider/database_provider.dart';
 import 'cloud_sync_screen.dart';
 import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
+import '../widgets/app_logo.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -658,6 +659,40 @@ class SettingsStylesScreen extends ConsumerWidget {
                     );
                   }).toList(),
                 ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const AppIcon(size: 46),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const ChefAndCostText(fontSize: 16.5),
+                            const SizedBox(height: 3),
+                            Text(
+                              l10n.localeName == 'es'
+                                  ? 'El icono y la marca se adaptan al tema seleccionado'
+                                  : 'The icon and branding adapt to your selected theme',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
 
@@ -1231,14 +1266,14 @@ class SettingsAboutScreen extends ConsumerWidget {
               ),
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: CircleAvatar(
-                  backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-                  child: Icon(Icons.info_outline, color: theme.colorScheme.primary),
+                leading: const AppIcon(
+                  size: 40,
                 ),
-                title: Text(
-                  l10n.settings_about,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                title: const Text(
+                  'Chef&Cost',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
+                subtitle: Text(l10n.settings_about),
                 trailing: Text(
                   '${l10n.settings_version} 1.0.0+1',
                   style: theme.textTheme.bodyMedium?.copyWith(

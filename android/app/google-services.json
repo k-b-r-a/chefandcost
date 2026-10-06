@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:194514517992:android:d4202c981e2a718d9bae5d",
+        "mobilesdk_app_id": "1:194514517992:android:e049ba4d67978ff89bae5d",
         "android_client_info": {
-          "package_name": "com.example.recipetools"
+          "package_name": "com.chefandcost.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "194514517992-748uug2nkb8n29obqlfil2ue7t5ih97o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.chefandcost.app",
+            "certificate_hash": "44942522dd783beee359e86e1976731b72290d50"
+          }
+        },
+        {
+          "client_id": "194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBLpYuok3dJhDJ7k4gOhL5pBeD1YgJ_ubU"
@@ -20,7 +33,63 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "194514517992-l5bsj1188ohneb9aksnagre026gio5j9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.recipetools"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:194514517992:android:d4202c981e2a718d9bae5d",
+        "android_client_info": {
+          "package_name": "com.example.recipetools"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "194514517992-a1uq4vj75cahbfe0dir3ivpn1teot72m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.recipetools",
+            "certificate_hash": "44942522dd783beee359e86e1976731b72290d50"
+          }
+        },
+        {
+          "client_id": "194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLpYuok3dJhDJ7k4gOhL5pBeD1YgJ_ubU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "194514517992-l5bsj1188ohneb9aksnagre026gio5j9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.recipetools"
+              }
+            }
+          ]
         }
       }
     }

@@ -222,7 +222,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     } catch (e) {
       state = state.copyWith(
         loading: false,
-        errorMessage: _formatAuthError(e),
+        errorMessage: _formatAuthError(e, isGoogle: true),
       );
     }
   }
@@ -244,7 +244,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     }
   }
 
-  String _formatAuthError(Object error) {
+  String _formatAuthError(Object error, {bool isGoogle = false}) {
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'user-not-found':
@@ -252,6 +252,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         case 'wrong-password':
           return 'Contraseña incorrecta. Por favor verifica tus datos.';
         case 'invalid-credential':
+          if (isGoogle) {
+            return 'No se pudo verificar la credencial de Google con Firebase. Asegúrate de que el proveedor Google esté activo en Firebase Console y de haber configurado el certificado SHA-1.';
+          }
           return 'Correo o contraseña incorrectos. Si aún no tienes cuenta, selecciona "Crear cuenta".';
         case 'email-already-in-use':
           return 'Ya existe una cuenta con este correo electrónico. Cambia a "Iniciar sesión".';

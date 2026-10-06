@@ -18,6 +18,7 @@ import 'screens/cloud_sync_screen.dart';
 import 'provider/settings_provider.dart';
 import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
+import 'widgets/app_logo.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -47,7 +48,7 @@ void main() async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
       ],
-      child: const RecipetoolsApp(),
+      child: const ChefAndCostApp(),
     ),
   );
 }
@@ -90,8 +91,10 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
   }
 }
 
-class RecipetoolsApp extends ConsumerWidget {
-  const RecipetoolsApp({super.key});
+typedef RecipetoolsApp = ChefAndCostApp;
+
+class ChefAndCostApp extends ConsumerWidget {
+  const ChefAndCostApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -169,7 +172,8 @@ class RecipetoolsApp extends ConsumerWidget {
     }
 
     return MaterialApp(
-      onGenerateTitle: (context) => AppLocalizations.of(context)!.recipes_title,
+      title: 'Chef&Cost',
+      onGenerateTitle: (context) => 'Chef&Cost',
       locale: settings.locale,
       themeMode: settings.themeMode,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -390,49 +394,25 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       labelType: settings.showNavBarLabels
           ? NavigationRailLabelType.all
           : NavigationRailLabelType.none,
-      minWidth: 72,
+      minWidth: 80,
       minExtendedWidth: 200,
       leading: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20.0),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () async {
-            final guard = ref.read(recipeCanLeaveGuardProvider);
-            if (guard != null && !await guard()) return;
-            webNotifier.showHome();
-          },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.restaurant_menu,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  size: 26,
-                ),
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Tooltip(
+          message: l10n.localeName == 'es' ? 'Chef&Cost - Inicio' : 'Chef&Cost - Home',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () async {
+              final guard = ref.read(recipeCanLeaveGuardProvider);
+              if (guard != null && !await guard()) return;
+              webNotifier.showHome();
+            },
+            child: const Padding(
+              padding: EdgeInsets.all(2.0),
+              child: AppIcon(
+                size: 56,
               ),
-              const SizedBox(height: 8),
-              Text(
-                'RecipeTools',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

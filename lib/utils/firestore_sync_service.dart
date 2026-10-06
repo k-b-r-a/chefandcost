@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
-import 'cloud_sync_service.dart';
 
 /// Service responsible for purely manual, on-demand, differential cross-platform sync
 /// with Cloud Firestore. Optimized for Firebase Spark plan limits by embedding
@@ -26,6 +25,8 @@ class FirestoreSyncService {
 
   static const String prefLastSyncKey = 'firestore_last_synced_at';
   static const String prefUserIdKey = 'firestore_sync_user_id';
+  static const String defaultFirebaseWebClientId =
+      '194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com';
 
   /// Whether Firebase has been initialized in the current runtime environment.
   bool get isConfigured {
@@ -154,8 +155,7 @@ class FirestoreSyncService {
       cred = await _auth.signInWithPopup(googleProvider);
     } else {
       await GoogleSignIn.instance.initialize(
-        clientId: GoogleDriveSyncService.defaultClientId,
-        serverClientId: GoogleDriveSyncService.defaultServerClientId,
+        serverClientId: defaultFirebaseWebClientId,
       );
       final googleUser = await GoogleSignIn.instance.authenticate();
       final auth = googleUser.authentication;
