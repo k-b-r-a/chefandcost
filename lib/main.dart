@@ -398,15 +398,22 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       minExtendedWidth: 200,
       leading: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: ChefAndCostBrand(
-          badgeSize: 46,
-          compactWidth: 72,
-          tooltip: l10n.localeName == 'es' ? 'Chef&Cost - Inicio' : 'Chef&Cost - Home',
-          onTap: () async {
-            final guard = ref.read(recipeCanLeaveGuardProvider);
-            if (guard != null && !await guard()) return;
-            webNotifier.showHome();
-          },
+        child: Tooltip(
+          message: l10n.localeName == 'es' ? 'Chef&Cost - Inicio' : 'Chef&Cost - Home',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () async {
+              final guard = ref.read(recipeCanLeaveGuardProvider);
+              if (guard != null && !await guard()) return;
+              webNotifier.showHome();
+            },
+            child: const Padding(
+              padding: EdgeInsets.all(4.0),
+              child: AppIcon(
+                size: 44,
+              ),
+            ),
+          ),
         ),
       ),
       trailing: Expanded(

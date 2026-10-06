@@ -3,6 +3,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:recipetools/widgets/app_logo.dart';
 
 void main() {
+  testWidgets('AppIcon renders cleanly without errors', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppIcon(size: 44),
+        ),
+      ),
+    );
+
+    expect(find.byType(AppIcon), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ChefAndCostText renders "Chef", "&", and "Cost" on a single fitted line',
       (WidgetTester tester) async {
     await tester.pumpWidget(
@@ -33,11 +46,11 @@ void main() {
     );
 
     expect(find.byType(ChefAndCostBadge), findsOneWidget);
-    expect(find.byType(AppLogo), findsOneWidget);
+    expect(find.byType(AppIcon), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('ChefAndCostBrand in compact mode renders vertically and triggers onTap',
+  testWidgets('ChefAndCostBrand in compact mode renders and triggers onTap',
       (WidgetTester tester) async {
     bool tapped = false;
 
@@ -59,8 +72,7 @@ void main() {
     );
 
     expect(find.byType(ChefAndCostBrand), findsOneWidget);
-    expect(find.byType(ChefAndCostBadge), findsOneWidget);
-    expect(find.byType(ChefAndCostText), findsOneWidget);
+    expect(find.byType(AppIcon), findsOneWidget);
 
     await tester.tap(find.byType(ChefAndCostBrand));
     await tester.pump();

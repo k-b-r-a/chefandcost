@@ -1232,11 +1232,12 @@ class SettingsAboutScreen extends ConsumerWidget {
               ),
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: const ChefAndCostBadge(
+                leading: const AppIcon(
                   size: 40,
                 ),
-                title: const ChefAndCostText(
-                  fontSize: 16,
+                title: const Text(
+                  'Chef&Cost',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(l10n.settings_about),
                 trailing: Text(
