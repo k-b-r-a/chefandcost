@@ -49,3 +49,7 @@ app.*.map.json
 .agents
 .firebase/
 *.apk
+*.keystore
+*.jks
+android/key.properties
+key.properties

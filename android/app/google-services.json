@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "194514517992-a1uq4vj75cahbfe0dir3ivpn1teot72m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.recipetools",
+            "certificate_hash": "44942522dd783beee359e86e1976731b72290d50"
+          }
+        },
+        {
           "client_id": "194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com",
           "client_type": 3
         }
