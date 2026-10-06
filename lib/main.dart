@@ -399,7 +399,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       leading: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Tooltip(
-          message: l10n.localeName == 'es' ? 'Chef&Cost - Inicio' : 'Chef&Cost - Home',
+          message: l10n.brand_home_tooltip,
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: () async {
@@ -455,8 +455,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                 : theme.colorScheme.onSurfaceVariant,
                           ),
                     tooltip: syncState.signedIn
-                        ? (syncState.email ?? (l10n.localeName == 'es' ? 'Cuenta conectada' : 'Connected account'))
-                        : (l10n.localeName == 'es' ? 'Iniciar sesión' : 'Sign In'),
+                        ? (syncState.email ?? l10n.cloud_sync_connected_account)
+                        : l10n.sign_in_button,
                     onPressed: () async {
                       final guard = ref.read(recipeCanLeaveGuardProvider);
                       if (guard != null && !await guard()) return;
@@ -473,7 +473,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                             ? Icons.light_mode_outlined
                             : Icons.brightness_auto_outlined,
                   ),
-                  tooltip: 'Toggle Theme',
+                  tooltip: l10n.toggle_theme_tooltip,
                   onPressed: () {
                     final nextMode = settings.themeMode == ThemeMode.dark
                         ? ThemeMode.light
@@ -673,8 +673,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           ? _recipeSearchController
                           : _ingredientSearchController;
                       final hintText = isRecipes
-                          ? (l10n.localeName == 'es' ? 'Buscar recetas...' : 'Search recipes...')
-                          : (l10n.localeName == 'es' ? 'Buscar ingredientes...' : 'Search ingredients...');
+                          ? l10n.search_recipes_hint
+                          : l10n.search_ingredients_hint;
 
                       return SizedBox(
                         height: 36,
@@ -848,7 +848,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             left: 14,
             child: IconButton.filledTonal(
               icon: const Icon(Icons.arrow_back),
-              tooltip: l10n.localeName == 'es' ? 'Volver al Inicio' : 'Back to Home',
+              tooltip: l10n.back_to_home_tooltip,
               onPressed: () => webNotifier.showHome(),
             ),
           ),
@@ -1166,8 +1166,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                       ? _recipeSearchController
                                       : _ingredientSearchController;
                                   final hintText = isRecipes
-                                      ? (l10n.localeName == 'es' ? 'Buscar recetas...' : 'Search recipes...')
-                                      : (l10n.localeName == 'es' ? 'Buscar ingredientes...' : 'Search ingredients...');
+                                      ? l10n.search_recipes_hint
+                                      : l10n.search_ingredients_hint;
 
                                   return TextField(
                                     key: ValueKey('search_field_$_currentIndex'),

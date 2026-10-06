@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:recipetools/widgets/app_icon_svg_data.dart';
+import '../l10n/app_localizations.dart';
 
 /// Palette defining the 3 layers of the official Chef&Cost icon:
 /// - [baseColor]: Replaces the deep rich base / silhouette (#6B3208)
@@ -421,8 +422,9 @@ class ChefAndCostBrand extends StatelessWidget {
     }
 
     if (onTap != null) {
+      final l10n = AppLocalizations.of(context);
       return Tooltip(
-        message: tooltip ?? 'Chef&Cost - Inicio',
+        message: tooltip ?? (l10n?.brand_home_tooltip ?? 'Chef&Cost'),
         waitDuration: const Duration(milliseconds: 500),
         child: Material(
           color: Colors.transparent,

@@ -711,7 +711,7 @@ abstract class AppLocalizations {
   /// No description provided for @search_ingredients_hint.
   ///
   /// In en, this message translates to:
-  /// **'Type to search ingredients...'**
+  /// **'Search ingredients...'**
   String get search_ingredients_hint;
 
   /// No description provided for @no_ingredients_found.
@@ -1715,6 +1715,756 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scaled quantities saved to the real recipe'**
   String get scale_saved_toast;
+
+  /// No description provided for @brand_home_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Chef&Cost - Home'**
+  String get brand_home_tooltip;
+
+  /// No description provided for @back_to_home_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Home'**
+  String get back_to_home_tooltip;
+
+  /// No description provided for @back_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back_button;
+
+  /// No description provided for @close_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close_button;
+
+  /// No description provided for @apply_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply_button;
+
+  /// No description provided for @save_changes_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get save_changes_button;
+
+  /// No description provided for @view_button.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get view_button;
+
+  /// No description provided for @sign_in_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get sign_in_button;
+
+  /// No description provided for @toggle_theme_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Theme'**
+  String get toggle_theme_tooltip;
+
+  /// No description provided for @search_recipes_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recipes...'**
+  String get search_recipes_hint;
+
+  /// No description provided for @sample_data_loaded_snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample data loaded: {recipes} recipes and {ingredients} ingredients'**
+  String sample_data_loaded_snackbar(int recipes, int ingredients);
+
+  /// No description provided for @load_sample_data.
+  ///
+  /// In en, this message translates to:
+  /// **'Load sample data'**
+  String get load_sample_data;
+
+  /// No description provided for @timer_finished_banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Timer Finished!'**
+  String get timer_finished_banner;
+
+  /// No description provided for @timer_finished_at.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished at {time}'**
+  String timer_finished_at(String time);
+
+  /// No description provided for @delete_ingredient_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Ingredient?'**
+  String get delete_ingredient_title;
+
+  /// No description provided for @delete_ingredient_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\" from the database?'**
+  String delete_ingredient_confirm(String name);
+
+  /// No description provided for @unsaved_changes_ingredient_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to save or discard changes to this ingredient?'**
+  String get unsaved_changes_ingredient_body;
+
+  /// No description provided for @recipe_editor_add_ingredients_to_scale.
+  ///
+  /// In en, this message translates to:
+  /// **'Add ingredients to recipe before scaling'**
+  String get recipe_editor_add_ingredients_to_scale;
+
+  /// No description provided for @recipe_editor_please_enter_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a recipe name'**
+  String get recipe_editor_please_enter_name;
+
+  /// No description provided for @recipe_duplicated_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe duplicated successfully'**
+  String get recipe_duplicated_success;
+
+  /// No description provided for @apply_to_recipe_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to Recipe'**
+  String get apply_to_recipe_button;
+
+  /// No description provided for @recipe_duplicate_name.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({copyLabel})'**
+  String recipe_duplicate_name(String name, String copyLabel);
+
+  /// No description provided for @financial_summary_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Summary'**
+  String get financial_summary_title;
+
+  /// No description provided for @financial_costs_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Costs'**
+  String get financial_costs_section;
+
+  /// No description provided for @financial_margin_pricing_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin & Pricing'**
+  String get financial_margin_pricing_section;
+
+  /// No description provided for @financial_results_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get financial_results_section;
+
+  /// No description provided for @financial_total_revenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Gross Revenue'**
+  String get financial_total_revenue;
+
+  /// No description provided for @recipe_stats_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Stats'**
+  String get recipe_stats_section;
+
+  /// No description provided for @hide_financial_summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Financial Summary'**
+  String get hide_financial_summary;
+
+  /// No description provided for @show_financial_summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Financial Summary'**
+  String get show_financial_summary;
+
+  /// No description provided for @recipe_editor_live.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get recipe_editor_live;
+
+  /// No description provided for @recipe_editor_other_category.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get recipe_editor_other_category;
+
+  /// No description provided for @recipe_timers_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Timers'**
+  String get recipe_timers_section;
+
+  /// No description provided for @recipe_timer_single.
+  ///
+  /// In en, this message translates to:
+  /// **'Timer'**
+  String get recipe_timer_single;
+
+  /// No description provided for @recipe_timers_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Timers'**
+  String get recipe_timers_title;
+
+  /// No description provided for @recipe_timer_add_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Timer'**
+  String get recipe_timer_add_badge;
+
+  /// No description provided for @start_timer_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Start timer'**
+  String get start_timer_tooltip;
+
+  /// No description provided for @timer_started_snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Timer started: {name} ({duration})'**
+  String timer_started_snackbar(String name, String duration);
+
+  /// No description provided for @recipe_timer_edit_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Recipe Timer'**
+  String get recipe_timer_edit_title;
+
+  /// No description provided for @recipe_timer_add_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Recipe Timer'**
+  String get recipe_timer_add_title;
+
+  /// No description provided for @recipe_timer_name_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Timer label'**
+  String get recipe_timer_name_label;
+
+  /// No description provided for @recipe_timer_name_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Boil Noodles, Bake'**
+  String get recipe_timer_name_hint;
+
+  /// No description provided for @add_timer_preset_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Timer Preset'**
+  String get add_timer_preset_button;
+
+  /// No description provided for @edit_ingredient_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit ingredient'**
+  String get edit_ingredient_action;
+
+  /// No description provided for @edit_ingredient_action_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Modify name, cost, quantity or unit in the database'**
+  String get edit_ingredient_action_desc;
+
+  /// No description provided for @merge_ingredient_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge ingredient'**
+  String get merge_ingredient_action;
+
+  /// No description provided for @merge_ingredient_action_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Add amount into another ingredient in this recipe'**
+  String get merge_ingredient_action_desc;
+
+  /// No description provided for @delete_ingredient_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete ingredient'**
+  String get delete_ingredient_action;
+
+  /// No description provided for @delete_ingredient_action_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove ingredient from this recipe'**
+  String get delete_ingredient_action_desc;
+
+  /// No description provided for @merge_ingredient_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge Ingredient'**
+  String get merge_ingredient_title;
+
+  /// No description provided for @merge_ingredient_into_prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge \"{name}\" into:'**
+  String merge_ingredient_into_prompt(String name);
+
+  /// No description provided for @compare_merged_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Merged successfully'**
+  String get compare_merged_success;
+
+  /// No description provided for @compare_no_units_error.
+  ///
+  /// In en, this message translates to:
+  /// **'DATABASE ERROR: No units loaded. Please restart the app.'**
+  String get compare_no_units_error;
+
+  /// No description provided for @compare_more_costly.
+  ///
+  /// In en, this message translates to:
+  /// **'+{amount} MORE'**
+  String compare_more_costly(String amount);
+
+  /// No description provided for @compare_less_costly.
+  ///
+  /// In en, this message translates to:
+  /// **'-{amount} LESS'**
+  String compare_less_costly(String amount);
+
+  /// No description provided for @compare_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading comparison data...'**
+  String get compare_loading;
+
+  /// No description provided for @timers_running.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get timers_running;
+
+  /// No description provided for @timers_paused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get timers_paused;
+
+  /// No description provided for @timers_stop_alarm.
+  ///
+  /// In en, this message translates to:
+  /// **'STOP ALARM'**
+  String get timers_stop_alarm;
+
+  /// No description provided for @timers_reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get timers_reset;
+
+  /// No description provided for @timers_pause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get timers_pause;
+
+  /// No description provided for @timers_start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get timers_start;
+
+  /// No description provided for @timers_start_timer.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Timer'**
+  String get timers_start_timer;
+
+  /// No description provided for @timers_edit_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Timer'**
+  String get timers_edit_title;
+
+  /// No description provided for @timers_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Boil Potatoes'**
+  String get timers_hint;
+
+  /// No description provided for @timers_min.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get timers_min;
+
+  /// No description provided for @timers_sec.
+  ///
+  /// In en, this message translates to:
+  /// **'Sec'**
+  String get timers_sec;
+
+  /// No description provided for @timers_add_minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'+{minutes}m'**
+  String timers_add_minutes(int minutes);
+
+  /// No description provided for @rule_of_three_error_zero.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial value cannot be zero'**
+  String get rule_of_three_error_zero;
+
+  /// No description provided for @rule_of_three_explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'If {a} corresponds to {b}, then {c} will correspond to {result}.'**
+  String rule_of_three_explanation(String a, String b, String c, String result);
+
+  /// No description provided for @cloud_sync_sync_target.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Target'**
+  String get cloud_sync_sync_target;
+
+  /// No description provided for @cloud_sync_target_firestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Firestore'**
+  String get cloud_sync_target_firestore;
+
+  /// No description provided for @cloud_sync_target_drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive'**
+  String get cloud_sync_target_drive;
+
+  /// No description provided for @cloud_sync_target_local.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Directory'**
+  String get cloud_sync_target_local;
+
+  /// No description provided for @cloud_sync_desc_web.
+  ///
+  /// In en, this message translates to:
+  /// **'On Web, sync is powered by Cloud Firestore to synchronize data in real-time between your browser and mobile app. Google Drive file backups are available on mobile and desktop devices.'**
+  String get cloud_sync_desc_web;
+
+  /// No description provided for @cloud_sync_desc_firestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time cross-platform sync between Web and Mobile via Cloud Firestore.'**
+  String get cloud_sync_desc_firestore;
+
+  /// No description provided for @cloud_sync_desc_local.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Directory mode stores your backups in the device\'s local storage. It does not require internet connection or a Google Account.'**
+  String get cloud_sync_desc_local;
+
+  /// No description provided for @cloud_sync_switch_account.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch account'**
+  String get cloud_sync_switch_account;
+
+  /// No description provided for @cloud_sync_sync_now.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Now'**
+  String get cloud_sync_sync_now;
+
+  /// No description provided for @cloud_sync_save_copy_dialog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Select folder to save backup'**
+  String get cloud_sync_save_copy_dialog_title;
+
+  /// No description provided for @cloud_sync_save_copy_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Save backup to...'**
+  String get cloud_sync_save_copy_tooltip;
+
+  /// No description provided for @cloud_sync_restore_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get cloud_sync_restore_tooltip;
+
+  /// No description provided for @cloud_sync_delete_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get cloud_sync_delete_tooltip;
+
+  /// No description provided for @cloud_sync_connect_account_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Your Account'**
+  String get cloud_sync_connect_account_title;
+
+  /// No description provided for @cloud_sync_connect_account_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync your recipes in real-time across Web and Mobile'**
+  String get cloud_sync_connect_account_subtitle;
+
+  /// No description provided for @cloud_sync_continue_google.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get cloud_sync_continue_google;
+
+  /// No description provided for @cloud_sync_or_email.
+  ///
+  /// In en, this message translates to:
+  /// **'or with email'**
+  String get cloud_sync_or_email;
+
+  /// No description provided for @cloud_sync_create_account.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get cloud_sync_create_account;
+
+  /// No description provided for @cloud_sync_email_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get cloud_sync_email_label;
+
+  /// No description provided for @cloud_sync_email_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'example@mail.com'**
+  String get cloud_sync_email_hint;
+
+  /// No description provided for @cloud_sync_password_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get cloud_sync_password_label;
+
+  /// No description provided for @cloud_sync_password_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 6 characters'**
+  String get cloud_sync_password_hint;
+
+  /// No description provided for @cloud_sync_forgot_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get cloud_sync_forgot_password;
+
+  /// No description provided for @cloud_sync_connected_to_firestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to Firestore'**
+  String get cloud_sync_connected_to_firestore;
+
+  /// No description provided for @cloud_sync_authenticated_user.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticated user'**
+  String get cloud_sync_authenticated_user;
+
+  /// No description provided for @cloud_sync_sign_out_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Out'**
+  String get cloud_sync_sign_out_confirm_title;
+
+  /// No description provided for @cloud_sync_sign_out_confirm_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to sign out from Firestore sync?'**
+  String get cloud_sync_sign_out_confirm_message;
+
+  /// No description provided for @cloud_sync_error_invalid_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email address.'**
+  String get cloud_sync_error_invalid_email;
+
+  /// No description provided for @cloud_sync_error_short_password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters.'**
+  String get cloud_sync_error_short_password;
+
+  /// No description provided for @cloud_sync_reset_email_sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset email sent! Check your inbox.'**
+  String get cloud_sync_reset_email_sent;
+
+  /// No description provided for @cloud_sync_connected_account.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected account'**
+  String get cloud_sync_connected_account;
+
+  /// No description provided for @settings_category_data_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App data management'**
+  String get settings_category_data_subtitle;
+
+  /// No description provided for @settings_category_backup_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up and restore on Google Drive'**
+  String get settings_category_backup_subtitle;
+
+  /// No description provided for @settings_category_themes_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Themes, colors and font size'**
+  String get settings_category_themes_subtitle;
+
+  /// No description provided for @settings_category_locale_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language and number formatting'**
+  String get settings_category_locale_subtitle;
+
+  /// No description provided for @settings_category_info_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Version and information'**
+  String get settings_category_info_subtitle;
+
+  /// No description provided for @settings_sample_data_dialog_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to add the sample recipes to your existing list, or replace all current database contents?'**
+  String get settings_sample_data_dialog_message;
+
+  /// No description provided for @settings_sample_data_add_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to current'**
+  String get settings_sample_data_add_button;
+
+  /// No description provided for @settings_sample_data_replace_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all'**
+  String get settings_sample_data_replace_button;
+
+  /// No description provided for @settings_sample_data_replaced_snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Database replaced with sample data ({recipes} recipes, {ingredients} ingredients)'**
+  String settings_sample_data_replaced_snackbar(int recipes, int ingredients);
+
+  /// No description provided for @settings_sample_data_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Load test ingredients and recipes to evaluate the app'**
+  String get settings_sample_data_subtitle;
+
+  /// No description provided for @settings_brand_theme_adapt_notice.
+  ///
+  /// In en, this message translates to:
+  /// **'The icon and branding adapt to your selected theme'**
+  String get settings_brand_theme_adapt_notice;
+
+  /// No description provided for @scale_multiplier_button.
+  ///
+  /// In en, this message translates to:
+  /// **'x{multiplier}'**
+  String scale_multiplier_button(String multiplier);
+
+  /// No description provided for @scale_custom_multiplier_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 1.5'**
+  String get scale_custom_multiplier_hint;
+
+  /// No description provided for @scaled_recipe_name.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (x{multiplier})'**
+  String scaled_recipe_name(String name, String multiplier);
+
+  /// No description provided for @merge_no_other_ingredients.
+  ///
+  /// In en, this message translates to:
+  /// **'No other ingredients in this recipe to merge into.'**
+  String get merge_no_other_ingredients;
+
+  /// No description provided for @merge_no_other_database_ingredients.
+  ///
+  /// In en, this message translates to:
+  /// **'No other ingredients in the database to merge into.'**
+  String get merge_no_other_database_ingredients;
+
+  /// No description provided for @merge_ingredient_action_db_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge into another ingredient in the database'**
+  String get merge_ingredient_action_db_desc;
+
+  /// No description provided for @delete_ingredient_permanent_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete from database'**
+  String get delete_ingredient_permanent_desc;
+
+  /// No description provided for @ingredient_deleted_snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredient \"{name}\" deleted.'**
+  String ingredient_deleted_snackbar(String name);
+
+  /// No description provided for @no_timers_in_recipe.
+  ///
+  /// In en, this message translates to:
+  /// **'No timer presets added to this recipe.'**
+  String get no_timers_in_recipe;
+
+  /// No description provided for @recipe_timer_min.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get recipe_timer_min;
+
+  /// No description provided for @recipe_timer_sec.
+  ///
+  /// In en, this message translates to:
+  /// **'Sec'**
+  String get recipe_timer_sec;
+
+  /// No description provided for @gain_per_portion.
+  ///
+  /// In en, this message translates to:
+  /// **'Gain/Portion'**
+  String get gain_per_portion;
+
+  /// No description provided for @price_per_portion.
+  ///
+  /// In en, this message translates to:
+  /// **'Price/Portion'**
+  String get price_per_portion;
 }
 
 class _AppLocalizationsDelegate

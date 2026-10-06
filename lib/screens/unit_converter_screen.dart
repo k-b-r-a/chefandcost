@@ -137,6 +137,7 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
+                  softWrap: true,
                 ),
                 const SizedBox(height: 24),
                 // Category tabs
@@ -194,6 +195,7 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
+                        softWrap: true,
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -298,6 +300,7 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
+                        softWrap: true,
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -376,6 +379,7 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                       textAlign: TextAlign.center,
+                      softWrap: true,
                     ),
                   ),
               ],

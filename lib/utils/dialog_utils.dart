@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 /// Reusable application dialogs to collapse duplicate dialog implementations.
 class AppDialogs {
@@ -14,16 +15,17 @@ class AppDialogs {
     bool isDestructive = false,
   }) async {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(message),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold), softWrap: true),
+        content: Text(message, softWrap: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(cancelText ?? 'Cancel'),
+            child: Text(cancelText ?? (l10n?.cancel_button ?? 'Cancel')),
           ),
           ElevatedButton(
             style: isDestructive
@@ -33,7 +35,7 @@ class AppDialogs {
                   )
                 : null,
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(confirmText ?? 'OK'),
+            child: Text(confirmText ?? (l10n?.done_button ?? 'OK')),
           ),
         ],
       ),
@@ -50,6 +52,7 @@ class AppDialogs {
     String? cancelText,
   }) async {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -62,15 +65,17 @@ class AppDialogs {
               child: Text(
                 title,
                 style: const TextStyle(fontWeight: FontWeight.bold),
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        content: Text(message),
+        content: Text(message, softWrap: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(cancelText ?? 'Cancel'),
+            child: Text(cancelText ?? (l10n?.cancel_button ?? 'Cancel')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -78,7 +83,7 @@ class AppDialogs {
               foregroundColor: theme.colorScheme.onError,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(confirmText ?? 'Delete'),
+            child: Text(confirmText ?? (l10n?.delete_button ?? 'Delete')),
           ),
         ],
       ),
@@ -95,12 +100,13 @@ class AppDialogs {
     String? confirmText,
     String? cancelText,
   }) async {
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: initialValue);
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold), softWrap: true),
         content: TextField(
           controller: controller,
           textCapitalization: TextCapitalization.sentences,
@@ -112,11 +118,11 @@ class AppDialogs {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(cancelText ?? 'Cancel'),
+            child: Text(cancelText ?? (l10n?.cancel_button ?? 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: Text(confirmText ?? 'Save'),
+            child: Text(confirmText ?? (l10n?.save_button ?? 'Save')),
           ),
         ],
       ),
@@ -124,3 +130,4 @@ class AppDialogs {
     return result;
   }
 }
+

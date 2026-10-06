@@ -512,6 +512,7 @@ class CurrencyText extends StatelessWidget {
       textAlign: textAlign,
       maxLines: maxLines,
       overflow: overflow,
+      softWrap: true,
     );
   }
 }

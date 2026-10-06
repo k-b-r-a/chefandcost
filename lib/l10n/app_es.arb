@@ -90,7 +90,7 @@
   "select_unit": "Seleccionar Unidad",
   "ingredient_price_per_quantity": "{price} por cada {quantity} {unit}",
   "search_hint": "Buscar...",
-  "search_ingredients_hint": "Escribe para buscar ingredientes...",
+  "search_ingredients_hint": "Buscar ingredientes...",
   "no_ingredients_found": "Ingredientes no encontrados",
   "no_recipes_found": "No se encontraron recetas.",
   "related_ingredients": "Relacionados",
@@ -288,5 +288,252 @@
   "scale_revert_button": "Restablecer Original",
   "scale_save_as_real_button": "Guardar como Receta Real",
   "scale_reverted_toast": "Receta restablecida a las cantidades originales",
-  "scale_saved_toast": "Cantidades escaladas guardadas en la receta real"
+  "scale_saved_toast": "Cantidades escaladas guardadas en la receta real",
+  "brand_home_tooltip": "Chef&Cost - Inicio",
+  "back_to_home_tooltip": "Volver al Inicio",
+  "back_button": "Volver",
+  "close_button": "Cerrar",
+  "apply_button": "Aplicar",
+  "save_changes_button": "Guardar Cambios",
+  "view_button": "Ver",
+  "sign_in_button": "Iniciar Sesión",
+  "toggle_theme_tooltip": "Cambiar tema",
+  "search_recipes_hint": "Buscar recetas...",
+  "sample_data_loaded_snackbar": "Datos de ejemplo cargados: {recipes} recetas y {ingredients} ingredientes",
+  "@sample_data_loaded_snackbar": {
+    "placeholders": {
+      "recipes": {
+        "type": "int"
+      },
+      "ingredients": {
+        "type": "int"
+      }
+    }
+  },
+  "load_sample_data": "Cargar datos de ejemplo",
+  "timer_finished_banner": "¡Temporizador finalizado!",
+  "timer_finished_at": "Terminado a las {time}",
+  "@timer_finished_at": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "delete_ingredient_title": "¿Eliminar ingrediente?",
+  "delete_ingredient_confirm": "¿Estás seguro de que deseas eliminar \"{name}\" de la base de datos?",
+  "@delete_ingredient_confirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unsaved_changes_ingredient_body": "¿Deseas guardar los cambios del ingrediente o descartarlos?",
+  "recipe_editor_add_ingredients_to_scale": "Agregue ingredientes a la receta para escalar",
+  "recipe_editor_please_enter_name": "Por favor, ingrese el nombre de la receta",
+  "recipe_duplicated_success": "Receta duplicada con éxito",
+  "apply_to_recipe_button": "Aplicar a la Receta",
+  "recipe_duplicate_name": "{name} ({copyLabel})",
+  "@recipe_duplicate_name": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "copyLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "financial_summary_title": "Resumen Financiero",
+  "financial_costs_section": "Costos",
+  "financial_margin_pricing_section": "Margen y Precios",
+  "financial_results_section": "Resultados",
+  "financial_total_revenue": "Ingreso bruto total",
+  "recipe_stats_section": "Datos de Receta",
+  "hide_financial_summary": "Ocultar Resumen Financiero",
+  "show_financial_summary": "Mostrar Resumen Financiero",
+  "recipe_editor_live": "En vivo",
+  "recipe_editor_other_category": "Otros",
+  "recipe_timers_section": "Temporizadores de la Receta",
+  "recipe_timer_single": "Temporizador",
+  "recipe_timers_title": "Temporizadores",
+  "recipe_timer_add_badge": "+ Temporizador",
+  "start_timer_tooltip": "Iniciar temporizador",
+  "timer_started_snackbar": "Temporizador iniciado: {name} ({duration})",
+  "@timer_started_snackbar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "recipe_timer_edit_title": "Editar Temporizador",
+  "recipe_timer_add_title": "Agregar Temporizador",
+  "recipe_timer_name_label": "Nombre del temporizador",
+  "recipe_timer_name_hint": "ej. Hervir Pasta, Hornear",
+  "add_timer_preset_button": "Guardar Temporizador",
+  "edit_ingredient_action": "Editar ingrediente",
+  "edit_ingredient_action_desc": "Modificar nombre, costo, cantidad o unidad en la base de datos",
+  "merge_ingredient_action": "Combinar / Fusionar ingrediente",
+  "merge_ingredient_action_desc": "Sumar cantidad a otro ingrediente de esta receta",
+  "delete_ingredient_action": "Eliminar ingrediente",
+  "delete_ingredient_action_desc": "Quitar ingrediente de esta receta",
+  "merge_ingredient_title": "Combinar Ingrediente",
+  "merge_ingredient_into_prompt": "Combinar \"{name}\" en:",
+  "@merge_ingredient_into_prompt": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_merged_success": "Ingredientes combinados con éxito",
+  "compare_no_units_error": "ERROR: No hay unidades cargadas.",
+  "compare_more_costly": "+{amount} MÁS COSTOSO",
+  "@compare_more_costly": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_less_costly": "-{amount} MÁS ECONÓMICO",
+  "@compare_less_costly": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_loading": "Cargando datos de comparación...",
+  "timers_running": "En marcha",
+  "timers_paused": "Pausado",
+  "timers_stop_alarm": "DETENER ALARMA",
+  "timers_reset": "Reiniciar",
+  "timers_pause": "Pausar",
+  "timers_start": "Iniciar",
+  "timers_start_timer": "Iniciar Temporizador",
+  "timers_edit_title": "Editar Temporizador",
+  "timers_hint": "ej. Hervir Papas",
+  "timers_min": "Min",
+  "timers_sec": "Seg",
+  "timers_add_minutes": "+{minutes}m",
+  "@timers_add_minutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "rule_of_three_error_zero": "El valor inicial no puede ser cero",
+  "rule_of_three_explanation": "Si {a} equivale a {b}, entonces {c} equivale a {result}.",
+  "@rule_of_three_explanation": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "cloud_sync_sync_target": "Destino de Sincronización",
+  "cloud_sync_target_firestore": "Firestore",
+  "cloud_sync_target_drive": "Google Drive",
+  "cloud_sync_target_local": "Directorio Local",
+  "cloud_sync_desc_web": "En la Web, la sincronización se realiza mediante Cloud Firestore para sincronizar datos en tiempo real entre tu navegador y la aplicación móvil. Los respaldos en archivo de Google Drive están disponibles en dispositivos móviles y de escritorio.",
+  "cloud_sync_desc_firestore": "Sincronización multiplataforma (Web y Móvil) en tiempo real mediante Cloud Firestore.",
+  "cloud_sync_desc_local": "El modo Directorio Local guarda tus respaldos en el almacenamiento local del dispositivo. No requiere conexión a Internet ni una cuenta de Google.",
+  "cloud_sync_switch_account": "Cambiar cuenta",
+  "cloud_sync_sync_now": "Sincronizar ahora",
+  "cloud_sync_save_copy_dialog_title": "Seleccionar carpeta para guardar la copia",
+  "cloud_sync_save_copy_tooltip": "Guardar copia en...",
+  "cloud_sync_restore_tooltip": "Restaurar",
+  "cloud_sync_delete_tooltip": "Eliminar",
+  "cloud_sync_connect_account_title": "Conecta tu cuenta",
+  "cloud_sync_connect_account_subtitle": "Sincroniza tus recetas automáticamente entre Web y Móvil",
+  "cloud_sync_continue_google": "Continuar con Google",
+  "cloud_sync_or_email": "o con correo electrónico",
+  "cloud_sync_create_account": "Crear Cuenta",
+  "cloud_sync_email_label": "Correo electrónico",
+  "cloud_sync_email_hint": "ejemplo@correo.com",
+  "cloud_sync_password_label": "Contraseña",
+  "cloud_sync_password_hint": "Mínimo 6 caracteres",
+  "cloud_sync_forgot_password": "¿Olvidaste tu contraseña?",
+  "cloud_sync_connected_to_firestore": "Conectado a Firestore",
+  "cloud_sync_authenticated_user": "Usuario autenticado",
+  "cloud_sync_sign_out_confirm_title": "Cerrar sesión",
+  "cloud_sync_sign_out_confirm_message": "¿Estás seguro de que deseas cerrar sesión de Firestore?",
+  "cloud_sync_error_invalid_email": "Por favor, introduce un correo electrónico válido.",
+  "cloud_sync_error_short_password": "La contraseña debe tener al menos 6 caracteres.",
+  "cloud_sync_reset_email_sent": "¡Enlace enviado! Revisa tu correo electrónico para restablecer tu contraseña.",
+  "cloud_sync_connected_account": "Cuenta conectada",
+  "settings_category_data_subtitle": "Gestión de datos de la app",
+  "settings_category_backup_subtitle": "Respaldar y restaurar en Google Drive",
+  "settings_category_themes_subtitle": "Temas, colores y tamaño de letra",
+  "settings_category_locale_subtitle": "Idioma y formato numérico",
+  "settings_category_info_subtitle": "Versión e información",
+  "settings_sample_data_dialog_message": "¿Deseas añadir las recetas de ejemplo a las existentes o reemplazar todo el contenido actual de la base de datos?",
+  "settings_sample_data_add_button": "Añadir a los actuales",
+  "settings_sample_data_replace_button": "Reemplazar todo",
+  "settings_sample_data_replaced_snackbar": "Base de datos reemplazada con datos de ejemplo ({recipes} recetas, {ingredients} ingredientes)",
+  "@settings_sample_data_replaced_snackbar": {
+    "placeholders": {
+      "recipes": {
+        "type": "int"
+      },
+      "ingredients": {
+        "type": "int"
+      }
+    }
+  },
+  "settings_sample_data_subtitle": "Carga ingredientes y recetas de prueba para evaluar la app",
+  "settings_brand_theme_adapt_notice": "El icono y la marca se adaptan al tema seleccionado",
+  "scale_multiplier_button": "x{multiplier}",
+  "@scale_multiplier_button": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_custom_multiplier_hint": "ej. 1.5",
+  "scaled_recipe_name": "{name} (x{multiplier})",
+  "@scaled_recipe_name": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "merge_no_other_ingredients": "No hay otros ingredientes en esta receta para combinar.",
+  "merge_no_other_database_ingredients": "No hay otros ingredientes en la base de datos para combinar.",
+  "merge_ingredient_action_db_desc": "Fusionar con otro ingrediente en la base de datos",
+  "delete_ingredient_permanent_desc": "Eliminar permanentemente de la base de datos",
+  "ingredient_deleted_snackbar": "Ingrediente \"{name}\" eliminado.",
+  "@ingredient_deleted_snackbar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "no_timers_in_recipe": "No hay temporizadores agregados a esta receta.",
+  "recipe_timer_min": "Min",
+  "recipe_timer_sec": "Seg",
+  "gain_per_portion": "Ganancia/Porción",
+  "price_per_portion": "Precio/Porción"
 }

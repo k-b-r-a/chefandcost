@@ -97,6 +97,7 @@ class IngredientFilterChipsRow extends StatelessWidget {
                               ? theme.colorScheme.onPrimaryContainer
                               : theme.colorScheme.onSurfaceVariant,
                         ),
+                        softWrap: true,
                       ),
                     ],
                   ),
@@ -131,6 +132,7 @@ class IngredientFilterChipsRow extends StatelessWidget {
                       ? theme.colorScheme.onPrimaryContainer
                       : theme.colorScheme.onSurfaceVariant,
                 ),
+                softWrap: true,
               ),
               selected: isSelected,
               onSelected: (_) => onFilterSelected(entry.$1),

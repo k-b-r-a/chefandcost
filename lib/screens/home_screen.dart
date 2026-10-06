@@ -488,7 +488,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         OutlinedButton.icon(
                           onPressed: () async {
                             final db = ref.read(databaseProvider);
-                            final isEs = l10n.localeName == 'es';
                             final res = await loadSampleData(db, clearFirst: false);
                             ref.invalidate(recipesStreamProvider);
                             ref.invalidate(recipesWithFinancialsStreamProvider);
@@ -499,9 +498,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    isEs
-                                        ? 'Datos de ejemplo cargados: ${res.recipesAdded} recetas y ${res.ingredientsAdded} ingredientes'
-                                        : 'Sample data loaded: ${res.recipesAdded} recipes and ${res.ingredientsAdded} ingredients',
+                                    l10n.sample_data_loaded_snackbar(res.recipesAdded, res.ingredientsAdded),
+                                    softWrap: true,
                                   ),
                                 ),
                               );
@@ -509,9 +507,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           },
                           icon: const Icon(Icons.science_outlined, size: 18),
                           label: Text(
-                            l10n.localeName == 'es'
-                                ? 'Cargar datos de ejemplo'
-                                : 'Load sample data',
+                            l10n.load_sample_data,
+                            softWrap: true,
                           ),
                         ),
                       ],
@@ -646,7 +643,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (e, _) => Center(child: Text('Error: $e')),
+          error: (e, _) => Center(child: Text(l10n.error_prefix(e.toString()), softWrap: true)),
         ),
       ],
     );
@@ -797,7 +794,8 @@ class _LiveActiveTimersBanner extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      isDone ? '¡Temporizador finalizado!' : l10n.home_active_timers,
+                      isDone ? l10n.timer_finished_banner : l10n.home_active_timers,
+                      softWrap: true,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isDone
@@ -843,13 +841,15 @@ class _LiveActiveTimersBanner extends ConsumerWidget {
                             fontWeight: FontWeight.w600,
                           ),
                           maxLines: 1,
+                          softWrap: true,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           isDone
-                              ? 'Terminado a las ${topTimer.formattedFinishedTime}'
+                              ? l10n.timer_finished_at(topTimer.formattedFinishedTime)
                               : topTimer.formattedTime,
+                          softWrap: true,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             fontFeatures: const [FontFeature.tabularFigures()],

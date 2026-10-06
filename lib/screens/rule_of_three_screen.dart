@@ -76,7 +76,7 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
     final theme = Theme.of(context);
 
     final displayError = _hasError
-        ? (l10n.localeName == 'es' ? 'El valor inicial no puede ser cero' : 'Initial value cannot be zero')
+        ? l10n.rule_of_three_error_zero
         : '';
 
     return Scaffold(
@@ -276,9 +276,13 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      l10n.localeName == 'es'
-                          ? 'Si ${_aController.text} equivale a ${_bController.text}, entonces ${_cController.text} equivale a ${RecipeUtils.formatNumber(_result)}.'
-                          : 'If ${_aController.text} corresponds to ${_bController.text}, then ${_cController.text} will correspond to ${RecipeUtils.formatNumber(_result)}.',
+                      l10n.rule_of_three_explanation(
+                        _aController.text,
+                        _bController.text,
+                        _cController.text,
+                        RecipeUtils.formatNumber(_result),
+                      ),
+                      softWrap: true,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: theme.colorScheme.onPrimaryContainer,

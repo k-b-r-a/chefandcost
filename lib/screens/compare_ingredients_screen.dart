@@ -55,9 +55,7 @@ class _CompareIngredientsScreenState
         if (mounted) {
           AppSnackBar.showSuccess(
             context,
-            l10n.localeName == 'es'
-                ? 'Ingredientes combinados con éxito'
-                : 'Merged successfully',
+            l10n.compare_merged_success,
           );
           Navigator.pop(context); // go back to add screen
           Navigator.pop(context); // go back to list
@@ -84,7 +82,7 @@ class _CompareIngredientsScreenState
       appBar: AppBar(
         title: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(l10n.compare_button),
+          child: Text(l10n.compare_button, softWrap: true),
         ),
       ),
       body: unitsAsync.when(
@@ -94,8 +92,9 @@ class _CompareIngredientsScreenState
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: Text(
-                  l10n.localeName == 'es' ? 'ERROR: No hay unidades cargadas.' : 'DATABASE ERROR: No units loaded. Please restart the app.',
+                  l10n.compare_no_units_error,
                   textAlign: TextAlign.center,
+                  softWrap: true,
                 ),
               ),
             );
@@ -147,8 +146,8 @@ class _CompareIngredientsScreenState
                                 unit: unit1,
                                 currencySymbol: currency,
                                 diffText: price1 > price2AtSameQuantity
-                                    ? (l10n.localeName == 'es' ? '+$currency$formattedDiff MÁS COSTOSO' : '+$currency$formattedDiff MORE')
-                                    : (l10n.localeName == 'es' ? '-$currency$formattedDiff MÁS ECONÓMICO' : '-$currency$formattedDiff LESS'),
+                                    ? l10n.compare_more_costly('$currency$formattedDiff')
+                                    : l10n.compare_less_costly('$currency$formattedDiff'),
                                 diffColor: price1 > price2AtSameQuantity
                                     ? Colors.red
                                     : Colors.green,
@@ -173,8 +172,8 @@ class _CompareIngredientsScreenState
                                 currencySymbol: currency,
                                 // inverse comparison for the second card
                                 diffText: price2AtSameQuantity > price1
-                                    ? (l10n.localeName == 'es' ? '+$currency$formattedDiff MÁS COSTOSO' : '+$currency$formattedDiff MORE')
-                                    : (l10n.localeName == 'es' ? '-$currency$formattedDiff MÁS ECONÓMICO' : '-$currency$formattedDiff LESS'),
+                                    ? l10n.compare_more_costly('$currency$formattedDiff')
+                                    : l10n.compare_less_costly('$currency$formattedDiff'),
                                 diffColor: price2AtSameQuantity > price1
                                     ? Colors.red
                                     : Colors.green,
@@ -239,13 +238,13 @@ class _CompareIngredientsScreenState
         ),
       );
     },
-        loading: () => const Center(
+        loading: () => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Loading comparison data...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(l10n.compare_loading, softWrap: true),
             ],
           ),
         ),
@@ -253,9 +252,10 @@ class _CompareIngredientsScreenState
           child: Padding(
             padding: const EdgeInsets.all(32.0),
             child: Text(
-              'ERROR: ${e.toString()}',
+              l10n.error_prefix(e.toString()),
               style: const TextStyle(color: Colors.red),
               textAlign: TextAlign.center,
+              softWrap: true,
             ),
           ),
         ),
