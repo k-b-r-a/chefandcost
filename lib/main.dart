@@ -421,10 +421,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     ),
                   ],
                 ),
-                child: Center(
+                child: const Center(
                   child: AppLogo(
                     size: 28,
-                    color: theme.colorScheme.primary,
                   ),
                 ),
               ),

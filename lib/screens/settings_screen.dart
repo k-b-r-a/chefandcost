@@ -1234,10 +1234,9 @@ class SettingsAboutScreen extends ConsumerWidget {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 leading: CircleAvatar(
                   backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-                  child: Center(
+                  child: const Center(
                     child: AppLogo(
                       size: 24,
-                      color: theme.colorScheme.primary,
                     ),
                   ),
                 ),
