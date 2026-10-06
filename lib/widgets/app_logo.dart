@@ -11,22 +11,27 @@ class AppIcon extends StatelessWidget {
 
   const AppIcon({
     super.key,
-    this.size = 40,
+    this.size = 48,
     this.fit = BoxFit.contain,
     this.borderRadius,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.circular(size * 0.22),
-      child: SvgPicture.asset(
-        'assets/images/icon.svg',
-        width: size,
-        height: size,
-        fit: fit,
-      ),
+    final iconWidget = SvgPicture.asset(
+      'assets/images/icon.svg',
+      width: size,
+      height: size,
+      fit: fit,
     );
+
+    if (borderRadius != null) {
+      return ClipRRect(
+        borderRadius: borderRadius!,
+        child: iconWidget,
+      );
+    }
+    return iconWidget;
   }
 }
 

@@ -408,9 +408,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               webNotifier.showHome();
             },
             child: const Padding(
-              padding: EdgeInsets.all(4.0),
+              padding: EdgeInsets.all(2.0),
               child: AppIcon(
-                size: 44,
+                size: 56,
               ),
             ),
           ),
