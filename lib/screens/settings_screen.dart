@@ -10,6 +10,7 @@ import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
 import '../widgets/app_logo.dart';
 import '../constants.dart';
+import '../utils/app_logger.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -1233,10 +1234,488 @@ class SettingsAboutScreen extends ConsumerWidget {
   final VoidCallback? onClose;
   const SettingsAboutScreen({super.key, this.onClose});
 
+  void _copyToClipboard(BuildContext context, String text, String message) {
+    Clipboard.setData(ClipboardData(text: text));
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, softWrap: true),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showChangelogDialog(BuildContext context, ThemeData theme, AppLocalizations l10n) {
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    final changelog = isEs
+        ? const [
+            (
+              '0.1.0-beta+4',
+              'Octubre 2026',
+              [
+                'Sincronización en la nube con Firebase Firestore y Google Drive.',
+                'Temporizadores de recetas con auto-dismiss y alarmas acústicas.',
+                'Selector y buscador reactivo de ingredientes en recetas.',
+                'Conversor de unidades optimizado sin ceros innecesarios.',
+                'Regla de tres con soporte de decimales y unidades automáticas.',
+                'Configuración del tamaño de la barra de navegación.',
+                'Pantalla Acerca de con registro de cambios, privacidad, diagnóstico y licencias.',
+              ],
+            ),
+            (
+              '0.1.0-beta+3',
+              'Septiembre 2026',
+              [
+                'Nueva barra de navegación inferior flotante adaptativa con indicador suave.',
+                'Soporte completo de localización y accesibilidad en español e inglés.',
+                'Ajustes de física de desplazamiento, transiciones y modo zurdo.',
+              ],
+            ),
+            (
+              '0.1.0-beta+2',
+              'Agosto 2026',
+              [
+                'Métricas financieras por porción y receta.',
+                'Reordenamiento interactivo de ingredientes en costos.',
+                'Persistencia local con base de datos SQLite (Drift).',
+              ],
+            ),
+            (
+              '0.1.0-beta+1',
+              'Julio 2026',
+              [
+                'Lanzamiento inicial de Chef&Cost.',
+                'Gestión de recetas, ingredientes, conversión de medidas y herramientas.',
+              ],
+            ),
+          ]
+        : const [
+            (
+              '0.1.0-beta+4',
+              'October 2026',
+              [
+                'Cloud synchronization with Firebase Firestore and Google Drive.',
+                'Recipe cooking timers with auto-dismiss and audible alarms.',
+                'Reactive ingredient picker and real-time query loading.',
+                'Optimized unit converter without redundant zero padding.',
+                'Rule of three with decimal point support and unit extraction.',
+                'Navigation bar size preference in styles configuration.',
+                'Revamped About screen with changelog, privacy terms, beta diagnostics, and licenses.',
+              ],
+            ),
+            (
+              '0.1.0-beta+3',
+              'September 2026',
+              [
+                'Floating responsive bottom navigation bar with smooth indicator.',
+                'Full localization and accessibility support.',
+                'Motion physics, transition toggles, and left-handed layout mode.',
+              ],
+            ),
+            (
+              '0.1.0-beta+2',
+              'August 2026',
+              [
+                'Advanced financial metrics (cost per portion and profit margins).',
+                'Interactive reordering for recipe ingredient costs.',
+                'Persistent offline-first database powered by SQLite / Drift.',
+              ],
+            ),
+            (
+              '0.1.0-beta+1',
+              'July 2026',
+              [
+                'Initial release of Chef&Cost.',
+                'Recipe costing, ingredient manager, units, and kitchen utilities.',
+              ],
+            ),
+          ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.history_rounded, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(l10n.settings_about_changelog, softWrap: true),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 460),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: changelog.length,
+              separatorBuilder: (_, index) => const Divider(height: 24),
+              itemBuilder: (context, idx) {
+                final entry = changelog[idx];
+                final isCurrent = idx == 0;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'v${entry.$1}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isCurrent ? theme.colorScheme.primary : null,
+                              ),
+                            ),
+                            if (isCurrent) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Current',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        Text(
+                          entry.$2,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ...entry.$3.map(
+                      (point) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('• ', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                            Expanded(
+                              child: Text(
+                                point,
+                                softWrap: true,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.close_button),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyTermsDialog(BuildContext context, ThemeData theme, AppLocalizations l10n) {
+    final isEs = Localizations.localeOf(context).languageCode == 'es';
+    final terms = isEs
+        ? const [
+            (
+              Icons.storage_rounded,
+              'Almacenamiento Local Prioritario',
+              'Tus ingredientes, recetas y costos se almacenan localmente en tu dispositivo mediante SQLite (Drift). Tus datos nunca salen de tu control sin tu consentimiento.',
+            ),
+            (
+              Icons.cloud_sync_outlined,
+              'Sincronización en la Nube Opcional',
+              'La sincronización con Firebase y Google Drive es 100% opcional. Solo se activa si eliges iniciar sesión con tu cuenta.',
+            ),
+            (
+              Icons.verified_user_outlined,
+              'Propiedad Total de tus Datos',
+              'Tus recetas y cálculos de rentabilidad son de tu exclusiva propiedad intelectual. Chef&Cost no comparte ni comercializa tu información.',
+            ),
+            (
+              Icons.no_accounts_outlined,
+              'Sin Rastreadores Publicitarios',
+              'No utilizamos herramientas de rastreo publicitario de terceros ni vendemos datos personales.',
+            ),
+            (
+              Icons.notifications_active_outlined,
+              'Permisos del Sistema',
+              'La aplicación únicamente solicita permisos de notificaciones y audio para avisarte cuando finaliza un temporizador de cocción.',
+            ),
+          ]
+        : const [
+            (
+              Icons.storage_rounded,
+              'Offline-First Local Storage',
+              'Your ingredients, recipes, and cost data are stored securely on your device using SQLite (Drift). Your data stays strictly under your control.',
+            ),
+            (
+              Icons.cloud_sync_outlined,
+              'Opt-in Cloud Synchronization',
+              'Synchronization with Firebase Firestore and Google Drive is 100% optional and only occurs if you explicitly log in.',
+            ),
+            (
+              Icons.verified_user_outlined,
+              'Full Data Ownership',
+              'Your recipes and calculations belong exclusively to you. Chef&Cost does not claim ownership or distribute your culinary creations.',
+            ),
+            (
+              Icons.no_accounts_outlined,
+              'Zero Advertising Trackers',
+              'We do not embed third-party advertising SDKs or monetize your personal culinary metrics.',
+            ),
+            (
+              Icons.notifications_active_outlined,
+              'System Permissions',
+              'The application only requests notification and audio permissions to alert you when recipe cooking timers complete.',
+            ),
+          ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.privacy_tip_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(l10n.settings_about_privacy_terms, softWrap: true),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 460),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: terms.length,
+              separatorBuilder: (_, index) => const Divider(height: 20),
+              itemBuilder: (context, idx) {
+                final item = terms[idx];
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                      child: Icon(item.$1, size: 18, color: theme.colorScheme.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.$2,
+                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                            softWrap: true,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item.$3,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            softWrap: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.close_button),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDebugLogsDialog(BuildContext context, ThemeData theme, AppLocalizations l10n) {
+    AppLogger.init();
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final logs = AppLogger.logs;
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.terminal_rounded, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${l10n.settings_about_debug_logs} (${logs.length})',
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 460),
+                  child: logs.isEmpty
+                      ? Center(
+                          child: Text(
+                            l10n.settings_about_logs_empty,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: logs.length,
+                            itemBuilder: (context, idx) {
+                              final log = logs[idx];
+                              Color levelColor;
+                              switch (log.level) {
+                                case LogLevel.error:
+                                  levelColor = Colors.red;
+                                  break;
+                                case LogLevel.warn:
+                                  levelColor = Colors.orange;
+                                  break;
+                                case LogLevel.debug:
+                                  levelColor = Colors.purple;
+                                  break;
+                                case LogLevel.info:
+                                  levelColor = Colors.green;
+                                  break;
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: '[${log.formattedTime}] ',
+                                        style: TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 11,
+                                          color: theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: '[${log.levelLabel}] ',
+                                        style: TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: levelColor,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: log.message,
+                                        style: TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 11,
+                                          color: theme.colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ),
+              actions: [
+                TextButton.icon(
+                  icon: const Icon(Icons.add_circle_outline, size: 16),
+                  label: const Text('Test Log'),
+                  onPressed: () {
+                    AppLogger.info('Manual test event triggered at ${DateTime.now()}');
+                    setModalState(() {});
+                  },
+                ),
+                TextButton(
+                  onPressed: () {
+                    AppLogger.clear();
+                    setModalState(() {});
+                  },
+                  child: Text(l10n.settings_about_logs_clear),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  label: Text(l10n.settings_about_logs_copy),
+                  onPressed: () {
+                    _copyToClipboard(
+                      context,
+                      AppLogger.exportText(),
+                      l10n.settings_about_logs_copied,
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final db = ref.watch(databaseProvider);
+    final isBeta = kAppVersion.toLowerCase().contains('beta');
+
+    Widget buildCard({required Widget child, EdgeInsetsGeometry? padding}) {
+      return Card(
+        margin: const EdgeInsets.only(bottom: 16.0),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(16.0),
+          child: child,
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -1255,31 +1734,300 @@ class SettingsAboutScreen extends ConsumerWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 820),
-            child: Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                ),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: const AppIcon(
-                  size: 40,
-                ),
-                title: const Text(
-                  'Chef&Cost',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(l10n.settings_about),
-                trailing: Text(
-                  '${l10n.settings_version} $kAppVersion',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. App Header, Version & Database Schema
+                buildCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+                  child: Column(
+                    children: [
+                      const AppIcon(size: 64),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Chef&Cost',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.settings_about,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified_outlined, size: 14, color: theme.colorScheme.primary),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'v$kAppVersion',
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.storage_rounded, size: 14, color: theme.colorScheme.secondary),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '${l10n.settings_about_db_schema} v${db.schemaVersion}',
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.secondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: (isBeta ? Colors.orange : Colors.green).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isBeta ? Icons.science_outlined : Icons.check_circle_outline,
+                                  size: 14,
+                                  color: isBeta ? Colors.orange.shade800 : Colors.green.shade800,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  isBeta ? l10n.settings_about_channel_beta : l10n.settings_about_channel_stable,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isBeta ? Colors.orange.shade800 : Colors.green.shade800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
+
+                // 2. Developer Card
+                buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.code_rounded, color: theme.colorScheme.primary, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.settings_about_developer,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 20),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: theme.colorScheme.primaryContainer,
+                            child: Text(
+                              'EZ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                color: theme.colorScheme.primary,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.settings_about_developer_name,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  l10n.settings_about_developer_role,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(Icons.email_outlined, size: 14, color: theme.colorScheme.primary),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        l10n.settings_about_developer_email,
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton.filledTonal(
+                            icon: const Icon(Icons.copy_rounded, size: 18),
+                            tooltip: l10n.settings_about_copy_email,
+                            onPressed: () {
+                              _copyToClipboard(
+                                context,
+                                l10n.settings_about_developer_email,
+                                l10n.settings_about_email_copied,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 3. Information, Changelog, Privacy & Licenses
+                buildCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.amber.withValues(alpha: 0.15),
+                          child: const Icon(Icons.history_rounded, color: Colors.amber),
+                        ),
+                        title: Text(
+                          l10n.settings_about_changelog,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(l10n.settings_about_changelog_desc),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _showChangelogDialog(context, theme, l10n),
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.teal.withValues(alpha: 0.15),
+                          child: const Icon(Icons.privacy_tip_outlined, color: Colors.teal),
+                        ),
+                        title: Text(
+                          l10n.settings_about_privacy_terms,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(l10n.settings_about_privacy_terms_desc),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _showPrivacyTermsDialog(context, theme, l10n),
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.blue.withValues(alpha: 0.15),
+                          child: const Icon(Icons.article_outlined, color: Colors.blue),
+                        ),
+                        title: Text(
+                          l10n.settings_about_licenses,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(l10n.settings_about_licenses_desc),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          showLicensePage(
+                            context: context,
+                            applicationName: 'Chef&Cost',
+                            applicationVersion: kAppVersion,
+                            applicationIcon: const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: AppIcon(size: 48),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 4. Beta Debug & Diagnostics (Only displayed if beta app)
+                if (isBeta)
+                  buildCard(
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.purple.withValues(alpha: 0.15),
+                        child: const Icon(Icons.terminal_rounded, color: Colors.purple),
+                      ),
+                      title: Row(
+                        children: [
+                          Text(
+                            l10n.settings_about_debug_logs,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'BETA',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.purple,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      subtitle: Text(l10n.settings_about_debug_logs_desc),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _showDebugLogsDialog(context, theme, l10n),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

@@ -1276,4 +1276,71 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get force_overwrite_failure_toast => 'Failed to overwrite cloud data.';
+
+  @override
+  String get settings_about_developer => 'Developer';
+
+  @override
+  String get settings_about_developer_name => 'Esteban Z.';
+
+  @override
+  String get settings_about_developer_role => 'Lead Creator & Developer';
+
+  @override
+  String get settings_about_developer_email => 'tebotan99@gmail.com';
+
+  @override
+  String get settings_about_email_copied => 'Email copied to clipboard';
+
+  @override
+  String get settings_about_copy_email => 'Copy Email';
+
+  @override
+  String get settings_about_db_schema => 'DB Schema';
+
+  @override
+  String get settings_about_channel_beta => 'Beta Channel';
+
+  @override
+  String get settings_about_channel_stable => 'Stable Channel';
+
+  @override
+  String get settings_about_changelog => 'Changelog';
+
+  @override
+  String get settings_about_changelog_desc =>
+      'View release notes and version history';
+
+  @override
+  String get settings_about_privacy_terms => 'Terms & Privacy Policy';
+
+  @override
+  String get settings_about_privacy_terms_desc =>
+      'Read data ownership and privacy commitments';
+
+  @override
+  String get settings_about_licenses => 'Open Source Licenses';
+
+  @override
+  String get settings_about_licenses_desc =>
+      'View software licenses and third-party libraries';
+
+  @override
+  String get settings_about_debug_logs => 'Debug Diagnostics (Beta)';
+
+  @override
+  String get settings_about_debug_logs_desc =>
+      'Inspect system logs, memory buffer and events';
+
+  @override
+  String get settings_about_logs_copied => 'Diagnostics copied to clipboard';
+
+  @override
+  String get settings_about_logs_clear => 'Clear Logs';
+
+  @override
+  String get settings_about_logs_copy => 'Copy All';
+
+  @override
+  String get settings_about_logs_empty => 'No logs recorded yet';
 }

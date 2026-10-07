@@ -2531,6 +2531,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to overwrite cloud data.'**
   String get force_overwrite_failure_toast;
+
+  /// No description provided for @settings_about_developer.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get settings_about_developer;
+
+  /// No description provided for @settings_about_developer_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Esteban Z.'**
+  String get settings_about_developer_name;
+
+  /// No description provided for @settings_about_developer_role.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead Creator & Developer'**
+  String get settings_about_developer_role;
+
+  /// No description provided for @settings_about_developer_email.
+  ///
+  /// In en, this message translates to:
+  /// **'tebotan99@gmail.com'**
+  String get settings_about_developer_email;
+
+  /// No description provided for @settings_about_email_copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Email copied to clipboard'**
+  String get settings_about_email_copied;
+
+  /// No description provided for @settings_about_copy_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Email'**
+  String get settings_about_copy_email;
+
+  /// No description provided for @settings_about_db_schema.
+  ///
+  /// In en, this message translates to:
+  /// **'DB Schema'**
+  String get settings_about_db_schema;
+
+  /// No description provided for @settings_about_channel_beta.
+  ///
+  /// In en, this message translates to:
+  /// **'Beta Channel'**
+  String get settings_about_channel_beta;
+
+  /// No description provided for @settings_about_channel_stable.
+  ///
+  /// In en, this message translates to:
+  /// **'Stable Channel'**
+  String get settings_about_channel_stable;
+
+  /// No description provided for @settings_about_changelog.
+  ///
+  /// In en, this message translates to:
+  /// **'Changelog'**
+  String get settings_about_changelog;
+
+  /// No description provided for @settings_about_changelog_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'View release notes and version history'**
+  String get settings_about_changelog_desc;
+
+  /// No description provided for @settings_about_privacy_terms.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms & Privacy Policy'**
+  String get settings_about_privacy_terms;
+
+  /// No description provided for @settings_about_privacy_terms_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Read data ownership and privacy commitments'**
+  String get settings_about_privacy_terms_desc;
+
+  /// No description provided for @settings_about_licenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Source Licenses'**
+  String get settings_about_licenses;
+
+  /// No description provided for @settings_about_licenses_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'View software licenses and third-party libraries'**
+  String get settings_about_licenses_desc;
+
+  /// No description provided for @settings_about_debug_logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug Diagnostics (Beta)'**
+  String get settings_about_debug_logs;
+
+  /// No description provided for @settings_about_debug_logs_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect system logs, memory buffer and events'**
+  String get settings_about_debug_logs_desc;
+
+  /// No description provided for @settings_about_logs_copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics copied to clipboard'**
+  String get settings_about_logs_copied;
+
+  /// No description provided for @settings_about_logs_clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Logs'**
+  String get settings_about_logs_clear;
+
+  /// No description provided for @settings_about_logs_copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy All'**
+  String get settings_about_logs_copy;
+
+  /// No description provided for @settings_about_logs_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No logs recorded yet'**
+  String get settings_about_logs_empty;
 }
 
 class _AppLocalizationsDelegate
