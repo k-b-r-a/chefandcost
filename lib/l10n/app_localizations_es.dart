@@ -1301,4 +1301,44 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get force_overwrite_failure_toast =>
       'Error al sobrescribir los datos en la nube.';
+
+  @override
+  String get cloud_sync_load_local_backup_btn =>
+      'Cargar Copia de Seguridad Local';
+
+  @override
+  String get cloud_sync_load_local_backup_desc =>
+      'Selecciona un archivo .sqlite de respaldo de tu dispositivo para restaurar tus recetas y costos.';
+
+  @override
+  String get cloud_sync_load_local_backup_confirm_title =>
+      '¿Cargar Copia de Seguridad Local?';
+
+  @override
+  String cloud_sync_load_local_backup_confirm_desc(String fileName) {
+    return 'Se reemplazarán todas las recetas e ingredientes actuales con el archivo seleccionado ($fileName). Esta acción no se puede deshacer. ¿Deseas continuar?';
+  }
+
+  @override
+  String get cloud_sync_load_local_backup_success =>
+      'Copia de seguridad local cargada con éxito.';
+
+  @override
+  String get cloud_sync_load_local_backup_invalid =>
+      'El archivo seleccionado no es una base de datos SQLite válida.';
+
+  @override
+  String get cloud_sync_local_backup_title => 'Copia Local y Restauración';
+
+  @override
+  String get cloud_sync_local_backup_desc =>
+      'Gestiona copias de seguridad directamente en tu dispositivo sin requerir servicios en la nube.';
+
+  @override
+  String get cloud_sync_export_local_backup_btn =>
+      'Exportar Copia al Dispositivo';
+
+  @override
+  String get cloud_sync_export_local_backup_success =>
+      'Copia de seguridad guardada exitosamente en el dispositivo.';
 }

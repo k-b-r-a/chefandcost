@@ -342,6 +342,93 @@ class GoogleDriveSyncService {
     }
   }
 
+  /// Checks whether a given list of bytes matches the SQLite 3 magic header.
+  bool isValidSqliteBytes(List<int> bytes) {
+    if (bytes.length < 16) return false;
+    const sqliteHeader = [
+      0x53, 0x51, 0x4c, 0x69, 0x74, 0x65, 0x20, 0x66,
+      0x6f, 0x72, 0x6d, 0x61, 0x74, 0x20, 0x33, 0x00
+    ];
+    for (int i = 0; i < 16; i++) {
+      if (bytes[i] != sqliteHeader[i]) return false;
+    }
+    return true;
+  }
+
+  /// Restores the database from a user-selected local file on the device.
+  Future<bool> restoreFromLocalFile(String filePath, {Uint8List? fileBytes}) async {
+    if (kIsWeb) return false;
+
+    try {
+      final dbFile = await _getDatabaseFile();
+
+      if (fileBytes != null && fileBytes.isNotEmpty) {
+        if (!isValidSqliteBytes(fileBytes)) {
+          debugPrint('Invalid SQLite header in uploaded bytes.');
+          return false;
+        }
+
+        final walFile = File('${dbFile.path}-wal');
+        if (await walFile.exists()) {
+          try { await walFile.delete(); } catch (_) {}
+        }
+        final shmFile = File('${dbFile.path}-shm');
+        if (await shmFile.exists()) {
+          try { await shmFile.delete(); } catch (_) {}
+        }
+
+        await dbFile.writeAsBytes(fileBytes);
+        return true;
+      }
+
+      final sourceFile = File(filePath);
+      if (!await sourceFile.exists()) {
+        debugPrint('Source file does not exist at $filePath');
+        return false;
+      }
+
+      final fileHeaderBytes = await sourceFile.openRead(0, 16).first;
+      if (!isValidSqliteBytes(fileHeaderBytes)) {
+        debugPrint('Invalid SQLite header in local file: $filePath');
+        return false;
+      }
+
+      final walFile = File('${dbFile.path}-wal');
+      if (await walFile.exists()) {
+        try { await walFile.delete(); } catch (_) {}
+      }
+      final shmFile = File('${dbFile.path}-shm');
+      if (await shmFile.exists()) {
+        try { await shmFile.delete(); } catch (_) {}
+      }
+
+      await sourceFile.copy(dbFile.path);
+      return true;
+    } catch (e) {
+      debugPrint('Error restoring from local file: $e');
+      return false;
+    }
+  }
+
+  /// Exports the current SQLite database to a local file on the device.
+  Future<File?> exportDatabaseToDirectory(String targetDirPath, {String? fileName}) async {
+    if (kIsWeb) return null;
+
+    try {
+      final dbFile = await _getDatabaseFile();
+      if (!await dbFile.exists()) return null;
+
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+      final exportName = fileName ?? 'backup_$timestamp.sqlite';
+      final destFile = File(p.join(targetDirPath, exportName));
+
+      return await dbFile.copy(destFile.path);
+    } catch (e) {
+      debugPrint('Error exporting database: $e');
+      return null;
+    }
+  }
+
   /// Deletes a backup.
   Future<bool> deleteBackup(String backupId) async {
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;

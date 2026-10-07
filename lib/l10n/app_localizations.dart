@@ -2561,6 +2561,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to overwrite cloud data.'**
   String get force_overwrite_failure_toast;
+
+  /// No description provided for @cloud_sync_load_local_backup_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Load Local Backup'**
+  String get cloud_sync_load_local_backup_btn;
+
+  /// No description provided for @cloud_sync_load_local_backup_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a .sqlite backup file from your device to restore recipes and costs.'**
+  String get cloud_sync_load_local_backup_desc;
+
+  /// No description provided for @cloud_sync_load_local_backup_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Load Local Backup?'**
+  String get cloud_sync_load_local_backup_confirm_title;
+
+  /// No description provided for @cloud_sync_load_local_backup_confirm_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'All current recipes and ingredients will be replaced with the selected file ({fileName}). This action cannot be undone. Do you wish to continue?'**
+  String cloud_sync_load_local_backup_confirm_desc(String fileName);
+
+  /// No description provided for @cloud_sync_load_local_backup_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Local backup loaded successfully.'**
+  String get cloud_sync_load_local_backup_success;
+
+  /// No description provided for @cloud_sync_load_local_backup_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected file is not a valid SQLite database.'**
+  String get cloud_sync_load_local_backup_invalid;
+
+  /// No description provided for @cloud_sync_local_backup_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Backup & Restore'**
+  String get cloud_sync_local_backup_title;
+
+  /// No description provided for @cloud_sync_local_backup_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage offline backups directly on your device storage without requiring cloud services.'**
+  String get cloud_sync_local_backup_desc;
+
+  /// No description provided for @cloud_sync_export_local_backup_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Backup to Device'**
+  String get cloud_sync_export_local_backup_btn;
+
+  /// No description provided for @cloud_sync_export_local_backup_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved successfully to device.'**
+  String get cloud_sync_export_local_backup_success;
 }
 
 class _AppLocalizationsDelegate

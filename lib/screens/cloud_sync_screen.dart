@@ -131,6 +131,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                                 _buildBackupsList(syncState, syncNotifier, theme, l10n),
                             ],
                           ],
+                          const SizedBox(height: 24),
+                          _buildLocalBackupCard(syncNotifier, theme, l10n),
                         ],
                       ),
                     ),
@@ -1616,6 +1618,248 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             color: Color(0xFF4285F4),
             fontFamily: 'sans-serif',
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndLoadLocalBackup(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: l10n.cloud_sync_load_local_backup_btn,
+        type: FileType.custom,
+        allowedExtensions: ['sqlite', 'db', 'bak'],
+        withData: kIsWeb,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final file = result.files.single;
+      final fileName = file.name;
+
+      if (!context.mounted) return;
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: Icon(Icons.file_open_rounded, size: 36, color: Theme.of(ctx).colorScheme.primary),
+          title: Text(l10n.cloud_sync_load_local_backup_confirm_title, softWrap: true),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.cloud_sync_load_local_backup_confirm_desc(fileName),
+                softWrap: true,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(ctx).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.insert_drive_file_outlined, size: 18, color: Theme.of(ctx).colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$fileName (${_formatBytes(file.size)})',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.discard_button, softWrap: true),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(ctx).colorScheme.primary,
+                foregroundColor: Theme.of(ctx).colorScheme.onPrimary,
+              ),
+              child: Text(l10n.cloud_sync_load_local_backup_btn, softWrap: true),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true || !context.mounted) return;
+
+      final success = await notifier.restoreFromLocalFile(
+        filePath: file.path ?? '',
+        fileBytes: file.bytes,
+      );
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? l10n.cloud_sync_load_local_backup_success
+                : l10n.cloud_sync_load_local_backup_invalid,
+            softWrap: true,
+          ),
+          backgroundColor: success
+              ? Theme.of(context).colorScheme.secondary
+              : Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.error_prefix(e.toString()), softWrap: true),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _exportLocalBackup(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      final selectedDirectory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: l10n.cloud_sync_save_copy_dialog_title,
+      );
+      if (selectedDirectory == null || !context.mounted) return;
+
+      final success = await notifier.exportLocalBackup(selectedDirectory);
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? l10n.cloud_sync_export_local_backup_success
+                : l10n.cloud_sync_save_copy_dialog_title,
+            softWrap: true,
+          ),
+          backgroundColor: success
+              ? Theme.of(context).colorScheme.secondary
+              : Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.error_prefix(e.toString()), softWrap: true),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Widget _buildLocalBackupCard(
+    CloudSyncNotifier notifier,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                  child: Icon(Icons.storage_rounded, color: theme.colorScheme.secondary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.cloud_sync_local_backup_title,
+                        softWrap: true,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.cloud_sync_local_backup_desc,
+                        softWrap: true,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: () => _pickAndLoadLocalBackup(context, notifier, l10n),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(Icons.file_open_outlined),
+              label: Text(
+                l10n.cloud_sync_load_local_backup_btn,
+                softWrap: true,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+            if (!kIsWeb) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => _exportLocalBackup(context, notifier, l10n),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.4)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.download_rounded),
+                label: Text(
+                  l10n.cloud_sync_export_local_backup_btn,
+                  softWrap: true,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

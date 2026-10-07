@@ -1292,4 +1292,41 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get force_overwrite_failure_toast => 'Failed to overwrite cloud data.';
+
+  @override
+  String get cloud_sync_load_local_backup_btn => 'Load Local Backup';
+
+  @override
+  String get cloud_sync_load_local_backup_desc =>
+      'Select a .sqlite backup file from your device to restore recipes and costs.';
+
+  @override
+  String get cloud_sync_load_local_backup_confirm_title => 'Load Local Backup?';
+
+  @override
+  String cloud_sync_load_local_backup_confirm_desc(String fileName) {
+    return 'All current recipes and ingredients will be replaced with the selected file ($fileName). This action cannot be undone. Do you wish to continue?';
+  }
+
+  @override
+  String get cloud_sync_load_local_backup_success =>
+      'Local backup loaded successfully.';
+
+  @override
+  String get cloud_sync_load_local_backup_invalid =>
+      'The selected file is not a valid SQLite database.';
+
+  @override
+  String get cloud_sync_local_backup_title => 'Local Backup & Restore';
+
+  @override
+  String get cloud_sync_local_backup_desc =>
+      'Manage offline backups directly on your device storage without requiring cloud services.';
+
+  @override
+  String get cloud_sync_export_local_backup_btn => 'Export Backup to Device';
+
+  @override
+  String get cloud_sync_export_local_backup_success =>
+      'Backup saved successfully to device.';
 }

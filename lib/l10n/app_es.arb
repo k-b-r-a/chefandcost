@@ -551,5 +551,22 @@
   "force_overwrite_challenge_placeholder": "OVERWRITE",
   "force_overwrite_confirm_final_btn": "Confirmar Sobrescritura",
   "force_overwrite_success_toast": "Los datos en la nube se han sobrescrito con éxito con la copia local.",
-  "force_overwrite_failure_toast": "Error al sobrescribir los datos en la nube."
+  "force_overwrite_failure_toast": "Error al sobrescribir los datos en la nube.",
+  "cloud_sync_load_local_backup_btn": "Cargar Copia de Seguridad Local",
+  "cloud_sync_load_local_backup_desc": "Selecciona un archivo .sqlite de respaldo de tu dispositivo para restaurar tus recetas y costos.",
+  "cloud_sync_load_local_backup_confirm_title": "¿Cargar Copia de Seguridad Local?",
+  "cloud_sync_load_local_backup_confirm_desc": "Se reemplazarán todas las recetas e ingredientes actuales con el archivo seleccionado ({fileName}). Esta acción no se puede deshacer. ¿Deseas continuar?",
+  "@cloud_sync_load_local_backup_confirm_desc": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "cloud_sync_load_local_backup_success": "Copia de seguridad local cargada con éxito.",
+  "cloud_sync_load_local_backup_invalid": "El archivo seleccionado no es una base de datos SQLite válida.",
+  "cloud_sync_local_backup_title": "Copia Local y Restauración",
+  "cloud_sync_local_backup_desc": "Gestiona copias de seguridad directamente en tu dispositivo sin requerir servicios en la nube.",
+  "cloud_sync_export_local_backup_btn": "Exportar Copia al Dispositivo",
+  "cloud_sync_export_local_backup_success": "Copia de seguridad guardada exitosamente en el dispositivo."
 }

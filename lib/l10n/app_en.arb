@@ -578,5 +578,22 @@
   "force_overwrite_challenge_placeholder": "OVERWRITE",
   "force_overwrite_confirm_final_btn": "Confirm Overwrite",
   "force_overwrite_success_toast": "Cloud data successfully overwritten with local copy.",
-  "force_overwrite_failure_toast": "Failed to overwrite cloud data."
+  "force_overwrite_failure_toast": "Failed to overwrite cloud data.",
+  "cloud_sync_load_local_backup_btn": "Load Local Backup",
+  "cloud_sync_load_local_backup_desc": "Select a .sqlite backup file from your device to restore recipes and costs.",
+  "cloud_sync_load_local_backup_confirm_title": "Load Local Backup?",
+  "cloud_sync_load_local_backup_confirm_desc": "All current recipes and ingredients will be replaced with the selected file ({fileName}). This action cannot be undone. Do you wish to continue?",
+  "@cloud_sync_load_local_backup_confirm_desc": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "cloud_sync_load_local_backup_success": "Local backup loaded successfully.",
+  "cloud_sync_load_local_backup_invalid": "The selected file is not a valid SQLite database.",
+  "cloud_sync_local_backup_title": "Local Backup & Restore",
+  "cloud_sync_local_backup_desc": "Manage offline backups directly on your device storage without requiring cloud services.",
+  "cloud_sync_export_local_backup_btn": "Export Backup to Device",
+  "cloud_sync_export_local_backup_success": "Backup saved successfully to device."
 }

@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../provider/settings_provider.dart';
 import '../provider/database_provider.dart';
+import '../provider/cloud_sync_provider.dart';
 import 'cloud_sync_screen.dart';
 import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
@@ -343,6 +346,116 @@ class SettingsGeneralScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _pickAndLoadLocalBackup(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+    final notifier = ref.read(cloudSyncProvider.notifier);
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: l10n.cloud_sync_load_local_backup_btn,
+        type: FileType.custom,
+        allowedExtensions: ['sqlite', 'db', 'bak'],
+        withData: kIsWeb,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final file = result.files.single;
+      final fileName = file.name;
+
+      if (!context.mounted) return;
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: Icon(Icons.file_open_rounded, size: 36, color: Theme.of(ctx).colorScheme.primary),
+          title: Text(l10n.cloud_sync_load_local_backup_confirm_title, softWrap: true),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.cloud_sync_load_local_backup_confirm_desc(fileName),
+                softWrap: true,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(ctx).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.insert_drive_file_outlined, size: 18, color: Theme.of(ctx).colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        fileName,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.discard_button, softWrap: true),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(ctx).colorScheme.primary,
+                foregroundColor: Theme.of(ctx).colorScheme.onPrimary,
+              ),
+              child: Text(l10n.cloud_sync_load_local_backup_btn, softWrap: true),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true || !context.mounted) return;
+
+      final success = await notifier.restoreFromLocalFile(
+        filePath: file.path ?? '',
+        fileBytes: file.bytes,
+      );
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? l10n.cloud_sync_load_local_backup_success
+                : l10n.cloud_sync_load_local_backup_invalid,
+            softWrap: true,
+          ),
+          backgroundColor: success
+              ? Theme.of(context).colorScheme.secondary
+              : Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.error_prefix(e.toString()), softWrap: true),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -429,6 +542,32 @@ class SettingsGeneralScreen extends ConsumerWidget {
                         HapticFeedback.lightImpact();
                       }
                       _showLoadSampleConfirmation(context, ref);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 20, endIndent: 20),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
+                      child: Icon(Icons.file_open_outlined, color: theme.colorScheme.secondary),
+                    ),
+                    title: Text(
+                      l10n.cloud_sync_load_local_backup_btn,
+                      softWrap: true,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      l10n.cloud_sync_load_local_backup_desc,
+                      softWrap: true,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    onTap: () {
+                      if (settings.hapticFeedbackEnabled) {
+                        HapticFeedback.lightImpact();
+                      }
+                      _pickAndLoadLocalBackup(context, ref);
                     },
                   ),
                   const Divider(height: 1, indent: 20, endIndent: 20),
