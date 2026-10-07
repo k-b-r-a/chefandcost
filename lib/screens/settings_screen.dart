@@ -1562,6 +1562,15 @@ class SettingsAboutScreen extends ConsumerWidget {
     final changelog = isEs
         ? const [
             (
+              '0.1.0-beta+5',
+              'Octubre 2026',
+              [
+                'Copia de seguridad local: exportación y carga de archivos SQLite desde el dispositivo.',
+                'Nueva sección Acerca de con información del desarrollador, esquema DB y términos.',
+                'Ajuste del tamaño de la barra de navegación y mejoras generales.',
+              ],
+            ),
+            (
               '0.1.0-beta+4',
               'Octubre 2026',
               [
@@ -1602,6 +1611,15 @@ class SettingsAboutScreen extends ConsumerWidget {
             ),
           ]
         : const [
+            (
+              '0.1.0-beta+5',
+              'October 2026',
+              [
+                'Local backup: import and export SQLite files directly to device storage.',
+                'Revamped About screen with developer contact, DB schema version, and privacy terms.',
+                'Navigation bar size preference and stability enhancements.',
+              ],
+            ),
             (
               '0.1.0-beta+4',
               'October 2026',

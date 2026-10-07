@@ -75,7 +75,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Chef&Cost'), findsOneWidget);
-      expect(find.textContaining('0.1.0-beta+4'), findsOneWidget);
+      expect(find.textContaining('0.1.0-beta+5'), findsOneWidget);
       expect(find.textContaining('Esquema DB v1'), findsOneWidget);
       expect(find.text('Canal Beta'), findsOneWidget);
     });
@@ -111,11 +111,11 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.text('v0.1.0-beta+4'),
+          matching: find.text('v0.1.0-beta+5'),
         ),
         findsOneWidget,
       );
-      expect(find.text('v0.1.0-beta+3'), findsOneWidget);
+      expect(find.text('v0.1.0-beta+4'), findsOneWidget);
 
       final beta2 = find.text('v0.1.0-beta+2');
       await tester.scrollUntilVisible(beta2, 100, scrollable: find.byType(Scrollable).last);
