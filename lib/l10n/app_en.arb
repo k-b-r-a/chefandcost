@@ -562,5 +562,16 @@
   "recipe_timer_min": "Min",
   "recipe_timer_sec": "Sec",
   "gain_per_portion": "Gain/Portion",
-  "price_per_portion": "Price/Portion"
+  "price_per_portion": "Price/Portion",
+  "force_overwrite_danger_zone": "Danger Zone",
+  "force_overwrite_cloud_btn": "Force Overwrite Cloud",
+  "force_overwrite_first_confirm_title": "Force Overwrite Cloud",
+  "force_overwrite_first_confirm_desc": "This will permanently OVERWRITE all cloud data with your local copy. This action is irreversible.",
+  "force_overwrite_understand_risk": "Yes, I understand the risk",
+  "force_overwrite_challenge_title": "Type OVERWRITE to Confirm",
+  "force_overwrite_challenge_desc": "To prevent accidental loss, please type OVERWRITE below to proceed.",
+  "force_overwrite_challenge_placeholder": "OVERWRITE",
+  "force_overwrite_confirm_final_btn": "Confirm Overwrite",
+  "force_overwrite_success_toast": "Cloud data successfully overwritten with local copy.",
+  "force_overwrite_failure_toast": "Failed to overwrite cloud data."
 }

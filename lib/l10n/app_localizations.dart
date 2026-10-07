@@ -2465,6 +2465,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Price/Portion'**
   String get price_per_portion;
+
+  /// No description provided for @force_overwrite_danger_zone.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger Zone'**
+  String get force_overwrite_danger_zone;
+
+  /// No description provided for @force_overwrite_cloud_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Force Overwrite Cloud'**
+  String get force_overwrite_cloud_btn;
+
+  /// No description provided for @force_overwrite_first_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Force Overwrite Cloud'**
+  String get force_overwrite_first_confirm_title;
+
+  /// No description provided for @force_overwrite_first_confirm_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently OVERWRITE all cloud data with your local copy. This action is irreversible.'**
+  String get force_overwrite_first_confirm_desc;
+
+  /// No description provided for @force_overwrite_understand_risk.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, I understand the risk'**
+  String get force_overwrite_understand_risk;
+
+  /// No description provided for @force_overwrite_challenge_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Type OVERWRITE to Confirm'**
+  String get force_overwrite_challenge_title;
+
+  /// No description provided for @force_overwrite_challenge_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'To prevent accidental loss, please type OVERWRITE below to proceed.'**
+  String get force_overwrite_challenge_desc;
+
+  /// No description provided for @force_overwrite_challenge_placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'OVERWRITE'**
+  String get force_overwrite_challenge_placeholder;
+
+  /// No description provided for @force_overwrite_confirm_final_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Overwrite'**
+  String get force_overwrite_confirm_final_btn;
+
+  /// No description provided for @force_overwrite_success_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud data successfully overwritten with local copy.'**
+  String get force_overwrite_success_toast;
+
+  /// No description provided for @force_overwrite_failure_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to overwrite cloud data.'**
+  String get force_overwrite_failure_toast;
 }
 
 class _AppLocalizationsDelegate

@@ -535,5 +535,16 @@
   "recipe_timer_min": "Min",
   "recipe_timer_sec": "Seg",
   "gain_per_portion": "Ganancia/Porción",
-  "price_per_portion": "Precio/Porción"
+  "price_per_portion": "Precio/Porción",
+  "force_overwrite_danger_zone": "Zona de Peligro",
+  "force_overwrite_cloud_btn": "Forzar Sobrescritura en la Nube",
+  "force_overwrite_first_confirm_title": "Forzar Sobrescritura en la Nube",
+  "force_overwrite_first_confirm_desc": "Esto SOBRESCRIBIRÁ permanentemente todos los datos en la nube con su copia local. Esta acción es irreversible.",
+  "force_overwrite_understand_risk": "Sí, entiendo el riesgo",
+  "force_overwrite_challenge_title": "Escribe OVERWRITE para Confirmar",
+  "force_overwrite_challenge_desc": "Para evitar pérdidas accidentales, escribe OVERWRITE a continuación para continuar.",
+  "force_overwrite_challenge_placeholder": "OVERWRITE",
+  "force_overwrite_confirm_final_btn": "Confirmar Sobrescritura",
+  "force_overwrite_success_toast": "Los datos en la nube se han sobrescrito con éxito con la copia local.",
+  "force_overwrite_failure_toast": "Error al sobrescribir los datos en la nube."
 }
