@@ -86,7 +86,7 @@ void main() {
 
       expect(find.text('Esteban Z.'), findsOneWidget);
       expect(find.text('Creador & Desarrollador Principal'), findsOneWidget);
-      expect(find.text('tebotan99@gmail.com'), findsOneWidget);
+      expect(find.text('kbradevp@gmail.com'), findsOneWidget);
 
       final copyButton = find.byIcon(Icons.copy_rounded);
       expect(copyButton, findsOneWidget);

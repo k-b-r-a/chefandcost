@@ -2583,7 +2583,7 @@ abstract class AppLocalizations {
   /// No description provided for @settings_about_developer_email.
   ///
   /// In en, this message translates to:
-  /// **'tebotan99@gmail.com'**
+  /// **'kbradevp@gmail.com'**
   String get settings_about_developer_email;
 
   /// No description provided for @settings_about_email_copied.

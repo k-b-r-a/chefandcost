@@ -1313,7 +1313,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Creador & Desarrollador Principal';
 
   @override
-  String get settings_about_developer_email => 'tebotan99@gmail.com';
+  String get settings_about_developer_email => 'kbradevp@gmail.com';
 
   @override
   String get settings_about_email_copied => 'Correo copiado al portapapeles';

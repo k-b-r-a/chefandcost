@@ -1303,7 +1303,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get settings_about_developer_role => 'Lead Creator & Developer';
 
   @override
-  String get settings_about_developer_email => 'tebotan99@gmail.com';
+  String get settings_about_developer_email => 'kbradevp@gmail.com';
 
   @override
   String get settings_about_email_copied => 'Email copied to clipboard';
