@@ -361,35 +361,23 @@ class GoogleDriveSyncService {
 
     try {
       final dbFile = await _getDatabaseFile();
+      Uint8List? bytes = fileBytes;
 
-      if (fileBytes != null && fileBytes.isNotEmpty) {
-        if (!isValidSqliteBytes(fileBytes)) {
-          debugPrint('Invalid SQLite header in uploaded bytes.');
+      if (bytes == null || bytes.isEmpty) {
+        if (filePath.isEmpty) {
+          debugPrint('No file path or bytes provided for restore.');
           return false;
         }
-
-        final walFile = File('${dbFile.path}-wal');
-        if (await walFile.exists()) {
-          try { await walFile.delete(); } catch (_) {}
+        final sourceFile = File(filePath);
+        if (!await sourceFile.exists()) {
+          debugPrint('Source file does not exist at $filePath');
+          return false;
         }
-        final shmFile = File('${dbFile.path}-shm');
-        if (await shmFile.exists()) {
-          try { await shmFile.delete(); } catch (_) {}
-        }
-
-        await dbFile.writeAsBytes(fileBytes);
-        return true;
+        bytes = await sourceFile.readAsBytes();
       }
 
-      final sourceFile = File(filePath);
-      if (!await sourceFile.exists()) {
-        debugPrint('Source file does not exist at $filePath');
-        return false;
-      }
-
-      final fileHeaderBytes = await sourceFile.openRead(0, 16).first;
-      if (!isValidSqliteBytes(fileHeaderBytes)) {
-        debugPrint('Invalid SQLite header in local file: $filePath');
+      if (!isValidSqliteBytes(bytes)) {
+        debugPrint('Invalid SQLite header in restored file.');
         return false;
       }
 
@@ -402,7 +390,7 @@ class GoogleDriveSyncService {
         try { await shmFile.delete(); } catch (_) {}
       }
 
-      await sourceFile.copy(dbFile.path);
+      await dbFile.writeAsBytes(bytes);
       return true;
     } catch (e) {
       debugPrint('Error restoring from local file: $e');

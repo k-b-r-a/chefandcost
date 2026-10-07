@@ -1631,9 +1631,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     try {
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: l10n.cloud_sync_load_local_backup_btn,
-        type: FileType.custom,
-        allowedExtensions: ['sqlite', 'db', 'bak'],
-        withData: kIsWeb,
+        type: FileType.any,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {

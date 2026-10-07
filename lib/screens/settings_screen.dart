@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -354,9 +353,8 @@ class SettingsGeneralScreen extends ConsumerWidget {
     try {
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: l10n.cloud_sync_load_local_backup_btn,
-        type: FileType.custom,
-        allowedExtensions: ['sqlite', 'db', 'bak'],
-        withData: kIsWeb,
+        type: FileType.any,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -1562,6 +1560,13 @@ class SettingsAboutScreen extends ConsumerWidget {
     final changelog = isEs
         ? const [
             (
+              '0.1.0-beta+7',
+              'Octubre 2026',
+              [
+                'Corrección en selector de copia de seguridad local: eliminación de restricciones de extensiones para permitir seleccionar cualquier archivo SQLite.',
+              ],
+            ),
+            (
               '0.1.0-beta+6',
               'Octubre 2026',
               [
@@ -1619,6 +1624,13 @@ class SettingsAboutScreen extends ConsumerWidget {
             ),
           ]
         : const [
+            (
+              '0.1.0-beta+7',
+              'October 2026',
+              [
+                'Local backup picker fix: removed restrictive extension filters to allow selecting any SQLite backup file.',
+              ],
+            ),
             (
               '0.1.0-beta+6',
               'October 2026',
