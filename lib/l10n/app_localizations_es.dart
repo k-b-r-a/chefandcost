@@ -582,6 +582,22 @@ class AppLocalizationsEs extends AppLocalizations {
       'Muestra las etiquetas de texto debajo de los iconos de navegación';
 
   @override
+  String get settings_styles_navbar_size => 'Tamaño de Barra de Navegación';
+
+  @override
+  String get settings_styles_navbar_size_desc =>
+      'Ajusta la altura y la escala de los iconos de la barra de navegación';
+
+  @override
+  String get settings_styles_navbar_size_compact => 'Compacto';
+
+  @override
+  String get settings_styles_navbar_size_normal => 'Normal';
+
+  @override
+  String get settings_styles_navbar_size_large => 'Grande';
+
+  @override
   String get settings_format_mass_unit => 'Unidad de Masa Predeterminada';
 
   @override

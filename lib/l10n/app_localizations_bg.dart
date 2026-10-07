@@ -579,6 +579,22 @@ class AppLocalizationsBg extends AppLocalizations {
       'Display text labels below the navigation bar icons';
 
   @override
+  String get settings_styles_navbar_size => 'Navigation Bar Size';
+
+  @override
+  String get settings_styles_navbar_size_desc =>
+      'Adjust the height and icon scale of the navigation bar';
+
+  @override
+  String get settings_styles_navbar_size_compact => 'Compact';
+
+  @override
+  String get settings_styles_navbar_size_normal => 'Normal';
+
+  @override
+  String get settings_styles_navbar_size_large => 'Large';
+
+  @override
   String get settings_format_mass_unit => 'Default Mass Unit';
 
   @override

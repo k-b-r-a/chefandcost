@@ -483,25 +483,51 @@ class SettingsStylesScreen extends ConsumerWidget {
   ];
 
   IconData _getPreviewIcon(int index, String style) {
-    switch (index) {
-      case 0:
-        if (style == 'rounded') return Icons.home_rounded;
-        if (style == 'sharp') return Icons.home_sharp;
-        return Icons.home_outlined;
-      case 1:
-        if (style == 'rounded') return Icons.inventory_2_rounded;
-        if (style == 'sharp') return Icons.inventory_2_sharp;
-        return Icons.inventory_2_outlined;
-      case 2:
-        if (style == 'rounded') return Icons.handyman_rounded;
-        if (style == 'sharp') return Icons.handyman_sharp;
-        return Icons.handyman_outlined;
-      case 3:
-        if (style == 'rounded') return Icons.settings_rounded;
-        if (style == 'sharp') return Icons.settings_sharp;
-        return Icons.settings_outlined;
-      default:
-        return Icons.star_outline;
+    if (style == 'rounded') {
+      switch (index) {
+        case 0:
+          return Icons.home_rounded;
+        case 1:
+          return Icons.menu_book_rounded;
+        case 2:
+          return Icons.inventory_2_rounded;
+        case 3:
+          return Icons.handyman_rounded;
+        case 4:
+          return Icons.settings_rounded;
+        default:
+          return Icons.star_rounded;
+      }
+    } else if (style == 'sharp') {
+      switch (index) {
+        case 0:
+          return Icons.home_sharp;
+        case 1:
+          return Icons.menu_book_sharp;
+        case 2:
+          return Icons.inventory_2_sharp;
+        case 3:
+          return Icons.handyman_sharp;
+        case 4:
+          return Icons.settings_sharp;
+        default:
+          return Icons.star_sharp;
+      }
+    } else {
+      switch (index) {
+        case 0:
+          return Icons.home_outlined;
+        case 1:
+          return Icons.menu_book_outlined;
+        case 2:
+          return Icons.inventory_2_outlined;
+        case 3:
+          return Icons.handyman_outlined;
+        case 4:
+          return Icons.settings_outlined;
+        default:
+          return Icons.star_outline;
+      }
     }
   }
 
@@ -861,14 +887,16 @@ class SettingsStylesScreen extends ConsumerWidget {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(4, (index) {
+                    children: List.generate(5, (index) {
                       final label = index == 0
-                          ? l10n.recipes_title
+                          ? l10n.home_title
                           : index == 1
-                              ? l10n.ingredients_title
+                              ? l10n.recipes_title
                               : index == 2
-                                  ? l10n.tools_title
-                                  : l10n.config_button;
+                                  ? l10n.ingredients_title
+                                  : index == 3
+                                      ? l10n.tools_title
+                                      : l10n.config_button;
                       return Column(
                         children: [
                           Icon(
@@ -972,6 +1000,52 @@ class SettingsStylesScreen extends ConsumerWidget {
                     settingsNotifier.setShowNavBarLabels(val);
                   },
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.settings_styles_navbar_size,
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.settings_styles_navbar_size_desc,
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    segments: [
+                      ButtonSegment(
+                        value: 'compact',
+                        label: Text(l10n.settings_styles_navbar_size_compact),
+                        icon: const Icon(Icons.density_small, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: 'normal',
+                        label: Text(l10n.settings_styles_navbar_size_normal),
+                        icon: const Icon(Icons.density_medium, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: 'large',
+                        label: Text(l10n.settings_styles_navbar_size_large),
+                        icon: const Icon(Icons.density_large, size: 16),
+                      ),
+                    ],
+                    selected: {settings.navBarSize},
+                    onSelectionChanged: (selection) {
+                      triggerHaptic();
+                      settingsNotifier.setNavBarSize(selection.first);
+                    },
+                    showSelectedIcon: false,
+                    style: SegmentedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildNavBarPreview(theme, settings, l10n),
               ],
             ),
           ],
@@ -980,6 +1054,104 @@ class SettingsStylesScreen extends ConsumerWidget {
     ),
   ),
 );
+  }
+
+  Widget _buildNavBarPreview(ThemeData theme, SettingsState settings, AppLocalizations l10n) {
+    final double previewHeight;
+    final double iconSize;
+    final double fontSize;
+    switch (settings.navBarSize) {
+      case 'compact':
+        previewHeight = settings.showNavBarLabels ? 46.0 : 38.0;
+        iconSize = 16.0;
+        fontSize = 9.0;
+        break;
+      case 'large':
+        previewHeight = settings.showNavBarLabels ? 62.0 : 52.0;
+        iconSize = 22.0;
+        fontSize = 11.5;
+        break;
+      case 'normal':
+      default:
+        previewHeight = settings.showNavBarLabels ? 54.0 : 44.0;
+        iconSize = 18.0;
+        fontSize = 10.0;
+        break;
+    }
+
+    final previewLabels = [
+      l10n.home_title,
+      l10n.recipes_title,
+      l10n.ingredients_title,
+      l10n.tools_title,
+      l10n.config_button,
+    ];
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      width: double.infinity,
+      height: previewHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(previewLabels.length, (index) {
+          final isSelected = index == 0;
+          final iconData = _getPreviewIcon(index, settings.iconStyle);
+          return Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              decoration: isSelected
+                  ? BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(10),
+                    )
+                  : null,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      iconData,
+                      size: iconSize,
+                      color: isSelected
+                          ? theme.colorScheme.onPrimaryContainer
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                    if (settings.showNavBarLabels) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        previewLabels[index],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected
+                              ? theme.colorScheme.onPrimaryContainer
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 }
 

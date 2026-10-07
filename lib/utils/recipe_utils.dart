@@ -204,19 +204,63 @@ class RecipeUtils {
   }
 
   /// formats numbers with dots as thousands separator (e.g. 1.000)
-  static String formatNumber(num value, {int? decimalDigits}) {
-    final digits = decimalDigits ?? defaultDecimalDigits;
+  static String formatNumber(
+    num value, {
+    int? decimalDigits,
+    int? minDecimalDigits,
+    bool trimTrailingZeros = false,
+  }) {
+    final maxDigits = decimalDigits ?? defaultDecimalDigits;
+    final minDigits = trimTrailingZeros
+        ? 0
+        : (minDecimalDigits ?? decimalDigits ?? defaultDecimalDigits);
     final formatter = NumberFormat.decimalPattern('es_ES'); // uses dot for thousands
-    formatter.minimumFractionDigits = digits;
-    formatter.maximumFractionDigits = digits;
-    return formatter.format(digits == 0 ? value.round() : value);
+    formatter.minimumFractionDigits = minDigits;
+    formatter.maximumFractionDigits = maxDigits;
+    return formatter.format(maxDigits == 0 ? value.round() : value);
   }
 
-  /// Parses a number string that might contain thousands separators (dots) and decimal commas
+  /// Parses a number string that might contain thousands separators (dots) and decimal commas or units
   static double parseFormattedNumber(String text) {
     if (text.isEmpty) return 0.0;
-    // Remove dots (thousands) and replace comma with dot (decimal)
-    String clean = text.replaceAll('.', '').replaceAll(',', '.');
+    final trimmed = text.trim();
+    final match = RegExp(r'[-+]?(?:[0-9]+(?:[.,][0-9]+)*|[.,][0-9]+)').firstMatch(trimmed);
+    if (match == null) return 0.0;
+    final numStr = match.group(0)!;
+    final hasDot = numStr.contains('.');
+    final hasComma = numStr.contains(',');
+
+    String clean;
+    if (hasDot && hasComma) {
+      final lastDot = numStr.lastIndexOf('.');
+      final lastComma = numStr.lastIndexOf(',');
+      if (lastComma > lastDot) {
+        // e.g. 1.000,50
+        clean = numStr.replaceAll('.', '').replaceAll(',', '.');
+      } else {
+        // e.g. 1,000.50
+        clean = numStr.replaceAll(',', '');
+      }
+    } else if (hasComma) {
+      if (numStr.split(',').length - 1 > 1) {
+        // multiple commas: 1,000,000
+        clean = numStr.replaceAll(',', '');
+      } else {
+        // single comma decimal: 1,5 or ,5
+        clean = numStr.replaceAll(',', '.');
+      }
+    } else if (hasDot) {
+      if (numStr.split('.').length - 1 > 1) {
+        // multiple dots: 1.000.000
+        clean = numStr.replaceAll('.', '');
+      } else {
+        // single dot decimal: 1.5 or .5
+        clean = numStr;
+      }
+    } else {
+      clean = numStr;
+    }
+
     return double.tryParse(clean) ?? 0.0;
   }
 

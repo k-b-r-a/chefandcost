@@ -1290,6 +1290,36 @@ abstract class AppLocalizations {
   /// **'Display text labels below the navigation bar icons'**
   String get settings_styles_show_nav_labels_desc;
 
+  /// No description provided for @settings_styles_navbar_size.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation Bar Size'**
+  String get settings_styles_navbar_size;
+
+  /// No description provided for @settings_styles_navbar_size_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust the height and icon scale of the navigation bar'**
+  String get settings_styles_navbar_size_desc;
+
+  /// No description provided for @settings_styles_navbar_size_compact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get settings_styles_navbar_size_compact;
+
+  /// No description provided for @settings_styles_navbar_size_normal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get settings_styles_navbar_size_normal;
+
+  /// No description provided for @settings_styles_navbar_size_large.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get settings_styles_navbar_size_large;
+
   /// No description provided for @settings_format_mass_unit.
   ///
   /// In en, this message translates to:
