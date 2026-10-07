@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
+import '../constants.dart';
 
 /// Service responsible for purely manual, on-demand, differential cross-platform sync
 /// with Cloud Firestore. Optimized for Firebase Spark plan limits by embedding
@@ -527,7 +528,7 @@ class FirestoreSyncService {
     batch.set(metaRef, {
       'lastSyncTimestamp': Timestamp.fromDate(syncStartTime),
       'platform': kIsWeb ? 'web' : defaultTargetPlatform.name,
-      'appVersion': '1.0.0+1',
+      'appVersion': kAppVersion,
       'forceOverwritten': true,
     }, SetOptions(merge: true));
     opCount++;
@@ -733,7 +734,7 @@ class FirestoreSyncService {
     batch.set(metaRef, {
       'lastSyncTimestamp': Timestamp.fromDate(syncStartTime),
       'platform': kIsWeb ? 'web' : defaultTargetPlatform.name,
-      'appVersion': '1.0.0+1',
+      'appVersion': kAppVersion,
     }, SetOptions(merge: true));
     opCount++;
 
