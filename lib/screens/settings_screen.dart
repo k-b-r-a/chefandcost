@@ -1562,6 +1562,14 @@ class SettingsAboutScreen extends ConsumerWidget {
     final changelog = isEs
         ? const [
             (
+              '0.1.0-beta+6',
+              'Octubre 2026',
+              [
+                'Actualización oficial del correo de contacto y soporte del desarrollador (kbradevp@gmail.com).',
+                'Optimizaciones de estabilidad y ajustes de despliegue en canal Beta.',
+              ],
+            ),
+            (
               '0.1.0-beta+5',
               'Octubre 2026',
               [
@@ -1611,6 +1619,14 @@ class SettingsAboutScreen extends ConsumerWidget {
             ),
           ]
         : const [
+            (
+              '0.1.0-beta+6',
+              'October 2026',
+              [
+                'Official developer support & contact email update (kbradevp@gmail.com).',
+                'Beta channel deployment refinements and stability fixes.',
+              ],
+            ),
             (
               '0.1.0-beta+5',
               'October 2026',
