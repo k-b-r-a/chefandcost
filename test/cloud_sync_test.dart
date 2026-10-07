@@ -468,5 +468,35 @@ void main() {
       expect(mockNotifier.forceOverwriteCalled, isTrue);
       expect(find.text('Cloud data successfully overwritten with local copy.'), findsOneWidget);
     });
+
+    testWidgets('CloudSyncScreen renders only one compact explanatory info box for local backups and no redundant developer_mode box', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            cloudSyncProvider.overrideWith(MockCloudSyncNotifier.new),
+          ],
+          child: const MaterialApp(
+            locale: Locale('es'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: CloudSyncScreen(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Exactly one compact explanatory box is rendered
+      final localDesc = find.textContaining('El modo Directorio Local guarda tus respaldos');
+      expect(localDesc, findsOneWidget);
+
+      // Redundant developer_mode container is not rendered
+      expect(find.byIcon(Icons.developer_mode), findsNothing);
+    });
   });
 }

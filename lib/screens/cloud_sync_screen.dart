@@ -117,7 +117,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                             ] else ...[
                               _buildFirestoreAuthCard(syncState, syncNotifier, theme, l10n),
                             ],
-                          ] else ...[
+                          ] else if (syncState.storageType == CloudSyncStorageType.googleDrive) ...[
                             _buildConnectionHeader(syncState, syncNotifier, theme, l10n),
                             const SizedBox(height: 24),
                             if (syncState.signedIn) ...[
@@ -130,6 +130,15 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                               else
                                 _buildBackupsList(syncState, syncNotifier, theme, l10n),
                             ],
+                          ] else ...[
+                            _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
+                            const SizedBox(height: 24),
+                            _buildBackupsListHeader(theme, l10n),
+                            const SizedBox(height: 12),
+                            if (syncState.backups.isEmpty)
+                              _buildEmptyBackupsPlaceholder(theme, l10n)
+                            else
+                              _buildBackupsList(syncState, syncNotifier, theme, l10n),
                           ],
                           const SizedBox(height: 24),
                           _buildLocalBackupCard(syncNotifier, theme, l10n),
@@ -258,35 +267,59 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             ] else if (isFirestore) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  l10n.cloud_sync_desc_firestore,
-                  softWrap: true,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    height: 1.4,
-                    color: theme.colorScheme.onSurfaceVariant,
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
                   ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.cloud_sync_outlined, size: 20, color: theme.colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.cloud_sync_desc_firestore,
+                        softWrap: true,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          height: 1.4,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ] else if (!isGoogleDrive) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  l10n.cloud_sync_desc_local,
-                  softWrap: true,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    height: 1.4,
-                    color: theme.colorScheme.onSurfaceVariant,
+                  border: Border.all(
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.2),
                   ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.folder_shared_outlined, size: 20, color: theme.colorScheme.secondary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.cloud_sync_desc_local,
+                        softWrap: true,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          height: 1.4,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -302,19 +335,13 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    final isLocal = state.storageType == CloudSyncStorageType.localDirectory;
+    final IconData headerIcon =
+        state.signedIn ? Icons.cloud_done_outlined : Icons.backup_outlined;
 
-    final IconData headerIcon = isLocal
-        ? Icons.folder_shared_outlined
-        : (state.signedIn ? Icons.cloud_done_outlined : Icons.backup_outlined);
+    final String headerTitle =
+        state.signedIn ? l10n.cloud_sync_connected : l10n.cloud_sync_disconnected;
 
-    final String headerTitle = isLocal
-        ? l10n.cloud_sync_sandbox_badge
-        : (state.signedIn ? l10n.cloud_sync_connected : l10n.cloud_sync_disconnected);
-
-    final String headerDesc = isLocal
-        ? l10n.cloud_sync_sandbox_desc
-        : l10n.cloud_sync_desc;
+    final String headerDesc = l10n.cloud_sync_desc;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -346,17 +373,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            if (isLocal) ...[
-              const SizedBox(height: 4),
-              Text(
-                l10n.cloud_sync_sandbox_badge,
-                softWrap: true,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ] else if (state.signedIn && state.email != null) ...[
+            if (state.signedIn && state.email != null) ...[
               const SizedBox(height: 4),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -391,65 +408,63 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            if (!isLocal) ...[
-              const SizedBox(height: 20),
-              if (!state.signedIn)
-                ElevatedButton.icon(
-                  onPressed: () => notifier.signIn(),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
+            const SizedBox(height: 20),
+            if (!state.signedIn)
+              ElevatedButton.icon(
+                onPressed: () => notifier.signIn(),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  icon: const Icon(Icons.login),
-                  label: Text(
-                    l10n.cloud_sync_connect_btn,
-                    softWrap: true,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                )
-              else
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () => notifier.signIn(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: const Icon(Icons.switch_account),
-                      label: Text(l10n.cloud_sync_switch_account, softWrap: true),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => notifier.signOut(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        foregroundColor: theme.colorScheme.error,
-                        side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: const Icon(Icons.logout),
-                      label: Text(
-                        l10n.cloud_sync_disconnect_btn,
-                        softWrap: true,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
+                  elevation: 0,
                 ),
-            ],
+                icon: const Icon(Icons.login),
+                label: Text(
+                  l10n.cloud_sync_connect_btn,
+                  softWrap: true,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => notifier.signIn(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    icon: const Icon(Icons.switch_account),
+                    label: Text(l10n.cloud_sync_switch_account, softWrap: true),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => notifier.signOut(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      foregroundColor: theme.colorScheme.error,
+                      side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    icon: const Icon(Icons.logout),
+                    label: Text(
+                      l10n.cloud_sync_disconnect_btn,
+                      softWrap: true,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -462,56 +477,11 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    final isSim = state.storageType == CloudSyncStorageType.localDirectory;
     final isFirestore = state.storageType == CloudSyncStorageType.firestore;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (isSim) ...[
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.developer_mode, color: theme.colorScheme.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.cloud_sync_sandbox_badge,
-                        softWrap: true,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        l10n.cloud_sync_sandbox_desc,
-                        softWrap: true,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 11,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
         ElevatedButton.icon(
           onPressed: () => _confirmSync(context, notifier, l10n),
           style: ElevatedButton.styleFrom(
