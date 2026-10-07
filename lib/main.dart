@@ -365,6 +365,28 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       }
     }
 
+    final double railWidth;
+    final double logoSize;
+    final double railIconSize;
+    switch (settings.navBarSize) {
+      case 'compact':
+        railWidth = 68.0;
+        logoSize = 46.0;
+        railIconSize = 20.0;
+        break;
+      case 'large':
+        railWidth = 96.0;
+        logoSize = 64.0;
+        railIconSize = 28.0;
+        break;
+      case 'normal':
+      default:
+        railWidth = 80.0;
+        logoSize = 56.0;
+        railIconSize = 24.0;
+        break;
+    }
+
     return NavigationRail(
       selectedIndex: selectedIndex,
       onDestinationSelected: (index) async {
@@ -394,7 +416,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       labelType: settings.showNavBarLabels
           ? NavigationRailLabelType.all
           : NavigationRailLabelType.none,
-      minWidth: 80,
+      minWidth: railWidth,
       minExtendedWidth: 200,
       leading: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -407,10 +429,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               if (guard != null && !await guard()) return;
               webNotifier.showHome();
             },
-            child: const Padding(
-              padding: EdgeInsets.all(2.0),
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
               child: AppIcon(
-                size: 56,
+                size: logoSize,
               ),
             ),
           ),
@@ -488,28 +510,28 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       ),
       destinations: [
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(0, false, settings.iconStyle)),
-          selectedIcon: Icon(getNavBarIcon(0, true, settings.iconStyle)),
+          icon: Icon(getNavBarIcon(0, false, settings.iconStyle), size: railIconSize),
+          selectedIcon: Icon(getNavBarIcon(0, true, settings.iconStyle), size: railIconSize),
           label: Text(l10n.home_title),
         ),
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(1, false, settings.iconStyle)),
-          selectedIcon: Icon(getNavBarIcon(1, true, settings.iconStyle)),
+          icon: Icon(getNavBarIcon(1, false, settings.iconStyle), size: railIconSize),
+          selectedIcon: Icon(getNavBarIcon(1, true, settings.iconStyle), size: railIconSize),
           label: Text(l10n.recipes_title),
         ),
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(2, false, settings.iconStyle)),
-          selectedIcon: Icon(getNavBarIcon(2, true, settings.iconStyle)),
+          icon: Icon(getNavBarIcon(2, false, settings.iconStyle), size: railIconSize),
+          selectedIcon: Icon(getNavBarIcon(2, true, settings.iconStyle), size: railIconSize),
           label: Text(l10n.ingredients_title),
         ),
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(3, false, settings.iconStyle)),
-          selectedIcon: Icon(getNavBarIcon(3, true, settings.iconStyle)),
+          icon: Icon(getNavBarIcon(3, false, settings.iconStyle), size: railIconSize),
+          selectedIcon: Icon(getNavBarIcon(3, true, settings.iconStyle), size: railIconSize),
           label: Text(l10n.tools_title),
         ),
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(4, false, settings.iconStyle)),
-          selectedIcon: Icon(getNavBarIcon(4, true, settings.iconStyle)),
+          icon: Icon(getNavBarIcon(4, false, settings.iconStyle), size: railIconSize),
+          selectedIcon: Icon(getNavBarIcon(4, true, settings.iconStyle), size: railIconSize),
           label: Text(l10n.config_button),
         ),
       ],
@@ -921,7 +943,45 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       (4, l10n.config_button),
     ];
 
-    final double pillHeight = settings.showNavBarLabels ? 54.0 : 44.0;
+    final double pillHeight;
+    final double indicatorHeight;
+    final double iconSize;
+    final double fontSize;
+    final EdgeInsets itemPadding;
+
+    switch (settings.navBarSize) {
+      case 'compact':
+        pillHeight = settings.showNavBarLabels ? 46.0 : 38.0;
+        indicatorHeight = settings.showNavBarLabels ? 36.0 : 30.0;
+        iconSize = 18.0;
+        fontSize = 9.5;
+        itemPadding = EdgeInsets.symmetric(
+          vertical: settings.showNavBarLabels ? 2.5 : 5.0,
+          horizontal: 2.0,
+        );
+        break;
+      case 'large':
+        pillHeight = settings.showNavBarLabels ? 62.0 : 52.0;
+        indicatorHeight = settings.showNavBarLabels ? 48.0 : 42.0;
+        iconSize = 24.0;
+        fontSize = 11.5;
+        itemPadding = EdgeInsets.symmetric(
+          vertical: settings.showNavBarLabels ? 5.0 : 8.5,
+          horizontal: 2.0,
+        );
+        break;
+      case 'normal':
+      default:
+        pillHeight = settings.showNavBarLabels ? 54.0 : 44.0;
+        indicatorHeight = settings.showNavBarLabels ? 42.0 : 36.0;
+        iconSize = 20.0;
+        fontSize = 10.5;
+        itemPadding = EdgeInsets.symmetric(
+          vertical: settings.showNavBarLabels ? 4.0 : 7.0,
+          horizontal: 2.0,
+        );
+        break;
+    }
     final animDuration = settings.animationsEnabled
         ? const Duration(milliseconds: 200)
         : Duration.zero;
@@ -978,7 +1038,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           ),
                           child: Container(
                             width: itemWidth - 6,
-                            height: settings.showNavBarLabels ? 42 : 36,
+                            height: indicatorHeight,
                             decoration: BoxDecoration(
                               color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(12),
@@ -1018,10 +1078,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                   },
                                   borderRadius: BorderRadius.circular(12),
                                   child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: settings.showNavBarLabels ? 4 : 7,
-                                      horizontal: 2,
-                                    ),
+                                    padding: itemPadding,
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -1032,7 +1089,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                           curve: Curves.easeOut,
                                           child: Icon(
                                             icon,
-                                            size: 20,
+                                            size: iconSize,
                                             color: isSelected
                                                 ? theme.colorScheme.onPrimaryContainer
                                                 : theme.colorScheme.onSurfaceVariant,
@@ -1043,7 +1100,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                           AnimatedDefaultTextStyle(
                                             duration: animDuration,
                                             style: TextStyle(
-                                              fontSize: 10.5,
+                                              fontSize: fontSize,
                                               fontWeight: isSelected
                                                   ? FontWeight.w700
                                                   : FontWeight.w500,
@@ -1078,7 +1135,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     ),
   ),
 );
-}
+  }
 
   Widget? _buildFab(BuildContext context, SettingsState settings, {bool isWide = false}) {
     final theme = Theme.of(context);

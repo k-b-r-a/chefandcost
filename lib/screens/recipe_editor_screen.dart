@@ -3834,8 +3834,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                     timerData.durationSeconds,
                                   );
 
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
+                                      duration: const Duration(seconds: 3),
+                                      behavior: SnackBarBehavior.floating,
                                       content: Text(
                                         l10n.timer_started_snackbar(timerName, timerData.formattedDuration),
                                         softWrap: true,
@@ -3843,6 +3846,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                       action: SnackBarAction(
                                         label: l10n.view_button,
                                         onPressed: () {
+                                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
                                               builder: (context) => const KitchenTimersScreen(),
@@ -5439,6 +5443,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
   void _showGlobalIngredientPicker() {
     ref.read(ingredientSearchQueryProvider.notifier).setQuery('');
+    ref.invalidate(ingredientsStreamProvider);
+    ref.invalidate(unitsProvider);
     final isDesktopWeb = MediaQuery.sizeOf(context).width >= 640;
     if (isDesktopWeb) {
       setState(() {
@@ -5562,8 +5568,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                     timerData.durationSeconds,
                                   );
 
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
+                                      duration: const Duration(seconds: 3),
+                                      behavior: SnackBarBehavior.floating,
                                       content: Text(
                                         l10n.timer_started_snackbar(
                                           timerName,
@@ -5574,6 +5583,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                       action: SnackBarAction(
                                         label: l10n.view_button,
                                         onPressed: () {
+                                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
                                               builder: (context) => const KitchenTimersScreen(),

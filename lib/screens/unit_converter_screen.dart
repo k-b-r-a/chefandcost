@@ -115,13 +115,22 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
               .toList();
 
           // Initialize units if not set
+          var shouldRecalculate = false;
           if (_fromUnit == null || _fromUnit!.category != _selectedCategory) {
             _fromUnit = filteredUnits.isNotEmpty ? filteredUnits[0] : null;
+            shouldRecalculate = true;
           }
           if (_toUnit == null || _toUnit!.category != _selectedCategory) {
             _toUnit = filteredUnits.length > 1
                 ? filteredUnits[1]
                 : (filteredUnits.isNotEmpty ? filteredUnits[0] : null);
+            shouldRecalculate = true;
+          }
+          if (shouldRecalculate && _fromUnit != null && _toUnit != null) {
+            final valueText = _valueController.text.trim();
+            final inputVal = RecipeUtils.parseFormattedNumber(valueText);
+            final valueInBase = inputVal * _fromUnit!.factorToBase;
+            _result = valueInBase / _toUnit!.factorToBase;
           }
 
           return Center(
@@ -311,7 +320,7 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                RecipeUtils.formatNumber(_result, decimalDigits: 4),
+                                RecipeUtils.formatNumber(_result, decimalDigits: 4, trimTrailingZeros: true),
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.w900,
                                   color: theme.colorScheme.primary,
@@ -373,7 +382,7 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                       ),
                     ),
                     child: Text(
-                      '${_valueController.text} ${_fromUnit!.symbol} = ${RecipeUtils.formatNumber(_result, decimalDigits: 4)} ${_toUnit!.symbol}',
+                      '${_valueController.text} ${_fromUnit!.symbol} = ${RecipeUtils.formatNumber(_result, decimalDigits: 4, trimTrailingZeros: true)} ${_toUnit!.symbol}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.onSurfaceVariant,
