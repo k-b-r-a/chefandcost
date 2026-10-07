@@ -1303,6 +1303,74 @@ class AppLocalizationsEs extends AppLocalizations {
       'Error al sobrescribir los datos en la nube.';
 
   @override
+  String get settings_about_developer => 'Desarrollador';
+
+  @override
+  String get settings_about_developer_name => 'Esteban Z.';
+
+  @override
+  String get settings_about_developer_role =>
+      'Creador & Desarrollador Principal';
+
+  @override
+  String get settings_about_developer_email => 'tebotan99@gmail.com';
+
+  @override
+  String get settings_about_email_copied => 'Correo copiado al portapapeles';
+
+  @override
+  String get settings_about_copy_email => 'Copiar Correo';
+
+  @override
+  String get settings_about_db_schema => 'Esquema DB';
+
+  @override
+  String get settings_about_channel_beta => 'Canal Beta';
+
+  @override
+  String get settings_about_channel_stable => 'Canal Estable';
+
+  @override
+  String get settings_about_changelog => 'Registro de Cambios';
+
+  @override
+  String get settings_about_changelog_desc =>
+      'Consulta las notas de versión e historial de novedades';
+
+  @override
+  String get settings_about_privacy_terms => 'Términos y Privacidad';
+
+  @override
+  String get settings_about_privacy_terms_desc =>
+      'Consulta nuestra política de datos y privacidad';
+
+  @override
+  String get settings_about_licenses => 'Licencias de Código Abierto';
+
+  @override
+  String get settings_about_licenses_desc =>
+      'Consulta las licencias y librerías de terceros';
+
+  @override
+  String get settings_about_debug_logs => 'Diagnóstico y Depuración (Beta)';
+
+  @override
+  String get settings_about_debug_logs_desc =>
+      'Inspecciona el registro de eventos y diagnóstico del sistema';
+
+  @override
+  String get settings_about_logs_copied => 'Registros copiados al portapapeles';
+
+  @override
+  String get settings_about_logs_clear => 'Limpiar Registros';
+
+  @override
+  String get settings_about_logs_copy => 'Copiar Todo';
+
+  @override
+  String get settings_about_logs_empty => 'No hay registros grabados todavía';
+
+  @override
   String get cloud_sync_load_local_backup_btn =>
       'Cargar Copia de Seguridad Local';
 
