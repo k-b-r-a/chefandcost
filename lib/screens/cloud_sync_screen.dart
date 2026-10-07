@@ -183,22 +183,38 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             ),
             const SizedBox(height: 12),
             SegmentedButton<CloudSyncStorageType>(
+              style: SegmentedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+              ),
               segments: [
                 ButtonSegment<CloudSyncStorageType>(
                   value: CloudSyncStorageType.firestore,
                   icon: const Icon(Icons.cloud_sync_outlined),
-                  label: Text(l10n.cloud_sync_target_firestore, softWrap: true),
+                  label: Text(
+                    l10n.cloud_sync_target_firestore,
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 ButtonSegment<CloudSyncStorageType>(
                   value: CloudSyncStorageType.googleDrive,
                   icon: const Icon(Icons.cloud_outlined),
-                  label: Text(l10n.cloud_sync_target_drive, softWrap: true),
+                  label: Text(
+                    l10n.cloud_sync_target_drive,
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                  ),
                   enabled: !kIsWeb,
                 ),
                 ButtonSegment<CloudSyncStorageType>(
                   value: CloudSyncStorageType.localDirectory,
                   icon: const Icon(Icons.folder_open),
-                  label: Text(l10n.cloud_sync_target_local, softWrap: true),
+                  label: Text(
+                    l10n.cloud_sync_target_local,
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                  ),
                   enabled: !kIsWeb,
                 ),
               ],
@@ -1162,16 +1178,28 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
 
             // Mode Toggle (Iniciar Sesión vs Registrarse)
             SegmentedButton<bool>(
+              style: SegmentedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              ),
               segments: [
                 ButtonSegment<bool>(
                   value: false,
                   icon: const Icon(Icons.login, size: 18),
-                  label: Text(l10n.sign_in_button, softWrap: true),
+                  label: Text(
+                    l10n.sign_in_button,
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 ButtonSegment<bool>(
                   value: true,
                   icon: const Icon(Icons.person_add_outlined, size: 18),
-                  label: Text(l10n.cloud_sync_create_account, softWrap: true),
+                  label: Text(
+                    l10n.cloud_sync_create_account,
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
               selected: {_isRegisterMode},

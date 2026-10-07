@@ -57,7 +57,7 @@ class GoogleDriveSyncService {
       return CloudSyncStorageType.firestore;
     }
     final prefs = await SharedPreferences.getInstance();
-    final index = prefs.getInt(_storageTypeKey) ?? (isDefaultSimulation ? 1 : 0);
+    final index = prefs.getInt(_storageTypeKey) ?? CloudSyncStorageType.firestore.index;
     return CloudSyncStorageType.values[index];
   }
 

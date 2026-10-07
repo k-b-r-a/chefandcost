@@ -61,9 +61,10 @@ class _GlobalIngredientPickerSheetState
     super.initState();
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(ingredientSearchQueryProvider.notifier).setQuery('');
-      }
+      if (!mounted) return;
+      ref.read(ingredientSearchQueryProvider.notifier).setQuery('');
+      ref.invalidate(ingredientsStreamProvider);
+      ref.invalidate(unitsProvider);
     });
   }
 
@@ -464,9 +465,7 @@ class _GlobalIngredientPickerSheetState
             child: Consumer(
               builder: (context, ref, _) {
                 final query = ref.watch(ingredientSearchQueryProvider);
-                final ingredientsAsync = query.isEmpty
-                    ? ref.watch(ingredientsStreamProvider)
-                    : ref.watch(relatedIngredientsProvider(query));
+                final ingredientsAsync = ref.watch(ingredientsStreamProvider);
                 final unitsAsync = ref.watch(unitsProvider);
 
                 return ingredientsAsync.when(
@@ -679,10 +678,13 @@ class _GlobalIngredientPickerSheetState
                                       subtitle: unitsAsync.when(
                                         data: (units) {
                                           final unit = units
-                                              .firstWhere(
-                                                (u) => u.unitPk == ing.unitFk,
-                                              )
-                                              .symbol;
+                                                  .where(
+                                                    (u) =>
+                                                        u.unitPk == ing.unitFk,
+                                                  )
+                                                  .firstOrNull
+                                                  ?.symbol ??
+                                              '';
                                           return CurrencyText(
                                             l10n.ingredient_price_per_quantity(
                                               '$currency${RecipeUtils.formatNumber(ing.cost)}',

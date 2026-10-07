@@ -25,7 +25,7 @@ class CloudSyncState {
     this.loading = false,
     this.errorMessage,
     this.successMessage,
-    this.storageType = CloudSyncStorageType.googleDrive,
+    this.storageType = CloudSyncStorageType.firestore,
   });
 
   CloudSyncState copyWith({
