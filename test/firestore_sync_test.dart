@@ -9,6 +9,7 @@ import 'package:recipetools/provider/cloud_sync_provider.dart';
 import 'package:recipetools/screens/cloud_sync_screen.dart';
 import 'package:recipetools/utils/cloud_sync_service.dart';
 import 'package:recipetools/utils/firestore_sync_service.dart';
+import 'package:recipetools/utils/recipe_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockFirestoreCloudSyncNotifier extends CloudSyncNotifier {
@@ -108,6 +109,9 @@ void main() {
       expect(firestoreMap['ingredients'], hasLength(1));
       expect(firestoreMap['ingredients'][0]['recipeIngredientPk'], 'ri-1');
       expect(firestoreMap['ingredients'][0]['amountNeeded'], 200.0);
+      expect(firestoreMap['ingredients'][0]['name'], 'Butter');
+      expect(firestoreMap['ingredients'][0]['cost'], 4.5);
+      expect(firestoreMap['ingredients'][0]['unitFk'], 'unit-g');
       expect(firestoreMap['steps'], hasLength(1));
       expect(firestoreMap['steps'][0]['stepPk'], 'step-1');
       expect(firestoreMap['steps'][0]['instruction'], 'Laminate dough with butter block');
@@ -401,6 +405,92 @@ void main() {
       final ing = await db.getIngredientById('ing-salt');
       expect(ing?.name, 'Local Premium Salt');
       expect(ing?.cost, 5.0);
+    });
+
+    test('mergeRecipeFromRemote upserts nestedIngredients and getRecipeDetail loads them', () async {
+      final now = DateTime.utc(2026, 4, 1);
+      final remoteRecipe = Recipe(
+        recipePk: 'rec-nested',
+        name: 'Cookie Recipe',
+        defaultYield: 12,
+        yieldName: 'cookies',
+        targetProfitMargin: 0.5,
+        targetPricePerPortion: 1.5,
+        fixedOverheadCost: 0.1,
+        dateCreated: now,
+        dateTimeModified: now,
+        archived: false,
+      );
+
+      final remoteIngredient = RecipeIngredient(
+        recipeIngredientPk: 'ri-cookie-1',
+        recipeFk: 'rec-nested',
+        ingredientFk: 'ing-choc-chips',
+        amountNeeded: 150.0,
+        dateTimeModified: now,
+      );
+
+      final nestedIngredient = Ingredient(
+        ingredientPk: 'ing-choc-chips',
+        name: 'Chocolate Chips',
+        cost: 3.0,
+        quantityForCost: 200.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        dateTimeModified: now,
+      );
+
+      await db.mergeRecipeFromRemote(
+        remoteRecipe: remoteRecipe,
+        remoteIngredients: [remoteIngredient],
+        remoteSteps: [],
+        nestedIngredients: [nestedIngredient],
+      );
+
+      final detail = await db.getRecipeDetail('rec-nested');
+      expect(detail.ingredients, hasLength(1));
+      expect(detail.ingredients.first.ingredient.name, 'Chocolate Chips');
+      expect(detail.ingredients.first.entry.amountNeeded, 150.0);
+    });
+
+    test('RecipeUtils.saveRecipe updates ingredient dateTimeModified and returns complete detail', () async {
+      final now = DateTime.utc(2026, 1, 1);
+      final ingredient = Ingredient(
+        ingredientPk: 'ing-flour-test',
+        name: 'Flour',
+        cost: 2.0,
+        quantityForCost: 1000.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        dateTimeModified: now,
+      );
+      await db.into(db.ingredients).insert(ingredient);
+
+      final ingData = RecipeIngredientData(
+        ingredient: ingredient,
+        initialAmount: '350',
+      );
+
+      final detail = await RecipeUtils.saveRecipe(
+        db: db,
+        name: 'Pancake',
+        description: 'Fluffy pancakes',
+        yieldText: '4',
+        yieldName: 'portions',
+        profitMarginText: '50',
+        priceText: '2.5',
+        ingredients: [ingData],
+        steps: [],
+      );
+
+      expect(detail.recipe.name, 'Pancake');
+      expect(detail.ingredients, hasLength(1));
+      expect(detail.ingredients.first.ingredient.name, 'Flour');
+      expect(detail.ingredients.first.entry.amountNeeded, 350.0);
+
+      final dbIng = await db.getIngredientById('ing-flour-test');
+      expect(dbIng?.dateTimeModified, isNotNull);
+      expect(dbIng!.dateTimeModified!.isAfter(now), isTrue);
     });
   });
 

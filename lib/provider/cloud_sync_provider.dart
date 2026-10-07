@@ -639,6 +639,82 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     await _firestoreService.setCustomUserId(userId);
     await checkStatus();
   }
+
+  Future<void> saveRecipe(RecipeDetail detail) async {
+    if (state.signedIn && state.storageType == CloudSyncStorageType.firestore) {
+      try {
+        await _firestoreService.saveRecipe(detail);
+      } catch (e) {
+        debugPrint('Cloud sync save recipe error: $e');
+      }
+    }
+  }
+
+  Future<bool> forceOverwriteCloud() async {
+    state = state.copyWith(loading: true);
+    try {
+      if (state.storageType == CloudSyncStorageType.firestore) {
+        if (!_firestoreService.isConfigured) {
+          state = state.copyWith(
+            loading: false,
+            errorMessage: 'Firebase is not configured.',
+          );
+          return false;
+        }
+
+        final currentUser = _firestoreService.authCurrentUser;
+        final activeUid = currentUser?.uid ?? await _firestoreService.getActiveUserId();
+        if (activeUid == null || activeUid.isEmpty) {
+          state = state.copyWith(
+            loading: false,
+            errorMessage: 'Please sign in or set a Sync ID before overwriting cloud data.',
+          );
+          return false;
+        }
+
+        final localDb = ref.read(databaseProvider);
+        await _firestoreService.forceOverwriteCloud(
+          db: localDb,
+          userId: activeUid,
+        );
+        ref.read(databaseProvider.notifier).refreshDatabase();
+        state = state.copyWith(
+          loading: false,
+          successMessage: 'Cloud data successfully overwritten with local copy.',
+        );
+        return true;
+      } else {
+        // Google Drive / Local Directory
+        final backups = await _syncService.getBackups();
+        for (final b in backups) {
+          await _syncService.deleteBackup(b.id);
+        }
+        final success = await _syncService.createBackup();
+        final updatedBackups = await _syncService.getBackups();
+        if (success) {
+          state = state.copyWith(
+            backups: updatedBackups,
+            loading: false,
+            successMessage: 'Cloud data successfully overwritten with local copy.',
+          );
+          return true;
+        } else {
+          state = state.copyWith(
+            backups: updatedBackups,
+            loading: false,
+            errorMessage: 'Failed to upload local copy to cloud.',
+          );
+          return false;
+        }
+      }
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Force overwrite failed: $e',
+      );
+      return false;
+    }
+  }
 }
 
 class GoogleUserNotifier extends Notifier<GoogleSignInAccount?> {
