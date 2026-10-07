@@ -424,12 +424,6 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }) async {
     state = state.copyWith(loading: true);
     try {
-      try {
-        await ref.read(databaseProvider).close();
-      } catch (e) {
-        debugPrint('Notice closing database before local restore: $e');
-      }
-
       final success = await _syncService.restoreFromLocalFile(
         filePath,
         fileBytes: fileBytes,
@@ -443,7 +437,6 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         ref.invalidate(unitsProvider);
         ref.invalidate(unitsStreamProvider);
 
-        await refreshBackups();
         state = state.copyWith(
           loading: false,
           successMessage: 'Copia de seguridad local cargada con éxito.',
@@ -462,6 +455,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         errorMessage: 'Error al restaurar copia local: $e',
       );
       return false;
+    } finally {
+      if (state.loading) {
+        state = state.copyWith(loading: false);
+      }
     }
   }
 
@@ -488,6 +485,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         errorMessage: 'Error al exportar: $e',
       );
       return false;
+    } finally {
+      if (state.loading) {
+        state = state.copyWith(loading: false);
+      }
     }
   }
 

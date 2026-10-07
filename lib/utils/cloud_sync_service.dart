@@ -361,6 +361,9 @@ class GoogleDriveSyncService {
 
     try {
       final dbFile = await _getDatabaseFile();
+      if (!await dbFile.parent.exists()) {
+        await dbFile.parent.create(recursive: true);
+      }
       Uint8List? bytes = fileBytes;
 
       if (bytes == null || bytes.isEmpty) {
