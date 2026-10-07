@@ -14,6 +14,7 @@ import '../utils/dialog_utils.dart';
 import '../utils/ui_utils.dart';
 import '../widgets/global_ingredient_picker_sheet.dart';
 import '../provider/web_layout_provider.dart';
+import '../provider/cloud_sync_provider.dart';
 import 'add_ingredient_screen.dart';
 import 'kitchen_timers_screen.dart';
 import 'compare_ingredients_screen.dart';
@@ -2071,7 +2072,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         }
       }
 
-      await RecipeUtils.saveRecipe(
+      final savedDetail = await RecipeUtils.saveRecipe(
         db: db,
         recipePk: widget.recipeId,
         name: name,
@@ -2083,6 +2084,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         ingredients: _ingredients,
         steps: stepsToSave,
       );
+
+      // Persist to cloud database if cloud sync is active
+      await ref.read(cloudSyncProvider.notifier).saveRecipe(savedDetail);
+
       _initialSnapshot = _createSnapshot();
       if (mounted && popOnSuccess) {
         if (widget.onClose != null) {

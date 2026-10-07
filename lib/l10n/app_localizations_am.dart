@@ -1240,4 +1240,40 @@ class AppLocalizationsAm extends AppLocalizations {
 
   @override
   String get price_per_portion => 'Price/Portion';
+
+  @override
+  String get force_overwrite_danger_zone => 'Danger Zone';
+
+  @override
+  String get force_overwrite_cloud_btn => 'Force Overwrite Cloud';
+
+  @override
+  String get force_overwrite_first_confirm_title => 'Force Overwrite Cloud';
+
+  @override
+  String get force_overwrite_first_confirm_desc =>
+      'This will permanently OVERWRITE all cloud data with your local copy. This action is irreversible.';
+
+  @override
+  String get force_overwrite_understand_risk => 'Yes, I understand the risk';
+
+  @override
+  String get force_overwrite_challenge_title => 'Type OVERWRITE to Confirm';
+
+  @override
+  String get force_overwrite_challenge_desc =>
+      'To prevent accidental loss, please type OVERWRITE below to proceed.';
+
+  @override
+  String get force_overwrite_challenge_placeholder => 'OVERWRITE';
+
+  @override
+  String get force_overwrite_confirm_final_btn => 'Confirm Overwrite';
+
+  @override
+  String get force_overwrite_success_toast =>
+      'Cloud data successfully overwritten with local copy.';
+
+  @override
+  String get force_overwrite_failure_toast => 'Failed to overwrite cloud data.';
 }

@@ -25,6 +25,13 @@ class MockCloudSyncNotifier extends CloudSyncNotifier {
 
   @override
   Future<void> checkStatus() async {}
+
+  bool forceOverwriteCalled = false;
+  @override
+  Future<bool> forceOverwriteCloud() async {
+    forceOverwriteCalled = true;
+    return true;
+  }
 }
 
 void main() {
@@ -376,6 +383,93 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('Force Overwrite Cloud enforces double-confirmation and case-sensitive OVERWRITE validation', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final mockNotifier = MockCloudSyncNotifier();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            cloudSyncProvider.overrideWith(() => mockNotifier),
+          ],
+          child: const MaterialApp(
+            locale: Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: CloudSyncScreen(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 1. Find Force Overwrite Cloud button
+      final forceBtn = find.widgetWithText(ElevatedButton, 'Force Overwrite Cloud');
+      expect(forceBtn, findsOneWidget);
+
+      // Verify Crimson color
+      final elevatedButtonWidget = tester.widget<ElevatedButton>(forceBtn);
+      expect(
+        elevatedButtonWidget.style?.backgroundColor?.resolve({}),
+        const Color(0xFFDC2626),
+      );
+
+      // 2. Click button to trigger First Confirmation modal
+      await tester.tap(forceBtn);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text('This will permanently OVERWRITE all cloud data with your local copy. This action is irreversible.'),
+        findsOneWidget,
+      );
+
+      final understandRiskBtn = find.widgetWithText(ElevatedButton, 'Yes, I understand the risk');
+      expect(understandRiskBtn, findsOneWidget);
+
+      // 3. Click "Yes, I understand the risk" to enter Second Confirmation modal
+      await tester.tap(understandRiskBtn);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Type OVERWRITE to Confirm'), findsOneWidget);
+
+      final finalConfirmBtn = find.byKey(const ValueKey('force_overwrite_confirm_final_btn'));
+      expect(finalConfirmBtn, findsOneWidget);
+
+      // Button is disabled initially
+      expect(tester.widget<ElevatedButton>(finalConfirmBtn).onPressed, isNull);
+
+      // 4. Enter incorrect or lowercase text -> remains disabled
+      final inputField = find.byKey(const ValueKey('force_overwrite_challenge_input'));
+      await tester.enterText(inputField, 'overwrite');
+      await tester.pump();
+      expect(tester.widget<ElevatedButton>(finalConfirmBtn).onPressed, isNull);
+
+      await tester.enterText(inputField, 'OVERWRIT');
+      await tester.pump();
+      expect(tester.widget<ElevatedButton>(finalConfirmBtn).onPressed, isNull);
+
+      // 5. Enter exact "OVERWRITE" -> button is enabled
+      await tester.enterText(inputField, 'OVERWRITE');
+      await tester.pump();
+      expect(tester.widget<ElevatedButton>(finalConfirmBtn).onPressed, isNotNull);
+
+      // 6. Tap final confirm button
+      await tester.tap(finalConfirmBtn);
+      await tester.pumpAndSettle();
+
+      // Modal closed and overwrite executed
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(mockNotifier.forceOverwriteCalled, isTrue);
+      expect(find.text('Cloud data successfully overwritten with local copy.'), findsOneWidget);
     });
   });
 }

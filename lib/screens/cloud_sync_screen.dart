@@ -533,6 +533,25 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             ),
           ),
         ],
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: () => _showForceOverwriteDialog(context, notifier, l10n),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: const Color(0xFFDC2626),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
+          label: Text(
+            l10n.force_overwrite_cloud_btn,
+            softWrap: true,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+          ),
+        ),
       ],
     );
   }
@@ -730,6 +749,163 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             child: Text(l10n.cloud_sync_sync_btn),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showForceOverwriteDialog(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+  ) {
+    final challengeController = TextEditingController();
+    bool understoodRisk = false;
+    bool isMatch = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                Icon(
+                  understoodRisk ? Icons.lock_outline_rounded : Icons.warning_amber_rounded,
+                  color: const Color(0xFFDC2626),
+                  size: 28,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    understoodRisk
+                        ? l10n.force_overwrite_challenge_title
+                        : l10n.force_overwrite_first_confirm_title,
+                    softWrap: true,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            content: AnimatedCrossFade(
+              duration: const Duration(milliseconds: 250),
+              crossFadeState: understoodRisk
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              firstChild: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.force_overwrite_first_confirm_desc,
+                    softWrap: true,
+                    style: const TextStyle(fontSize: 15, height: 1.4),
+                  ),
+                ],
+              ),
+              secondChild: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.force_overwrite_challenge_desc,
+                    softWrap: true,
+                    style: const TextStyle(fontSize: 14, height: 1.4),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const ValueKey('force_overwrite_challenge_input'),
+                    controller: challengeController,
+                    autofocus: true,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    decoration: InputDecoration(
+                      hintText: l10n.force_overwrite_challenge_placeholder,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFDC2626),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setModalState(() {
+                        isMatch = value == 'OVERWRITE';
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  l10n.discard_button,
+                  softWrap: true,
+                ),
+              ),
+              if (!understoodRisk)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    setModalState(() {
+                      understoodRisk = true;
+                    });
+                  },
+                  child: Text(
+                    l10n.force_overwrite_understand_risk,
+                    softWrap: true,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                ElevatedButton(
+                  key: const ValueKey('force_overwrite_confirm_final_btn'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFFDC2626).withValues(alpha: 0.35),
+                    disabledForegroundColor: Colors.white70,
+                  ),
+                  onPressed: isMatch
+                      ? () async {
+                          Navigator.of(dialogContext).pop();
+                          final success = await notifier.forceOverwriteCloud();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  success
+                                      ? l10n.force_overwrite_success_toast
+                                      : l10n.force_overwrite_failure_toast,
+                                  softWrap: true,
+                                ),
+                                backgroundColor: success
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : const Color(0xFFDC2626),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      : null,
+                  child: Text(
+                    l10n.force_overwrite_confirm_final_btn,
+                    softWrap: true,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

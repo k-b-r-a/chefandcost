@@ -9,6 +9,7 @@ import 'cloud_sync_screen.dart';
 import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
 import '../widgets/app_logo.dart';
+import '../constants.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -1273,7 +1274,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                 ),
                 subtitle: Text(l10n.settings_about),
                 trailing: Text(
-                  '${l10n.settings_version} 1.0.0+1',
+                  '${l10n.settings_version} $kAppVersion',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

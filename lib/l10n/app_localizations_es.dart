@@ -1246,4 +1246,43 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get price_per_portion => 'Precio/Porción';
+
+  @override
+  String get force_overwrite_danger_zone => 'Zona de Peligro';
+
+  @override
+  String get force_overwrite_cloud_btn => 'Forzar Sobrescritura en la Nube';
+
+  @override
+  String get force_overwrite_first_confirm_title =>
+      'Forzar Sobrescritura en la Nube';
+
+  @override
+  String get force_overwrite_first_confirm_desc =>
+      'Esto SOBRESCRIBIRÁ permanentemente todos los datos en la nube con su copia local. Esta acción es irreversible.';
+
+  @override
+  String get force_overwrite_understand_risk => 'Sí, entiendo el riesgo';
+
+  @override
+  String get force_overwrite_challenge_title =>
+      'Escribe OVERWRITE para Confirmar';
+
+  @override
+  String get force_overwrite_challenge_desc =>
+      'Para evitar pérdidas accidentales, escribe OVERWRITE a continuación para continuar.';
+
+  @override
+  String get force_overwrite_challenge_placeholder => 'OVERWRITE';
+
+  @override
+  String get force_overwrite_confirm_final_btn => 'Confirmar Sobrescritura';
+
+  @override
+  String get force_overwrite_success_toast =>
+      'Los datos en la nube se han sobrescrito con éxito con la copia local.';
+
+  @override
+  String get force_overwrite_failure_toast =>
+      'Error al sobrescribir los datos en la nube.';
 }

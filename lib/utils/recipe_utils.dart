@@ -411,7 +411,7 @@ class RecipeUtils {
     );
   }
 
-  static Future<void> saveRecipe({
+  static Future<RecipeDetail> saveRecipe({
     required AppDatabase db,
     String? recipePk,
     required String name,
@@ -429,6 +429,7 @@ class RecipeUtils {
     final decimalMargin = rawMargin / 100.0;
 
     final actualRecipePk = recipePk ?? uuid.v4();
+    final now = DateTime.now();
 
     final recipeCompanion = RecipesCompanion(
       recipePk: drift.Value(actualRecipePk),
@@ -438,7 +439,7 @@ class RecipeUtils {
       yieldName: drift.Value(yieldName.trim().isEmpty ? 'portions' : yieldName.trim()),
       targetProfitMargin: drift.Value(decimalMargin),
       targetPricePerPortion: drift.Value(parsedPrice),
-      dateTimeModified: drift.Value(DateTime.now()),
+      dateTimeModified: drift.Value(now),
     );
 
     await db.transaction(() async {
@@ -451,11 +452,25 @@ class RecipeUtils {
       await (db.delete(db.recipeIngredients)..where((t) => t.recipeFk.equals(actualRecipePk))).go();
 
       for (var ingData in ingredients) {
+        // Ensure ingredient entity exists and mark modified so differential sync picks it up
+        await db.into(db.ingredients).insertOnConflictUpdate(
+          IngredientsCompanion(
+            ingredientPk: drift.Value(ingData.ingredient.ingredientPk),
+            name: drift.Value(ingData.ingredient.name),
+            cost: drift.Value(ingData.ingredient.cost),
+            quantityForCost: drift.Value(ingData.ingredient.quantityForCost),
+            unitFk: drift.Value(ingData.ingredient.unitFk),
+            dateCreated: drift.Value(ingData.ingredient.dateCreated),
+            dateTimeModified: drift.Value(now),
+          ),
+        );
+
         await db.into(db.recipeIngredients).insert(
               RecipeIngredientsCompanion.insert(
                 recipeFk: actualRecipePk,
                 ingredientFk: ingData.ingredient.ingredientPk,
                 amountNeeded: ingData.amount,
+                dateTimeModified: drift.Value(now),
               ),
             );
       }
@@ -467,6 +482,8 @@ class RecipeUtils {
         await db.into(db.recipeSteps).insert(step);
       }
     });
+
+    return await db.getRecipeDetail(actualRecipePk);
   }
 
   static RecipeStepsCompanion _mapToCompanion(String recipePk, int index, RecipeStepData step) {

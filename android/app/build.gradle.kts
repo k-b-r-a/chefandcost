@@ -47,6 +47,8 @@ android {
             val storeFilePath = keystoreProperties.getProperty("storeFile")
             storeFile = if (storeFilePath != null) file(storeFilePath) else null
             storePassword = keystoreProperties.getProperty("storePassword")
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
+import '../constants.dart';
 
 /// Service responsible for purely manual, on-demand, differential cross-platform sync
 /// with Cloud Firestore. Optimized for Firebase Spark plan limits by embedding
@@ -225,6 +226,12 @@ class FirestoreSyncService {
         'ingredientFk': ri.entry.ingredientFk,
         'amountNeeded': ri.entry.amountNeeded,
         'dateTimeModified': ri.entry.dateTimeModified?.toIso8601String(),
+        'name': ri.ingredient.name,
+        'cost': ri.ingredient.cost,
+        'quantityForCost': ri.ingredient.quantityForCost,
+        'unitFk': ri.ingredient.unitFk,
+        'dateCreated': ri.ingredient.dateCreated.toIso8601String(),
+        'ingredientDateTimeModified': ri.ingredient.dateTimeModified?.toIso8601String(),
       }).toList(),
       'steps': detail.steps.map((st) => {
         'stepPk': st.stepPk,
@@ -237,7 +244,12 @@ class FirestoreSyncService {
   }
 
   /// Parses a remote recipe document with embedded ingredients and steps.
-  static ({Recipe recipe, List<RecipeIngredient> ingredients, List<RecipeStep> steps}) recipeFromFirestore(
+  static ({
+    Recipe recipe,
+    List<RecipeIngredient> ingredients,
+    List<RecipeStep> steps,
+    List<Ingredient> nestedIngredients,
+  }) recipeFromFirestore(
       Map<String, dynamic> d) {
     final recipe = Recipe(
       recipePk: d['recipePk'] as String,
@@ -257,9 +269,12 @@ class FirestoreSyncService {
     );
 
     final rawIngredients = (d['ingredients'] as List<dynamic>?) ?? [];
-    final ingredients = rawIngredients.map((raw) {
+    final ingredients = <RecipeIngredient>[];
+    final nestedIngredients = <Ingredient>[];
+
+    for (final raw in rawIngredients) {
       final m = raw as Map<String, dynamic>;
-      return RecipeIngredient(
+      final ri = RecipeIngredient(
         recipeIngredientPk: m['recipeIngredientPk'] as String,
         recipeFk: m['recipeFk'] as String,
         ingredientFk: m['ingredientFk'] as String,
@@ -268,7 +283,29 @@ class FirestoreSyncService {
             ? DateTime.tryParse(m['dateTimeModified'] as String)
             : null,
       );
-    }).toList();
+      ingredients.add(ri);
+
+      final ingMap = (m['ingredient'] as Map<String, dynamic>?) ?? m;
+      if (ingMap.containsKey('name') && ingMap['name'] != null) {
+        nestedIngredients.add(
+          Ingredient(
+            ingredientPk: (ingMap['ingredientPk'] ?? m['ingredientFk']) as String,
+            name: ingMap['name'] as String,
+            cost: (ingMap['cost'] as num?)?.toDouble() ?? 0.0,
+            quantityForCost: (ingMap['quantityForCost'] as num?)?.toDouble() ?? 1.0,
+            unitFk: (ingMap['unitFk'] as String?) ?? 'unit-g',
+            dateCreated: ingMap['dateCreated'] != null
+                ? DateTime.tryParse(ingMap['dateCreated'] as String) ?? DateTime.now()
+                : DateTime.now(),
+            dateTimeModified: ingMap['dateTimeModified'] != null
+                ? DateTime.tryParse(ingMap['dateTimeModified'] as String)
+                : (ingMap['ingredientDateTimeModified'] != null
+                    ? DateTime.tryParse(ingMap['ingredientDateTimeModified'] as String)
+                    : null),
+          ),
+        );
+      }
+    }
 
     final rawSteps = (d['steps'] as List<dynamic>?) ?? [];
     final steps = rawSteps.map((raw) {
@@ -284,7 +321,12 @@ class FirestoreSyncService {
       );
     }).toList();
 
-    return (recipe: recipe, ingredients: ingredients, steps: steps);
+    return (
+      recipe: recipe,
+      ingredients: ingredients,
+      steps: steps,
+      nestedIngredients: nestedIngredients,
+    );
   }
 
   /// Serializes an [Ingredient] into Firestore format.
@@ -338,6 +380,172 @@ class FirestoreSyncService {
       category: d['category'] as String?,
       factorToBase: (d['factorToBase'] as num).toDouble(),
       isMutable: d['isMutable'] as bool? ?? true,
+    );
+  }
+
+  /// Saves/upserts a recipe and its nested ingredients directly to Firestore.
+  Future<void> saveRecipe(RecipeDetail detail, {String? userId}) async {
+    if (!isConfigured) return;
+    final activeUid = userId ?? await getActiveUserId();
+    if (activeUid == null || activeUid.isEmpty) return;
+
+    await initPersistence();
+
+    final userDoc = _firestore.collection('users').doc(activeUid);
+    final recipeDoc = userDoc.collection('recipes').doc(detail.recipe.recipePk);
+    final data = recipeToFirestore(detail);
+
+    final batch = _firestore.batch();
+    batch.set(recipeDoc, data, SetOptions(merge: true));
+
+    // Also update/upsert the nested ingredients in the cloud ingredients subcollection
+    for (final ri in detail.ingredients) {
+      final ingDoc = userDoc.collection('ingredients').doc(ri.ingredient.ingredientPk);
+      batch.set(ingDoc, ingredientToFirestore(ri.ingredient), SetOptions(merge: true));
+    }
+
+    await batch.commit();
+  }
+
+  /// Force overwrites the cloud data with the complete local SQLite dataset.
+  /// Deletes existing remote documents in recipes, ingredients, and custom units,
+  /// and uploads all local records directly.
+  Future<SyncMergeResult> forceOverwriteCloud({
+    required AppDatabase db,
+    String? userId,
+  }) async {
+    if (!isConfigured) {
+      throw StateError('Firebase is not configured. Please complete Firebase setup.');
+    }
+
+    final activeUid = userId ?? await getActiveUserId();
+    if (activeUid == null || activeUid.isEmpty) {
+      throw StateError('No active user or sync ID found. Please sign in or set a Sync ID.');
+    }
+
+    await initPersistence();
+
+    final prefs = await SharedPreferences.getInstance();
+    final syncStartTime = DateTime.now().toUtc();
+
+    final userDoc = _firestore.collection('users').doc(activeUid);
+    final recipesCol = userDoc.collection('recipes');
+    final ingsCol = userDoc.collection('ingredients');
+    final unitsCol = userDoc.collection('units');
+
+    // 1. Delete all existing remote units, ingredients, and recipes
+    final remoteUnitsSnap = await unitsCol.get();
+    final remoteIngsSnap = await ingsCol.get();
+    final remoteRecipesSnap = await recipesCol.get();
+
+    WriteBatch batch = _firestore.batch();
+    int opCount = 0;
+
+    for (final doc in remoteUnitsSnap.docs) {
+      batch.delete(doc.reference);
+      opCount++;
+      if (opCount >= 400) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
+
+    for (final doc in remoteIngsSnap.docs) {
+      batch.delete(doc.reference);
+      opCount++;
+      if (opCount >= 400) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
+
+    for (final doc in remoteRecipesSnap.docs) {
+      batch.delete(doc.reference);
+      opCount++;
+      if (opCount >= 400) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
+
+    if (opCount > 0) {
+      await batch.commit();
+      batch = _firestore.batch();
+      opCount = 0;
+    }
+
+    // 2. Fetch all local units, ingredients, and recipes
+    final allUnits = await db.getAllUnits();
+    final customUnits = allUnits.where((u) => u.isMutable).toList();
+    final allIngs = await db.getAllIngredients();
+    final allRecipeDetails = await db.getAllRecipeDetails();
+
+    // 3. Upload all custom units
+    for (final unit in customUnits) {
+      final docRef = unitsCol.doc(unit.unitPk);
+      final data = unitToFirestore(unit);
+      data['updatedAt'] = Timestamp.fromDate(syncStartTime);
+      batch.set(docRef, data);
+      opCount++;
+      if (opCount >= 400) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
+
+    // 4. Upload all ingredients
+    for (final ing in allIngs) {
+      final docRef = ingsCol.doc(ing.ingredientPk);
+      final data = ingredientToFirestore(ing);
+      batch.set(docRef, data);
+      opCount++;
+      if (opCount >= 400) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
+
+    // 5. Upload all recipes
+    for (final rd in allRecipeDetails) {
+      final docRef = recipesCol.doc(rd.recipe.recipePk);
+      final data = recipeToFirestore(rd);
+      batch.set(docRef, data);
+      opCount++;
+      if (opCount >= 400) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
+
+    // Metadata
+    final metaRef = userDoc.collection('sync_meta').doc('status');
+    batch.set(metaRef, {
+      'lastSyncTimestamp': Timestamp.fromDate(syncStartTime),
+      'platform': kIsWeb ? 'web' : defaultTargetPlatform.name,
+      'appVersion': kAppVersion,
+      'forceOverwritten': true,
+    }, SetOptions(merge: true));
+    opCount++;
+
+    if (opCount > 0) {
+      await batch.commit();
+    }
+
+    // 6. Record lastSyncedAt
+    await prefs.setString('${prefLastSyncKey}_$activeUid', syncStartTime.toIso8601String());
+
+    return SyncMergeResult(
+      recipesAdded: allRecipeDetails.length,
+      recipesUpdated: 0,
+      recipesKeptLocal: 0,
+      ingredientsAdded: allIngs.length,
+      ingredientsUpdated: 0,
     );
   }
 
@@ -429,6 +637,7 @@ class FirestoreSyncService {
         remoteRecipe: parsed.recipe,
         remoteIngredients: parsed.ingredients,
         remoteSteps: parsed.steps,
+        nestedIngredients: parsed.nestedIngredients,
       );
       if (res == 1) recipesAdded++;
       if (res == 2) recipesUpdated++;
@@ -460,6 +669,7 @@ class FirestoreSyncService {
     }
 
     // Push Ingredients
+    final pushedIngIds = <String>{};
     for (final ing in localIngredients) {
       final localTime = ing.dateTimeModified ?? ing.dateCreated;
       final remoteTime = remoteIngUpdatedTimes[ing.ingredientPk];
@@ -468,6 +678,7 @@ class FirestoreSyncService {
         continue;
       }
 
+      pushedIngIds.add(ing.ingredientPk);
       final docRef = ingsCol.doc(ing.ingredientPk);
       final data = ingredientToFirestore(ing);
       batch.set(docRef, data, SetOptions(merge: true));
@@ -476,6 +687,24 @@ class FirestoreSyncService {
         await batch.commit();
         batch = _firestore.batch();
         opCount = 0;
+      }
+    }
+
+    // Push any ingredients referenced by localRecipes that were not already pushed
+    for (final rd in localRecipes) {
+      for (final ri in rd.ingredients) {
+        if (!pushedIngIds.contains(ri.ingredient.ingredientPk)) {
+          pushedIngIds.add(ri.ingredient.ingredientPk);
+          final docRef = ingsCol.doc(ri.ingredient.ingredientPk);
+          final data = ingredientToFirestore(ri.ingredient);
+          batch.set(docRef, data, SetOptions(merge: true));
+          opCount++;
+          if (opCount >= 400) {
+            await batch.commit();
+            batch = _firestore.batch();
+            opCount = 0;
+          }
+        }
       }
     }
 
@@ -505,7 +734,7 @@ class FirestoreSyncService {
     batch.set(metaRef, {
       'lastSyncTimestamp': Timestamp.fromDate(syncStartTime),
       'platform': kIsWeb ? 'web' : defaultTargetPlatform.name,
-      'appVersion': '1.0.0+1',
+      'appVersion': kAppVersion,
     }, SetOptions(merge: true));
     opCount++;
 

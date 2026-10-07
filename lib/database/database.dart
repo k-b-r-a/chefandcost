@@ -254,7 +254,7 @@ class AppDatabase extends _$AppDatabase {
     )..where((t) => t.recipePk.equals(recipePk))).getSingle();
 
     final ingredientList = await (select(recipeIngredients).join([
-      innerJoin(
+      leftOuterJoin(
         ingredients,
         ingredients.ingredientPk.equalsExp(recipeIngredients.ingredientFk),
       ),
@@ -269,9 +269,19 @@ class AppDatabase extends _$AppDatabase {
     return RecipeDetail(
       recipe: recipe,
       ingredients: ingredientList.map((row) {
+        final entry = row.readTable(recipeIngredients);
+        final ing = row.readTableOrNull(ingredients) ??
+            Ingredient(
+              ingredientPk: entry.ingredientFk,
+              name: 'Unknown Ingredient',
+              cost: 0.0,
+              quantityForCost: 1.0,
+              unitFk: 'unit-g',
+              dateCreated: DateTime.now(),
+            );
         return RecipeIngredientWithData(
-          entry: row.readTable(recipeIngredients),
-          ingredient: row.readTable(ingredients),
+          entry: entry,
+          ingredient: ing,
         );
       }).toList(),
       steps: stepList,
@@ -309,13 +319,19 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Merges a single recipe and its embedded ingredients and steps from remote using LWW based on updated_at.
+  /// Also upserts any nested ingredients provided.
   /// Returns: 1 if inserted, 2 if updated, 0 if kept local.
   Future<int> mergeRecipeFromRemote({
     required Recipe remoteRecipe,
     required List<RecipeIngredient> remoteIngredients,
     required List<RecipeStep> remoteSteps,
+    List<Ingredient> nestedIngredients = const [],
   }) async {
     return transaction(() async {
+      for (final ing in nestedIngredients) {
+        await mergeIngredientFromRemote(ing);
+      }
+
       final localRecipe = await (select(recipes)
             ..where((t) => t.recipePk.equals(remoteRecipe.recipePk)))
           .getSingleOrNull();
