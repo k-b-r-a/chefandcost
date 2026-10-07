@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -354,9 +353,8 @@ class SettingsGeneralScreen extends ConsumerWidget {
     try {
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: l10n.cloud_sync_load_local_backup_btn,
-        type: FileType.custom,
-        allowedExtensions: ['sqlite', 'db', 'bak'],
-        withData: kIsWeb,
+        type: FileType.any,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -1562,6 +1560,30 @@ class SettingsAboutScreen extends ConsumerWidget {
     final changelog = isEs
         ? const [
             (
+              '0.1.0-beta+7',
+              'Octubre 2026',
+              [
+                'Corrección en selector de copia de seguridad local: eliminación de restricciones de extensiones para permitir seleccionar cualquier archivo SQLite.',
+              ],
+            ),
+            (
+              '0.1.0-beta+6',
+              'Octubre 2026',
+              [
+                'Actualización oficial del correo de contacto y soporte del desarrollador (kbradevp@gmail.com).',
+                'Optimizaciones de estabilidad y ajustes de despliegue en canal Beta.',
+              ],
+            ),
+            (
+              '0.1.0-beta+5',
+              'Octubre 2026',
+              [
+                'Copia de seguridad local: exportación y carga de archivos SQLite desde el dispositivo.',
+                'Nueva sección Acerca de con información del desarrollador, esquema DB y términos.',
+                'Ajuste del tamaño de la barra de navegación y mejoras generales.',
+              ],
+            ),
+            (
               '0.1.0-beta+4',
               'Octubre 2026',
               [
@@ -1602,6 +1624,30 @@ class SettingsAboutScreen extends ConsumerWidget {
             ),
           ]
         : const [
+            (
+              '0.1.0-beta+7',
+              'October 2026',
+              [
+                'Local backup picker fix: removed restrictive extension filters to allow selecting any SQLite backup file.',
+              ],
+            ),
+            (
+              '0.1.0-beta+6',
+              'October 2026',
+              [
+                'Official developer support & contact email update (kbradevp@gmail.com).',
+                'Beta channel deployment refinements and stability fixes.',
+              ],
+            ),
+            (
+              '0.1.0-beta+5',
+              'October 2026',
+              [
+                'Local backup: import and export SQLite files directly to device storage.',
+                'Revamped About screen with developer contact, DB schema version, and privacy terms.',
+                'Navigation bar size preference and stability enhancements.',
+              ],
+            ),
             (
               '0.1.0-beta+4',
               'October 2026',

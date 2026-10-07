@@ -10,6 +10,7 @@ import 'package:recipetools/provider/database_provider.dart';
 import 'package:recipetools/screens/cloud_sync_screen.dart';
 import 'package:recipetools/screens/settings_screen.dart';
 import 'package:recipetools/provider/settings_provider.dart';
+import 'package:recipetools/provider/cloud_sync_provider.dart';
 import 'package:recipetools/utils/cloud_sync_service.dart';
 
 class MockDatabaseNotifier extends DatabaseNotifier {
@@ -54,6 +55,26 @@ void main() {
 
       final tooShort = Uint8List.fromList([0x53, 0x51]);
       expect(service.isValidSqliteBytes(tooShort), isFalse);
+    });
+
+    test('restoreFromLocalFile handles invalid file safely and resets loading to false', () async {
+      final container = ProviderContainer(
+        overrides: [
+          databaseProvider.overrideWith(() => MockDatabaseNotifier(AppDatabase.forTesting(NativeDatabase.memory()))),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(cloudSyncProvider.notifier);
+      final invalidBytes = Uint8List.fromList([1, 2, 3, 4]);
+
+      final result = await notifier.restoreFromLocalFile(
+        filePath: 'dummy.sqlite',
+        fileBytes: invalidBytes,
+      );
+
+      expect(result, isFalse);
+      expect(container.read(cloudSyncProvider).loading, isFalse);
     });
   });
 
