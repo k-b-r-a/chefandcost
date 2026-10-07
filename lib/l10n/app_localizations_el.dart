@@ -579,6 +579,22 @@ class AppLocalizationsEl extends AppLocalizations {
       'Display text labels below the navigation bar icons';
 
   @override
+  String get settings_styles_navbar_size => 'Navigation Bar Size';
+
+  @override
+  String get settings_styles_navbar_size_desc =>
+      'Adjust the height and icon scale of the navigation bar';
+
+  @override
+  String get settings_styles_navbar_size_compact => 'Compact';
+
+  @override
+  String get settings_styles_navbar_size_normal => 'Normal';
+
+  @override
+  String get settings_styles_navbar_size_large => 'Large';
+
+  @override
   String get settings_format_mass_unit => 'Default Mass Unit';
 
   @override
@@ -1343,4 +1359,41 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get settings_about_logs_empty => 'No logs recorded yet';
+
+  @override
+  String get cloud_sync_load_local_backup_btn => 'Load Local Backup';
+
+  @override
+  String get cloud_sync_load_local_backup_desc =>
+      'Select a .sqlite backup file from your device to restore recipes and costs.';
+
+  @override
+  String get cloud_sync_load_local_backup_confirm_title => 'Load Local Backup?';
+
+  @override
+  String cloud_sync_load_local_backup_confirm_desc(String fileName) {
+    return 'All current recipes and ingredients will be replaced with the selected file ($fileName). This action cannot be undone. Do you wish to continue?';
+  }
+
+  @override
+  String get cloud_sync_load_local_backup_success =>
+      'Local backup loaded successfully.';
+
+  @override
+  String get cloud_sync_load_local_backup_invalid =>
+      'The selected file is not a valid SQLite database.';
+
+  @override
+  String get cloud_sync_local_backup_title => 'Local Backup & Restore';
+
+  @override
+  String get cloud_sync_local_backup_desc =>
+      'Manage offline backups directly on your device storage without requiring cloud services.';
+
+  @override
+  String get cloud_sync_export_local_backup_btn => 'Export Backup to Device';
+
+  @override
+  String get cloud_sync_export_local_backup_success =>
+      'Backup saved successfully to device.';
 }

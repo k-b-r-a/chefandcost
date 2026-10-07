@@ -25,7 +25,7 @@ class CloudSyncState {
     this.loading = false,
     this.errorMessage,
     this.successMessage,
-    this.storageType = CloudSyncStorageType.googleDrive,
+    this.storageType = CloudSyncStorageType.firestore,
   });
 
   CloudSyncState copyWith({
@@ -413,6 +413,79 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       state = state.copyWith(
         loading: false,
         errorMessage: 'Restore operation error: $e',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> restoreFromLocalFile({
+    required String filePath,
+    Uint8List? fileBytes,
+  }) async {
+    state = state.copyWith(loading: true);
+    try {
+      try {
+        await ref.read(databaseProvider).close();
+      } catch (e) {
+        debugPrint('Notice closing database before local restore: $e');
+      }
+
+      final success = await _syncService.restoreFromLocalFile(
+        filePath,
+        fileBytes: fileBytes,
+      );
+
+      if (success) {
+        ref.read(databaseProvider.notifier).refreshDatabase();
+        ref.invalidate(recipesStreamProvider);
+        ref.invalidate(recipesWithFinancialsStreamProvider);
+        ref.invalidate(ingredientsStreamProvider);
+        ref.invalidate(unitsProvider);
+        ref.invalidate(unitsStreamProvider);
+
+        await refreshBackups();
+        state = state.copyWith(
+          loading: false,
+          successMessage: 'Copia de seguridad local cargada con éxito.',
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: 'El archivo seleccionado no es válido o no se pudo restaurar.',
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Error al restaurar copia local: $e',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> exportLocalBackup(String targetDirPath) async {
+    state = state.copyWith(loading: true);
+    try {
+      final file = await _syncService.exportDatabaseToDirectory(targetDirPath);
+      if (file != null) {
+        state = state.copyWith(
+          loading: false,
+          successMessage: 'Copia de seguridad guardada exitosamente en el dispositivo.',
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: 'No se pudo guardar la copia de seguridad.',
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Error al exportar: $e',
       );
       return false;
     }

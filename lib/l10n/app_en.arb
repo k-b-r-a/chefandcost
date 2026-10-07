@@ -224,6 +224,11 @@
   "settings_styles_font_caveat": "Caveat",
   "settings_styles_show_nav_labels": "Show Navigation Labels",
   "settings_styles_show_nav_labels_desc": "Display text labels below the navigation bar icons",
+  "settings_styles_navbar_size": "Navigation Bar Size",
+  "settings_styles_navbar_size_desc": "Adjust the height and icon scale of the navigation bar",
+  "settings_styles_navbar_size_compact": "Compact",
+  "settings_styles_navbar_size_normal": "Normal",
+  "settings_styles_navbar_size_large": "Large",
   "settings_format_mass_unit": "Default Mass Unit",
   "settings_format_volume_unit": "Default Volume Unit",
   "settings_format_decimals_1": "1 Place",
@@ -594,5 +599,22 @@
   "settings_about_logs_copied": "Diagnostics copied to clipboard",
   "settings_about_logs_clear": "Clear Logs",
   "settings_about_logs_copy": "Copy All",
-  "settings_about_logs_empty": "No logs recorded yet"
+  "settings_about_logs_empty": "No logs recorded yet",
+  "cloud_sync_load_local_backup_btn": "Load Local Backup",
+  "cloud_sync_load_local_backup_desc": "Select a .sqlite backup file from your device to restore recipes and costs.",
+  "cloud_sync_load_local_backup_confirm_title": "Load Local Backup?",
+  "cloud_sync_load_local_backup_confirm_desc": "All current recipes and ingredients will be replaced with the selected file ({fileName}). This action cannot be undone. Do you wish to continue?",
+  "@cloud_sync_load_local_backup_confirm_desc": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "cloud_sync_load_local_backup_success": "Local backup loaded successfully.",
+  "cloud_sync_load_local_backup_invalid": "The selected file is not a valid SQLite database.",
+  "cloud_sync_local_backup_title": "Local Backup & Restore",
+  "cloud_sync_local_backup_desc": "Manage offline backups directly on your device storage without requiring cloud services.",
+  "cloud_sync_export_local_backup_btn": "Export Backup to Device",
+  "cloud_sync_export_local_backup_success": "Backup saved successfully to device."
 }

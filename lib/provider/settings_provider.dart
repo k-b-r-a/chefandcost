@@ -23,6 +23,7 @@ class SettingsState {
   final bool highContrastText;
   final String fontFamily;
   final bool showNavBarLabels;
+  final String navBarSize;
   final String defaultMassUnit;
   final String defaultVolumeUnit;
   final String currencySymbol;
@@ -43,6 +44,7 @@ class SettingsState {
     required this.highContrastText,
     required this.fontFamily,
     required this.showNavBarLabels,
+    this.navBarSize = 'normal',
     required this.defaultMassUnit,
     required this.defaultVolumeUnit,
     required this.currencySymbol,
@@ -65,6 +67,7 @@ class SettingsState {
       highContrastText: false,
       fontFamily: 'system',
       showNavBarLabels: true,
+      navBarSize: 'normal',
       defaultMassUnit: 'g',
       defaultVolumeUnit: 'ml',
       currencySymbol: r'$',
@@ -87,6 +90,7 @@ class SettingsState {
     bool? highContrastText,
     String? fontFamily,
     bool? showNavBarLabels,
+    String? navBarSize,
     String? defaultMassUnit,
     String? defaultVolumeUnit,
     String? currencySymbol,
@@ -107,6 +111,7 @@ class SettingsState {
       highContrastText: highContrastText ?? this.highContrastText,
       fontFamily: fontFamily ?? this.fontFamily,
       showNavBarLabels: showNavBarLabels ?? this.showNavBarLabels,
+      navBarSize: navBarSize ?? this.navBarSize,
       defaultMassUnit: defaultMassUnit ?? this.defaultMassUnit,
       defaultVolumeUnit: defaultVolumeUnit ?? this.defaultVolumeUnit,
       currencySymbol: currencySymbol ?? this.currencySymbol,
@@ -144,6 +149,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
     final highContrastText = _prefs.getBool('highContrastText') ?? false;
     final fontFamily = _prefs.getString('fontFamily') ?? 'system';
     final showNavBarLabels = _prefs.getBool('showNavBarLabels') ?? true;
+    final navBarSize = _prefs.getString('navBarSize') ?? 'normal';
     final defaultMassUnit = _prefs.getString('defaultMassUnit') ?? 'g';
     final defaultVolumeUnit = _prefs.getString('defaultVolumeUnit') ?? 'ml';
     final currencySymbol = _prefs.getString('currencySymbol') ?? r'$';
@@ -164,6 +170,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       highContrastText: highContrastText,
       fontFamily: fontFamily,
       showNavBarLabels: showNavBarLabels,
+      navBarSize: navBarSize,
       defaultMassUnit: defaultMassUnit,
       defaultVolumeUnit: defaultVolumeUnit,
       currencySymbol: currencySymbol,
@@ -244,6 +251,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setShowNavBarLabels(bool enabled) {
     _prefs.setBool('showNavBarLabels', enabled);
     state = state.copyWith(showNavBarLabels: enabled);
+  }
+
+  void setNavBarSize(String size) {
+    _prefs.setString('navBarSize', size);
+    state = state.copyWith(navBarSize: size);
   }
 
   void setDefaultMassUnit(String unit) {

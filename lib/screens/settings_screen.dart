@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../provider/settings_provider.dart';
 import '../provider/database_provider.dart';
+import '../provider/cloud_sync_provider.dart';
 import 'cloud_sync_screen.dart';
 import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
@@ -344,6 +347,116 @@ class SettingsGeneralScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _pickAndLoadLocalBackup(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+    final notifier = ref.read(cloudSyncProvider.notifier);
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: l10n.cloud_sync_load_local_backup_btn,
+        type: FileType.custom,
+        allowedExtensions: ['sqlite', 'db', 'bak'],
+        withData: kIsWeb,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final file = result.files.single;
+      final fileName = file.name;
+
+      if (!context.mounted) return;
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: Icon(Icons.file_open_rounded, size: 36, color: Theme.of(ctx).colorScheme.primary),
+          title: Text(l10n.cloud_sync_load_local_backup_confirm_title, softWrap: true),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.cloud_sync_load_local_backup_confirm_desc(fileName),
+                softWrap: true,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(ctx).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.insert_drive_file_outlined, size: 18, color: Theme.of(ctx).colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        fileName,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.discard_button, softWrap: true),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(ctx).colorScheme.primary,
+                foregroundColor: Theme.of(ctx).colorScheme.onPrimary,
+              ),
+              child: Text(l10n.cloud_sync_load_local_backup_btn, softWrap: true),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true || !context.mounted) return;
+
+      final success = await notifier.restoreFromLocalFile(
+        filePath: file.path ?? '',
+        fileBytes: file.bytes,
+      );
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? l10n.cloud_sync_load_local_backup_success
+                : l10n.cloud_sync_load_local_backup_invalid,
+            softWrap: true,
+          ),
+          backgroundColor: success
+              ? Theme.of(context).colorScheme.secondary
+              : Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.error_prefix(e.toString()), softWrap: true),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
@@ -436,6 +549,32 @@ class SettingsGeneralScreen extends ConsumerWidget {
                   ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
+                      child: Icon(Icons.file_open_outlined, color: theme.colorScheme.secondary),
+                    ),
+                    title: Text(
+                      l10n.cloud_sync_load_local_backup_btn,
+                      softWrap: true,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      l10n.cloud_sync_load_local_backup_desc,
+                      softWrap: true,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    onTap: () {
+                      if (settings.hapticFeedbackEnabled) {
+                        HapticFeedback.lightImpact();
+                      }
+                      _pickAndLoadLocalBackup(context, ref);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 20, endIndent: 20),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    leading: CircleAvatar(
                       backgroundColor: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
                       child: Icon(Icons.delete_forever, color: theme.colorScheme.error),
                     ),
@@ -484,25 +623,51 @@ class SettingsStylesScreen extends ConsumerWidget {
   ];
 
   IconData _getPreviewIcon(int index, String style) {
-    switch (index) {
-      case 0:
-        if (style == 'rounded') return Icons.home_rounded;
-        if (style == 'sharp') return Icons.home_sharp;
-        return Icons.home_outlined;
-      case 1:
-        if (style == 'rounded') return Icons.inventory_2_rounded;
-        if (style == 'sharp') return Icons.inventory_2_sharp;
-        return Icons.inventory_2_outlined;
-      case 2:
-        if (style == 'rounded') return Icons.handyman_rounded;
-        if (style == 'sharp') return Icons.handyman_sharp;
-        return Icons.handyman_outlined;
-      case 3:
-        if (style == 'rounded') return Icons.settings_rounded;
-        if (style == 'sharp') return Icons.settings_sharp;
-        return Icons.settings_outlined;
-      default:
-        return Icons.star_outline;
+    if (style == 'rounded') {
+      switch (index) {
+        case 0:
+          return Icons.home_rounded;
+        case 1:
+          return Icons.menu_book_rounded;
+        case 2:
+          return Icons.inventory_2_rounded;
+        case 3:
+          return Icons.handyman_rounded;
+        case 4:
+          return Icons.settings_rounded;
+        default:
+          return Icons.star_rounded;
+      }
+    } else if (style == 'sharp') {
+      switch (index) {
+        case 0:
+          return Icons.home_sharp;
+        case 1:
+          return Icons.menu_book_sharp;
+        case 2:
+          return Icons.inventory_2_sharp;
+        case 3:
+          return Icons.handyman_sharp;
+        case 4:
+          return Icons.settings_sharp;
+        default:
+          return Icons.star_sharp;
+      }
+    } else {
+      switch (index) {
+        case 0:
+          return Icons.home_outlined;
+        case 1:
+          return Icons.menu_book_outlined;
+        case 2:
+          return Icons.inventory_2_outlined;
+        case 3:
+          return Icons.handyman_outlined;
+        case 4:
+          return Icons.settings_outlined;
+        default:
+          return Icons.star_outline;
+      }
     }
   }
 
@@ -862,14 +1027,16 @@ class SettingsStylesScreen extends ConsumerWidget {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(4, (index) {
+                    children: List.generate(5, (index) {
                       final label = index == 0
-                          ? l10n.recipes_title
+                          ? l10n.home_title
                           : index == 1
-                              ? l10n.ingredients_title
+                              ? l10n.recipes_title
                               : index == 2
-                                  ? l10n.tools_title
-                                  : l10n.config_button;
+                                  ? l10n.ingredients_title
+                                  : index == 3
+                                      ? l10n.tools_title
+                                      : l10n.config_button;
                       return Column(
                         children: [
                           Icon(
@@ -973,6 +1140,52 @@ class SettingsStylesScreen extends ConsumerWidget {
                     settingsNotifier.setShowNavBarLabels(val);
                   },
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.settings_styles_navbar_size,
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.settings_styles_navbar_size_desc,
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    segments: [
+                      ButtonSegment(
+                        value: 'compact',
+                        label: Text(l10n.settings_styles_navbar_size_compact),
+                        icon: const Icon(Icons.density_small, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: 'normal',
+                        label: Text(l10n.settings_styles_navbar_size_normal),
+                        icon: const Icon(Icons.density_medium, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: 'large',
+                        label: Text(l10n.settings_styles_navbar_size_large),
+                        icon: const Icon(Icons.density_large, size: 16),
+                      ),
+                    ],
+                    selected: {settings.navBarSize},
+                    onSelectionChanged: (selection) {
+                      triggerHaptic();
+                      settingsNotifier.setNavBarSize(selection.first);
+                    },
+                    showSelectedIcon: false,
+                    style: SegmentedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildNavBarPreview(theme, settings, l10n),
               ],
             ),
           ],
@@ -981,6 +1194,104 @@ class SettingsStylesScreen extends ConsumerWidget {
     ),
   ),
 );
+  }
+
+  Widget _buildNavBarPreview(ThemeData theme, SettingsState settings, AppLocalizations l10n) {
+    final double previewHeight;
+    final double iconSize;
+    final double fontSize;
+    switch (settings.navBarSize) {
+      case 'compact':
+        previewHeight = settings.showNavBarLabels ? 46.0 : 38.0;
+        iconSize = 16.0;
+        fontSize = 9.0;
+        break;
+      case 'large':
+        previewHeight = settings.showNavBarLabels ? 62.0 : 52.0;
+        iconSize = 22.0;
+        fontSize = 11.5;
+        break;
+      case 'normal':
+      default:
+        previewHeight = settings.showNavBarLabels ? 54.0 : 44.0;
+        iconSize = 18.0;
+        fontSize = 10.0;
+        break;
+    }
+
+    final previewLabels = [
+      l10n.home_title,
+      l10n.recipes_title,
+      l10n.ingredients_title,
+      l10n.tools_title,
+      l10n.config_button,
+    ];
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      width: double.infinity,
+      height: previewHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(previewLabels.length, (index) {
+          final isSelected = index == 0;
+          final iconData = _getPreviewIcon(index, settings.iconStyle);
+          return Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              decoration: isSelected
+                  ? BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(10),
+                    )
+                  : null,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      iconData,
+                      size: iconSize,
+                      color: isSelected
+                          ? theme.colorScheme.onPrimaryContainer
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                    if (settings.showNavBarLabels) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        previewLabels[index],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected
+                              ? theme.colorScheme.onPrimaryContainer
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 }
 

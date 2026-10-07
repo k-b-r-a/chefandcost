@@ -71,10 +71,7 @@ void main() {
       state = container.read(cloudSyncProvider);
       expect(state.loading, isFalse);
 
-      final expectedType = container.read(googleDriveSyncServiceProvider).isDefaultSimulation
-          ? CloudSyncStorageType.localDirectory
-          : CloudSyncStorageType.googleDrive;
-      expect(state.storageType, expectedType);
+      expect(state.storageType, CloudSyncStorageType.firestore);
     });
 
     test('Switching storage type updates state and persists setting', () async {

@@ -16,6 +16,20 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
 
   double _result = 0.0;
   bool _hasError = false;
+  bool _isCalculated = false;
+  String _unit = '';
+
+  String _extractUnit(String text) {
+    final match = RegExp(r'[-+]?(?:[0-9]+(?:[.,][0-9]+)*|[.,][0-9]+)\s*([a-zA-Z%]+)').firstMatch(text.trim());
+    return match?.group(1) ?? '';
+  }
+
+  String _formattedResult() {
+    if (_hasError) return 'Error';
+    if (!_isCalculated) return '-';
+    final formatted = RecipeUtils.formatNumber(_result, decimalDigits: 4, trimTrailingZeros: true);
+    return _unit.isNotEmpty ? '$formatted $_unit' : formatted;
+  }
 
   @override
   void initState() {
@@ -42,6 +56,8 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
       setState(() {
         _result = 0.0;
         _hasError = false;
+        _isCalculated = false;
+        _unit = '';
       });
       return;
     }
@@ -54,6 +70,8 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
       setState(() {
         _result = 0.0;
         _hasError = true;
+        _isCalculated = false;
+        _unit = '';
       });
       return;
     }
@@ -61,6 +79,8 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
     setState(() {
       _result = (b * c) / a;
       _hasError = false;
+      _isCalculated = true;
+      _unit = _extractUnit(bText);
     });
   }
 
@@ -68,6 +88,12 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
     _aController.clear();
     _bController.clear();
     _cController.clear();
+    setState(() {
+      _result = 0.0;
+      _hasError = false;
+      _isCalculated = false;
+      _unit = '';
+    });
   }
 
   @override
@@ -207,9 +233,7 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
-                                  _hasError
-                                      ? 'Error'
-                                      : RecipeUtils.formatNumber(_result),
+                                  _formattedResult(),
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w900,
                                     color: _hasError
@@ -254,7 +278,7 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
                   ],
                 ),
               ),
-            if (!_hasError && _result > 0.0)
+            if (!_hasError && _isCalculated && _result > 0.0)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -280,7 +304,7 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
                         _aController.text,
                         _bController.text,
                         _cController.text,
-                        RecipeUtils.formatNumber(_result),
+                        _formattedResult(),
                       ),
                       softWrap: true,
                       style: theme.textTheme.bodyMedium?.copyWith(
