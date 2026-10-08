@@ -606,8 +606,8 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         debugPrint('Warning: Cloud backup of merged database failed.');
       }
 
-      // Refresh database streams in the UI
-      ref.read(databaseProvider.notifier).refreshDatabase();
+      // Refresh database streams in the UI without closing the database
+      _invalidateDataStreams();
 
       // Refresh backups list
       final updatedBackups = await _syncService.getBackups();
@@ -676,8 +676,8 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         userId: activeUid,
       );
 
-      // Refresh database streams in the UI
-      ref.read(databaseProvider.notifier).refreshDatabase();
+      // Refresh database streams in the UI without closing the database
+      _invalidateDataStreams();
 
       final buffer = StringBuffer('Firestore sync complete: ');
       if (mergeResult.hasChanges) {
@@ -707,6 +707,14 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       );
       return null;
     }
+  }
+
+  void _invalidateDataStreams() {
+    ref.invalidate(recipesStreamProvider);
+    ref.invalidate(recipesWithFinancialsStreamProvider);
+    ref.invalidate(ingredientsStreamProvider);
+    ref.invalidate(unitsProvider);
+    ref.invalidate(unitsStreamProvider);
   }
 
   Future<void> setCustomFirestoreUserId(String userId) async {
@@ -751,7 +759,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           db: localDb,
           userId: activeUid,
         );
-        ref.read(databaseProvider.notifier).refreshDatabase();
+        _invalidateDataStreams();
         state = state.copyWith(
           loading: false,
           successMessage: 'Cloud data successfully overwritten with local copy.',

@@ -75,7 +75,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Chef&Cost'), findsOneWidget);
-      expect(find.textContaining('0.1.0-beta+7'), findsOneWidget);
+      expect(find.textContaining('0.1.0-beta+8'), findsOneWidget);
       expect(find.textContaining('Esquema DB v1'), findsOneWidget);
       expect(find.text('Canal Beta'), findsOneWidget);
     });
@@ -111,11 +111,13 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.text('v0.1.0-beta+7'),
+          matching: find.text('v0.1.0-beta+8'),
         ),
         findsOneWidget,
       );
-      expect(find.text('v0.1.0-beta+6'), findsOneWidget);
+      final beta6 = find.text('v0.1.0-beta+6');
+      await tester.scrollUntilVisible(beta6, 100, scrollable: find.byType(Scrollable).last);
+      expect(beta6, findsOneWidget);
 
       final beta2 = find.text('v0.1.0-beta+2');
       await tester.scrollUntilVisible(beta2, 100, scrollable: find.byType(Scrollable).last);
@@ -164,12 +166,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Test Log'), findsOneWidget);
+      expect(find.text('Probar Registro'), findsOneWidget);
       expect(find.text('Limpiar Registros'), findsOneWidget);
       expect(find.text('Copiar Todo'), findsOneWidget);
 
       // Tap Test Log button
-      await tester.tap(find.text('Test Log'));
+      await tester.tap(find.text('Probar Registro'));
       await tester.pumpAndSettle();
 
       // Tap Copy All button

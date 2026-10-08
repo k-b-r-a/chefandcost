@@ -361,7 +361,7 @@ class SettingsGeneralScreen extends ConsumerWidget {
         return;
       }
 
-      final file = result.files.single;
+      final file = result.files.first;
       final fileName = file.name;
 
       if (!context.mounted) return;
@@ -1560,6 +1560,16 @@ class SettingsAboutScreen extends ConsumerWidget {
     final changelog = isEs
         ? const [
             (
+              '0.1.0-beta+8',
+              'Octubre 2026',
+              [
+                'Escalado inverso de recetas por ingrediente objetivo con aviso visual temporal y opción de guardado permanente.',
+                'Ordenamiento de ingredientes por tipo (Sólido, Líquido, Piezas) y alfabético.',
+                'Aislamiento de búsqueda independiente entre ingredientes y recetas.',
+                'Autocapitalización en campos de texto y mejoras de estabilidad en sincronización en la nube.',
+              ],
+            ),
+            (
               '0.1.0-beta+7',
               'Octubre 2026',
               [
@@ -1624,6 +1634,16 @@ class SettingsAboutScreen extends ConsumerWidget {
             ),
           ]
         : const [
+            (
+              '0.1.0-beta+8',
+              'October 2026',
+              [
+                'Target recipe scaling by single ingredient with temporary banner indicator and permanent save option.',
+                'Ingredient sorting controls by type (Solid, Liquid, Pieces) and alphabetical order.',
+                'Isolated search states between ingredients and recipes.',
+                'Text field auto-capitalization and cloud sync stability improvements.',
+              ],
+            ),
             (
               '0.1.0-beta+7',
               'October 2026',
@@ -1734,7 +1754,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  'Current',
+                                  l10n.settings_about_version_current,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -1791,62 +1811,33 @@ class SettingsAboutScreen extends ConsumerWidget {
   }
 
   void _showPrivacyTermsDialog(BuildContext context, ThemeData theme, AppLocalizations l10n) {
-    final isEs = Localizations.localeOf(context).languageCode == 'es';
-    final terms = isEs
-        ? const [
-            (
-              Icons.storage_rounded,
-              'Almacenamiento Local Prioritario',
-              'Tus ingredientes, recetas y costos se almacenan localmente en tu dispositivo mediante SQLite (Drift). Tus datos nunca salen de tu control sin tu consentimiento.',
-            ),
-            (
-              Icons.cloud_sync_outlined,
-              'Sincronización en la Nube Opcional',
-              'La sincronización con Firebase y Google Drive es 100% opcional. Solo se activa si eliges iniciar sesión con tu cuenta.',
-            ),
-            (
-              Icons.verified_user_outlined,
-              'Propiedad Total de tus Datos',
-              'Tus recetas y cálculos de rentabilidad son de tu exclusiva propiedad intelectual. Chef&Cost no comparte ni comercializa tu información.',
-            ),
-            (
-              Icons.no_accounts_outlined,
-              'Sin Rastreadores Publicitarios',
-              'No utilizamos herramientas de rastreo publicitario de terceros ni vendemos datos personales.',
-            ),
-            (
-              Icons.notifications_active_outlined,
-              'Permisos del Sistema',
-              'La aplicación únicamente solicita permisos de notificaciones y audio para avisarte cuando finaliza un temporizador de cocción.',
-            ),
-          ]
-        : const [
-            (
-              Icons.storage_rounded,
-              'Offline-First Local Storage',
-              'Your ingredients, recipes, and cost data are stored securely on your device using SQLite (Drift). Your data stays strictly under your control.',
-            ),
-            (
-              Icons.cloud_sync_outlined,
-              'Opt-in Cloud Synchronization',
-              'Synchronization with Firebase Firestore and Google Drive is 100% optional and only occurs if you explicitly log in.',
-            ),
-            (
-              Icons.verified_user_outlined,
-              'Full Data Ownership',
-              'Your recipes and calculations belong exclusively to you. Chef&Cost does not claim ownership or distribute your culinary creations.',
-            ),
-            (
-              Icons.no_accounts_outlined,
-              'Zero Advertising Trackers',
-              'We do not embed third-party advertising SDKs or monetize your personal culinary metrics.',
-            ),
-            (
-              Icons.notifications_active_outlined,
-              'System Permissions',
-              'The application only requests notification and audio permissions to alert you when recipe cooking timers complete.',
-            ),
-          ];
+    final terms = [
+      (
+        Icons.storage_rounded,
+        l10n.settings_about_privacy_storage_title,
+        l10n.settings_about_privacy_storage_desc,
+      ),
+      (
+        Icons.cloud_sync_outlined,
+        l10n.settings_about_privacy_sync_title,
+        l10n.settings_about_privacy_sync_desc,
+      ),
+      (
+        Icons.verified_user_outlined,
+        l10n.settings_about_privacy_ownership_title,
+        l10n.settings_about_privacy_ownership_desc,
+      ),
+      (
+        Icons.no_accounts_outlined,
+        l10n.settings_about_privacy_ads_title,
+        l10n.settings_about_privacy_ads_desc,
+      ),
+      (
+        Icons.notifications_active_outlined,
+        l10n.settings_about_privacy_permissions_title,
+        l10n.settings_about_privacy_permissions_desc,
+      ),
+    ];
 
     showDialog(
       context: context,
@@ -2018,7 +2009,7 @@ class SettingsAboutScreen extends ConsumerWidget {
               actions: [
                 TextButton.icon(
                   icon: const Icon(Icons.add_circle_outline, size: 16),
-                  label: const Text('Test Log'),
+                  label: Text(l10n.settings_about_logs_test),
                   onPressed: () {
                     AppLogger.info('Manual test event triggered at ${DateTime.now()}');
                     setModalState(() {});
@@ -2368,9 +2359,9 @@ class SettingsAboutScreen extends ConsumerWidget {
                               color: Colors.purple.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
-                              'BETA',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.settings_about_badge_beta,
+                              style: const TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.purple,

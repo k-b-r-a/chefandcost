@@ -108,8 +108,8 @@ class AppDatabase extends _$AppDatabase {
   // --- Ingredient Queries ---
   Future<List<Ingredient>> getAllIngredients() =>
       (select(ingredients)..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
-  Future<Ingredient?> getIngredientById(String pk) =>
-      (select(ingredients)..where((t) => t.ingredientPk.equals(pk))).getSingleOrNull();
+  Future<Ingredient?> getIngredientById(String pk) async =>
+      (await (select(ingredients)..where((t) => t.ingredientPk.equals(pk))..limit(1)).get()).firstOrNull;
   Stream<List<Ingredient>> watchAllIngredients() =>
       (select(ingredients)..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
   Future<int> insertIngredient(IngredientsCompanion ingredient) =>
@@ -198,10 +198,11 @@ class AppDatabase extends _$AppDatabase {
           .get();
 
       for (final entry in recipeIngredientsToUpdate) {
-        final existingNewEntry = await (select(recipeIngredients)
+        final existingNewEntry = (await (select(recipeIngredients)
               ..where((t) => t.recipeFk.equals(entry.recipeFk))
-              ..where((t) => t.ingredientFk.equals(newIngredient.ingredientPk)))
-            .getSingleOrNull();
+              ..where((t) => t.ingredientFk.equals(newIngredient.ingredientPk))
+              ..limit(1))
+            .get()).firstOrNull;
 
         if (existingNewEntry != null) {
           await (update(recipeIngredients)
@@ -249,9 +250,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<RecipeDetail> getRecipeDetail(String recipePk) async {
-    final recipe = await (select(
+    final recipe = (await (select(
       recipes,
-    )..where((t) => t.recipePk.equals(recipePk))).getSingle();
+    )..where((t) => t.recipePk.equals(recipePk))..limit(1)).get()).firstOrNull;
+
+    if (recipe == null) {
+      throw StateError('Recipe not found: $recipePk');
+    }
 
     final ingredientList = await (select(recipeIngredients).join([
       leftOuterJoin(
@@ -332,9 +337,34 @@ class AppDatabase extends _$AppDatabase {
         await mergeIngredientFromRemote(ing);
       }
 
-      final localRecipe = await (select(recipes)
-            ..where((t) => t.recipePk.equals(remoteRecipe.recipePk)))
-          .getSingleOrNull();
+      // Ensure all ingredients referenced by remoteIngredients exist in DB to prevent FK failures
+      for (final ri in remoteIngredients) {
+        final ingExists = (await (select(ingredients)
+              ..where((t) => t.ingredientPk.equals(ri.ingredientFk))
+              ..limit(1))
+            .get()).firstOrNull;
+        if (ingExists == null) {
+          final fallbackUnit = (await (select(units)..limit(1)).get()).firstOrNull;
+          if (fallbackUnit != null) {
+            await into(ingredients).insert(
+              IngredientsCompanion(
+                ingredientPk: Value(ri.ingredientFk),
+                name: const Value('Ingrediente'),
+                cost: const Value(0.0),
+                quantityForCost: const Value(1.0),
+                unitFk: Value(fallbackUnit.unitPk),
+                dateCreated: Value(DateTime.now()),
+              ),
+              mode: InsertMode.insertOrIgnore,
+            );
+          }
+        }
+      }
+
+      final localRecipe = (await (select(recipes)
+            ..where((t) => t.recipePk.equals(remoteRecipe.recipePk))
+            ..limit(1))
+          .get()).firstOrNull;
 
       if (localRecipe == null) {
         await into(recipes).insert(
@@ -363,6 +393,7 @@ class AppDatabase extends _$AppDatabase {
               amountNeeded: Value(ri.amountNeeded),
               dateTimeModified: Value(ri.dateTimeModified),
             ),
+            mode: InsertMode.insertOrReplace,
           );
         }
 
@@ -375,6 +406,7 @@ class AppDatabase extends _$AppDatabase {
               instruction: Value(rs.instruction),
               dateTimeModified: Value(rs.dateTimeModified),
             ),
+            mode: InsertMode.insertOrReplace,
           );
         }
 
@@ -409,6 +441,7 @@ class AppDatabase extends _$AppDatabase {
                 amountNeeded: Value(ri.amountNeeded),
                 dateTimeModified: Value(ri.dateTimeModified),
               ),
+              mode: InsertMode.insertOrReplace,
             );
           }
 
@@ -422,6 +455,7 @@ class AppDatabase extends _$AppDatabase {
                 instruction: Value(rs.instruction),
                 dateTimeModified: Value(rs.dateTimeModified),
               ),
+              mode: InsertMode.insertOrReplace,
             );
           }
 
@@ -436,6 +470,30 @@ class AppDatabase extends _$AppDatabase {
   /// Merges an ingredient from remote using LWW.
   /// Returns: 1 if inserted, 2 if updated, 0 if kept local.
   Future<int> mergeIngredientFromRemote(Ingredient remoteIngredient) async {
+    // Ensure the unit exists before inserting ingredient to satisfy FK constraint
+    final unitExists = (await (select(units)
+          ..where((t) => t.unitPk.equals(remoteIngredient.unitFk))
+          ..limit(1))
+        .get()).firstOrNull;
+    if (unitExists == null) {
+      final defaultG = (await (select(units)
+            ..where((t) => t.symbol.equals('g'))
+            ..limit(1))
+          .get()).firstOrNull ??
+          (await (select(units)..limit(1)).get()).firstOrNull;
+      await into(units).insert(
+        UnitsCompanion(
+          unitPk: Value(remoteIngredient.unitFk),
+          name: Value(defaultG?.name ?? 'Unit'),
+          symbol: Value(defaultG?.symbol ?? 'u'),
+          category: Value(defaultG?.category ?? 'mass'),
+          factorToBase: Value(defaultG?.factorToBase ?? 1.0),
+          isMutable: const Value(false),
+        ),
+        mode: InsertMode.insertOrIgnore,
+      );
+    }
+
     final localIng = await getIngredientById(remoteIngredient.ingredientPk);
     if (localIng == null) {
       await into(ingredients).insert(
@@ -448,6 +506,7 @@ class AppDatabase extends _$AppDatabase {
           dateCreated: Value(remoteIngredient.dateCreated),
           dateTimeModified: Value(remoteIngredient.dateTimeModified),
         ),
+        mode: InsertMode.insertOrReplace,
       );
       return 1;
     } else {
@@ -471,7 +530,10 @@ class AppDatabase extends _$AppDatabase {
 
   /// Merges a unit from remote (non-destructive insert if absent).
   Future<void> mergeUnitFromRemote(Unit remoteUnit) async {
-    final localUnit = await (select(units)..where((t) => t.unitPk.equals(remoteUnit.unitPk))).getSingleOrNull();
+    final localUnit = (await (select(units)
+          ..where((t) => t.unitPk.equals(remoteUnit.unitPk))
+          ..limit(1))
+        .get()).firstOrNull;
     if (localUnit == null) {
       await into(units).insert(
         UnitsCompanion(

@@ -201,6 +201,24 @@ class FirestoreSyncService {
   // Serialization & Deserialization (Spark-plan optimized: embedded children)
   // ---------------------------------------------------------------------------
 
+  static DateTime _parseDate(dynamic val) {
+    if (val == null) return DateTime.now();
+    if (val is Timestamp) return val.toDate();
+    if (val is DateTime) return val;
+    if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+    if (val is num) return DateTime.fromMillisecondsSinceEpoch(val.toInt());
+    return DateTime.now();
+  }
+
+  static DateTime? _parseNullableDate(dynamic val) {
+    if (val == null) return null;
+    if (val is Timestamp) return val.toDate();
+    if (val is DateTime) return val;
+    if (val is String) return DateTime.tryParse(val);
+    if (val is num) return DateTime.fromMillisecondsSinceEpoch(val.toInt());
+    return null;
+  }
+
   /// Serializes a [RecipeDetail] into a single Firestore document map, embedding
   /// all ingredients and steps directly to avoid separate document reads/writes.
   static Map<String, dynamic> recipeToFirestore(RecipeDetail detail) {
@@ -250,21 +268,20 @@ class FirestoreSyncService {
     List<RecipeStep> steps,
     List<Ingredient> nestedIngredients,
   }) recipeFromFirestore(
-      Map<String, dynamic> d) {
+      Map<String, dynamic> d, {String fallbackId = ''}) {
+    final pk = (d['recipePk'] as String?) ?? fallbackId;
     final recipe = Recipe(
-      recipePk: d['recipePk'] as String,
-      name: d['name'] as String,
+      recipePk: pk.isNotEmpty ? pk : 'recipe_${DateTime.now().millisecondsSinceEpoch}',
+      name: (d['name'] as String?) ?? 'Sin título',
       description: d['description'] as String?,
-      defaultYield: (d['defaultYield'] as num).toDouble(),
-      yieldName: d['yieldName'] as String,
-      targetProfitMargin: (d['targetProfitMargin'] as num).toDouble(),
-      targetPricePerPortion: (d['targetPricePerPortion'] as num).toDouble(),
-      fixedOverheadCost: (d['fixedOverheadCost'] as num).toDouble(),
+      defaultYield: (d['defaultYield'] as num?)?.toDouble() ?? 1.0,
+      yieldName: (d['yieldName'] as String?) ?? 'porciones',
+      targetProfitMargin: (d['targetProfitMargin'] as num?)?.toDouble() ?? 0.0,
+      targetPricePerPortion: (d['targetPricePerPortion'] as num?)?.toDouble() ?? 0.0,
+      fixedOverheadCost: (d['fixedOverheadCost'] as num?)?.toDouble() ?? 0.0,
       colour: d['colour'] as String?,
-      dateCreated: DateTime.parse(d['dateCreated'] as String),
-      dateTimeModified: d['dateTimeModified'] != null
-          ? DateTime.tryParse(d['dateTimeModified'] as String)
-          : null,
+      dateCreated: _parseDate(d['dateCreated']),
+      dateTimeModified: _parseNullableDate(d['dateTimeModified']),
       archived: d['archived'] as bool? ?? false,
     );
 
@@ -273,53 +290,60 @@ class FirestoreSyncService {
     final nestedIngredients = <Ingredient>[];
 
     for (final raw in rawIngredients) {
-      final m = raw as Map<String, dynamic>;
+      if (raw is! Map) continue;
+      final m = Map<String, dynamic>.from(raw);
+      final recipeFk = (m['recipeFk'] as String?) ?? recipe.recipePk;
+      final ingredientFk = (m['ingredientFk'] as String?) ?? '';
+      final riPk = (m['recipeIngredientPk'] as String?) ?? '${recipeFk}_$ingredientFk';
+
       final ri = RecipeIngredient(
-        recipeIngredientPk: m['recipeIngredientPk'] as String,
-        recipeFk: m['recipeFk'] as String,
-        ingredientFk: m['ingredientFk'] as String,
-        amountNeeded: (m['amountNeeded'] as num).toDouble(),
-        dateTimeModified: m['dateTimeModified'] != null
-            ? DateTime.tryParse(m['dateTimeModified'] as String)
-            : null,
+        recipeIngredientPk: riPk,
+        recipeFk: recipeFk,
+        ingredientFk: ingredientFk,
+        amountNeeded: (m['amountNeeded'] as num?)?.toDouble() ?? 1.0,
+        dateTimeModified: _parseNullableDate(m['dateTimeModified']),
       );
       ingredients.add(ri);
 
       final ingMap = (m['ingredient'] as Map<String, dynamic>?) ?? m;
       if (ingMap.containsKey('name') && ingMap['name'] != null) {
-        nestedIngredients.add(
-          Ingredient(
-            ingredientPk: (ingMap['ingredientPk'] ?? m['ingredientFk']) as String,
-            name: ingMap['name'] as String,
-            cost: (ingMap['cost'] as num?)?.toDouble() ?? 0.0,
-            quantityForCost: (ingMap['quantityForCost'] as num?)?.toDouble() ?? 1.0,
-            unitFk: (ingMap['unitFk'] as String?) ?? 'unit-g',
-            dateCreated: ingMap['dateCreated'] != null
-                ? DateTime.tryParse(ingMap['dateCreated'] as String) ?? DateTime.now()
-                : DateTime.now(),
-            dateTimeModified: ingMap['dateTimeModified'] != null
-                ? DateTime.tryParse(ingMap['dateTimeModified'] as String)
-                : (ingMap['ingredientDateTimeModified'] != null
-                    ? DateTime.tryParse(ingMap['ingredientDateTimeModified'] as String)
-                    : null),
-          ),
-        );
+        final ingPk = (ingMap['ingredientPk'] ?? ingredientFk) as String;
+        if (ingPk.isNotEmpty) {
+          nestedIngredients.add(
+            Ingredient(
+              ingredientPk: ingPk,
+              name: (ingMap['name'] as String?) ?? 'Ingrediente',
+              cost: (ingMap['cost'] as num?)?.toDouble() ?? 0.0,
+              quantityForCost: (ingMap['quantityForCost'] as num?)?.toDouble() ?? 1.0,
+              unitFk: (ingMap['unitFk'] as String?) ?? 'unit-g',
+              dateCreated: _parseDate(ingMap['dateCreated']),
+              dateTimeModified: _parseNullableDate(
+                ingMap['dateTimeModified'] ?? ingMap['ingredientDateTimeModified'],
+              ),
+            ),
+          );
+        }
       }
     }
 
     final rawSteps = (d['steps'] as List<dynamic>?) ?? [];
-    final steps = rawSteps.map((raw) {
-      final m = raw as Map<String, dynamic>;
-      return RecipeStep(
-        stepPk: m['stepPk'] as String,
-        recipeFk: m['recipeFk'] as String,
-        stepNumber: (m['stepNumber'] as num).toInt(),
-        instruction: m['instruction'] as String,
-        dateTimeModified: m['dateTimeModified'] != null
-            ? DateTime.tryParse(m['dateTimeModified'] as String)
-            : null,
+    final steps = <RecipeStep>[];
+    int defaultStepNumber = 1;
+    for (final raw in rawSteps) {
+      if (raw is! Map) continue;
+      final m = Map<String, dynamic>.from(raw);
+      final stepPk = (m['stepPk'] as String?) ?? '${recipe.recipePk}_step_$defaultStepNumber';
+      steps.add(
+        RecipeStep(
+          stepPk: stepPk,
+          recipeFk: (m['recipeFk'] as String?) ?? recipe.recipePk,
+          stepNumber: (m['stepNumber'] as num?)?.toInt() ?? defaultStepNumber,
+          instruction: (m['instruction'] as String?) ?? '',
+          dateTimeModified: _parseNullableDate(m['dateTimeModified']),
+        ),
       );
-    }).toList();
+      defaultStepNumber++;
+    }
 
     return (
       recipe: recipe,
@@ -345,17 +369,16 @@ class FirestoreSyncService {
   }
 
   /// Parses an [Ingredient] from Firestore format.
-  static Ingredient ingredientFromFirestore(Map<String, dynamic> d) {
+  static Ingredient ingredientFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
+    final pk = (d['ingredientPk'] as String?) ?? fallbackId;
     return Ingredient(
-      ingredientPk: d['ingredientPk'] as String,
-      name: d['name'] as String,
-      cost: (d['cost'] as num).toDouble(),
-      quantityForCost: (d['quantityForCost'] as num).toDouble(),
-      unitFk: d['unitFk'] as String,
-      dateCreated: DateTime.parse(d['dateCreated'] as String),
-      dateTimeModified: d['dateTimeModified'] != null
-          ? DateTime.tryParse(d['dateTimeModified'] as String)
-          : null,
+      ingredientPk: pk.isNotEmpty ? pk : 'ing_${DateTime.now().millisecondsSinceEpoch}',
+      name: (d['name'] as String?) ?? 'Ingrediente',
+      cost: (d['cost'] as num?)?.toDouble() ?? 0.0,
+      quantityForCost: (d['quantityForCost'] as num?)?.toDouble() ?? 1.0,
+      unitFk: (d['unitFk'] as String?) ?? 'unit-g',
+      dateCreated: _parseDate(d['dateCreated']),
+      dateTimeModified: _parseNullableDate(d['dateTimeModified']),
     );
   }
 
@@ -372,14 +395,15 @@ class FirestoreSyncService {
   }
 
   /// Parses a [Unit] from Firestore format.
-  static Unit unitFromFirestore(Map<String, dynamic> d) {
+  static Unit unitFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
+    final pk = (d['unitPk'] as String?) ?? fallbackId;
     return Unit(
-      unitPk: d['unitPk'] as String,
-      name: d['name'] as String,
-      symbol: d['symbol'] as String,
+      unitPk: pk.isNotEmpty ? pk : 'unit_${DateTime.now().millisecondsSinceEpoch}',
+      name: (d['name'] as String?) ?? 'Unidad',
+      symbol: (d['symbol'] as String?) ?? 'u',
       category: d['category'] as String?,
-      factorToBase: (d['factorToBase'] as num).toDouble(),
-      isMutable: d['isMutable'] as bool? ?? true,
+      factorToBase: (d['factorToBase'] as num?)?.toDouble() ?? 1.0,
+      isMutable: d['isMutable'] as bool? ?? false,
     );
   }
 
@@ -479,12 +503,11 @@ class FirestoreSyncService {
 
     // 2. Fetch all local units, ingredients, and recipes
     final allUnits = await db.getAllUnits();
-    final customUnits = allUnits.where((u) => u.isMutable).toList();
     final allIngs = await db.getAllIngredients();
     final allRecipeDetails = await db.getAllRecipeDetails();
 
-    // 3. Upload all custom units
-    for (final unit in customUnits) {
+    // 3. Upload all units
+    for (final unit in allUnits) {
       final docRef = unitsCol.doc(unit.unitPk);
       final data = unitToFirestore(unit);
       data['updatedAt'] = Timestamp.fromDate(syncStartTime);
@@ -590,29 +613,21 @@ class FirestoreSyncService {
     final unitsCol = userDoc.collection('units');
 
     // -------------------------------------------------------------
-    // PHASE 1: PULL REMOTE UPDATES (Differential queries)
+    // PHASE 1: PULL REMOTE UPDATES
     // -------------------------------------------------------------
 
-    // 1. Remote Custom Units
-    Query<Map<String, dynamic>> unitsQuery = unitsCol;
-    if (lastSyncedAt != null) {
-      unitsQuery = unitsQuery.where('updatedAt', isGreaterThan: Timestamp.fromDate(lastSyncedAt));
-    }
-    final remoteUnitsSnap = await unitsQuery.get();
+    // 1. Remote Units (Pull all units so foreign keys never fail)
+    final remoteUnitsSnap = await unitsCol.get();
     for (final doc in remoteUnitsSnap.docs) {
-      final unit = unitFromFirestore(doc.data());
+      final unit = unitFromFirestore(doc.data(), fallbackId: doc.id);
       await db.mergeUnitFromRemote(unit);
     }
 
-    // 2. Remote Ingredients (Differential)
-    Query<Map<String, dynamic>> ingsQuery = ingsCol;
-    if (lastSyncedAt != null) {
-      ingsQuery = ingsQuery.where('updatedAt', isGreaterThan: Timestamp.fromDate(lastSyncedAt));
-    }
-    final remoteIngsSnap = await ingsQuery.get();
+    // 2. Remote Ingredients
+    final remoteIngsSnap = await ingsCol.get();
     final Map<String, DateTime> remoteIngUpdatedTimes = {};
     for (final doc in remoteIngsSnap.docs) {
-      final ing = ingredientFromFirestore(doc.data());
+      final ing = ingredientFromFirestore(doc.data(), fallbackId: doc.id);
       final remoteTime = ing.dateTimeModified ?? ing.dateCreated;
       remoteIngUpdatedTimes[ing.ingredientPk] = remoteTime;
 
@@ -621,15 +636,11 @@ class FirestoreSyncService {
       if (res == 2) ingredientsUpdated++;
     }
 
-    // 3. Remote Recipes (Differential, embedded ingredients & steps)
-    Query<Map<String, dynamic>> recipesQuery = recipesCol;
-    if (lastSyncedAt != null) {
-      recipesQuery = recipesQuery.where('updatedAt', isGreaterThan: Timestamp.fromDate(lastSyncedAt));
-    }
-    final remoteRecipesSnap = await recipesQuery.get();
+    // 3. Remote Recipes (Differential or full, embedded ingredients & steps)
+    final remoteRecipesSnap = await recipesCol.get();
     final Map<String, DateTime> remoteRecipeUpdatedTimes = {};
     for (final doc in remoteRecipesSnap.docs) {
-      final parsed = recipeFromFirestore(doc.data());
+      final parsed = recipeFromFirestore(doc.data(), fallbackId: doc.id);
       final remoteTime = parsed.recipe.dateTimeModified ?? parsed.recipe.dateCreated;
       remoteRecipeUpdatedTimes[parsed.recipe.recipePk] = remoteTime;
 
@@ -645,17 +656,17 @@ class FirestoreSyncService {
     }
 
     // -------------------------------------------------------------
-    // PHASE 2: PUSH LOCAL UPDATES (Differential: modifiedSince lastSyncedAt)
+    // PHASE 2: PUSH LOCAL UPDATES
     // -------------------------------------------------------------
-    final localCustomUnits = await db.getCustomUnitsModifiedSince(lastSyncedAt);
-    final localIngredients = await db.getIngredientsModifiedSince(lastSyncedAt);
-    final localRecipes = await db.getAllRecipeDetails(modifiedSince: lastSyncedAt);
+    final localUnits = await db.getAllUnits();
+    final localIngredients = await db.getAllIngredients();
+    final localRecipes = await db.getAllRecipeDetails();
 
     WriteBatch batch = _firestore.batch();
     int opCount = 0;
 
-    // Push Custom Units
-    for (final unit in localCustomUnits) {
+    // Push Units (Ensure all local units exist on remote)
+    for (final unit in localUnits) {
       final docRef = unitsCol.doc(unit.unitPk);
       final data = unitToFirestore(unit);
       data['updatedAt'] = Timestamp.fromDate(syncStartTime);

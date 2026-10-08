@@ -1609,7 +1609,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
         return;
       }
 
-      final file = result.files.single;
+      final file = result.files.first;
       final fileName = file.name;
 
       if (!context.mounted) return;

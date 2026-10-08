@@ -2688,6 +2688,84 @@ abstract class AppLocalizations {
   /// **'No logs recorded yet'**
   String get settings_about_logs_empty;
 
+  /// No description provided for @settings_about_version_current.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get settings_about_version_current;
+
+  /// No description provided for @settings_about_logs_test.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Log'**
+  String get settings_about_logs_test;
+
+  /// No description provided for @settings_about_badge_beta.
+  ///
+  /// In en, this message translates to:
+  /// **'BETA'**
+  String get settings_about_badge_beta;
+
+  /// No description provided for @settings_about_privacy_storage_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline-First Local Storage'**
+  String get settings_about_privacy_storage_title;
+
+  /// No description provided for @settings_about_privacy_storage_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your ingredients, recipes, and cost data are stored securely on your device using SQLite (Drift). Your data stays strictly under your control.'**
+  String get settings_about_privacy_storage_desc;
+
+  /// No description provided for @settings_about_privacy_sync_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Opt-in Cloud Synchronization'**
+  String get settings_about_privacy_sync_title;
+
+  /// No description provided for @settings_about_privacy_sync_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization with Firebase Firestore and Google Drive is 100% optional and only occurs if you explicitly log in.'**
+  String get settings_about_privacy_sync_desc;
+
+  /// No description provided for @settings_about_privacy_ownership_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Data Ownership'**
+  String get settings_about_privacy_ownership_title;
+
+  /// No description provided for @settings_about_privacy_ownership_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your recipes and calculations belong exclusively to you. Chef&Cost does not claim ownership or distribute your culinary creations.'**
+  String get settings_about_privacy_ownership_desc;
+
+  /// No description provided for @settings_about_privacy_ads_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero Advertising Trackers'**
+  String get settings_about_privacy_ads_title;
+
+  /// No description provided for @settings_about_privacy_ads_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'We do not embed third-party advertising SDKs or monetize your personal culinary metrics.'**
+  String get settings_about_privacy_ads_desc;
+
+  /// No description provided for @settings_about_privacy_permissions_title.
+  ///
+  /// In en, this message translates to:
+  /// **'System Permissions'**
+  String get settings_about_privacy_permissions_title;
+
+  /// No description provided for @settings_about_privacy_permissions_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'The application only requests notification and audio permissions to alert you when recipe cooking timers complete.'**
+  String get settings_about_privacy_permissions_desc;
+
   /// No description provided for @cloud_sync_load_local_backup_btn.
   ///
   /// In en, this message translates to:

@@ -1371,6 +1371,54 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settings_about_logs_empty => 'No hay registros grabados todavía';
 
   @override
+  String get settings_about_version_current => 'Actual';
+
+  @override
+  String get settings_about_logs_test => 'Probar Registro';
+
+  @override
+  String get settings_about_badge_beta => 'BETA';
+
+  @override
+  String get settings_about_privacy_storage_title =>
+      'Almacenamiento Local Prioritario';
+
+  @override
+  String get settings_about_privacy_storage_desc =>
+      'Tus ingredientes, recetas y costos se almacenan localmente en tu dispositivo mediante SQLite (Drift). Tus datos nunca salen de tu control sin tu consentimiento.';
+
+  @override
+  String get settings_about_privacy_sync_title =>
+      'Sincronización en la Nube Opcional';
+
+  @override
+  String get settings_about_privacy_sync_desc =>
+      'La sincronización con Firebase y Google Drive es 100% opcional. Solo se activa si eliges iniciar sesión con tu cuenta.';
+
+  @override
+  String get settings_about_privacy_ownership_title =>
+      'Propiedad Total de tus Datos';
+
+  @override
+  String get settings_about_privacy_ownership_desc =>
+      'Tus recetas y cálculos de rentabilidad son de tu exclusiva propiedad intelectual. Chef&Cost no comparte ni comercializa tu información.';
+
+  @override
+  String get settings_about_privacy_ads_title =>
+      'Sin Rastreadores Publicitarios';
+
+  @override
+  String get settings_about_privacy_ads_desc =>
+      'No utilizamos herramientas de rastreo publicitario de terceros ni vendemos datos personales.';
+
+  @override
+  String get settings_about_privacy_permissions_title => 'Permisos del Sistema';
+
+  @override
+  String get settings_about_privacy_permissions_desc =>
+      'La aplicación únicamente solicita permisos de notificaciones y audio para avisarte cuando finaliza un temporizador de cocción.';
+
+  @override
   String get cloud_sync_load_local_backup_btn =>
       'Cargar Copia de Seguridad Local';
 
