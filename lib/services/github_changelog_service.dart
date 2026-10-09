@@ -60,7 +60,7 @@ class GithubChangelogService {
 
   GithubChangelogService({
     this.owner = 'k-b-r-a',
-    this.repo = 'recipetools',
+    this.repo = 'chefandcost',
     http.Client? client,
   })  : _client = client ?? http.Client(),
         _isCustomClient = client != null;
