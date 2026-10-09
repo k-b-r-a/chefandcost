@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -491,6 +492,165 @@ void main() {
       final dbIng = await db.getIngredientById('ing-flour-test');
       expect(dbIng?.dateTimeModified, isNotNull);
       expect(dbIng!.dateTimeModified!.isAfter(now), isTrue);
+    });
+
+    test('mergeIngredientFromRemote safely auto-creates missing unit to avoid FK failure', () async {
+      final now = DateTime.utc(2026, 5, 1);
+      final ingredientWithUnknownUnit = Ingredient(
+        ingredientPk: 'ing-mystery',
+        name: 'Mystery Ingredient',
+        cost: 10.0,
+        quantityForCost: 1.0,
+        unitFk: 'unit-unknown-uuid-1234',
+        dateCreated: now,
+        dateTimeModified: now,
+      );
+
+      // Should not throw SqliteException for foreign key violation
+      final res = await db.mergeIngredientFromRemote(ingredientWithUnknownUnit);
+      expect(res, 1);
+
+      final inserted = await db.getIngredientById('ing-mystery');
+      expect(inserted, isNotNull);
+      expect(inserted?.name, 'Mystery Ingredient');
+
+      // The unit should have been created as a stub to satisfy the FK constraint
+      final unit = (await (db.select(db.units)..where((t) => t.unitPk.equals('unit-unknown-uuid-1234'))).get()).firstOrNull;
+      expect(unit, isNotNull);
+    });
+
+    test('mergeIngredientFromRemote does not throw Too many elements when multiple units share symbol g', () async {
+      final now = DateTime.utc(2026, 5, 1);
+      // Insert duplicate units with symbol 'g' (e.g. from sync or custom units)
+      await db.into(db.units).insert(
+        UnitsCompanion(
+          unitPk: const Value('unit-g-device-1'),
+          name: const Value('unit_grams'),
+          symbol: const Value('g'),
+          category: const Value('mass'),
+          factorToBase: const Value(1.0),
+          isMutable: const Value(false),
+        ),
+      );
+      await db.into(db.units).insert(
+        UnitsCompanion(
+          unitPk: const Value('unit-g-device-2'),
+          name: const Value('Custom Grams'),
+          symbol: const Value('g'),
+          category: const Value('mass'),
+          factorToBase: const Value(1.0),
+          isMutable: const Value(true),
+        ),
+      );
+
+      final ingredientWithUnknownUnit = Ingredient(
+        ingredientPk: 'ing-multi-g-test',
+        name: 'Sugar Multi Unit',
+        cost: 5.0,
+        quantityForCost: 1.0,
+        unitFk: 'unit-not-existing-yet',
+        dateCreated: now,
+        dateTimeModified: now,
+      );
+
+      // Should safely pick first matching unit without throwing "Too many elements"
+      final res = await db.mergeIngredientFromRemote(ingredientWithUnknownUnit);
+      expect(res, 1);
+    });
+
+    test('mergeRecipeFromRemote safely auto-creates missing ingredient stub to avoid FK failure', () async {
+      final now = DateTime.utc(2026, 5, 1);
+      final remoteRecipe = Recipe(
+        recipePk: 'rec-orphan-ing',
+        name: 'Orphan Ingredient Recipe',
+        defaultYield: 2,
+        yieldName: 'portions',
+        targetProfitMargin: 0.3,
+        targetPricePerPortion: 5.0,
+        fixedOverheadCost: 0.0,
+        dateCreated: now,
+        dateTimeModified: now,
+        archived: false,
+      );
+
+      final orphanRi = RecipeIngredient(
+        recipeIngredientPk: 'ri-orphan-1',
+        recipeFk: 'rec-orphan-ing',
+        ingredientFk: 'ing-nonexistent-9999',
+        amountNeeded: 50.0,
+        dateTimeModified: now,
+      );
+
+      // Should not throw SqliteException for foreign key violation even without nestedIngredients
+      final res = await db.mergeRecipeFromRemote(
+        remoteRecipe: remoteRecipe,
+        remoteIngredients: [orphanRi],
+        remoteSteps: [],
+      );
+      expect(res, 1);
+
+      final detail = await db.getRecipeDetail('rec-orphan-ing');
+      expect(detail.recipe.name, 'Orphan Ingredient Recipe');
+      expect(detail.ingredients, hasLength(1));
+      expect(detail.ingredients.first.entry.ingredientFk, 'ing-nonexistent-9999');
+    });
+
+    test('recipeFromFirestore and ingredientFromFirestore handle Timestamps, nulls and missing fields safely', () {
+      final now = DateTime.utc(2026, 5, 1);
+      final rawFirestoreDoc = {
+        'recipePk': 'rec-corrupted',
+        'name': 'Resilient Recipe',
+        'defaultYield': 4, // int instead of double
+        'yieldName': null,
+        'targetProfitMargin': null,
+        'targetPricePerPortion': null,
+        'fixedOverheadCost': null,
+        'colour': null,
+        'dateCreated': Timestamp.fromDate(now), // Timestamp instead of String
+        'dateTimeModified': null,
+        'ingredients': [
+          {
+            'recipeIngredientPk': null,
+            'recipeFk': null,
+            'ingredientFk': 'ing-raw-1',
+            'amountNeeded': 100, // int instead of double
+            'dateTimeModified': null,
+            'ingredient': {
+              'ingredientPk': 'ing-raw-1',
+              'name': 'Raw Sugar',
+              'cost': null,
+              'quantityForCost': null,
+              'unitFk': null,
+              'dateCreated': Timestamp.fromDate(now),
+              'dateTimeModified': null,
+            },
+          },
+        ],
+        'steps': [
+          {
+            'stepPk': null,
+            'recipeFk': null,
+            'stepNumber': null,
+            'instruction': null,
+            'dateTimeModified': null,
+          },
+        ],
+      };
+
+      final parsed = FirestoreSyncService.recipeFromFirestore(rawFirestoreDoc);
+      expect(parsed.recipe.recipePk, 'rec-corrupted');
+      expect(parsed.recipe.name, 'Resilient Recipe');
+      expect(parsed.recipe.defaultYield, 4.0);
+      expect(parsed.recipe.yieldName, 'porciones');
+      expect(parsed.recipe.targetProfitMargin, 0.0);
+      expect(parsed.recipe.dateCreated.toUtc(), now.toUtc());
+      expect(parsed.ingredients, hasLength(1));
+      expect(parsed.ingredients.first.amountNeeded, 100.0);
+      expect(parsed.nestedIngredients, hasLength(1));
+      expect(parsed.nestedIngredients.first.name, 'Raw Sugar');
+      expect(parsed.nestedIngredients.first.cost, 0.0);
+      expect(parsed.steps, hasLength(1));
+      expect(parsed.steps.first.instruction, '');
     });
   });
 

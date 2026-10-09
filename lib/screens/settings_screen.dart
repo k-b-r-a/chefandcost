@@ -13,6 +13,7 @@ import '../database/sample_data.dart';
 import '../widgets/app_logo.dart';
 import '../constants.dart';
 import '../utils/app_logger.dart';
+import '../widgets/github_changelog_view.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -361,7 +362,7 @@ class SettingsGeneralScreen extends ConsumerWidget {
         return;
       }
 
-      final file = result.files.single;
+      final file = result.files.first;
       final fileName = file.name;
 
       if (!context.mounted) return;
@@ -1556,297 +1557,37 @@ class SettingsAboutScreen extends ConsumerWidget {
   }
 
   void _showChangelogDialog(BuildContext context, ThemeData theme, AppLocalizations l10n) {
-    final isEs = Localizations.localeOf(context).languageCode == 'es';
-    final changelog = isEs
-        ? const [
-            (
-              '0.1.0-beta+7',
-              'Octubre 2026',
-              [
-                'Corrección en selector de copia de seguridad local: eliminación de restricciones de extensiones para permitir seleccionar cualquier archivo SQLite.',
-              ],
-            ),
-            (
-              '0.1.0-beta+6',
-              'Octubre 2026',
-              [
-                'Actualización oficial del correo de contacto y soporte del desarrollador (kbradevp@gmail.com).',
-                'Optimizaciones de estabilidad y ajustes de despliegue en canal Beta.',
-              ],
-            ),
-            (
-              '0.1.0-beta+5',
-              'Octubre 2026',
-              [
-                'Copia de seguridad local: exportación y carga de archivos SQLite desde el dispositivo.',
-                'Nueva sección Acerca de con información del desarrollador, esquema DB y términos.',
-                'Ajuste del tamaño de la barra de navegación y mejoras generales.',
-              ],
-            ),
-            (
-              '0.1.0-beta+4',
-              'Octubre 2026',
-              [
-                'Sincronización en la nube con Firebase Firestore y Google Drive.',
-                'Temporizadores de recetas con auto-dismiss y alarmas acústicas.',
-                'Selector y buscador reactivo de ingredientes en recetas.',
-                'Conversor de unidades optimizado sin ceros innecesarios.',
-                'Regla de tres con soporte de decimales y unidades automáticas.',
-                'Configuración del tamaño de la barra de navegación.',
-                'Pantalla Acerca de con registro de cambios, privacidad, diagnóstico y licencias.',
-              ],
-            ),
-            (
-              '0.1.0-beta+3',
-              'Septiembre 2026',
-              [
-                'Nueva barra de navegación inferior flotante adaptativa con indicador suave.',
-                'Soporte completo de localización y accesibilidad en español e inglés.',
-                'Ajustes de física de desplazamiento, transiciones y modo zurdo.',
-              ],
-            ),
-            (
-              '0.1.0-beta+2',
-              'Agosto 2026',
-              [
-                'Métricas financieras por porción y receta.',
-                'Reordenamiento interactivo de ingredientes en costos.',
-                'Persistencia local con base de datos SQLite (Drift).',
-              ],
-            ),
-            (
-              '0.1.0-beta+1',
-              'Julio 2026',
-              [
-                'Lanzamiento inicial de Chef&Cost.',
-                'Gestión de recetas, ingredientes, conversión de medidas y herramientas.',
-              ],
-            ),
-          ]
-        : const [
-            (
-              '0.1.0-beta+7',
-              'October 2026',
-              [
-                'Local backup picker fix: removed restrictive extension filters to allow selecting any SQLite backup file.',
-              ],
-            ),
-            (
-              '0.1.0-beta+6',
-              'October 2026',
-              [
-                'Official developer support & contact email update (kbradevp@gmail.com).',
-                'Beta channel deployment refinements and stability fixes.',
-              ],
-            ),
-            (
-              '0.1.0-beta+5',
-              'October 2026',
-              [
-                'Local backup: import and export SQLite files directly to device storage.',
-                'Revamped About screen with developer contact, DB schema version, and privacy terms.',
-                'Navigation bar size preference and stability enhancements.',
-              ],
-            ),
-            (
-              '0.1.0-beta+4',
-              'October 2026',
-              [
-                'Cloud synchronization with Firebase Firestore and Google Drive.',
-                'Recipe cooking timers with auto-dismiss and audible alarms.',
-                'Reactive ingredient picker and real-time query loading.',
-                'Optimized unit converter without redundant zero padding.',
-                'Rule of three with decimal point support and unit extraction.',
-                'Navigation bar size preference in styles configuration.',
-                'Revamped About screen with changelog, privacy terms, beta diagnostics, and licenses.',
-              ],
-            ),
-            (
-              '0.1.0-beta+3',
-              'September 2026',
-              [
-                'Floating responsive bottom navigation bar with smooth indicator.',
-                'Full localization and accessibility support.',
-                'Motion physics, transition toggles, and left-handed layout mode.',
-              ],
-            ),
-            (
-              '0.1.0-beta+2',
-              'August 2026',
-              [
-                'Advanced financial metrics (cost per portion and profit margins).',
-                'Interactive reordering for recipe ingredient costs.',
-                'Persistent offline-first database powered by SQLite / Drift.',
-              ],
-            ),
-            (
-              '0.1.0-beta+1',
-              'July 2026',
-              [
-                'Initial release of Chef&Cost.',
-                'Recipe costing, ingredient manager, units, and kitchen utilities.',
-              ],
-            ),
-          ];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.history_rounded, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(l10n.settings_about_changelog, softWrap: true),
-          ],
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 460),
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: changelog.length,
-              separatorBuilder: (_, index) => const Divider(height: 24),
-              itemBuilder: (context, idx) {
-                final entry = changelog[idx];
-                final isCurrent = idx == 0;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'v${entry.$1}',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: isCurrent ? theme.colorScheme.primary : null,
-                              ),
-                            ),
-                            if (isCurrent) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primaryContainer,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  'Current',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onPrimaryContainer,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        Text(
-                          entry.$2,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ...entry.$3.map(
-                      (point) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('• ', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
-                            Expanded(
-                              child: Text(
-                                point,
-                                softWrap: true,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.close_button),
-          ),
-        ],
-      ),
-    );
+    showGithubChangelogDialog(context: context);
   }
 
   void _showPrivacyTermsDialog(BuildContext context, ThemeData theme, AppLocalizations l10n) {
-    final isEs = Localizations.localeOf(context).languageCode == 'es';
-    final terms = isEs
-        ? const [
-            (
-              Icons.storage_rounded,
-              'Almacenamiento Local Prioritario',
-              'Tus ingredientes, recetas y costos se almacenan localmente en tu dispositivo mediante SQLite (Drift). Tus datos nunca salen de tu control sin tu consentimiento.',
-            ),
-            (
-              Icons.cloud_sync_outlined,
-              'Sincronización en la Nube Opcional',
-              'La sincronización con Firebase y Google Drive es 100% opcional. Solo se activa si eliges iniciar sesión con tu cuenta.',
-            ),
-            (
-              Icons.verified_user_outlined,
-              'Propiedad Total de tus Datos',
-              'Tus recetas y cálculos de rentabilidad son de tu exclusiva propiedad intelectual. Chef&Cost no comparte ni comercializa tu información.',
-            ),
-            (
-              Icons.no_accounts_outlined,
-              'Sin Rastreadores Publicitarios',
-              'No utilizamos herramientas de rastreo publicitario de terceros ni vendemos datos personales.',
-            ),
-            (
-              Icons.notifications_active_outlined,
-              'Permisos del Sistema',
-              'La aplicación únicamente solicita permisos de notificaciones y audio para avisarte cuando finaliza un temporizador de cocción.',
-            ),
-          ]
-        : const [
-            (
-              Icons.storage_rounded,
-              'Offline-First Local Storage',
-              'Your ingredients, recipes, and cost data are stored securely on your device using SQLite (Drift). Your data stays strictly under your control.',
-            ),
-            (
-              Icons.cloud_sync_outlined,
-              'Opt-in Cloud Synchronization',
-              'Synchronization with Firebase Firestore and Google Drive is 100% optional and only occurs if you explicitly log in.',
-            ),
-            (
-              Icons.verified_user_outlined,
-              'Full Data Ownership',
-              'Your recipes and calculations belong exclusively to you. Chef&Cost does not claim ownership or distribute your culinary creations.',
-            ),
-            (
-              Icons.no_accounts_outlined,
-              'Zero Advertising Trackers',
-              'We do not embed third-party advertising SDKs or monetize your personal culinary metrics.',
-            ),
-            (
-              Icons.notifications_active_outlined,
-              'System Permissions',
-              'The application only requests notification and audio permissions to alert you when recipe cooking timers complete.',
-            ),
-          ];
+    final terms = [
+      (
+        Icons.storage_rounded,
+        l10n.settings_about_privacy_storage_title,
+        l10n.settings_about_privacy_storage_desc,
+      ),
+      (
+        Icons.cloud_sync_outlined,
+        l10n.settings_about_privacy_sync_title,
+        l10n.settings_about_privacy_sync_desc,
+      ),
+      (
+        Icons.verified_user_outlined,
+        l10n.settings_about_privacy_ownership_title,
+        l10n.settings_about_privacy_ownership_desc,
+      ),
+      (
+        Icons.no_accounts_outlined,
+        l10n.settings_about_privacy_ads_title,
+        l10n.settings_about_privacy_ads_desc,
+      ),
+      (
+        Icons.notifications_active_outlined,
+        l10n.settings_about_privacy_permissions_title,
+        l10n.settings_about_privacy_permissions_desc,
+      ),
+    ];
 
     showDialog(
       context: context,
@@ -2018,7 +1759,7 @@ class SettingsAboutScreen extends ConsumerWidget {
               actions: [
                 TextButton.icon(
                   icon: const Icon(Icons.add_circle_outline, size: 16),
-                  label: const Text('Test Log'),
+                  label: Text(l10n.settings_about_logs_test),
                   onPressed: () {
                     AppLogger.info('Manual test event triggered at ${DateTime.now()}');
                     setModalState(() {});
@@ -2368,9 +2109,9 @@ class SettingsAboutScreen extends ConsumerWidget {
                               color: Colors.purple.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
-                              'BETA',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.settings_about_badge_beta,
+                              style: const TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.purple,
