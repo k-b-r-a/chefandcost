@@ -629,5 +629,10 @@
   "cloud_sync_local_backup_title": "Local Backup & Restore",
   "cloud_sync_local_backup_desc": "Manage offline backups directly on your device storage without requiring cloud services.",
   "cloud_sync_export_local_backup_btn": "Export Backup to Device",
-  "cloud_sync_export_local_backup_success": "Backup saved successfully to device."
+  "cloud_sync_export_local_backup_success": "Backup saved successfully to device.",
+  "settings_about_changelog_loading": "Loading release notes...",
+  "settings_about_changelog_empty": "No release notes found.",
+  "settings_about_changelog_error": "Could not load release notes.",
+  "settings_about_changelog_retry": "Retry",
+  "settings_about_changelog_refresh": "Refresh"
 }

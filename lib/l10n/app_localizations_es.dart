@@ -1457,4 +1457,22 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get cloud_sync_export_local_backup_success =>
       'Copia de seguridad guardada exitosamente en el dispositivo.';
+
+  @override
+  String get settings_about_changelog_loading =>
+      'Cargando notas de la versión...';
+
+  @override
+  String get settings_about_changelog_empty =>
+      'No se encontraron notas de versión.';
+
+  @override
+  String get settings_about_changelog_error =>
+      'No se pudieron cargar las notas de la versión.';
+
+  @override
+  String get settings_about_changelog_retry => 'Reintentar';
+
+  @override
+  String get settings_about_changelog_refresh => 'Actualizar';
 }

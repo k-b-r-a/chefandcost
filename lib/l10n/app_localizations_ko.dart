@@ -1442,4 +1442,19 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get cloud_sync_export_local_backup_success =>
       'Backup saved successfully to device.';
+
+  @override
+  String get settings_about_changelog_loading => 'Loading release notes...';
+
+  @override
+  String get settings_about_changelog_empty => 'No release notes found.';
+
+  @override
+  String get settings_about_changelog_error => 'Could not load release notes.';
+
+  @override
+  String get settings_about_changelog_retry => 'Retry';
+
+  @override
+  String get settings_about_changelog_refresh => 'Refresh';
 }

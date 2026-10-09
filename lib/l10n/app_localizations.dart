@@ -2825,6 +2825,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup saved successfully to device.'**
   String get cloud_sync_export_local_backup_success;
+
+  /// No description provided for @settings_about_changelog_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading release notes...'**
+  String get settings_about_changelog_loading;
+
+  /// No description provided for @settings_about_changelog_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No release notes found.'**
+  String get settings_about_changelog_empty;
+
+  /// No description provided for @settings_about_changelog_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load release notes.'**
+  String get settings_about_changelog_error;
+
+  /// No description provided for @settings_about_changelog_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get settings_about_changelog_retry;
+
+  /// No description provided for @settings_about_changelog_refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get settings_about_changelog_refresh;
 }
 
 class _AppLocalizationsDelegate

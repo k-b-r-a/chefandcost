@@ -113,7 +113,11 @@ void main() {
           of: find.byType(AlertDialog),
           matching: find.text('v0.1.0-beta+$v'),
         );
-        await tester.scrollUntilVisible(betaFinder, 100, scrollable: find.byType(Scrollable).last);
+        await tester.scrollUntilVisible(
+          betaFinder,
+          100,
+          scrollable: find.byType(Scrollable).last,
+        );
         expect(betaFinder, findsOneWidget);
       }
 
