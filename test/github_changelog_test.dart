@@ -108,7 +108,7 @@ void main() {
       expect(forceRefresh.length, 1);
     });
 
-    test('Gracefully falls back to cache or bundled data when rate limited or offline', () async {
+    test('Gracefully falls back to cache or empty list when rate limited or offline', () async {
       final failingClient = MockClient((request) async {
         return http.Response('Rate limit exceeded', 403);
       });
@@ -121,9 +121,8 @@ void main() {
 
       final releases = await service.fetchReleases();
 
-      // Gracefully returns bundled fallback releases without throwing
-      expect(releases, isNotEmpty);
-      expect(releases.first.tagName, contains('beta'));
+      // Gracefully returns empty list without throwing
+      expect(releases, isEmpty);
     });
   });
 

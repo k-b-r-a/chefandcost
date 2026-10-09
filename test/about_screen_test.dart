@@ -70,14 +70,14 @@ void main() {
       );
     }
 
-    testWidgets('Displays App Header, Version, DB Schema, and Beta Badge', (WidgetTester tester) async {
+    testWidgets('Displays App Header, Version, DB Schema, and Alpha Badge', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
       expect(find.text('Chef&Cost'), findsOneWidget);
-      expect(find.textContaining('0.1.0-beta+8'), findsOneWidget);
+      expect(find.textContaining('0.1.1-alpha'), findsOneWidget);
       expect(find.textContaining('Esquema DB v1'), findsOneWidget);
-      expect(find.text('Canal Beta'), findsOneWidget);
+      expect(find.text('Canal Alpha'), findsOneWidget);
     });
 
     testWidgets('Displays Developer Info and copies email to clipboard', (WidgetTester tester) async {
@@ -97,7 +97,7 @@ void main() {
       expect(find.text('Correo copiado al portapapeles'), findsOneWidget);
     });
 
-    testWidgets('Opens Changelog dialog and displays releases', (WidgetTester tester) async {
+    testWidgets('Opens Changelog dialog and displays dialog cleanly', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
@@ -107,19 +107,13 @@ void main() {
       await tester.tap(changelogTile);
       await tester.pumpAndSettle();
 
-      expect(find.byType(AlertDialog), findsOneWidget);
-      for (int v = 8; v >= 1; v--) {
-        final betaFinder = find.descendant(
+      expect(
+        find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.text('v0.1.0-beta+$v'),
-        );
-        await tester.scrollUntilVisible(
-          betaFinder,
-          100,
-          scrollable: find.byType(Scrollable).last,
-        );
-        expect(betaFinder, findsOneWidget);
-      }
+          matching: find.text('Registro de Cambios'),
+        ),
+        findsOneWidget,
+      );
 
       // Close dialog
       await tester.tap(find.text('Cerrar'));

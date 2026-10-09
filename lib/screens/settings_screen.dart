@@ -1796,6 +1796,7 @@ class SettingsAboutScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final db = ref.watch(databaseProvider);
+    final isAlpha = kAppVersion.toLowerCase().contains('alpha');
     final isBeta = kAppVersion.toLowerCase().contains('beta');
 
     Widget buildCard({required Widget child, EdgeInsetsGeometry? padding}) {
@@ -1907,23 +1908,38 @@ class SettingsAboutScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: (isBeta ? Colors.orange : Colors.green).withValues(alpha: 0.15),
+                              color: (isAlpha
+                                      ? Colors.purple
+                                      : (isBeta ? Colors.orange : Colors.green))
+                                  .withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  isBeta ? Icons.science_outlined : Icons.check_circle_outline,
+                                  isAlpha
+                                      ? Icons.biotech_outlined
+                                      : (isBeta ? Icons.science_outlined : Icons.check_circle_outline),
                                   size: 14,
-                                  color: isBeta ? Colors.orange.shade800 : Colors.green.shade800,
+                                  color: isAlpha
+                                      ? Colors.purple.shade800
+                                      : (isBeta ? Colors.orange.shade800 : Colors.green.shade800),
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  isBeta ? l10n.settings_about_channel_beta : l10n.settings_about_channel_stable,
+                                  isAlpha
+                                      ? (Localizations.localeOf(context).languageCode == 'es'
+                                          ? 'Canal Alpha'
+                                          : 'Alpha Channel')
+                                      : (isBeta
+                                          ? l10n.settings_about_channel_beta
+                                          : l10n.settings_about_channel_stable),
                                   style: theme.textTheme.labelMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
-                                    color: isBeta ? Colors.orange.shade800 : Colors.green.shade800,
+                                    color: isAlpha
+                                        ? Colors.purple.shade800
+                                        : (isBeta ? Colors.orange.shade800 : Colors.green.shade800),
                                   ),
                                 ),
                               ],
@@ -2087,7 +2103,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                 ),
 
                 // 4. Beta Debug & Diagnostics (Only displayed if beta app)
-                if (isBeta)
+                if (isBeta || isAlpha)
                   buildCard(
                     padding: EdgeInsets.zero,
                     child: ListTile(

@@ -80,11 +80,11 @@ class GithubChangelogService {
     int maxReleases = 30,
     bool isSpanish = false,
   }) async {
-    // Fast path: in widget tests without an injected client, return bundled releases directly
+    // In widget tests without an injected client, return empty list immediately to prevent test hangs
     if (!_isCustomClient && !kIsWeb) {
       try {
         if (Platform.environment['FLUTTER_TEST'] == 'true') {
-          return getBundledFallbackReleases(isSpanish: isSpanish);
+          return const [];
         }
       } catch (_) {}
     }
@@ -182,8 +182,8 @@ class GithubChangelogService {
       return _inMemoryCache!;
     }
 
-    // 5. Final offline fallback: return bundled releases
-    return getBundledFallbackReleases(isSpanish: isSpanish);
+    // 5. Final offline fallback: return empty list
+    return const [];
   }
 
   Future<List<GithubRelease>?> _getCachedReleasesFromPrefs() async {
@@ -210,146 +210,5 @@ class GithubChangelogService {
       await prefs.setString(_cacheKey, jsonStr);
       await prefs.setInt(_cacheTimeKey, DateTime.now().millisecondsSinceEpoch);
     } catch (_) {}
-  }
-
-  /// Bundled fallback releases in markdown format for offline first launches.
-  static List<GithubRelease> getBundledFallbackReleases({bool isSpanish = false}) {
-    if (isSpanish) {
-      return const [
-        GithubRelease(
-          tagName: 'v0.1.0-beta+8',
-          name: 'Chef&Cost v0.1.0-beta+8',
-          body: '''### Destacado
-- Escalado inverso de recetas por ingrediente objetivo con aviso visual temporal y opción de guardado permanente.
-- Ordenamiento de ingredientes por tipo (Sólido, Líquido, Piezas) y alfabético.
-- Aislamiento de búsqueda independiente entre ingredientes y recetas.
-- Autocapitalización en campos de texto y mejoras de estabilidad en sincronización en la nube.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+7',
-          name: 'Chef&Cost v0.1.0-beta+7',
-          body: '''### Destacado
-- Corrección en selector de copia de seguridad local: eliminación de restricciones de extensiones para permitir seleccionar cualquier archivo SQLite.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+6',
-          name: 'Chef&Cost v0.1.0-beta+6',
-          body: '''### Destacado
-- Actualización oficial del correo de contacto y soporte del desarrollador (`kbradevp@gmail.com`).
-- Optimizaciones de estabilidad y ajustes de despliegue en canal Beta.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+5',
-          name: 'Chef&Cost v0.1.0-beta+5',
-          body: '''### Destacado
-- Copia de seguridad local: exportación y carga de archivos SQLite desde el dispositivo.
-- Nueva sección Acerca de con información del desarrollador, esquema DB y términos.
-- Ajuste del tamaño de la barra de navegación y mejoras generales.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+4',
-          name: 'Chef&Cost v0.1.0-beta+4',
-          body: '''### Destacado
-- Sincronización en la nube con Firebase Firestore y Google Drive.
-- Temporizadores de recetas con auto-dismiss y alarmas acústicas.
-- Selector y buscador reactivo de ingredientes en recetas.
-- Conversor de unidades optimizado sin ceros innecesarios.
-- Regla de tres con soporte de decimales y unidades automáticas.
-- Configuración del tamaño de la barra de navegación.
-- Pantalla Acerca de con registro de cambios, privacidad, diagnóstico y licencias.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+3',
-          name: 'Chef&Cost v0.1.0-beta+3',
-          body: '''### Destacado
-- Nueva barra de navegación inferior flotante adaptativa con indicador suave.
-- Soporte completo de localización y accesibilidad en español e inglés.
-- Ajustes de física de desplazamiento, transiciones y modo zurdo.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+2',
-          name: 'Chef&Cost v0.1.0-beta+2',
-          body: '''### Destacado
-- Métricas financieras por porción y receta.
-- Reordenamiento interactivo de ingredientes en costos.
-- Persistencia local con base de datos SQLite (Drift).''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+1',
-          name: 'Chef&Cost v0.1.0-beta+1',
-          body: '''### Destacado
-- Lanzamiento inicial de Chef&Cost.
-- Gestión de recetas, ingredientes, conversión de medidas y herramientas.''',
-        ),
-      ];
-    } else {
-      return const [
-        GithubRelease(
-          tagName: 'v0.1.0-beta+8',
-          name: 'Chef&Cost v0.1.0-beta+8',
-          body: '''### Highlights
-- Target recipe scaling by single ingredient with temporary banner indicator and permanent save option.
-- Ingredient sorting controls by type (Solid, Liquid, Pieces) and alphabetical order.
-- Isolated search states between ingredients and recipes.
-- Text field auto-capitalization and cloud sync stability improvements.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+7',
-          name: 'Chef&Cost v0.1.0-beta+7',
-          body: '''### Highlights
-- Local backup picker fix: removed restrictive extension filters to allow selecting any SQLite backup file.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+6',
-          name: 'Chef&Cost v0.1.0-beta+6',
-          body: '''### Highlights
-- Official developer support & contact email update (`kbradevp@gmail.com`).
-- Beta channel deployment refinements and stability fixes.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+5',
-          name: 'Chef&Cost v0.1.0-beta+5',
-          body: '''### Highlights
-- Local backup: import and export SQLite files directly to device storage.
-- Revamped About screen with developer contact, DB schema version, and privacy terms.
-- Navigation bar size preference and stability enhancements.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+4',
-          name: 'Chef&Cost v0.1.0-beta+4',
-          body: '''### Highlights
-- Cloud synchronization with Firebase Firestore and Google Drive.
-- Recipe timers with auto-dismiss and sound alarms.
-- Reactive ingredient selector and live search in recipes.
-- Unit converter optimized with clean decimal formatting.
-- Rule of three with decimal support and auto-unit resolution.
-- Navigation bar size customization.
-- About screen with changelog, privacy policy, diagnostics, and licenses.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+3',
-          name: 'Chef&Cost v0.1.0-beta+3',
-          body: '''### Highlights
-- New floating adaptive bottom navigation bar with fluid indicator.
-- Full localization and accessibility in English and Spanish.
-- Tuned scroll physics, screen transitions, and left-handed mode.''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+2',
-          name: 'Chef&Cost v0.1.0-beta+2',
-          body: '''### Highlights
-- Financial portion and recipe yield metrics.
-- Interactive ingredient cost reordering.
-- Local SQLite database persistence (Drift).''',
-        ),
-        GithubRelease(
-          tagName: 'v0.1.0-beta+1',
-          name: 'Chef&Cost v0.1.0-beta+1',
-          body: '''### Highlights
-- Initial release of Chef&Cost.
-- Recipe costing, ingredient manager, units, and kitchen utilities.''',
-        ),
-      ];
-    }
   }
 }
