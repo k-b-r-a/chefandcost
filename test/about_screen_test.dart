@@ -108,20 +108,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(
-        find.descendant(
+      for (int v = 8; v >= 1; v--) {
+        final betaFinder = find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.text('v0.1.0-beta+8'),
-        ),
-        findsOneWidget,
-      );
-      final beta6 = find.text('v0.1.0-beta+6');
-      await tester.scrollUntilVisible(beta6, 100, scrollable: find.byType(Scrollable).last);
-      expect(beta6, findsOneWidget);
-
-      final beta2 = find.text('v0.1.0-beta+2');
-      await tester.scrollUntilVisible(beta2, 100, scrollable: find.byType(Scrollable).last);
-      expect(beta2, findsOneWidget);
+          matching: find.text('v0.1.0-beta+$v'),
+        );
+        await tester.scrollUntilVisible(betaFinder, 100, scrollable: find.byType(Scrollable).last);
+        expect(betaFinder, findsOneWidget);
+      }
 
       // Close dialog
       await tester.tap(find.text('Cerrar'));
