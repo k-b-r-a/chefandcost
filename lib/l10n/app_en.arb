@@ -686,8 +686,17 @@
   "tutorial_editor_ingredient_hold_desc": "Tap the quantity to edit amount directly. But you can also hold any ingredient for more options!",
   "tutorial_editor_ingredient_hold_hint": "Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.",
   "sample_manufacturing_recipe_title": "Butter Cookies (Manufacturing Batch)",
+  "sample_manufacturing_recipe_desc": "Standard 3:2:1 manufacturing batch for production costing, yield tracking, and industrial margin calculation.",
+  "sample_manufacturing_yield_name": "pieces",
+  "sample_manufacturing_flour_name": "All-Purpose Wheat Flour",
+  "sample_manufacturing_butter_name": "Unsalted Butter",
+  "sample_manufacturing_sugar_name": "Refined White Sugar",
+  "sample_manufacturing_step1": "[timer:Industrial Creaming|240] Beat butter at medium-high speed until creamy and pale.",
+  "sample_manufacturing_step2": "Sift flour with sugar and incorporate at low speed in 2 parts until combined without overworking.",
+  "sample_manufacturing_step3": "[timer:Batch Baking|900] Portion 24 pieces of dough, arrange on baking sheet lined with parchment paper, and bake at 180°C.",
   "sample_manufacturing_badge": "Temporary Sample",
   "sample_manufacturing_banner_desc": "Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.",
   "sample_manufacturing_save_btn": "Save as Real Recipe",
-  "sample_manufacturing_dismiss_btn": "Dismiss Sample"
+  "sample_manufacturing_dismiss_btn": "Dismiss Sample",
+  "sample_manufacturing_auto_removed": "Tutorial completed. Temporary sample recipe removed."
 }

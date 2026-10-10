@@ -97,8 +97,26 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
           ),
           recipesAsync.when(
             data: (recipes) {
+              final hasSample = recipes.any(
+                (item) => isSampleManufacturingRecipe(item.recipe.recipePk),
+              );
+              if (hasSample) {
+                final prefs = ref.watch(sharedPreferencesProvider);
+                if (prefs.getBool(AppTutorialService.kTutorialRecipeEditorCompletedKey) == true) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      final db = ref.read(databaseProvider);
+                      dismissSampleManufacturingRecipe(db, prefs: prefs);
+                    }
+                  });
+                }
+              }
+
               final filteredRecipes = recipes.where((item) {
-                return item.recipe.name.toLowerCase().contains(searchQuery);
+                final effectiveName = isSampleManufacturingRecipe(item.recipe.recipePk)
+                    ? l10n.sample_manufacturing_recipe_title
+                    : item.recipe.name;
+                return effectiveName.toLowerCase().contains(searchQuery);
               }).toList();
 
               if (!_tutorialChecked && filteredRecipes.isNotEmpty) {
@@ -249,7 +267,9 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                recipe.name,
+                                                isSampleManufacturingRecipe(recipe.recipePk)
+                                                    ? l10n.sample_manufacturing_recipe_title
+                                                    : recipe.name,
                                                 style: theme.textTheme.titleMedium
                                                     ?.copyWith(
                                                       fontWeight: FontWeight.bold,
@@ -292,11 +312,19 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                             ],
                                           ],
                                         ),
-                                        if (recipe.description != null &&
-                                            recipe.description!.isNotEmpty) ...[
+                                        if ((isSampleManufacturingRecipe(recipe.recipePk)
+                                                ? l10n.sample_manufacturing_recipe_desc
+                                                : recipe.description) !=
+                                            null &&
+                                            (isSampleManufacturingRecipe(recipe.recipePk)
+                                                    ? l10n.sample_manufacturing_recipe_desc
+                                                    : (recipe.description ?? ''))
+                                                .isNotEmpty) ...[
                                           const SizedBox(height: 2),
                                           Text(
-                                            recipe.description!,
+                                            isSampleManufacturingRecipe(recipe.recipePk)
+                                                ? l10n.sample_manufacturing_recipe_desc
+                                                : recipe.description!,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: theme.textTheme.bodySmall

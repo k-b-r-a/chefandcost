@@ -1,9 +1,13 @@
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart' show Locale;
 import 'package:drift/drift.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import 'database.dart';
 import 'initialize_default_database.dart';
+import '../l10n/app_localizations.dart';
+import '../services/app_tutorial_service.dart';
 
 /// Identifier for the initial temporary sample manufacturing recipe.
 const String kSampleManufacturingRecipePk = 'sample_manufacturing_recipe_v1';
@@ -21,14 +25,54 @@ const String kSampleSugarPk = 'sample_mfg_sugar_v1';
 bool isSampleManufacturingRecipe(String? recipePk) =>
     recipePk == kSampleManufacturingRecipePk;
 
+/// Resolves appropriate [AppLocalizations] adapting to the device language or user preference.
+AppLocalizations getSampleRecipeLocalizations({
+  SharedPreferences? prefs,
+  Locale? locale,
+}) {
+  if (locale != null) {
+    try {
+      return lookupAppLocalizations(locale);
+    } catch (_) {
+      try {
+        return lookupAppLocalizations(Locale(locale.languageCode));
+      } catch (_) {}
+    }
+  }
+  final savedCode = prefs?.getString('locale');
+  if (savedCode != null && savedCode.isNotEmpty) {
+    try {
+      return lookupAppLocalizations(Locale(savedCode));
+    } catch (_) {}
+  }
+  try {
+    final devLocale = ui.PlatformDispatcher.instance.locale;
+    return lookupAppLocalizations(Locale(devLocale.languageCode));
+  } catch (_) {}
+  return lookupAppLocalizations(const Locale('es'));
+}
+
 /// Ensures the initial 3-ingredient manufacturing recipe exists on fresh app start.
+/// Adapts ingredient names, recipe title, description, and steps to the device language.
 /// Returns true if the recipe was created, false otherwise.
 Future<bool> ensureSampleManufacturingRecipe(
   AppDatabase db, {
   SharedPreferences? prefs,
+  Locale? locale,
 }) async {
   final p = prefs ?? await SharedPreferences.getInstance();
   if (p.getBool(kSampleManufacturingRecipeDismissedKey) == true) {
+    return false;
+  }
+
+  // If the recipe editor walkthrough has already been completed, do not keep or create the sample recipe
+  if (p.getBool(AppTutorialService.kTutorialRecipeEditorCompletedKey) == true) {
+    final existingSample = (await (db.select(db.recipes)
+          ..where((t) => t.recipePk.equals(kSampleManufacturingRecipePk)))
+        .get()).firstOrNull;
+    if (existingSample != null) {
+      await dismissSampleManufacturingRecipe(db, prefs: p);
+    }
     return false;
   }
 
@@ -36,6 +80,8 @@ Future<bool> ensureSampleManufacturingRecipe(
   if (allRecipes.isNotEmpty) {
     return false;
   }
+
+  final l10n = getSampleRecipeLocalizations(prefs: p, locale: locale);
 
   // 1. Ensure default culinary units exist
   await initializeDefaultDatabase(db);
@@ -52,14 +98,16 @@ Future<bool> ensureSampleManufacturingRecipe(
   };
 
   String flourPk = kSampleFlourPk;
-  final existingFlour = ingByName['harina de trigo 0000'];
+  final existingFlour = ingByName[l10n.sample_manufacturing_flour_name.toLowerCase().trim()] ??
+      ingByName['harina de trigo 0000'] ??
+      ingByName['all-purpose wheat flour'];
   if (existingFlour != null) {
     flourPk = existingFlour.ingredientPk;
   } else {
     await db.insertIngredient(
       IngredientsCompanion(
         ingredientPk: Value(flourPk),
-        name: const Value('Harina de Trigo 0000'),
+        name: Value(l10n.sample_manufacturing_flour_name),
         cost: const Value(1.20),
         quantityForCost: const Value(1000.0),
         unitFk: Value(gUnit.unitPk),
@@ -70,14 +118,16 @@ Future<bool> ensureSampleManufacturingRecipe(
   }
 
   String butterPk = kSampleButterPk;
-  final existingButter = ingByName['mantequilla sin sal'];
+  final existingButter = ingByName[l10n.sample_manufacturing_butter_name.toLowerCase().trim()] ??
+      ingByName['mantequilla sin sal'] ??
+      ingByName['unsalted butter'];
   if (existingButter != null) {
     butterPk = existingButter.ingredientPk;
   } else {
     await db.insertIngredient(
       IngredientsCompanion(
         ingredientPk: Value(butterPk),
-        name: const Value('Mantequilla sin Sal'),
+        name: Value(l10n.sample_manufacturing_butter_name),
         cost: const Value(2.80),
         quantityForCost: const Value(250.0),
         unitFk: Value(gUnit.unitPk),
@@ -88,15 +138,17 @@ Future<bool> ensureSampleManufacturingRecipe(
   }
 
   String sugarPk = kSampleSugarPk;
-  final existingSugar = ingByName['azúcar blanca refinada'] ??
-      ingByName['azucar blanca refinada'];
+  final existingSugar = ingByName[l10n.sample_manufacturing_sugar_name.toLowerCase().trim()] ??
+      ingByName['azúcar blanca refinada'] ??
+      ingByName['azucar blanca refinada'] ??
+      ingByName['refined white sugar'];
   if (existingSugar != null) {
     sugarPk = existingSugar.ingredientPk;
   } else {
     await db.insertIngredient(
       IngredientsCompanion(
         ingredientPk: Value(sugarPk),
-        name: const Value('Azúcar Blanca Refinada'),
+        name: Value(l10n.sample_manufacturing_sugar_name),
         cost: const Value(1.50),
         quantityForCost: const Value(1000.0),
         unitFk: Value(gUnit.unitPk),
@@ -117,12 +169,10 @@ Future<bool> ensureSampleManufacturingRecipe(
     await db.insertRecipe(
       RecipesCompanion(
         recipePk: const Value(kSampleManufacturingRecipePk),
-        name: const Value('Galletas de Mantequilla (Lote Producción)'),
-        description: const Value(
-          'Lote estándar de manufactura con fórmula 3:2:1 para costeo de producción, control de rendimiento y cálculo de margen industrial.',
-        ),
+        name: Value(l10n.sample_manufacturing_recipe_title),
+        description: Value(l10n.sample_manufacturing_recipe_desc),
         defaultYield: const Value(24.0),
-        yieldName: const Value('piezas'),
+        yieldName: Value(l10n.sample_manufacturing_yield_name),
         targetProfitMargin: const Value(50.0),
         targetPricePerPortion: const Value(0.23),
         fixedOverheadCost: const Value(0.0),
@@ -159,9 +209,9 @@ Future<bool> ensureSampleManufacturingRecipe(
 
     // 3 Manufacturing steps with timers
     final steps = [
-      'Control de calidad y pesaje de materia prima según fórmula de fabricación (300g harina, 200g mantequilla, 100g azúcar).',
-      'Cremado de mantequilla con azúcar en batidora industrial por 4 minutos hasta emulsionar. [timer:Cremado Industrial|240]',
-      'Incorporación de harina tamizada, porcionado en unidades de 25g en bandeja industrial y horneado continuo a 180°C por 15 minutos. [timer:Horneado de Lote|900]',
+      l10n.sample_manufacturing_step1,
+      l10n.sample_manufacturing_step2,
+      l10n.sample_manufacturing_step3,
     ];
 
     for (int i = 0; i < steps.length; i++) {

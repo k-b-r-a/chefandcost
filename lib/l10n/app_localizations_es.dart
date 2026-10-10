@@ -1630,6 +1630,34 @@ class AppLocalizationsEs extends AppLocalizations {
       'Galletas de Mantequilla (Lote Producción)';
 
   @override
+  String get sample_manufacturing_recipe_desc =>
+      'Lote estándar de manufactura con fórmula 3:2:1 para costeo de producción, control de rendimiento y cálculo de margen industrial.';
+
+  @override
+  String get sample_manufacturing_yield_name => 'piezas';
+
+  @override
+  String get sample_manufacturing_flour_name => 'Harina de Trigo 0000';
+
+  @override
+  String get sample_manufacturing_butter_name => 'Mantequilla sin Sal';
+
+  @override
+  String get sample_manufacturing_sugar_name => 'Azúcar Blanca Refinada';
+
+  @override
+  String get sample_manufacturing_step1 =>
+      '[timer:Cremado Industrial|240] Batir la mantequilla a velocidad media-alta hasta punto pomada y blanqueo homogéneo.';
+
+  @override
+  String get sample_manufacturing_step2 =>
+      'Tamizar la harina con el azúcar e incorporar a velocidad baja en 2 partes hasta unir sin sobreamasar.';
+
+  @override
+  String get sample_manufacturing_step3 =>
+      '[timer:Horneado de Lote|900] Porcionar 24 piezas de masa, colocar en bandeja con papel sulfurizado y hornear a 180°C.';
+
+  @override
   String get sample_manufacturing_badge => 'Muestra Temporal';
 
   @override
@@ -1641,4 +1669,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sample_manufacturing_dismiss_btn => 'Descartar muestra';
+
+  @override
+  String get sample_manufacturing_auto_removed =>
+      'Tutorial completado. Se removió la receta de muestra temporal.';
 }

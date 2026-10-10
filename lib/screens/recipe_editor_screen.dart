@@ -1576,14 +1576,22 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       if (!mounted) return;
       final theme = Theme.of(context);
       final settings = ref.read(settingsProvider);
+      final l10n = AppLocalizations.of(context)!;
+      final isSample = isSampleManufacturingRecipe(widget.recipeId);
 
-      _nameController.text = detail.recipe.name;
-      _descriptionController.text = detail.recipe.description ?? '';
+      _nameController.text = isSample
+          ? l10n.sample_manufacturing_recipe_title
+          : detail.recipe.name;
+      _descriptionController.text = isSample
+          ? l10n.sample_manufacturing_recipe_desc
+          : (detail.recipe.description ?? '');
       _yieldController.text = RecipeUtils.formatNumber(
         detail.recipe.defaultYield,
         decimalDigits: 0,
       );
-      _yieldNameController.text = detail.recipe.yieldName;
+      _yieldNameController.text = isSample
+          ? l10n.sample_manufacturing_yield_name
+          : detail.recipe.yieldName;
       _profitMarginController.text = RecipeUtils.formatNumber(
         detail.recipe.targetProfitMargin * 100,
         decimalDigits: 0,
@@ -1594,14 +1602,25 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       );
 
       for (var ingWithData in detail.ingredients) {
+        Ingredient effectiveIng = ingWithData.ingredient;
+        if (isSample) {
+          if (effectiveIng.ingredientPk == kSampleFlourPk) {
+            effectiveIng = effectiveIng.copyWith(name: l10n.sample_manufacturing_flour_name);
+          } else if (effectiveIng.ingredientPk == kSampleButterPk) {
+            effectiveIng = effectiveIng.copyWith(name: l10n.sample_manufacturing_butter_name);
+          } else if (effectiveIng.ingredientPk == kSampleSugarPk) {
+            effectiveIng = effectiveIng.copyWith(name: l10n.sample_manufacturing_sugar_name);
+          }
+        }
+
         final sourceUnit = units
-            .where((u) => u.unitPk == ingWithData.ingredient.unitFk)
+            .where((u) => u.unitPk == effectiveIng.unitFk)
             .firstOrNull;
         final targetUnit = sourceUnit != null
             ? UnitUtils.getTargetUnit(sourceUnit, units, settings)
             : null;
         final data = RecipeIngredientData(
-          ingredient: ingWithData.ingredient,
+          ingredient: effectiveIng,
           initialAmount: RecipeUtils.formatNumber(
             ingWithData.entry.amountNeeded,
             decimalDigits: 2,
@@ -1615,8 +1634,18 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
       final timerRegExp = RegExp(r'\[timer:(.*?)\|(\d+)\]');
       for (var step in detail.steps) {
-        String cleanInstruction = step.instruction;
-        final matches = timerRegExp.allMatches(step.instruction);
+        String rawInstruction = step.instruction;
+        if (isSample) {
+          if (step.stepNumber == 1) {
+            rawInstruction = l10n.sample_manufacturing_step1;
+          } else if (step.stepNumber == 2) {
+            rawInstruction = l10n.sample_manufacturing_step2;
+          } else if (step.stepNumber == 3) {
+            rawInstruction = l10n.sample_manufacturing_step3;
+          }
+        }
+        String cleanInstruction = rawInstruction;
+        final matches = timerRegExp.allMatches(rawInstruction);
         for (final match in matches) {
           final timerName = match.group(1) ?? 'Timer';
           final durationSecs = int.tryParse(match.group(2) ?? '0') ?? 0;
@@ -2359,13 +2388,35 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     }
   }
 
-  void _handleTutorialEnd() {
+  Future<void> _handleTutorialEnd() async {
     if (mounted && _tutorialExpandedIngredientIndex != null) {
       setState(() {
         _tutorialExpandedIngredientIndex = null;
       });
     }
+    if (isSampleManufacturingRecipe(widget.recipeId)) {
+      await _autoRemoveSampleRecipe();
+    }
   }
+
+  Future<void> _autoRemoveSampleRecipe() async {
+    final db = ref.read(databaseProvider);
+    final prefs = ref.read(sharedPreferencesProvider);
+    await dismissSampleManufacturingRecipe(db, prefs: prefs);
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    AppSnackBar.showSuccess(context, l10n.sample_manufacturing_auto_removed);
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+  @visibleForTesting
+  Future<void> handleTutorialEnd() => _handleTutorialEnd();
 
   @override
   Widget build(BuildContext context) {

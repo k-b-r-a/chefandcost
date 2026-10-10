@@ -3102,6 +3102,54 @@ abstract class AppLocalizations {
   /// **'Butter Cookies (Manufacturing Batch)'**
   String get sample_manufacturing_recipe_title;
 
+  /// No description provided for @sample_manufacturing_recipe_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard 3:2:1 manufacturing batch for production costing, yield tracking, and industrial margin calculation.'**
+  String get sample_manufacturing_recipe_desc;
+
+  /// No description provided for @sample_manufacturing_yield_name.
+  ///
+  /// In en, this message translates to:
+  /// **'pieces'**
+  String get sample_manufacturing_yield_name;
+
+  /// No description provided for @sample_manufacturing_flour_name.
+  ///
+  /// In en, this message translates to:
+  /// **'All-Purpose Wheat Flour'**
+  String get sample_manufacturing_flour_name;
+
+  /// No description provided for @sample_manufacturing_butter_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsalted Butter'**
+  String get sample_manufacturing_butter_name;
+
+  /// No description provided for @sample_manufacturing_sugar_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Refined White Sugar'**
+  String get sample_manufacturing_sugar_name;
+
+  /// No description provided for @sample_manufacturing_step1.
+  ///
+  /// In en, this message translates to:
+  /// **'[timer:Industrial Creaming|240] Beat butter at medium-high speed until creamy and pale.'**
+  String get sample_manufacturing_step1;
+
+  /// No description provided for @sample_manufacturing_step2.
+  ///
+  /// In en, this message translates to:
+  /// **'Sift flour with sugar and incorporate at low speed in 2 parts until combined without overworking.'**
+  String get sample_manufacturing_step2;
+
+  /// No description provided for @sample_manufacturing_step3.
+  ///
+  /// In en, this message translates to:
+  /// **'[timer:Batch Baking|900] Portion 24 pieces of dough, arrange on baking sheet lined with parchment paper, and bake at 180°C.'**
+  String get sample_manufacturing_step3;
+
   /// No description provided for @sample_manufacturing_badge.
   ///
   /// In en, this message translates to:
@@ -3125,6 +3173,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss Sample'**
   String get sample_manufacturing_dismiss_btn;
+
+  /// No description provided for @sample_manufacturing_auto_removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Tutorial completed. Temporary sample recipe removed.'**
+  String get sample_manufacturing_auto_removed;
 }
 
 class _AppLocalizationsDelegate

@@ -1608,6 +1608,34 @@ class AppLocalizationsAf extends AppLocalizations {
       'Butter Cookies (Manufacturing Batch)';
 
   @override
+  String get sample_manufacturing_recipe_desc =>
+      'Standard 3:2:1 manufacturing batch for production costing, yield tracking, and industrial margin calculation.';
+
+  @override
+  String get sample_manufacturing_yield_name => 'pieces';
+
+  @override
+  String get sample_manufacturing_flour_name => 'All-Purpose Wheat Flour';
+
+  @override
+  String get sample_manufacturing_butter_name => 'Unsalted Butter';
+
+  @override
+  String get sample_manufacturing_sugar_name => 'Refined White Sugar';
+
+  @override
+  String get sample_manufacturing_step1 =>
+      '[timer:Industrial Creaming|240] Beat butter at medium-high speed until creamy and pale.';
+
+  @override
+  String get sample_manufacturing_step2 =>
+      'Sift flour with sugar and incorporate at low speed in 2 parts until combined without overworking.';
+
+  @override
+  String get sample_manufacturing_step3 =>
+      '[timer:Batch Baking|900] Portion 24 pieces of dough, arrange on baking sheet lined with parchment paper, and bake at 180°C.';
+
+  @override
   String get sample_manufacturing_badge => 'Temporary Sample';
 
   @override
@@ -1619,4 +1647,8 @@ class AppLocalizationsAf extends AppLocalizations {
 
   @override
   String get sample_manufacturing_dismiss_btn => 'Dismiss Sample';
+
+  @override
+  String get sample_manufacturing_auto_removed =>
+      'Tutorial completed. Temporary sample recipe removed.';
 }

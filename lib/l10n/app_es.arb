@@ -659,8 +659,17 @@
   "tutorial_editor_ingredient_hold_desc": "Toca la cantidad para editarla directamente. ¡Pero también puedes mantener presionado cualquier ingrediente para ver más opciones!",
   "tutorial_editor_ingredient_hold_hint": "Mantén presionado este ingrediente para ver más opciones: Escalar la receta según este ingrediente, Editar, Fusionar o Eliminar.",
   "sample_manufacturing_recipe_title": "Galletas de Mantequilla (Lote Producción)",
+  "sample_manufacturing_recipe_desc": "Lote estándar de manufactura con fórmula 3:2:1 para costeo de producción, control de rendimiento y cálculo de margen industrial.",
+  "sample_manufacturing_yield_name": "piezas",
+  "sample_manufacturing_flour_name": "Harina de Trigo 0000",
+  "sample_manufacturing_butter_name": "Mantequilla sin Sal",
+  "sample_manufacturing_sugar_name": "Azúcar Blanca Refinada",
+  "sample_manufacturing_step1": "[timer:Cremado Industrial|240] Batir la mantequilla a velocidad media-alta hasta punto pomada y blanqueo homogéneo.",
+  "sample_manufacturing_step2": "Tamizar la harina con el azúcar e incorporar a velocidad baja en 2 partes hasta unir sin sobreamasar.",
+  "sample_manufacturing_step3": "[timer:Horneado de Lote|900] Porcionar 24 piezas de masa, colocar en bandeja con papel sulfurizado y hornear a 180°C.",
   "sample_manufacturing_badge": "Muestra Temporal",
   "sample_manufacturing_banner_desc": "Receta de muestra temporal para pruebas de costeo y manufactura (3 ingredientes). No se guardará como receta permanente a menos que decidas guardarla.",
   "sample_manufacturing_save_btn": "Guardar como receta real",
-  "sample_manufacturing_dismiss_btn": "Descartar muestra"
+  "sample_manufacturing_dismiss_btn": "Descartar muestra",
+  "sample_manufacturing_auto_removed": "Tutorial completado. Se removió la receta de muestra temporal."
 }
