@@ -229,6 +229,10 @@ Future<bool> ensureSampleManufacturingRecipe(
 }
 
 /// Permanently dismisses / removes the temporary sample manufacturing recipe.
+/// If the database was empty of user data (only contained the sample recipe and
+/// sample raw materials), the 3 sample ingredients are also deleted.
+/// If user data already exists in the database (other recipes or ingredients),
+/// the ingredients are preserved.
 Future<void> dismissSampleManufacturingRecipe(
   AppDatabase db, {
   SharedPreferences? prefs,
@@ -237,6 +241,28 @@ Future<void> dismissSampleManufacturingRecipe(
   await p.setBool(kSampleManufacturingRecipeDismissedKey, true);
 
   await db.transaction(() async {
+    const samplePks = {kSampleFlourPk, kSampleButterPk, kSampleSugarPk};
+
+    // Check if the database already has user data
+    final otherRecipes = await (db.select(db.recipes)
+          ..where((t) => t.recipePk.equals(kSampleManufacturingRecipePk).not()))
+        .get();
+
+    final allIngredients = await db.getAllIngredients();
+    final otherIngredients = allIngredients
+        .where((i) => !samplePks.contains(i.ingredientPk))
+        .toList();
+
+    final otherUsages = await (db.select(db.recipeIngredients)
+          ..where((t) =>
+              t.recipeFk.equals(kSampleManufacturingRecipePk).not() &
+              t.ingredientFk.isIn(samplePks)))
+        .get();
+
+    final hasOtherData = otherRecipes.isNotEmpty ||
+        otherIngredients.isNotEmpty ||
+        otherUsages.isNotEmpty;
+
     await (db.delete(db.recipeSteps)
           ..where((t) => t.recipeFk.equals(kSampleManufacturingRecipePk)))
         .go();
@@ -246,6 +272,14 @@ Future<void> dismissSampleManufacturingRecipe(
     await (db.delete(db.recipes)
           ..where((t) => t.recipePk.equals(kSampleManufacturingRecipePk)))
         .go();
+
+    if (!hasOtherData) {
+      for (final ingPk in samplePks) {
+        await (db.delete(db.ingredients)
+              ..where((t) => t.ingredientPk.equals(ingPk)))
+            .go();
+      }
+    }
   });
 }
 

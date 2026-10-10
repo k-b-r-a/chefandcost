@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -98,18 +99,107 @@ void main() {
       expect(recipes, isEmpty);
     });
 
-    test('dismissSampleManufacturingRecipe deletes recipe and sets dismissed key', () async {
+    test('dismissSampleManufacturingRecipe deletes recipe, sample ingredients, and sets dismissed key when database was empty', () async {
       await ensureSampleManufacturingRecipe(db, prefs: prefs);
       expect((await db.getAllRecipes()).length, 1);
+      expect((await db.getAllIngredients()).length, 3);
 
       await dismissSampleManufacturingRecipe(db, prefs: prefs);
       expect((await db.getAllRecipes()), isEmpty);
+      expect((await db.getAllIngredients()), isEmpty);
       expect(prefs.getBool(kSampleManufacturingRecipeDismissedKey), isTrue);
 
       // Next ensure run should not resurrect it
       final tryRecreate = await ensureSampleManufacturingRecipe(db, prefs: prefs);
       expect(tryRecreate, isFalse);
       expect((await db.getAllRecipes()), isEmpty);
+      expect((await db.getAllIngredients()), isEmpty);
+    });
+
+    test('dismissSampleManufacturingRecipe preserves sample ingredients if database already contains other recipes', () async {
+      await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect((await db.getAllRecipes()).length, 1);
+      expect((await db.getAllIngredients()).length, 3);
+
+      // Insert another recipe into the DB
+      await db.insertRecipe(
+        RecipesCompanion(
+          recipePk: const Value('custom_user_recipe_1'),
+          name: const Value('Custom User Cake'),
+          defaultYield: const Value(1.0),
+          yieldName: const Value('portions'),
+          dateCreated: Value(DateTime.now()),
+          dateTimeModified: Value(DateTime.now()),
+        ),
+      );
+
+      await dismissSampleManufacturingRecipe(db, prefs: prefs);
+      // Sample recipe is deleted, custom recipe remains
+      final recipes = await db.getAllRecipes();
+      expect(recipes.length, 1);
+      expect(recipes.first.recipePk, 'custom_user_recipe_1');
+      // Ingredients must be preserved because DB had existing recipe data
+      final ingredients = await db.getAllIngredients();
+      expect(ingredients.length, 3);
+    });
+
+    test('dismissSampleManufacturingRecipe preserves sample ingredients if database already contains other ingredients', () async {
+      await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect((await db.getAllRecipes()).length, 1);
+      expect((await db.getAllIngredients()).length, 3);
+
+      final units = await db.getAllUnits();
+
+      // Insert another ingredient created by user
+      await db.insertIngredient(
+        IngredientsCompanion(
+          ingredientPk: const Value('custom_user_ingredient_1'),
+          name: const Value('Huevos de Campo'),
+          cost: const Value(3.0),
+          quantityForCost: const Value(12.0),
+          unitFk: Value(units.first.unitPk),
+          dateCreated: Value(DateTime.now()),
+          dateTimeModified: Value(DateTime.now()),
+        ),
+      );
+
+      await dismissSampleManufacturingRecipe(db, prefs: prefs);
+      // Sample recipe is deleted
+      expect(await db.getAllRecipes(), isEmpty);
+      // All ingredients (3 sample + 1 custom) are preserved
+      final ingredients = await db.getAllIngredients();
+      expect(ingredients.length, 4);
+      expect(ingredients.any((i) => i.ingredientPk == 'custom_user_ingredient_1'), isTrue);
+    });
+
+    test('dismissSampleManufacturingRecipe preserves sample ingredients if another recipe uses them', () async {
+      await ensureSampleManufacturingRecipe(db, prefs: prefs);
+
+      // Insert another recipe that references kSampleFlourPk
+      await db.insertRecipe(
+        RecipesCompanion(
+          recipePk: const Value('user_recipe_using_flour'),
+          name: const Value('Pan Casero'),
+          defaultYield: const Value(1.0),
+          yieldName: const Value('portions'),
+          dateCreated: Value(DateTime.now()),
+          dateTimeModified: Value(DateTime.now()),
+        ),
+      );
+      await db.into(db.recipeIngredients).insert(
+        RecipeIngredientsCompanion.insert(
+          recipeFk: 'user_recipe_using_flour',
+          ingredientFk: kSampleFlourPk,
+          amountNeeded: 500.0,
+        ),
+      );
+
+      await dismissSampleManufacturingRecipe(db, prefs: prefs);
+      // Sample recipe is deleted, other recipe remains
+      expect((await db.getAllRecipes()).length, 1);
+      // Sample ingredients preserved because they are in use and DB has recipe data
+      final ingredients = await db.getAllIngredients();
+      expect(ingredients.length, 3);
     });
 
     test('convertSampleRecipeToPermanent clones to new UUID and deletes temporary record', () async {
