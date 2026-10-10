@@ -344,9 +344,12 @@ void main() {
       await tester.pumpWidget(buildTestApp(home: const RecipeEditorScreen()));
       await tester.pumpAndSettle();
 
-      // For a new recipe, name editing TextField is active in AppBar by default
+      // For a new recipe on small screen, name editing field is in body under top header
       final nameField = tester.widget<TextField>(
-        find.descendant(of: find.byType(AppBar), matching: find.byType(TextField)),
+        find.descendant(
+          of: find.byKey(const ValueKey('recipe_name_input')),
+          matching: find.byType(TextField),
+        ),
       );
       expect(nameField.textCapitalization, TextCapitalization.sentences);
 

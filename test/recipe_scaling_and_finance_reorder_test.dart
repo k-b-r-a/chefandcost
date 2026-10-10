@@ -221,6 +221,7 @@ void main() {
 
     Widget createTestApp({
       required List<InitialIngredientInput> initialIngredients,
+      List<InitialStepInput>? initialSteps,
       bool isTemporary = true,
       String? recipeId,
     }) {
@@ -246,6 +247,7 @@ void main() {
             initialProfitMargin: '30',
             initialPrice: '10',
             initialIngredients: initialIngredients,
+            initialSteps: initialSteps,
           ),
         ),
       );
@@ -339,14 +341,14 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      // Long press Flour ingredient item to open options modal
+      // Long press Flour ingredient item to expand quick action dropdown
       final flourText = find.text('Flour');
       expect(flourText, findsOneWidget);
       await tester.longPress(flourText);
       await tester.pumpAndSettle();
 
-      // Tap "Scale by Ingredient" option in modal
-      final scaleOption = find.text('Scale by Ingredient');
+      // Tap "Scale" action in dropdown
+      final scaleOption = find.byKey(const ValueKey('ingredient_action_scale'));
       expect(scaleOption, findsOneWidget);
       await tester.tap(scaleOption);
       await tester.pumpAndSettle();
@@ -453,7 +455,7 @@ void main() {
       await tester.longPress(find.text('Flour'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Scale by Ingredient'));
+      await tester.tap(find.byKey(const ValueKey('ingredient_action_scale')));
       await tester.pumpAndSettle();
 
       final targetField = find.descendant(
@@ -492,5 +494,252 @@ void main() {
       final milkItem = savedIngs.firstWhere((i) => i.ingredientFk == ingMilk.ingredientPk);
       expect(milkItem.amountNeeded, 300.0);
     });
+
+    test('RecipeUtils portion scaling and number formatting logic', () {
+      // Portion scaling factor calculation: target_servings / base_servings
+      expect(RecipeUtils.calculatePortionScaleMultiplier(baseServings: 4, targetServings: 2), 0.5);
+      expect(RecipeUtils.calculatePortionScaleMultiplier(baseServings: 4, targetServings: 1), 0.25);
+      expect(RecipeUtils.calculatePortionScaleMultiplier(baseServings: 4, targetServings: 8), 2.0);
+      expect(RecipeUtils.calculatePortionScaleMultiplier(baseServings: 4, targetServings: 6), 1.5);
+      expect(RecipeUtils.calculatePortionScaleMultiplier(baseServings: 0, targetServings: 4), 1.0);
+
+      // Clean number formatting without trailing zeros or artifacts
+      expect(RecipeUtils.formatQuantity(2.0), '2');
+      expect(RecipeUtils.formatQuantity(2), '2');
+      expect(RecipeUtils.formatQuantity(2.0000000001), '2');
+      expect(RecipeUtils.formatQuantity(0.50000000001), '0.5');
+      expect(RecipeUtils.formatQuantity(0.2500000000), '0.25');
+      expect(RecipeUtils.formatQuantity(1.5), '1.5');
+
+      // Multiplier formatting
+      expect(RecipeUtils.formatMultiplier(0.25), '1/4x');
+      expect(RecipeUtils.formatMultiplier(0.5), '1/2x');
+      expect(RecipeUtils.formatMultiplier(1.0), '1x');
+      expect(RecipeUtils.formatMultiplier(2.0), '2x');
+      expect(RecipeUtils.formatMultiplier(3.0), '3x');
+      expect(RecipeUtils.formatMultiplier(1.5), '1.5x');
+
+      // Fraction formatting
+      expect(RecipeUtils.formatFractionOrDecimal(0.25, preferFraction: true), '1/4');
+      expect(RecipeUtils.formatFractionOrDecimal(0.5, preferFraction: true), '1/2');
+      expect(RecipeUtils.formatFractionOrDecimal(1.5, preferFraction: true), '1 1/2');
+      expect(RecipeUtils.formatFractionOrDecimal(2.0, preferFraction: true), '2');
+
+      // Fraction parsing
+      expect(RecipeUtils.parseFormattedNumber('1/2'), 0.5);
+      expect(RecipeUtils.parseFormattedNumber('1/4'), 0.25);
+      expect(RecipeUtils.parseFormattedNumber('1 1/2'), 1.5);
+    });
+
+    testWidgets('Quick scale selector bar scales ingredients with 1/4x and 1/2x fractional multipliers', (tester) async {
+      tester.view.physicalSize = const Size(500, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final initialIngredients = [
+        InitialIngredientInput(ingredient: ingFlour, amount: 100),
+        InitialIngredientInput(ingredient: ingMilk, amount: 200),
+      ];
+
+      await tester.pumpWidget(createTestApp(
+        initialIngredients: initialIngredients,
+      ));
+      await tester.pumpAndSettle();
+
+      // Selector bar should be present
+      expect(find.byKey(const ValueKey('recipe_scale_selector_bar')), findsOneWidget);
+
+      // Verify preset chips are present
+      final chipQuarter = find.byKey(const ValueKey('scale_chip_0_25'));
+      final chipHalf = find.byKey(const ValueKey('scale_chip_0_5'));
+      final chip1x = find.byKey(const ValueKey('scale_chip_1'));
+      final chip2x = find.byKey(const ValueKey('scale_chip_2'));
+
+      expect(chipQuarter, findsOneWidget);
+      expect(chipHalf, findsOneWidget);
+      expect(chip1x, findsOneWidget);
+      expect(chip2x, findsOneWidget);
+
+      // Tap 1/2x chip
+      await tester.tap(chipHalf);
+      await tester.pumpAndSettle();
+
+      // Flour 100 * 0.5 = 50, Milk 200 * 0.5 = 100
+      expect(
+        find.byWidgetPredicate((w) => w is TextField && w.controller?.text == '50'),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate((w) => w is TextField && w.controller?.text == '100'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('temporary_scale_banner')), findsOneWidget);
+
+      // Tap 1/4x chip
+      await tester.tap(chipQuarter);
+      await tester.pumpAndSettle();
+
+      // Flour 100 * 0.25 = 25, Milk 200 * 0.25 = 50
+      expect(
+        find.byWidgetPredicate((w) => w is TextField && w.controller?.text == '25'),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate((w) => w is TextField && w.controller?.text == '50'),
+        findsOneWidget,
+      );
+
+      // Tap 1x chip to revert
+      await tester.tap(chip1x);
+      await tester.pumpAndSettle();
+
+      // Restored: Flour 100, Milk 200
+      expect(
+        find.byWidgetPredicate((w) => w is TextField && w.controller?.text == '100'),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate((w) => w is TextField && w.controller?.text == '200'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('temporary_scale_banner')), findsNothing);
+    });
+
+    testWidgets('Custom portion scaling calculates scale factor and updates ingredient quantities', (tester) async {
+      tester.view.physicalSize = const Size(500, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final initialIngredients = [
+        InitialIngredientInput(ingredient: ingFlour, amount: 100),
+        InitialIngredientInput(ingredient: ingMilk, amount: 200),
+      ];
+
+      await tester.pumpWidget(createTestApp(
+        initialIngredients: initialIngredients,
+      ));
+      await tester.pumpAndSettle();
+
+      // Tap custom portions chip
+      final customChip = find.byKey(const ValueKey('scale_chip_custom_portions'));
+      expect(customChip, findsOneWidget);
+      await tester.ensureVisible(customChip);
+      await tester.pumpAndSettle();
+      await tester.tap(customChip);
+      await tester.pumpAndSettle();
+
+      // Portions dialog opens
+      expect(find.byKey(const ValueKey('scale_by_portions_dialog')), findsOneWidget);
+
+      // Enter target portions = 6 (6 / 4 = 1.5x)
+      final inputField = find.byKey(const ValueKey('target_portions_input'));
+      expect(inputField, findsOneWidget);
+      await tester.enterText(inputField, '6');
+      await tester.pumpAndSettle();
+
+      // Dynamic scale factor badge in dialog displays 1.5x
+      expect(find.text('1.5x'), findsOneWidget);
+
+      // Tap Apply
+      await tester.tap(find.byKey(const ValueKey('apply_scale_by_portions_button')));
+      await tester.pumpAndSettle();
+
+      // Dialog dismissed
+      expect(find.byKey(const ValueKey('scale_by_portions_dialog')), findsNothing);
+
+      // Scaled values: Flour 100 * 1.5 = 150, Milk 200 * 1.5 = 300
+      expect(
+        find.byWidgetPredicate((w) => w is TextField && w.controller?.text == '150'),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate((w) => w is TextField && w.controller?.text == '300'),
+        findsOneWidget,
+      );
+
+      // Verify custom portions chip is highlighted
+      expect(find.byKey(const ValueKey('temporary_scale_banner')), findsOneWidget);
+    });
+
+    testWidgets('Section headers and items show counters for ingredients and steps', (tester) async {
+      tester.view.physicalSize = const Size(500, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final initialIngredients = [
+        InitialIngredientInput(ingredient: ingFlour, amount: 100),
+        InitialIngredientInput(ingredient: ingMilk, amount: 200),
+      ];
+
+      final initialSteps = [
+        const InitialStepInput(instruction: 'Mix flour and milk'),
+        const InitialStepInput(instruction: 'Bake for 20 minutes'),
+      ];
+
+      await tester.pumpWidget(createTestApp(
+        initialIngredients: initialIngredients,
+        initialSteps: initialSteps,
+      ));
+      await tester.pumpAndSettle();
+
+      // Verify section header counter badges
+      final ingCounterBadge = find.byKey(const ValueKey('ingredients_counter_badge_mobile'));
+      expect(ingCounterBadge, findsOneWidget);
+      expect(find.descendant(of: ingCounterBadge, matching: find.text('2')), findsOneWidget);
+
+      final stepsCounterBadge = find.byKey(const ValueKey('steps_counter_badge_mobile'));
+      expect(stepsCounterBadge, findsOneWidget);
+      expect(find.descendant(of: stepsCounterBadge, matching: find.text('2')), findsOneWidget);
+
+      // Verify ingredient items display individual index counters (1 and 2)
+      expect(find.text('1'), findsWidgets);
+      expect(find.text('2'), findsWidgets);
+    });
+
+    testWidgets('Long pressing an ingredient item expands inline dropdown instead of opening modal popup', (tester) async {
+      tester.view.physicalSize = const Size(400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final initialIngredients = [
+        InitialIngredientInput(ingredient: ingFlour, amount: 100),
+        InitialIngredientInput(ingredient: ingMilk, amount: 200),
+      ];
+
+      await tester.pumpWidget(createTestApp(
+        initialIngredients: initialIngredients,
+      ));
+      await tester.pumpAndSettle();
+
+      // Before long press, quick action buttons should not be visible
+      expect(find.byKey(const ValueKey('ingredient_action_scale')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_edit')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_merge')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_delete')), findsNothing);
+      expect(find.byType(BottomSheet), findsNothing);
+
+      // Long press Flour
+      await tester.longPress(find.text('Flour'));
+      await tester.pumpAndSettle();
+
+      // Verify NO modal popup / bottom sheet was opened
+      expect(find.byType(BottomSheet), findsNothing);
+
+      // Verify inline dropdown actions are visible
+      expect(find.byKey(const ValueKey('ingredient_action_scale')), findsOneWidget);
+      expect(find.byKey(const ValueKey('ingredient_action_edit')), findsOneWidget);
+      expect(find.byKey(const ValueKey('ingredient_action_merge')), findsOneWidget);
+      expect(find.byKey(const ValueKey('ingredient_action_delete')), findsOneWidget);
+
+      // Long press Flour again to collapse inline dropdown
+      await tester.longPress(find.text('Flour'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('ingredient_action_scale')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_edit')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_merge')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_delete')), findsNothing);
+    });
   });
 }
+

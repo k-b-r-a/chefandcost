@@ -183,12 +183,14 @@ void main() {
       expect(targets[1].identify, 'step_recipe_list_finance');
     });
 
-    testWidgets('createRecipeEditorTargets creates targets for finance panel, ingredient hold, and gestures', (WidgetTester tester) async {
+    testWidgets('createRecipeEditorTargets creates targets for finance panel, scale bar, ingredient hold, and gestures', (WidgetTester tester) async {
       final financeKey = GlobalKey();
+      final scaleBarKey = GlobalKey();
       final firstIngredientKey = GlobalKey();
       final ingredientsKey = GlobalKey();
       final keys = RecipeEditorTutorialKeys(
         recipeEditorFinanceKey: financeKey,
+        recipeEditorScaleBarKey: scaleBarKey,
         recipeEditorFirstIngredientKey: firstIngredientKey,
         recipeEditorIngredientsKey: ingredientsKey,
       );
@@ -202,6 +204,7 @@ void main() {
             body: Column(
               children: [
                 SizedBox(key: financeKey, height: 80, width: 300, child: const Text('Finance Panel')),
+                SizedBox(key: scaleBarKey, height: 40, width: 300, child: const Text('Scale Bar')),
                 SizedBox(key: firstIngredientKey, height: 50, width: 300, child: const Text('First Ingredient')),
                 SizedBox(key: ingredientsKey, height: 120, width: 300, child: const Text('Ingredients Section')),
               ],
@@ -214,11 +217,12 @@ void main() {
       final context = tester.element(find.byType(Scaffold));
       final targets = AppTutorialService.createRecipeEditorTargets(context: context, keys: keys);
 
-      expect(targets.length, 3);
+      expect(targets.length, 4);
       expect(targets[0].identify, 'step_recipe_editor_finance');
-      expect(targets[1].identify, 'step_recipe_editor_ingredient_hold');
-      expect(targets[2].identify, 'step_recipe_editor_gestures');
-      expect(targets[1].enableTargetTab, isTrue);
+      expect(targets[1].identify, 'step_recipe_editor_scale_bar');
+      expect(targets[2].identify, 'step_recipe_editor_ingredient_hold');
+      expect(targets[3].identify, 'step_recipe_editor_gestures');
+      expect(targets[2].enableTargetTab, isTrue);
     });
 
     testWidgets('createRecipeEditorTargets skips unmounted firstIngredientKey gracefully', (WidgetTester tester) async {
@@ -403,6 +407,143 @@ void main() {
       expect(await AppTutorialService.isTutorialCompleted(sharedPrefs), isFalse);
 
       AppTutorialService.replayNotifier.removeListener(listener);
+    });
+  });
+
+  group('AppTutorialService concurrency & tablet mutex tests', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      AppTutorialService.dismissActiveTutorial();
+    });
+
+    tearDown(() {
+      AppTutorialService.dismissActiveTutorial();
+    });
+
+    testWidgets('Tutorial mutex prevents two tutorials from showing simultaneously', (WidgetTester tester) async {
+      final key1 = GlobalKey();
+      final key2 = GlobalKey();
+      final homeKeys = AppTutorialKeys(navBarKey: key1);
+      final listKeys = RecipeListTutorialKeys(recipeCardKey: key2);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Column(
+              children: [
+                SizedBox(key: key1, height: 50, width: 200, child: const Text('Home Target')),
+                SizedBox(key: key2, height: 50, width: 200, child: const Text('List Target')),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(Scaffold));
+
+      expect(AppTutorialService.isTutorialActive, isFalse);
+
+      // Show Home tutorial
+      final startedHome = AppTutorialService.showTutorial(context, keys: homeKeys);
+      expect(startedHome, isTrue);
+      expect(AppTutorialService.isTutorialActive, isTrue);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // Attempting to show Recipe List tutorial while Home is active should be rejected
+      final startedList = AppTutorialService.showRecipeListTutorial(context, keys: listKeys);
+      expect(startedList, isFalse);
+
+      // Dismiss active tutorial cleans up lock
+      AppTutorialService.dismissActiveTutorial();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(AppTutorialService.isTutorialActive, isFalse);
+
+      // Now Recipe List tutorial can start
+      final startedListAfterDismiss = AppTutorialService.showRecipeListTutorial(context, keys: listKeys);
+      expect(startedListAfterDismiss, isTrue);
+      expect(AppTutorialService.isTutorialActive, isTrue);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      AppTutorialService.dismissActiveTutorial();
+      await tester.pump(const Duration(milliseconds: 500));
+    });
+
+    testWidgets('Sequential prerequisites on wide/tablet layouts prevent premature triggering', (WidgetTester tester) async {
+      final prefs = await SharedPreferences.getInstance();
+      final key = GlobalKey();
+      final listKeys = RecipeListTutorialKeys(recipeCardKey: key);
+      final editorKeys = RecipeEditorTutorialKeys(recipeEditorFinanceKey: key);
+
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: SizedBox(key: key, height: 60, width: 200, child: const Text('Target')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(Scaffold));
+
+      // 1. Neither Home nor List completed -> Recipe List tutorial should not trigger automatically
+      final listTriggered = await AppTutorialService.checkAndShowRecipeListTutorial(
+        context,
+        keys: listKeys,
+        prefs: prefs,
+        bypassTestCheck: true,
+      );
+      expect(listTriggered, isFalse);
+
+      // 2. Recipe Editor should not trigger automatically if Home & List are not completed
+      final editorTriggered = await AppTutorialService.checkAndShowRecipeEditorTutorial(
+        context,
+        keys: editorKeys,
+        prefs: prefs,
+        bypassTestCheck: true,
+      );
+      expect(editorTriggered, isFalse);
+
+      // Mark Home as completed
+      await AppTutorialService.markTutorialCompleted(prefs);
+
+      // Recipe Editor still should NOT trigger on tablet because Recipe List is not completed
+      final editorTriggered2 = await AppTutorialService.checkAndShowRecipeEditorTutorial(
+        context,
+        keys: editorKeys,
+        prefs: prefs,
+        bypassTestCheck: true,
+      );
+      expect(editorTriggered2, isFalse);
+
+      // Mark Recipe List as completed
+      await AppTutorialService.markRecipeListTutorialCompleted(prefs);
+
+      // Now Recipe Editor can trigger
+      final editorTriggered3 = await AppTutorialService.checkAndShowRecipeEditorTutorial(
+        context,
+        keys: editorKeys,
+        prefs: prefs,
+        bypassTestCheck: true,
+      );
+      expect(editorTriggered3, isTrue);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      AppTutorialService.dismissActiveTutorial();
+      await tester.pump(const Duration(milliseconds: 500));
     });
   });
 }

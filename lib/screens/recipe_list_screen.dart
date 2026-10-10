@@ -26,11 +26,48 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   final RecipeListTutorialKeys _tutorialKeys = RecipeListTutorialKeys();
   String? _expandedRecipeId;
   bool _tutorialChecked = false;
+  bool _isCheckingTutorial = false;
+  VoidCallback? _tutorialCompletedListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _tutorialCompletedListener = () {
+      if (!mounted) return;
+      _maybeTriggerTutorial();
+    };
+    AppTutorialService.tutorialStepCompletedNotifier.addListener(_tutorialCompletedListener!);
+  }
 
   @override
   void dispose() {
+    if (_tutorialCompletedListener != null) {
+      AppTutorialService.tutorialStepCompletedNotifier.removeListener(_tutorialCompletedListener!);
+    }
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _maybeTriggerTutorial() {
+    if (_tutorialChecked || _isCheckingTutorial || !mounted) return;
+    _isCheckingTutorial = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        _isCheckingTutorial = false;
+        return;
+      }
+      final shown = await AppTutorialService.checkAndShowRecipeListTutorial(
+        context,
+        keys: _tutorialKeys,
+        onStepFocus: _handleTutorialStepFocus,
+        onFinish: _handleTutorialEnd,
+        onSkip: _handleTutorialEnd,
+      );
+      if (shown) {
+        _tutorialChecked = true;
+      }
+      _isCheckingTutorial = false;
+    });
   }
 
   Future<void> _handleTutorialStepFocus(String stepId) async {
@@ -120,18 +157,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
               }).toList();
 
               if (!_tutorialChecked && filteredRecipes.isNotEmpty) {
-                _tutorialChecked = true;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) {
-                    AppTutorialService.checkAndShowRecipeListTutorial(
-                      context,
-                      keys: _tutorialKeys,
-                      onStepFocus: _handleTutorialStepFocus,
-                      onFinish: _handleTutorialEnd,
-                      onSkip: _handleTutorialEnd,
-                    );
-                  }
-                });
+                _maybeTriggerTutorial();
               }
 
               final isWideWeb = MediaQuery.sizeOf(context).width >= 640;
@@ -687,14 +713,14 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
               spacing: 8,
               runSpacing: 8,
               alignment: WrapAlignment.center,
-              children: [0.5, 2.0, 3.0, 4.0, 5.0].map((multiplier) {
+              children: [0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0].map((multiplier) {
                 return OutlinedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     _openTemporaryScaledRecipeFromList(context, recipe, multiplier);
                   },
                   child: Text(
-                    l10n.scale_multiplier_button(RecipeUtils.formatNumber(multiplier)),
+                    RecipeUtils.formatMultiplier(multiplier),
                     softWrap: true,
                   ),
                 );
