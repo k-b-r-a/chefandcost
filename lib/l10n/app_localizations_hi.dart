@@ -1543,4 +1543,63 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get tutorial_target_settings_hint =>
       'You can replay this interactive walkthrough anytime from Settings.';
+
+  @override
+  String get tutorial_help_tooltip => 'View guided walkthrough';
+
+  @override
+  String get tutorial_recipe_list_hold_title => 'Recipe Quick Actions';
+
+  @override
+  String get tutorial_recipe_list_hold_desc =>
+      'Tap any recipe to open and edit it. But there is a powerful shortcut hidden here!';
+
+  @override
+  String get tutorial_recipe_list_hold_hint =>
+      'Hold / Long-press this recipe card to reveal more options: Scale portions, Duplicate, Edit, or Delete directly from the list.';
+
+  @override
+  String get tutorial_recipe_list_finance_title => 'Recipe Financial Breakdown';
+
+  @override
+  String get tutorial_recipe_list_finance_desc =>
+      'Every recipe card displays its live Total Cost, Estimated Profit, and Target Sale Price per portion.';
+
+  @override
+  String get tutorial_recipe_list_finance_hint =>
+      'Tip: These numbers recalculate automatically when ingredient costs or portions change.';
+
+  @override
+  String get tutorial_editor_finance_title => 'Recipe Finance & Margins';
+
+  @override
+  String get tutorial_editor_finance_desc =>
+      'Calculate total cost, cost per portion, desired profit margin, overhead expenses, and target sale price.';
+
+  @override
+  String get tutorial_editor_finance_hint =>
+      'Key action: Tap the bottom finance bar to expand the full profit calculator and price simulator.';
+
+  @override
+  String get tutorial_editor_gestures_title => 'Ingredients & Yield Gestures';
+
+  @override
+  String get tutorial_editor_gestures_desc =>
+      'Add ingredients with accurate cost, specify portion yields, and organize preparation steps.';
+
+  @override
+  String get tutorial_editor_gestures_hint =>
+      'Non-intuitive actions: Hold and drag ingredients to reorder them. Tap portion yield to automatically scale the entire recipe.';
+
+  @override
+  String get tutorial_editor_ingredient_hold_title =>
+      'Ingredient Quick Actions';
+
+  @override
+  String get tutorial_editor_ingredient_hold_desc =>
+      'Tap the quantity to edit amount directly. But you can also hold any ingredient for more options!';
+
+  @override
+  String get tutorial_editor_ingredient_hold_hint =>
+      'Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.';
 }

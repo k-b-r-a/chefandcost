@@ -2999,6 +2999,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can replay this interactive walkthrough anytime from Settings.'**
   String get tutorial_target_settings_hint;
+
+  /// No description provided for @tutorial_help_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View guided walkthrough'**
+  String get tutorial_help_tooltip;
+
+  /// No description provided for @tutorial_recipe_list_hold_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Quick Actions'**
+  String get tutorial_recipe_list_hold_title;
+
+  /// No description provided for @tutorial_recipe_list_hold_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap any recipe to open and edit it. But there is a powerful shortcut hidden here!'**
+  String get tutorial_recipe_list_hold_desc;
+
+  /// No description provided for @tutorial_recipe_list_hold_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold / Long-press this recipe card to reveal more options: Scale portions, Duplicate, Edit, or Delete directly from the list.'**
+  String get tutorial_recipe_list_hold_hint;
+
+  /// No description provided for @tutorial_recipe_list_finance_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Financial Breakdown'**
+  String get tutorial_recipe_list_finance_title;
+
+  /// No description provided for @tutorial_recipe_list_finance_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Every recipe card displays its live Total Cost, Estimated Profit, and Target Sale Price per portion.'**
+  String get tutorial_recipe_list_finance_desc;
+
+  /// No description provided for @tutorial_recipe_list_finance_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: These numbers recalculate automatically when ingredient costs or portions change.'**
+  String get tutorial_recipe_list_finance_hint;
+
+  /// No description provided for @tutorial_editor_finance_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Finance & Margins'**
+  String get tutorial_editor_finance_title;
+
+  /// No description provided for @tutorial_editor_finance_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate total cost, cost per portion, desired profit margin, overhead expenses, and target sale price.'**
+  String get tutorial_editor_finance_desc;
+
+  /// No description provided for @tutorial_editor_finance_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Key action: Tap the bottom finance bar to expand the full profit calculator and price simulator.'**
+  String get tutorial_editor_finance_hint;
+
+  /// No description provided for @tutorial_editor_gestures_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients & Yield Gestures'**
+  String get tutorial_editor_gestures_title;
+
+  /// No description provided for @tutorial_editor_gestures_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Add ingredients with accurate cost, specify portion yields, and organize preparation steps.'**
+  String get tutorial_editor_gestures_desc;
+
+  /// No description provided for @tutorial_editor_gestures_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Non-intuitive actions: Hold and drag ingredients to reorder them. Tap portion yield to automatically scale the entire recipe.'**
+  String get tutorial_editor_gestures_hint;
+
+  /// No description provided for @tutorial_editor_ingredient_hold_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredient Quick Actions'**
+  String get tutorial_editor_ingredient_hold_title;
+
+  /// No description provided for @tutorial_editor_ingredient_hold_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the quantity to edit amount directly. But you can also hold any ingredient for more options!'**
+  String get tutorial_editor_ingredient_hold_desc;
+
+  /// No description provided for @tutorial_editor_ingredient_hold_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.'**
+  String get tutorial_editor_ingredient_hold_hint;
 }
 
 class _AppLocalizationsDelegate

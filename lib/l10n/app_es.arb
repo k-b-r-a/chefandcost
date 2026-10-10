@@ -641,5 +641,21 @@
   "tutorial_target_tools_hint": "Función clave: Los temporizadores siguen corriendo en segundo plano con avisos sonoros.",
   "tutorial_target_settings_title": "Sincronización en la Nube y Ajustes",
   "tutorial_target_settings_desc": "Personaliza temas, sincroniza con Firebase y administra copias de seguridad.",
-  "tutorial_target_settings_hint": "Puedes repetir este tutorial interactivo en cualquier momento desde Ajustes."
+  "tutorial_target_settings_hint": "Puedes repetir este tutorial interactivo en cualquier momento desde Ajustes.",
+  "tutorial_help_tooltip": "Ver tutorial guiado",
+  "tutorial_recipe_list_hold_title": "Opciones Rápidas de Receta",
+  "tutorial_recipe_list_hold_desc": "Toca cualquier receta para abrirla y editarla. ¡Pero hay un atajo oculto aquí!",
+  "tutorial_recipe_list_hold_hint": "Mantén presionada esta receta para ver más opciones: Escalar porciones, Duplicar, Editar o Eliminar directamente desde la lista.",
+  "tutorial_recipe_list_finance_title": "Resumen Financiero Directo",
+  "tutorial_recipe_list_finance_desc": "Cada receta muestra en vivo su Costo Total, Ganancia Estimada y Precio de Venta por porción.",
+  "tutorial_recipe_list_finance_hint": "Consejo: Estos valores se recalculan automáticamente si cambian los costos de ingredientes o las porciones.",
+  "tutorial_editor_finance_title": "Finanzas y Márgenes de la Receta",
+  "tutorial_editor_finance_desc": "Calcula el costo total, costo por porción, margen de beneficio deseado, costos indirectos y precio de venta objetivo.",
+  "tutorial_editor_finance_hint": "Acción clave: Toca la barra inferior de finanzas para desplegar la calculadora completa de márgenes y precios.",
+  "tutorial_editor_gestures_title": "Gestos en Ingredientes y Porciones",
+  "tutorial_editor_gestures_desc": "Agrega ingredientes con costos precisos, define porciones y organiza los pasos de preparación.",
+  "tutorial_editor_gestures_hint": "Acciones no intuitivas: Mantén presionado y arrastra ingredientes para reordenarlos. Toca las porciones para escalar automáticamente toda la receta.",
+  "tutorial_editor_ingredient_hold_title": "Opciones Rápidas de Ingrediente",
+  "tutorial_editor_ingredient_hold_desc": "Toca la cantidad para editarla directamente. ¡Pero también puedes mantener presionado cualquier ingrediente para ver más opciones!",
+  "tutorial_editor_ingredient_hold_hint": "Mantén presionado este ingrediente para ver más opciones: Escalar la receta según este ingrediente, Editar, Fusionar o Eliminar."
 }

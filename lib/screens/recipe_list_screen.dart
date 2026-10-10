@@ -10,6 +10,7 @@ import '../utils/recipe_utils.dart';
 import '../utils/ui_utils.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../provider/web_layout_provider.dart';
+import '../services/app_tutorial_service.dart';
 import 'recipe_editor_screen.dart';
 
 class RecipeListScreen extends ConsumerStatefulWidget {
@@ -21,12 +22,43 @@ class RecipeListScreen extends ConsumerStatefulWidget {
 
 class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   final ScrollController _scrollController = ScrollController();
+  final RecipeListTutorialKeys _tutorialKeys = RecipeListTutorialKeys();
   String? _expandedRecipeId;
+  bool _tutorialChecked = false;
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleTutorialStepFocus(String stepId) async {
+    if (stepId == 'step_recipe_list_hold') {
+      final recipesAsync = ref.read(recipesWithFinancialsStreamProvider);
+      final searchQuery = ref.read(recipeSearchQueryProvider).toLowerCase();
+      final recipes = recipesAsync.asData?.value ?? [];
+      final filtered = recipes.where((item) => item.recipe.name.toLowerCase().contains(searchQuery)).toList();
+      if (filtered.isNotEmpty) {
+        final firstPk = filtered.first.recipe.recipePk;
+        if (_expandedRecipeId != firstPk) {
+          if (mounted) {
+            setState(() {
+              _expandedRecipeId = firstPk;
+            });
+          }
+          // Allow AnimatedSize transition to complete so spotlight encapsulates the expanded card
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      }
+    }
+  }
+
+  void _handleTutorialEnd() {
+    if (mounted && _expandedRecipeId != null) {
+      setState(() {
+        _expandedRecipeId = null;
+      });
+    }
   }
 
   @override
@@ -45,12 +77,43 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
             context: context,
             title: l10n.recipes_title,
             controller: _scrollController,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.help_outline_rounded),
+                tooltip: l10n.tutorial_help_tooltip,
+                onPressed: () {
+                  AppTutorialService.showRecipeListTutorial(
+                    context,
+                    keys: _tutorialKeys,
+                    onStepFocus: _handleTutorialStepFocus,
+                    onFinish: _handleTutorialEnd,
+                    onSkip: _handleTutorialEnd,
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           recipesAsync.when(
             data: (recipes) {
               final filteredRecipes = recipes.where((item) {
                 return item.recipe.name.toLowerCase().contains(searchQuery);
               }).toList();
+
+              if (!_tutorialChecked && filteredRecipes.isNotEmpty) {
+                _tutorialChecked = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    AppTutorialService.checkAndShowRecipeListTutorial(
+                      context,
+                      keys: _tutorialKeys,
+                      onStepFocus: _handleTutorialStepFocus,
+                      onFinish: _handleTutorialEnd,
+                      onSkip: _handleTutorialEnd,
+                    );
+                  }
+                });
+              }
 
               final isWideWeb = MediaQuery.sizeOf(context).width >= 640;
               if (isWideWeb && filteredRecipes.isNotEmpty) {
@@ -104,7 +167,9 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                       child: Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 860),
-                          child: Card(
+                          child: KeyedSubtree(
+                            key: index == 0 ? _tutorialKeys.recipeCardKey : null,
+                            child: Card(
                             margin: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 6,
@@ -206,41 +271,44 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                 ],
                               ),
                               const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildStaticFinancialGridItem(
-                                      context,
-                                      settings,
-                                      l10n.total_cost,
-                                      '${settings.currencySymbol}${RecipeUtils.formatNumber(financials.totalCost)}',
-                                      theme.colorScheme.errorContainer,
-                                      theme.colorScheme.onErrorContainer,
+                              KeyedSubtree(
+                                key: index == 0 ? _tutorialKeys.recipeFinanceGridKey : null,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildStaticFinancialGridItem(
+                                        context,
+                                        settings,
+                                        l10n.total_cost,
+                                        '${settings.currencySymbol}${RecipeUtils.formatNumber(financials.totalCost)}',
+                                        theme.colorScheme.errorContainer,
+                                        theme.colorScheme.onErrorContainer,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _buildStaticFinancialGridItem(
-                                      context,
-                                      settings,
-                                      l10n.total_profit,
-                                      '${settings.currencySymbol}${RecipeUtils.formatNumber(financials.totalProfit)}',
-                                      theme.colorScheme.primaryContainer,
-                                      theme.colorScheme.onPrimaryContainer,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildStaticFinancialGridItem(
+                                        context,
+                                        settings,
+                                        l10n.total_profit,
+                                        '${settings.currencySymbol}${RecipeUtils.formatNumber(financials.totalProfit)}',
+                                        theme.colorScheme.primaryContainer,
+                                        theme.colorScheme.onPrimaryContainer,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _buildStaticFinancialGridItem(
-                                      context,
-                                      settings,
-                                      l10n.financial_price,
-                                      '${settings.currencySymbol}${RecipeUtils.formatNumber(recipe.targetPricePerPortion)}',
-                                      theme.colorScheme.secondaryContainer,
-                                      theme.colorScheme.onSecondaryContainer,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildStaticFinancialGridItem(
+                                        context,
+                                        settings,
+                                        l10n.financial_price,
+                                        '${settings.currencySymbol}${RecipeUtils.formatNumber(recipe.targetPricePerPortion)}',
+                                        theme.colorScheme.secondaryContainer,
+                                        theme.colorScheme.onSecondaryContainer,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                               AnimatedSize(
                                 duration: settings.animationsEnabled
@@ -331,6 +399,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                             ],
                           ),
                           ),
+                        ),
                         ),
                       ),
                     ),

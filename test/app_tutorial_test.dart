@@ -37,13 +37,42 @@ void main() {
       expect(isCompleted, isTrue);
     });
 
-    test('resetTutorial resets completion flag to false', () async {
+    test('resetTutorial resets all completion flags to false', () async {
       final prefs = await SharedPreferences.getInstance();
       await AppTutorialService.markTutorialCompleted(prefs);
+      await AppTutorialService.markRecipeListTutorialCompleted(prefs);
+      await AppTutorialService.markRecipeEditorTutorialCompleted(prefs);
+
       expect(await AppTutorialService.isTutorialCompleted(prefs), isTrue);
+      expect(await AppTutorialService.isRecipeListTutorialCompleted(prefs), isTrue);
+      expect(await AppTutorialService.isRecipeEditorTutorialCompleted(prefs), isTrue);
 
       await AppTutorialService.resetTutorial(prefs);
       expect(await AppTutorialService.isTutorialCompleted(prefs), isFalse);
+      expect(await AppTutorialService.isRecipeListTutorialCompleted(prefs), isFalse);
+      expect(await AppTutorialService.isRecipeEditorTutorialCompleted(prefs), isFalse);
+    });
+
+    test('RecipeList tutorial persistence flags work correctly', () async {
+      final prefs = await SharedPreferences.getInstance();
+      expect(await AppTutorialService.isRecipeListTutorialCompleted(prefs), isFalse);
+
+      await AppTutorialService.markRecipeListTutorialCompleted(prefs);
+      expect(await AppTutorialService.isRecipeListTutorialCompleted(prefs), isTrue);
+
+      await AppTutorialService.resetRecipeListTutorial(prefs);
+      expect(await AppTutorialService.isRecipeListTutorialCompleted(prefs), isFalse);
+    });
+
+    test('RecipeEditor tutorial persistence flags work correctly', () async {
+      final prefs = await SharedPreferences.getInstance();
+      expect(await AppTutorialService.isRecipeEditorTutorialCompleted(prefs), isFalse);
+
+      await AppTutorialService.markRecipeEditorTutorialCompleted(prefs);
+      expect(await AppTutorialService.isRecipeEditorTutorialCompleted(prefs), isTrue);
+
+      await AppTutorialService.resetRecipeEditorTutorial(prefs);
+      expect(await AppTutorialService.isRecipeEditorTutorialCompleted(prefs), isFalse);
     });
 
     test('requestReplay and triggerReplay notify listeners', () {
@@ -119,6 +148,168 @@ void main() {
       expect(targets[0].identify, 'step_nav_bar');
       expect(targets[1].identify, 'step_quick_actions');
       expect(targets[2].identify, 'step_recent_recipes');
+    });
+
+    testWidgets('createRecipeListTargets creates targets for recipe card and finance row', (WidgetTester tester) async {
+      final cardKey = GlobalKey();
+      final financeKey = GlobalKey();
+      final keys = RecipeListTutorialKeys(
+        recipeCardKey: cardKey,
+        recipeFinanceGridKey: financeKey,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Column(
+              children: [
+                SizedBox(key: cardKey, height: 120, width: 300, child: const Text('Recipe Card')),
+                SizedBox(key: financeKey, height: 40, width: 300, child: const Text('Finance Grid')),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(Scaffold));
+      final targets = AppTutorialService.createRecipeListTargets(context: context, keys: keys);
+
+      expect(targets.length, 2);
+      expect(targets[0].identify, 'step_recipe_list_hold');
+      expect(targets[1].identify, 'step_recipe_list_finance');
+    });
+
+    testWidgets('createRecipeEditorTargets creates targets for finance panel, ingredient hold, and gestures', (WidgetTester tester) async {
+      final financeKey = GlobalKey();
+      final firstIngredientKey = GlobalKey();
+      final ingredientsKey = GlobalKey();
+      final keys = RecipeEditorTutorialKeys(
+        recipeEditorFinanceKey: financeKey,
+        recipeEditorFirstIngredientKey: firstIngredientKey,
+        recipeEditorIngredientsKey: ingredientsKey,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Column(
+              children: [
+                SizedBox(key: financeKey, height: 80, width: 300, child: const Text('Finance Panel')),
+                SizedBox(key: firstIngredientKey, height: 50, width: 300, child: const Text('First Ingredient')),
+                SizedBox(key: ingredientsKey, height: 120, width: 300, child: const Text('Ingredients Section')),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(Scaffold));
+      final targets = AppTutorialService.createRecipeEditorTargets(context: context, keys: keys);
+
+      expect(targets.length, 3);
+      expect(targets[0].identify, 'step_recipe_editor_finance');
+      expect(targets[1].identify, 'step_recipe_editor_ingredient_hold');
+      expect(targets[2].identify, 'step_recipe_editor_gestures');
+      expect(targets[1].enableTargetTab, isTrue);
+    });
+
+    testWidgets('createRecipeEditorTargets skips unmounted firstIngredientKey gracefully', (WidgetTester tester) async {
+      final financeKey = GlobalKey();
+      final unmountedIngredientKey = GlobalKey();
+      final ingredientsKey = GlobalKey();
+      final keys = RecipeEditorTutorialKeys(
+        recipeEditorFinanceKey: financeKey,
+        recipeEditorFirstIngredientKey: unmountedIngredientKey,
+        recipeEditorIngredientsKey: ingredientsKey,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Column(
+              children: [
+                SizedBox(key: financeKey, height: 80, width: 300, child: const Text('Finance Panel')),
+                SizedBox(key: ingredientsKey, height: 40, width: 300, child: const Text('Ingredients Section')),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(Scaffold));
+      final targets = AppTutorialService.createRecipeEditorTargets(context: context, keys: keys);
+
+      expect(targets.length, 2);
+      expect(targets[0].identify, 'step_recipe_editor_finance');
+      expect(targets[1].identify, 'step_recipe_editor_gestures');
+    });
+
+    testWidgets('calculateSafeTargetPosition positions card close to focus target instead of screen edges', (WidgetTester tester) async {
+      final topWidgetKey = GlobalKey();
+      final bottomWidgetKey = GlobalKey();
+
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Stack(
+              children: [
+                Positioned(
+                  top: 100,
+                  left: 100,
+                  child: SizedBox(key: topWidgetKey, height: 60, width: 200, child: const Text('Top Widget')),
+                ),
+                Positioned(
+                  top: 750,
+                  left: 800,
+                  child: SizedBox(key: bottomWidgetKey, height: 60, width: 200, child: const Text('Bottom Widget')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(Scaffold));
+
+      // 1. Top widget: plenty of space below -> places close below the widget
+      final topPos = AppTutorialService.calculateSafeTargetPosition(
+        context: context,
+        keyTarget: topWidgetKey,
+      );
+      expect(topPos.top, isNotNull);
+      expect(topPos.bottom, isNull);
+      // Target bottom is 160. Gap is 12 -> desired top is 172.
+      expect(topPos.top, closeTo(172.0, 5.0));
+
+      // 2. Bottom widget: plenty of space above -> places close above the widget
+      final bottomPos = AppTutorialService.calculateSafeTargetPosition(
+        context: context,
+        keyTarget: bottomWidgetKey,
+      );
+      expect(bottomPos.bottom, isNotNull);
+      expect(bottomPos.top, isNull);
+      // Screen height is 900, target top is 750 -> distance from bottom is 150 + gap 12 = 162.
+      expect(bottomPos.bottom, closeTo(162.0, 5.0));
     });
   });
 

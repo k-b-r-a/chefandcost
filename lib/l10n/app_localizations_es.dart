@@ -1563,4 +1563,65 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get tutorial_target_settings_hint =>
       'Puedes repetir este tutorial interactivo en cualquier momento desde Ajustes.';
+
+  @override
+  String get tutorial_help_tooltip => 'Ver tutorial guiado';
+
+  @override
+  String get tutorial_recipe_list_hold_title => 'Opciones Rápidas de Receta';
+
+  @override
+  String get tutorial_recipe_list_hold_desc =>
+      'Toca cualquier receta para abrirla y editarla. ¡Pero hay un atajo oculto aquí!';
+
+  @override
+  String get tutorial_recipe_list_hold_hint =>
+      'Mantén presionada esta receta para ver más opciones: Escalar porciones, Duplicar, Editar o Eliminar directamente desde la lista.';
+
+  @override
+  String get tutorial_recipe_list_finance_title => 'Resumen Financiero Directo';
+
+  @override
+  String get tutorial_recipe_list_finance_desc =>
+      'Cada receta muestra en vivo su Costo Total, Ganancia Estimada y Precio de Venta por porción.';
+
+  @override
+  String get tutorial_recipe_list_finance_hint =>
+      'Consejo: Estos valores se recalculan automáticamente si cambian los costos de ingredientes o las porciones.';
+
+  @override
+  String get tutorial_editor_finance_title =>
+      'Finanzas y Márgenes de la Receta';
+
+  @override
+  String get tutorial_editor_finance_desc =>
+      'Calcula el costo total, costo por porción, margen de beneficio deseado, costos indirectos y precio de venta objetivo.';
+
+  @override
+  String get tutorial_editor_finance_hint =>
+      'Acción clave: Toca la barra inferior de finanzas para desplegar la calculadora completa de márgenes y precios.';
+
+  @override
+  String get tutorial_editor_gestures_title =>
+      'Gestos en Ingredientes y Porciones';
+
+  @override
+  String get tutorial_editor_gestures_desc =>
+      'Agrega ingredientes con costos precisos, define porciones y organiza los pasos de preparación.';
+
+  @override
+  String get tutorial_editor_gestures_hint =>
+      'Acciones no intuitivas: Mantén presionado y arrastra ingredientes para reordenarlos. Toca las porciones para escalar automáticamente toda la receta.';
+
+  @override
+  String get tutorial_editor_ingredient_hold_title =>
+      'Opciones Rápidas de Ingrediente';
+
+  @override
+  String get tutorial_editor_ingredient_hold_desc =>
+      'Toca la cantidad para editarla directamente. ¡Pero también puedes mantener presionado cualquier ingrediente para ver más opciones!';
+
+  @override
+  String get tutorial_editor_ingredient_hold_hint =>
+      'Mantén presionado este ingrediente para ver más opciones: Escalar la receta según este ingrediente, Editar, Fusionar o Eliminar.';
 }

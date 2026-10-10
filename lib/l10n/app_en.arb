@@ -668,5 +668,21 @@
   "tutorial_target_tools_hint": "Feature tip: Timers keep running in the background with audio alarms and auto-dismiss.",
   "tutorial_target_settings_title": "Cloud Sync & Preferences",
   "tutorial_target_settings_desc": "Customize styles, connect Firebase sync, and manage database backups.",
-  "tutorial_target_settings_hint": "You can replay this interactive walkthrough anytime from Settings."
+  "tutorial_target_settings_hint": "You can replay this interactive walkthrough anytime from Settings.",
+  "tutorial_help_tooltip": "View guided walkthrough",
+  "tutorial_recipe_list_hold_title": "Recipe Quick Actions",
+  "tutorial_recipe_list_hold_desc": "Tap any recipe to open and edit it. But there is a powerful shortcut hidden here!",
+  "tutorial_recipe_list_hold_hint": "Hold / Long-press this recipe card to reveal more options: Scale portions, Duplicate, Edit, or Delete directly from the list.",
+  "tutorial_recipe_list_finance_title": "Recipe Financial Breakdown",
+  "tutorial_recipe_list_finance_desc": "Every recipe card displays its live Total Cost, Estimated Profit, and Target Sale Price per portion.",
+  "tutorial_recipe_list_finance_hint": "Tip: These numbers recalculate automatically when ingredient costs or portions change.",
+  "tutorial_editor_finance_title": "Recipe Finance & Margins",
+  "tutorial_editor_finance_desc": "Calculate total cost, cost per portion, desired profit margin, overhead expenses, and target sale price.",
+  "tutorial_editor_finance_hint": "Key action: Tap the bottom finance bar to expand the full profit calculator and price simulator.",
+  "tutorial_editor_gestures_title": "Ingredients & Yield Gestures",
+  "tutorial_editor_gestures_desc": "Add ingredients with accurate cost, specify portion yields, and organize preparation steps.",
+  "tutorial_editor_gestures_hint": "Non-intuitive actions: Hold and drag ingredients to reorder them. Tap portion yield to automatically scale the entire recipe.",
+  "tutorial_editor_ingredient_hold_title": "Ingredient Quick Actions",
+  "tutorial_editor_ingredient_hold_desc": "Tap the quantity to edit amount directly. But you can also hold any ingredient for more options!",
+  "tutorial_editor_ingredient_hold_hint": "Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete."
 }
