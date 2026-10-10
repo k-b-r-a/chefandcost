@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
+import '../database/sample_manufacturing_recipe.dart';
 import '../constants.dart';
 
 /// Service responsible for purely manual, on-demand, differential cross-platform sync
@@ -409,6 +410,7 @@ class FirestoreSyncService {
 
   /// Saves/upserts a recipe and its nested ingredients directly to Firestore.
   Future<void> saveRecipe(RecipeDetail detail, {String? userId}) async {
+    if (isSampleManufacturingRecipe(detail.recipe.recipePk)) return;
     if (!isConfigured) return;
     final activeUid = userId ?? await getActiveUserId();
     if (activeUid == null || activeUid.isEmpty) return;
@@ -504,7 +506,9 @@ class FirestoreSyncService {
     // 2. Fetch all local units, ingredients, and recipes
     final allUnits = await db.getAllUnits();
     final allIngs = await db.getAllIngredients();
-    final allRecipeDetails = await db.getAllRecipeDetails();
+    final allRecipeDetails = (await db.getAllRecipeDetails())
+        .where((r) => !isSampleManufacturingRecipe(r.recipe.recipePk))
+        .toList();
 
     // 3. Upload all units
     for (final unit in allUnits) {
@@ -659,7 +663,9 @@ class FirestoreSyncService {
     // -------------------------------------------------------------
     final localUnits = await db.getAllUnits();
     final localIngredients = await db.getAllIngredients();
-    final localRecipes = await db.getAllRecipeDetails();
+    final localRecipes = (await db.getAllRecipeDetails())
+        .where((r) => !isSampleManufacturingRecipe(r.recipe.recipePk))
+        .toList();
 
     WriteBatch batch = _firestore.batch();
     int opCount = 0;

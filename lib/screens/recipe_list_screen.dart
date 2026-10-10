@@ -11,6 +11,7 @@ import '../utils/ui_utils.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../provider/web_layout_provider.dart';
 import '../services/app_tutorial_service.dart';
+import '../database/sample_manufacturing_recipe.dart';
 import 'recipe_editor_screen.dart';
 
 class RecipeListScreen extends ConsumerStatefulWidget {
@@ -208,7 +209,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            RecipeEditorScreen(recipeId: recipe.recipePk),
+                                            RecipeEditorScreen(
+                                              recipeId: recipe.recipePk,
+                                              isTemporary: isSampleManufacturingRecipe(recipe.recipePk),
+                                            ),
                                       ),
                                     );
                                   }
@@ -241,14 +245,52 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          recipe.name,
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                recipe.name,
+                                                style: theme.textTheme.titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                            ),
+                                            if (isSampleManufacturingRecipe(recipe.recipePk)) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: theme.colorScheme.tertiaryContainer,
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.science_outlined,
+                                                      size: 11,
+                                                      color: theme.colorScheme.onTertiaryContainer,
+                                                    ),
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      l10n.sample_manufacturing_badge,
+                                                      style: theme.textTheme.labelSmall?.copyWith(
+                                                        color: theme.colorScheme.onTertiaryContainer,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                         if (recipe.description != null &&
                                             recipe.description!.isNotEmpty) ...[
@@ -348,7 +390,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                                       Navigator.of(context).push(
                                                         MaterialPageRoute(
                                                           builder: (context) =>
-                                                              RecipeEditorScreen(recipeId: recipe.recipePk),
+                                                              RecipeEditorScreen(
+                                                                recipeId: recipe.recipePk,
+                                                                isTemporary: isSampleManufacturingRecipe(recipe.recipePk),
+                                                              ),
                                                         ),
                                                       ).then((_) {
                                                         setState(() {
@@ -581,7 +626,12 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
 
     if (confirm) {
       try {
-        await db.deleteRecipe(recipe);
+        if (isSampleManufacturingRecipe(recipe.recipePk)) {
+          final prefs = ref.read(sharedPreferencesProvider);
+          await dismissSampleManufacturingRecipe(db, prefs: prefs);
+        } else {
+          await db.deleteRecipe(recipe);
+        }
         setState(() {
           _expandedRecipeId = null;
         });

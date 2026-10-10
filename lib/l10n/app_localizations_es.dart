@@ -1624,4 +1624,21 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get tutorial_editor_ingredient_hold_hint =>
       'Mantén presionado este ingrediente para ver más opciones: Escalar la receta según este ingrediente, Editar, Fusionar o Eliminar.';
+
+  @override
+  String get sample_manufacturing_recipe_title =>
+      'Galletas de Mantequilla (Lote Producción)';
+
+  @override
+  String get sample_manufacturing_badge => 'Muestra Temporal';
+
+  @override
+  String get sample_manufacturing_banner_desc =>
+      'Receta de muestra temporal para pruebas de costeo y manufactura (3 ingredientes). No se guardará como receta permanente a menos que decidas guardarla.';
+
+  @override
+  String get sample_manufacturing_save_btn => 'Guardar como receta real';
+
+  @override
+  String get sample_manufacturing_dismiss_btn => 'Descartar muestra';
 }

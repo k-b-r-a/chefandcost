@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart' as p;
 import '../database/database.dart';
+import '../database/sample_manufacturing_recipe.dart';
 import '../utils/cloud_sync_service.dart';
 import '../utils/firestore_sync_service.dart';
 import 'database_provider.dart';
@@ -723,6 +724,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<void> saveRecipe(RecipeDetail detail) async {
+    if (isSampleManufacturingRecipe(detail.recipe.recipePk)) return;
     if (state.signedIn && state.storageType == CloudSyncStorageType.firestore) {
       try {
         await _firestoreService.saveRecipe(detail);

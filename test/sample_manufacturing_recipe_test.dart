@@ -1,0 +1,249 @@
+import 'package:drift/native.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:recipetools/database/database.dart';
+import 'package:recipetools/database/sample_manufacturing_recipe.dart';
+import 'package:recipetools/l10n/app_localizations.dart';
+import 'package:recipetools/provider/database_provider.dart';
+import 'package:recipetools/provider/settings_provider.dart';
+import 'package:recipetools/screens/recipe_list_screen.dart';
+import 'package:recipetools/screens/recipe_editor_screen.dart';
+import 'package:recipetools/utils/recipe_utils.dart';
+
+import 'package:recipetools/services/app_tutorial_service.dart';
+
+class MockDatabaseNotifier extends DatabaseNotifier {
+  final AppDatabase _mockDb;
+  MockDatabaseNotifier(this._mockDb);
+
+  @override
+  AppDatabase build() => _mockDb;
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('Sample Manufacturing Recipe DB Tests', () {
+    late AppDatabase db;
+    late SharedPreferences prefs;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('ensureSampleManufacturingRecipe creates 3 ingredients and 1 manufacturing recipe', () async {
+      final created = await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect(created, isTrue);
+
+      final recipes = await db.getAllRecipes();
+      expect(recipes.length, 1);
+      final recipe = recipes.first;
+      expect(recipe.recipePk, kSampleManufacturingRecipePk);
+      expect(recipe.name, contains('Galletas de Mantequilla'));
+      expect(recipe.defaultYield, 24.0);
+      expect(recipe.targetProfitMargin, 50.0);
+
+      // Verify exactly 3 manufacturing raw materials
+      final detail = await db.getRecipeDetail(recipe.recipePk);
+      expect(detail.ingredients.length, 3);
+
+      final ingNames = detail.ingredients.map((i) => i.ingredient.name).toList();
+      expect(ingNames, containsAll([
+        'Harina de Trigo 0000',
+        'Mantequilla sin Sal',
+        'Azúcar Blanca Refinada',
+      ]));
+
+      // Verify amounts (300g flour, 200g butter, 100g sugar)
+      final flour = detail.ingredients.firstWhere((i) => i.ingredient.name == 'Harina de Trigo 0000');
+      final butter = detail.ingredients.firstWhere((i) => i.ingredient.name == 'Mantequilla sin Sal');
+      final sugar = detail.ingredients.firstWhere((i) => i.ingredient.name == 'Azúcar Blanca Refinada');
+      expect(flour.entry.amountNeeded, 300.0);
+      expect(butter.entry.amountNeeded, 200.0);
+      expect(sugar.entry.amountNeeded, 100.0);
+
+      // Verify manufacturing steps and timers
+      expect(detail.steps.length, 3);
+      expect(detail.steps.any((s) => s.instruction.contains('[timer:Cremado Industrial|240]')), isTrue);
+      expect(detail.steps.any((s) => s.instruction.contains('[timer:Horneado de Lote|900]')), isTrue);
+    });
+
+    test('ensureSampleManufacturingRecipe is idempotent and does not recreate if recipes exist', () async {
+      await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      final secondRun = await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect(secondRun, isFalse);
+
+      final recipes = await db.getAllRecipes();
+      expect(recipes.length, 1);
+    });
+
+    test('ensureSampleManufacturingRecipe respects dismissed SharedPreferences key', () async {
+      await prefs.setBool(kSampleManufacturingRecipeDismissedKey, true);
+      final created = await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect(created, isFalse);
+
+      final recipes = await db.getAllRecipes();
+      expect(recipes, isEmpty);
+    });
+
+    test('dismissSampleManufacturingRecipe deletes recipe and sets dismissed key', () async {
+      await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect((await db.getAllRecipes()).length, 1);
+
+      await dismissSampleManufacturingRecipe(db, prefs: prefs);
+      expect((await db.getAllRecipes()), isEmpty);
+      expect(prefs.getBool(kSampleManufacturingRecipeDismissedKey), isTrue);
+
+      // Next ensure run should not resurrect it
+      final tryRecreate = await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect(tryRecreate, isFalse);
+      expect((await db.getAllRecipes()), isEmpty);
+    });
+
+    test('convertSampleRecipeToPermanent clones to new UUID and deletes temporary record', () async {
+      await ensureSampleManufacturingRecipe(db, prefs: prefs);
+
+      final newPk = await convertSampleRecipeToPermanent(
+        db,
+        prefs: prefs,
+        customName: 'Galletas de Producción Guardadas',
+      );
+
+      expect(newPk, isNot(equals(kSampleManufacturingRecipePk)));
+      expect(prefs.getBool(kSampleManufacturingRecipeDismissedKey), isTrue);
+
+      final recipes = await db.getAllRecipes();
+      expect(recipes.length, 1);
+      expect(recipes.first.recipePk, newPk);
+      expect(recipes.first.name, 'Galletas de Producción Guardadas');
+
+      final detail = await db.getRecipeDetail(newPk);
+      expect(detail.ingredients.length, 3);
+      expect(detail.steps.length, 3);
+    });
+  });
+
+  group('Sample Manufacturing Recipe UI & Widget Tests', () {
+    late AppDatabase db;
+    late SharedPreferences prefs;
+    late List<Unit> testUnits;
+    late List<Ingredient> testIngredients;
+    late List<Recipe> testRecipes;
+    late RecipeDetail testDetail;
+    late RecipeFinancialSummary testFinancials;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({
+        AppTutorialService.kTutorialCompletedKey: true,
+        AppTutorialService.kTutorialRecipeListCompletedKey: true,
+        AppTutorialService.kTutorialRecipeEditorCompletedKey: true,
+      });
+      prefs = await SharedPreferences.getInstance();
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+      await ensureSampleManufacturingRecipe(db, prefs: prefs);
+
+      testUnits = await db.getAllUnits();
+      testIngredients = await db.getAllIngredients();
+      testRecipes = await db.getAllRecipes();
+      testDetail = await db.getRecipeDetail(testRecipes.first.recipePk);
+      testFinancials = RecipeUtils.calculateSummaryFromDetail(testDetail);
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    testWidgets('RecipeListScreen renders temporary sample badge for manufacturing recipe', (tester) async {
+      tester.view.physicalSize = const Size(500, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            databaseProvider.overrideWith(() => MockDatabaseNotifier(db)),
+            unitsProvider.overrideWith((ref) => Future.value(testUnits)),
+            unitsStreamProvider.overrideWith((ref) => Stream.value(testUnits)),
+            ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
+            recipesWithFinancialsStreamProvider.overrideWith(
+              (ref) => Stream.value([
+                RecipeWithFinancials(
+                  recipe: testRecipes.first,
+                  financials: testFinancials,
+                ),
+              ]),
+            ),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('es'),
+            home: RecipeListScreen(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Card should be rendered
+      expect(find.textContaining('Galletas de Mantequilla'), findsOneWidget);
+      // Temporary sample badge should be visible
+      expect(find.text('Muestra Temporal'), findsOneWidget);
+    });
+
+    testWidgets('RecipeEditorScreen renders sample banner with save & dismiss buttons', (tester) async {
+      tester.view.physicalSize = const Size(500, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            databaseProvider.overrideWith(() => MockDatabaseNotifier(db)),
+            unitsProvider.overrideWith((ref) => Future.value(testUnits)),
+            unitsStreamProvider.overrideWith((ref) => Stream.value(testUnits)),
+            ingredientsStreamProvider.overrideWith((ref) => Stream.value(testIngredients)),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('es'),
+            home: RecipeEditorScreen(
+              recipeId: kSampleManufacturingRecipePk,
+              isTemporary: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Temporary banner should be visible
+      expect(find.byKey(const ValueKey('sample_manufacturing_recipe_banner')), findsOneWidget);
+      expect(find.byKey(const ValueKey('save_sample_recipe_permanently_button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('dismiss_sample_recipe_button')), findsOneWidget);
+
+      // Ingredients should be loaded
+      expect(find.text('Harina de Trigo 0000'), findsOneWidget);
+      expect(find.text('Mantequilla sin Sal'), findsOneWidget);
+      expect(find.text('Azúcar Blanca Refinada'), findsOneWidget);
+    });
+  });
+}

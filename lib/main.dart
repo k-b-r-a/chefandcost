@@ -23,6 +23,7 @@ import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
 import 'widgets/app_logo.dart';
 import 'services/app_tutorial_service.dart';
+import 'database/sample_manufacturing_recipe.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -839,9 +840,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     if (webLayout.selectedRecipeId != null ||
         webLayout.rightPaneView == WebRightPaneView.newRecipe) {
       if (webLayout.selectedRecipeId != null) {
+        final isSample = isSampleManufacturingRecipe(webLayout.selectedRecipeId);
         return RecipeEditorScreen(
           key: ValueKey('recipe_${webLayout.selectedRecipeId}'),
           recipeId: webLayout.selectedRecipeId,
+          isTemporary: isSample,
           onClose: () => webNotifier.closeDetail(),
         );
       }

@@ -1,0 +1,264 @@
+import 'package:drift/drift.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+
+import 'database.dart';
+import 'initialize_default_database.dart';
+
+/// Identifier for the initial temporary sample manufacturing recipe.
+const String kSampleManufacturingRecipePk = 'sample_manufacturing_recipe_v1';
+
+/// SharedPreferences flag indicating the user has dismissed / deleted the sample recipe.
+const String kSampleManufacturingRecipeDismissedKey =
+    'has_dismissed_sample_manufacturing_recipe_v1';
+
+/// Stable PKs for the 3 manufacturing raw materials.
+const String kSampleFlourPk = 'sample_mfg_wheat_flour_v1';
+const String kSampleButterPk = 'sample_mfg_butter_v1';
+const String kSampleSugarPk = 'sample_mfg_sugar_v1';
+
+/// Returns true if [recipePk] corresponds to the initial sample manufacturing recipe.
+bool isSampleManufacturingRecipe(String? recipePk) =>
+    recipePk == kSampleManufacturingRecipePk;
+
+/// Ensures the initial 3-ingredient manufacturing recipe exists on fresh app start.
+/// Returns true if the recipe was created, false otherwise.
+Future<bool> ensureSampleManufacturingRecipe(
+  AppDatabase db, {
+  SharedPreferences? prefs,
+}) async {
+  final p = prefs ?? await SharedPreferences.getInstance();
+  if (p.getBool(kSampleManufacturingRecipeDismissedKey) == true) {
+    return false;
+  }
+
+  final allRecipes = await db.getAllRecipes();
+  if (allRecipes.isNotEmpty) {
+    return false;
+  }
+
+  // 1. Ensure default culinary units exist
+  await initializeDefaultDatabase(db);
+  final units = await db.getAllUnits();
+  final gUnit = units.firstWhere(
+    (u) => u.symbol == 'g' || u.name == 'unit_grams',
+    orElse: () => units.first,
+  );
+
+  // 2. Ensure the 3 raw material ingredients exist
+  final existingIngs = await db.getAllIngredients();
+  final ingByName = {
+    for (var i in existingIngs) i.name.toLowerCase().trim(): i,
+  };
+
+  String flourPk = kSampleFlourPk;
+  final existingFlour = ingByName['harina de trigo 0000'];
+  if (existingFlour != null) {
+    flourPk = existingFlour.ingredientPk;
+  } else {
+    await db.insertIngredient(
+      IngredientsCompanion(
+        ingredientPk: Value(flourPk),
+        name: const Value('Harina de Trigo 0000'),
+        cost: const Value(1.20),
+        quantityForCost: const Value(1000.0),
+        unitFk: Value(gUnit.unitPk),
+        dateCreated: Value(DateTime.now()),
+        dateTimeModified: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  String butterPk = kSampleButterPk;
+  final existingButter = ingByName['mantequilla sin sal'];
+  if (existingButter != null) {
+    butterPk = existingButter.ingredientPk;
+  } else {
+    await db.insertIngredient(
+      IngredientsCompanion(
+        ingredientPk: Value(butterPk),
+        name: const Value('Mantequilla sin Sal'),
+        cost: const Value(2.80),
+        quantityForCost: const Value(250.0),
+        unitFk: Value(gUnit.unitPk),
+        dateCreated: Value(DateTime.now()),
+        dateTimeModified: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  String sugarPk = kSampleSugarPk;
+  final existingSugar = ingByName['azúcar blanca refinada'] ??
+      ingByName['azucar blanca refinada'];
+  if (existingSugar != null) {
+    sugarPk = existingSugar.ingredientPk;
+  } else {
+    await db.insertIngredient(
+      IngredientsCompanion(
+        ingredientPk: Value(sugarPk),
+        name: const Value('Azúcar Blanca Refinada'),
+        cost: const Value(1.50),
+        quantityForCost: const Value(1000.0),
+        unitFk: Value(gUnit.unitPk),
+        dateCreated: Value(DateTime.now()),
+        dateTimeModified: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  // 3. Create the 3-ingredient manufacturing recipe
+  // Standard 3:2:1 industrial shortbread/cookie manufacturing batch:
+  // - 300g Flour ($0.36)
+  // - 200g Butter ($2.24)
+  // - 100g Sugar ($0.15)
+  // Total raw material cost: $2.75 for 24 pieces ($0.1146/piece)
+  // 50% target profit margin -> $0.23/piece -> $5.52 total batch value.
+  await db.transaction(() async {
+    await db.insertRecipe(
+      RecipesCompanion(
+        recipePk: const Value(kSampleManufacturingRecipePk),
+        name: const Value('Galletas de Mantequilla (Lote Producción)'),
+        description: const Value(
+          'Lote estándar de manufactura con fórmula 3:2:1 para costeo de producción, control de rendimiento y cálculo de margen industrial.',
+        ),
+        defaultYield: const Value(24.0),
+        yieldName: const Value('piezas'),
+        targetProfitMargin: const Value(50.0),
+        targetPricePerPortion: const Value(0.23),
+        fixedOverheadCost: const Value(0.0),
+        colour: const Value('amber'),
+        dateCreated: Value(DateTime.now()),
+        dateTimeModified: Value(DateTime.now()),
+      ),
+    );
+
+    // 3 Manufacturing ingredients
+    await db.into(db.recipeIngredients).insert(
+      RecipeIngredientsCompanion.insert(
+        recipeFk: kSampleManufacturingRecipePk,
+        ingredientFk: flourPk,
+        amountNeeded: 300.0,
+      ),
+    );
+
+    await db.into(db.recipeIngredients).insert(
+      RecipeIngredientsCompanion.insert(
+        recipeFk: kSampleManufacturingRecipePk,
+        ingredientFk: butterPk,
+        amountNeeded: 200.0,
+      ),
+    );
+
+    await db.into(db.recipeIngredients).insert(
+      RecipeIngredientsCompanion.insert(
+        recipeFk: kSampleManufacturingRecipePk,
+        ingredientFk: sugarPk,
+        amountNeeded: 100.0,
+      ),
+    );
+
+    // 3 Manufacturing steps with timers
+    final steps = [
+      'Control de calidad y pesaje de materia prima según fórmula de fabricación (300g harina, 200g mantequilla, 100g azúcar).',
+      'Cremado de mantequilla con azúcar en batidora industrial por 4 minutos hasta emulsionar. [timer:Cremado Industrial|240]',
+      'Incorporación de harina tamizada, porcionado en unidades de 25g en bandeja industrial y horneado continuo a 180°C por 15 minutos. [timer:Horneado de Lote|900]',
+    ];
+
+    for (int i = 0; i < steps.length; i++) {
+      await db.into(db.recipeSteps).insert(
+        RecipeStepsCompanion.insert(
+          recipeFk: kSampleManufacturingRecipePk,
+          stepNumber: i + 1,
+          instruction: steps[i],
+        ),
+      );
+    }
+  });
+
+  return true;
+}
+
+/// Permanently dismisses / removes the temporary sample manufacturing recipe.
+Future<void> dismissSampleManufacturingRecipe(
+  AppDatabase db, {
+  SharedPreferences? prefs,
+}) async {
+  final p = prefs ?? await SharedPreferences.getInstance();
+  await p.setBool(kSampleManufacturingRecipeDismissedKey, true);
+
+  await db.transaction(() async {
+    await (db.delete(db.recipeSteps)
+          ..where((t) => t.recipeFk.equals(kSampleManufacturingRecipePk)))
+        .go();
+    await (db.delete(db.recipeIngredients)
+          ..where((t) => t.recipeFk.equals(kSampleManufacturingRecipePk)))
+        .go();
+    await (db.delete(db.recipes)
+          ..where((t) => t.recipePk.equals(kSampleManufacturingRecipePk)))
+        .go();
+  });
+}
+
+/// Converts the temporary sample recipe into a permanent user recipe with a new UUID.
+Future<String> convertSampleRecipeToPermanent(
+  AppDatabase db, {
+  SharedPreferences? prefs,
+  String? customName,
+}) async {
+  final p = prefs ?? await SharedPreferences.getInstance();
+  await p.setBool(kSampleManufacturingRecipeDismissedKey, true);
+
+  final detail = await db.getRecipeDetail(kSampleManufacturingRecipePk);
+  final newPk = const Uuid().v4();
+
+  await db.transaction(() async {
+    await db.insertRecipe(
+      RecipesCompanion(
+        recipePk: Value(newPk),
+        name: Value(customName ?? detail.recipe.name),
+        description: Value(detail.recipe.description ?? ''),
+        defaultYield: Value(detail.recipe.defaultYield),
+        yieldName: Value(detail.recipe.yieldName),
+        targetProfitMargin: Value(detail.recipe.targetProfitMargin),
+        targetPricePerPortion: Value(detail.recipe.targetPricePerPortion),
+        fixedOverheadCost: Value(detail.recipe.fixedOverheadCost),
+        colour: Value(detail.recipe.colour),
+        dateCreated: Value(DateTime.now()),
+        dateTimeModified: Value(DateTime.now()),
+      ),
+    );
+
+    for (final ing in detail.ingredients) {
+      await db.into(db.recipeIngredients).insert(
+        RecipeIngredientsCompanion.insert(
+          recipeFk: newPk,
+          ingredientFk: ing.ingredient.ingredientPk,
+          amountNeeded: ing.entry.amountNeeded,
+        ),
+      );
+    }
+
+    for (final step in detail.steps) {
+      await db.into(db.recipeSteps).insert(
+        RecipeStepsCompanion.insert(
+          recipeFk: newPk,
+          stepNumber: step.stepNumber,
+          instruction: step.instruction,
+        ),
+      );
+    }
+
+    // Remove the temporary sample recipe record
+    await (db.delete(db.recipeSteps)
+          ..where((t) => t.recipeFk.equals(kSampleManufacturingRecipePk)))
+        .go();
+    await (db.delete(db.recipeIngredients)
+          ..where((t) => t.recipeFk.equals(kSampleManufacturingRecipePk)))
+        .go();
+    await (db.delete(db.recipes)
+          ..where((t) => t.recipePk.equals(kSampleManufacturingRecipePk)))
+        .go();
+  });
+
+  return newPk;
+}

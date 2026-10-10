@@ -19,6 +19,7 @@ import 'add_ingredient_screen.dart';
 import 'kitchen_timers_screen.dart';
 import 'compare_ingredients_screen.dart';
 import '../services/app_tutorial_service.dart';
+import '../database/sample_manufacturing_recipe.dart';
 
 enum WebRecipeRightPanelMode {
   financials,
@@ -421,7 +422,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       }
     });
 
-    if (widget.isTemporary) {
+    if (widget.isTemporary && widget.recipeId == null) {
       _isLoading = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -1365,6 +1366,151 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildSampleRecipeBanner(ThemeData theme, AppLocalizations l10n) {
+    return Container(
+      key: const ValueKey('sample_manufacturing_recipe_banner'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.tertiary.withValues(alpha: 0.4),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.science_outlined,
+                  size: 18,
+                  color: theme.colorScheme.tertiary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.sample_manufacturing_badge,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onTertiaryContainer,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.sample_manufacturing_banner_desc,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
+            softWrap: true,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                key: const ValueKey('save_sample_recipe_permanently_button'),
+                onPressed: _saveSampleRecipePermanently,
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                label: Text(l10n.sample_manufacturing_save_btn),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+              OutlinedButton.icon(
+                key: const ValueKey('dismiss_sample_recipe_button'),
+                onPressed: _dismissSampleRecipe,
+                icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                label: Text(l10n.sample_manufacturing_dismiss_btn),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: theme.colorScheme.error,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _dismissSampleRecipe() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirm = await AppDialogs.confirmDelete(
+      context,
+      title: l10n.delete_recipe_title,
+      message: l10n.delete_recipe_message,
+      confirmText: l10n.delete_button,
+      cancelText: l10n.discard_button,
+    );
+    if (confirm && mounted) {
+      final db = ref.read(databaseProvider);
+      final prefs = ref.read(sharedPreferencesProvider);
+      await dismissSampleManufacturingRecipe(db, prefs: prefs);
+      if (mounted) {
+        if (widget.onClose != null) {
+          widget.onClose!();
+        } else {
+          Navigator.of(context).pop();
+        }
+      }
+    }
+  }
+
+  Future<void> _saveSampleRecipePermanently() async {
+    final l10n = AppLocalizations.of(context)!;
+    final db = ref.read(databaseProvider);
+    final prefs = ref.read(sharedPreferencesProvider);
+    final newPk = await convertSampleRecipeToPermanent(
+      db,
+      prefs: prefs,
+      customName: _nameController.text.trim().isNotEmpty
+          ? _nameController.text.trim()
+          : null,
+    );
+
+    await RecipeUtils.saveRecipe(
+      db: db,
+      recipePk: newPk,
+      name: _nameController.text.trim(),
+      description: _descriptionController.text.trim(),
+      yieldText: _yieldController.text.trim(),
+      yieldName: _yieldNameController.text.trim().isEmpty
+          ? 'portions'
+          : _yieldNameController.text.trim(),
+      profitMarginText: _profitMarginController.text.trim(),
+      priceText: _priceController.text.trim(),
+      ingredients: _ingredients,
+      steps: _steps,
+    );
+
+    if (mounted) {
+      AppSnackBar.showSuccess(context, l10n.scale_saved_toast);
+      if (widget.onClose != null) {
+        widget.onClose!();
+      } else {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   Future<void> _duplicateCurrentRecipe() async {
@@ -3442,6 +3588,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       children: [
         if (_isScaledTemporarily)
           _buildScaledBanner(theme, l10n),
+        if (isSampleManufacturingRecipe(widget.recipeId))
+          _buildSampleRecipeBanner(theme, l10n),
 
         // Description Card
         Container(
@@ -3818,6 +3966,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     if (_isScaledTemporarily) ...[
                       const SizedBox(height: 12),
                       _buildScaledBanner(theme, l10n),
+                    ],
+                    if (isSampleManufacturingRecipe(widget.recipeId)) ...[
+                      const SizedBox(height: 12),
+                      _buildSampleRecipeBanner(theme, l10n),
                     ],
                     const SizedBox(height: 16),
                     Row(

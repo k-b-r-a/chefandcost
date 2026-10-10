@@ -3095,6 +3095,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.'**
   String get tutorial_editor_ingredient_hold_hint;
+
+  /// No description provided for @sample_manufacturing_recipe_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Butter Cookies (Manufacturing Batch)'**
+  String get sample_manufacturing_recipe_title;
+
+  /// No description provided for @sample_manufacturing_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary Sample'**
+  String get sample_manufacturing_badge;
+
+  /// No description provided for @sample_manufacturing_banner_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.'**
+  String get sample_manufacturing_banner_desc;
+
+  /// No description provided for @sample_manufacturing_save_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Real Recipe'**
+  String get sample_manufacturing_save_btn;
+
+  /// No description provided for @sample_manufacturing_dismiss_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss Sample'**
+  String get sample_manufacturing_dismiss_btn;
 }
 
 class _AppLocalizationsDelegate

@@ -1602,4 +1602,21 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get tutorial_editor_ingredient_hold_hint =>
       'Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.';
+
+  @override
+  String get sample_manufacturing_recipe_title =>
+      'Butter Cookies (Manufacturing Batch)';
+
+  @override
+  String get sample_manufacturing_badge => 'Temporary Sample';
+
+  @override
+  String get sample_manufacturing_banner_desc =>
+      'Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.';
+
+  @override
+  String get sample_manufacturing_save_btn => 'Save as Real Recipe';
+
+  @override
+  String get sample_manufacturing_dismiss_btn => 'Dismiss Sample';
 }

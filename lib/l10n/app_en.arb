@@ -684,5 +684,10 @@
   "tutorial_editor_gestures_hint": "Non-intuitive actions: Hold and drag ingredients to reorder them. Tap portion yield to automatically scale the entire recipe.",
   "tutorial_editor_ingredient_hold_title": "Ingredient Quick Actions",
   "tutorial_editor_ingredient_hold_desc": "Tap the quantity to edit amount directly. But you can also hold any ingredient for more options!",
-  "tutorial_editor_ingredient_hold_hint": "Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete."
+  "tutorial_editor_ingredient_hold_hint": "Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.",
+  "sample_manufacturing_recipe_title": "Butter Cookies (Manufacturing Batch)",
+  "sample_manufacturing_badge": "Temporary Sample",
+  "sample_manufacturing_banner_desc": "Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.",
+  "sample_manufacturing_save_btn": "Save as Real Recipe",
+  "sample_manufacturing_dismiss_btn": "Dismiss Sample"
 }

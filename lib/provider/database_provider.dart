@@ -1,11 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
+import '../database/sample_manufacturing_recipe.dart';
+import 'settings_provider.dart';
 
 class DatabaseNotifier extends Notifier<AppDatabase> {
   @override
   AppDatabase build() {
     final db = AppDatabase();
     ref.onDispose(() => db.close());
+    Future.microtask(() async {
+      try {
+        final prefs = ref.read(sharedPreferencesProvider);
+        await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      } catch (_) {}
+    });
     return db;
   }
 
