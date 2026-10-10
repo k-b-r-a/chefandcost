@@ -51,7 +51,7 @@ class TutorialStepInfo {
 
 /// Service managing the interactive, step-by-step walkthrough tutorial.
 class AppTutorialService {
-  static const String kTutorialCompletedKey = 'has_completed_app_walkthrough_tutorial_v1';
+  static const String kTutorialCompletedKey = 'has_completed_app_walkthrough_tutorial_v2';
 
   /// Global notifier to trigger a walkthrough replay from anywhere in the app.
   static final ValueNotifier<int> replayNotifier = ValueNotifier<int>(0);
@@ -154,24 +154,32 @@ class AppTutorialService {
 
     final totalSteps = activeSteps.length;
     final screenHeight = MediaQuery.sizeOf(context).height;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final targets = <TargetFocus>[];
 
     for (int i = 0; i < totalSteps; i++) {
       final step = activeSteps[i];
       final stepIndex = i;
 
-      // Dynamically select align based on target position to ensure content is never off-screen
-      ContentAlign dynamicAlign = step.align;
+      // Dynamically calculate screen half to ensure the explanation card never escapes the screen
       final ctx = step.keyTarget.currentContext;
+      bool isLower = false;
       if (ctx != null) {
         final renderBox = ctx.findRenderObject();
         if (renderBox is RenderBox && renderBox.hasSize) {
           final pos = renderBox.localToGlobal(Offset.zero);
-          dynamicAlign = pos.dy > (screenHeight * 0.45)
-              ? ContentAlign.top
-              : ContentAlign.bottom;
+          final targetCenterY = pos.dy + (renderBox.size.height / 2);
+          isLower = targetCenterY > (screenHeight * 0.45);
         }
       }
+
+      // Pin the card inside the opposite half with safe viewport padding
+      final customPos = CustomTargetContentPosition(
+        top: isLower ? (topPadding + 20.0) : null,
+        bottom: isLower ? null : (bottomPadding + 20.0),
+        left: 0.0,
+      );
 
       targets.add(
         TargetFocus(
@@ -183,8 +191,9 @@ class AppTutorialService {
           enableTargetTab: false,
           contents: [
             TargetContent(
-              align: dynamicAlign,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              align: ContentAlign.custom,
+              customPosition: customPos,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
               builder: (ctx, controller) {
                 return _buildStepCard(
                   context: ctx,
@@ -232,7 +241,7 @@ class AppTutorialService {
               ctx,
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
-              alignment: 0.5,
+              alignment: 0.60,
             );
           } catch (_) {}
         }
@@ -350,14 +359,19 @@ class AppTutorialService {
         ? theme.colorScheme.surfaceContainerHigh
         : theme.colorScheme.surface;
 
+    final screenHeight = MediaQuery.sizeOf(context).height;
+
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
+        constraints: BoxConstraints(
+          maxWidth: 420,
+          maxHeight: (screenHeight * 0.42).clamp(220.0, 480.0),
+        ),
         child: Material(
           color: Colors.transparent,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-            padding: const EdgeInsets.all(18.0),
+            margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
             decoration: BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(22),
@@ -373,11 +387,13 @@ class AppTutorialService {
                 ),
               ],
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header: Step Badge & Skip Action
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header: Step Badge & Skip Action
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -539,6 +555,7 @@ class AppTutorialService {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

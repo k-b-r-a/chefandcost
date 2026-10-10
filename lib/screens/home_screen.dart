@@ -103,23 +103,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: 20),
 
                       // 5. Recent Recipes
-                      KeyedSubtree(
-                        key: widget.tutorialKeys?.recentRecipesKey,
-                        child: _buildRecentRecipesSection(
-                          context: context,
-                          theme: theme,
-                          l10n: l10n,
-                          settings: settings,
-                          recipesAsync: recipesAsync,
-                        ),
+                      _buildRecentRecipesSection(
+                        context: context,
+                        theme: theme,
+                        l10n: l10n,
+                        settings: settings,
+                        recipesAsync: recipesAsync,
                       ),
                       const SizedBox(height: 20),
 
                       // 6. Kitchen Tools Quick Launch
-                      KeyedSubtree(
-                        key: widget.tutorialKeys?.toolsSectionKey,
-                        child: _buildKitchenToolsSection(context, theme, l10n),
-                      ),
+                      _buildKitchenToolsSection(context, theme, l10n),
                     ],
                   ),
                 ),
@@ -422,31 +416,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                l10n.home_recent_recipes,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            TextButton(
-              onPressed: () => widget.onNavigateToTab?.call(1),
-              child: Text(
-                l10n.home_view_all,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+        KeyedSubtree(
+          key: widget.tutorialKeys?.recentRecipesKey,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.home_recent_recipes,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-          ],
+              TextButton(
+                onPressed: () => widget.onNavigateToTab?.call(1),
+                child: Text(
+                  l10n.home_view_all,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         recipesAsync.when(
@@ -670,31 +667,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                l10n.home_kitchen_tools,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            TextButton(
-              onPressed: () => widget.onNavigateToTab?.call(3),
-              child: Text(
-                l10n.home_view_all,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+        KeyedSubtree(
+          key: widget.tutorialKeys?.toolsSectionKey,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.home_kitchen_tools,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-          ],
+              TextButton(
+                onPressed: () => widget.onNavigateToTab?.call(3),
+                child: Text(
+                  l10n.home_view_all,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         ToolCard(
