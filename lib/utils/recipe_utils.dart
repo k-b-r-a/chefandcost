@@ -208,6 +208,60 @@ class RecipeUtils {
     return targetAmount / currentAmount;
   }
 
+  /// Calculates scale factor when scaling by portions / servings.
+  /// Scaling factor = (target_servings / base_servings).
+  /// Returns 1.0 if baseServings <= 0 or targetServings <= 0.
+  static double calculatePortionScaleMultiplier({
+    required double baseServings,
+    required double targetServings,
+  }) {
+    if (baseServings <= 0 || targetServings <= 0) return 1.0;
+    return targetServings / baseServings;
+  }
+
+  /// Formats a scale multiplier cleanly (e.g. 0.25 -> "1/4x", 0.5 -> "1/2x", 1.0 -> "1x", 2.0 -> "2x").
+  static String formatMultiplier(double multiplier) {
+    if ((multiplier - 0.25).abs() < 0.001) return '1/4x';
+    if ((multiplier - 0.5).abs() < 0.001) return '1/2x';
+    if ((multiplier - 0.75).abs() < 0.001) return '3/4x';
+    if ((multiplier - 0.3333).abs() < 0.01) return '1/3x';
+    if ((multiplier - 0.6667).abs() < 0.01) return '2/3x';
+    final rounded = multiplier.roundToDouble();
+    if ((multiplier - rounded).abs() < 1e-9) {
+      return '${rounded.toInt()}x';
+    }
+    return '${formatQuantity(multiplier)}x';
+  }
+
+  /// Formats a quantity value cleanly into fractions (e.g. "1/4", "1/2", "1 1/2") or clean decimals.
+  static String formatFractionOrDecimal(num value, {bool preferFraction = false}) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 1e-9) {
+      return rounded.toInt().toString();
+    }
+    if (preferFraction) {
+      final intPart = value.floor();
+      final fracPart = (value - intPart).toDouble();
+      String? fracStr;
+      if ((fracPart - 0.25).abs() < 0.005) {
+        fracStr = '1/4';
+      } else if ((fracPart - 0.5).abs() < 0.005) {
+        fracStr = '1/2';
+      } else if ((fracPart - 0.75).abs() < 0.005) {
+        fracStr = '3/4';
+      } else if ((fracPart - 0.3333).abs() < 0.01) {
+        fracStr = '1/3';
+      } else if ((fracPart - 0.6667).abs() < 0.01) {
+        fracStr = '2/3';
+      }
+
+      if (fracStr != null) {
+        return intPart > 0 ? '$intPart $fracStr' : fracStr;
+      }
+    }
+    return formatQuantity(value);
+  }
+
   /// Strips redundant decimal places and unnecessary trailing zeros from a numeric string.
   /// E.g. "2.0" -> "2", "2.000" -> "2", "2,00" -> "2", "2.50" -> "2.5", "2,50" -> "2,5".
   static String cleanTrailingZeros(String text) {
@@ -252,12 +306,19 @@ class RecipeUtils {
   }
 
   /// Formats an ingredient quantity value cleanly without appending unnecessary trailing zeros.
-  /// E.g. 2.0 -> "2", 2.5 -> "2.5", 0.125 -> "0.125".
+  /// E.g. 2.0 -> "2", 2.000000001 -> "2", 2.5 -> "2.5", 0.50000000001 -> "0.5", 0.125 -> "0.125".
   static String formatQuantity(num value, {int maxDecimalDigits = 4}) {
-    if (value % 1 == 0) {
-      return value.toInt().toString();
+    // If within epsilon of integer, display integer without decimals
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 1e-9) {
+      return rounded.toInt().toString();
     }
+    // Round to maxDecimalDigits to avoid floating-point artifacts
     final fixed = value.toStringAsFixed(maxDecimalDigits);
+    final parsed = double.tryParse(fixed);
+    if (parsed != null && (parsed - parsed.roundToDouble()).abs() < 1e-9) {
+      return parsed.round().toString();
+    }
     return cleanTrailingZeros(fixed);
   }
 
@@ -278,10 +339,28 @@ class RecipeUtils {
     return formatter.format(maxDigits == 0 ? value.round() : value);
   }
 
-  /// Parses a number string that might contain thousands separators (dots) and decimal commas or units
+  /// Parses a number string that might contain thousands separators (dots) and decimal commas, fractions, or units
   static double parseFormattedNumber(String text) {
     if (text.isEmpty) return 0.0;
     final trimmed = text.trim();
+
+    // Check for mixed fractions: e.g. "1 1/2"
+    final mixedMatch = RegExp(r'^(\d+)\s+(\d+)\s*/\s*(\d+)$').firstMatch(trimmed);
+    if (mixedMatch != null) {
+      final whole = double.tryParse(mixedMatch.group(1)!) ?? 0.0;
+      final num = double.tryParse(mixedMatch.group(2)!) ?? 0.0;
+      final den = double.tryParse(mixedMatch.group(3)!) ?? 1.0;
+      if (den != 0) return whole + (num / den);
+    }
+
+    // Check for simple fractions: e.g. "1/2", "1/4", "3/4"
+    final fracMatch = RegExp(r'^(\d+)\s*/\s*(\d+)$').firstMatch(trimmed);
+    if (fracMatch != null) {
+      final num = double.tryParse(fracMatch.group(1)!) ?? 0.0;
+      final den = double.tryParse(fracMatch.group(2)!) ?? 1.0;
+      if (den != 0) return num / den;
+    }
+
     final match = RegExp(r'[-+]?(?:[0-9]+(?:[.,][0-9]+)*|[.,][0-9]+)').firstMatch(trimmed);
     if (match == null) return 0.0;
     final numStr = match.group(0)!;

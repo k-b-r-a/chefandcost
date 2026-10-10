@@ -687,14 +687,14 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
               spacing: 8,
               runSpacing: 8,
               alignment: WrapAlignment.center,
-              children: [0.5, 2.0, 3.0, 4.0, 5.0].map((multiplier) {
+              children: [0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0].map((multiplier) {
                 return OutlinedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     _openTemporaryScaledRecipeFromList(context, recipe, multiplier);
                   },
                   child: Text(
-                    l10n.scale_multiplier_button(RecipeUtils.formatNumber(multiplier)),
+                    RecipeUtils.formatMultiplier(multiplier),
                     softWrap: true,
                   ),
                 );
