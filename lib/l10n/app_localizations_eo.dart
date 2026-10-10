@@ -1457,4 +1457,198 @@ class AppLocalizationsEo extends AppLocalizations {
 
   @override
   String get settings_about_changelog_refresh => 'Refresh';
+
+  @override
+  String get tutorial_replay_title => 'App Walkthrough Tutorial';
+
+  @override
+  String get tutorial_replay_subtitle =>
+      'Replay step-by-step guide of gestures, shortcuts, and key features';
+
+  @override
+  String get tutorial_replay_button => 'Repeat Walkthrough';
+
+  @override
+  String get tutorial_replay_reset_toast =>
+      'Tutorial reset. Launching walkthrough...';
+
+  @override
+  String tutorial_step_counter(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get tutorial_action_next => 'Next';
+
+  @override
+  String get tutorial_action_prev => 'Previous';
+
+  @override
+  String get tutorial_action_skip => 'Skip Tutorial';
+
+  @override
+  String get tutorial_action_finish => 'Get Started';
+
+  @override
+  String get tutorial_target_nav_title => 'Adaptive Navigation & Gestures';
+
+  @override
+  String get tutorial_target_nav_desc =>
+      'Switch smoothly between Recipes, Ingredients, Tools, and Settings.';
+
+  @override
+  String get tutorial_target_nav_hint =>
+      'Gesture tip: Swipe horizontally anywhere to switch between tabs instantly!';
+
+  @override
+  String get tutorial_target_quick_actions_title => 'Quick Action Shortcuts';
+
+  @override
+  String get tutorial_target_quick_actions_desc =>
+      'Create new recipes, calculate costs, or add ingredients on the fly.';
+
+  @override
+  String get tutorial_target_quick_actions_hint =>
+      'Tip: Tap \'New Recipe\' or \'New Ingredient\' to jump directly into editing.';
+
+  @override
+  String get tutorial_target_recipes_title => 'Recipes & Long-Press Preview';
+
+  @override
+  String get tutorial_target_recipes_desc =>
+      'Browse and manage your recipe catalog with live cost metrics.';
+
+  @override
+  String get tutorial_target_recipes_hint =>
+      'Hidden gesture: Long-press any recipe card to expand quick financial breakdown without leaving!';
+
+  @override
+  String get tutorial_target_tools_title => 'Kitchen Utilities & Multi-Timers';
+
+  @override
+  String get tutorial_target_tools_desc =>
+      'Use Unit Converters, Rule of Three, and multi-alarm Kitchen Timers.';
+
+  @override
+  String get tutorial_target_tools_hint =>
+      'Feature tip: Timers keep running in the background with audio alarms and auto-dismiss.';
+
+  @override
+  String get tutorial_target_settings_title => 'Cloud Sync & Preferences';
+
+  @override
+  String get tutorial_target_settings_desc =>
+      'Customize styles, connect Firebase sync, and manage database backups.';
+
+  @override
+  String get tutorial_target_settings_hint =>
+      'You can replay this interactive walkthrough anytime from Settings.';
+
+  @override
+  String get tutorial_help_tooltip => 'View guided walkthrough';
+
+  @override
+  String get tutorial_recipe_list_hold_title => 'Recipe Quick Actions';
+
+  @override
+  String get tutorial_recipe_list_hold_desc =>
+      'Tap any recipe to open and edit it. But there is a powerful shortcut hidden here!';
+
+  @override
+  String get tutorial_recipe_list_hold_hint =>
+      'Hold / Long-press this recipe card to reveal more options: Scale portions, Duplicate, Edit, or Delete directly from the list.';
+
+  @override
+  String get tutorial_recipe_list_finance_title => 'Recipe Financial Breakdown';
+
+  @override
+  String get tutorial_recipe_list_finance_desc =>
+      'Every recipe card displays its live Total Cost, Estimated Profit, and Target Sale Price per portion.';
+
+  @override
+  String get tutorial_recipe_list_finance_hint =>
+      'Tip: These numbers recalculate automatically when ingredient costs or portions change.';
+
+  @override
+  String get tutorial_editor_finance_title => 'Recipe Finance & Margins';
+
+  @override
+  String get tutorial_editor_finance_desc =>
+      'Calculate total cost, cost per portion, desired profit margin, overhead expenses, and target sale price.';
+
+  @override
+  String get tutorial_editor_finance_hint =>
+      'Key action: Tap the bottom finance bar to expand the full profit calculator and price simulator.';
+
+  @override
+  String get tutorial_editor_gestures_title => 'Ingredients & Yield Gestures';
+
+  @override
+  String get tutorial_editor_gestures_desc =>
+      'Add ingredients with accurate cost, specify portion yields, and organize preparation steps.';
+
+  @override
+  String get tutorial_editor_gestures_hint =>
+      'Non-intuitive actions: Hold and drag ingredients to reorder them. Tap portion yield to automatically scale the entire recipe.';
+
+  @override
+  String get tutorial_editor_ingredient_hold_title =>
+      'Ingredient Quick Actions';
+
+  @override
+  String get tutorial_editor_ingredient_hold_desc =>
+      'Tap the quantity to edit amount directly. But you can also hold any ingredient for more options!';
+
+  @override
+  String get tutorial_editor_ingredient_hold_hint =>
+      'Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.';
+
+  @override
+  String get sample_manufacturing_recipe_title =>
+      'Butter Cookies (Manufacturing Batch)';
+
+  @override
+  String get sample_manufacturing_recipe_desc =>
+      'Standard 3:2:1 manufacturing batch for production costing, yield tracking, and industrial margin calculation.';
+
+  @override
+  String get sample_manufacturing_yield_name => 'pieces';
+
+  @override
+  String get sample_manufacturing_flour_name => 'All-Purpose Wheat Flour';
+
+  @override
+  String get sample_manufacturing_butter_name => 'Unsalted Butter';
+
+  @override
+  String get sample_manufacturing_sugar_name => 'Refined White Sugar';
+
+  @override
+  String get sample_manufacturing_step1 =>
+      '[timer:Industrial Creaming|240] Beat butter at medium-high speed until creamy and pale.';
+
+  @override
+  String get sample_manufacturing_step2 =>
+      'Sift flour with sugar and incorporate at low speed in 2 parts until combined without overworking.';
+
+  @override
+  String get sample_manufacturing_step3 =>
+      '[timer:Batch Baking|900] Portion 24 pieces of dough, arrange on baking sheet lined with parchment paper, and bake at 180°C.';
+
+  @override
+  String get sample_manufacturing_badge => 'Temporary Sample';
+
+  @override
+  String get sample_manufacturing_banner_desc =>
+      'Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.';
+
+  @override
+  String get sample_manufacturing_save_btn => 'Save as Real Recipe';
+
+  @override
+  String get sample_manufacturing_dismiss_btn => 'Dismiss Sample';
+
+  @override
+  String get sample_manufacturing_auto_removed =>
+      'Tutorial completed. Temporary sample recipe removed.';
 }

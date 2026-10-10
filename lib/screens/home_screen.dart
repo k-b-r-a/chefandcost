@@ -18,13 +18,16 @@ import 'add_ingredient_screen.dart';
 import 'kitchen_timers_screen.dart';
 import 'rule_of_three_screen.dart';
 import 'unit_converter_screen.dart';
+import '../services/app_tutorial_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int index)? onNavigateToTab;
+  final AppTutorialKeys? tutorialKeys;
 
   const HomeScreen({
     super.key,
     this.onNavigateToTab,
+    this.tutorialKeys,
   });
 
   @override
@@ -93,7 +96,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const _LiveActiveTimersBanner(),
 
                       // 3. Quick Actions
-                      _buildQuickActionsSection(context, theme, l10n),
+                      KeyedSubtree(
+                        key: widget.tutorialKeys?.quickActionsKey,
+                        child: _buildQuickActionsSection(context, theme, l10n),
+                      ),
                       const SizedBox(height: 20),
 
                       // 5. Recent Recipes
@@ -410,31 +416,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                l10n.home_recent_recipes,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            TextButton(
-              onPressed: () => widget.onNavigateToTab?.call(1),
-              child: Text(
-                l10n.home_view_all,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+        KeyedSubtree(
+          key: widget.tutorialKeys?.recentRecipesKey,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.home_recent_recipes,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-          ],
+              TextButton(
+                onPressed: () => widget.onNavigateToTab?.call(1),
+                child: Text(
+                  l10n.home_view_all,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         recipesAsync.when(
@@ -685,58 +694,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        ToolCard(
-          title: l10n.timers_title,
-          subtitle: l10n.timers_desc,
-          icon: Icons.timer_outlined,
-          isCompact: true,
-          onTap: () {
-            if (MediaQuery.sizeOf(context).width >= 640) {
-              ref.read(webLayoutProvider.notifier).openTool(0);
-            } else {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const KitchenTimersScreen(),
-                ),
-              );
-            }
-          },
-        ),
-        const SizedBox(height: 10),
-        ToolCard(
-          title: l10n.rule_of_three_title,
-          subtitle: l10n.rule_of_three_desc,
-          icon: Icons.calculate_outlined,
-          isCompact: true,
-          onTap: () {
-            if (MediaQuery.sizeOf(context).width >= 640) {
-              ref.read(webLayoutProvider.notifier).openTool(1);
-            } else {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const RuleOfThreeScreen(),
-                ),
-              );
-            }
-          },
-        ),
-        const SizedBox(height: 10),
-        ToolCard(
-          title: l10n.unit_converter_title,
-          subtitle: l10n.unit_converter_desc,
-          icon: Icons.swap_horiz_rounded,
-          isCompact: true,
-          onTap: () {
-            if (MediaQuery.sizeOf(context).width >= 640) {
-              ref.read(webLayoutProvider.notifier).openTool(2);
-            } else {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const UnitConverterScreen(),
-                ),
-              );
-            }
-          },
+        KeyedSubtree(
+          key: widget.tutorialKeys?.toolsSectionKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ToolCard(
+                title: l10n.timers_title,
+                subtitle: l10n.timers_desc,
+                icon: Icons.timer_outlined,
+                isCompact: true,
+                onTap: () {
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openTool(0);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const KitchenTimersScreen(),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              ToolCard(
+                title: l10n.rule_of_three_title,
+                subtitle: l10n.rule_of_three_desc,
+                icon: Icons.calculate_outlined,
+                isCompact: true,
+                onTap: () {
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openTool(1);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const RuleOfThreeScreen(),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              ToolCard(
+                title: l10n.unit_converter_title,
+                subtitle: l10n.unit_converter_desc,
+                icon: Icons.swap_horiz_rounded,
+                isCompact: true,
+                onTap: () {
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openTool(2);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const UnitConverterScreen(),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );

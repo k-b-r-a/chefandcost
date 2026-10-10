@@ -2855,6 +2855,330 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh'**
   String get settings_about_changelog_refresh;
+
+  /// No description provided for @tutorial_replay_title.
+  ///
+  /// In en, this message translates to:
+  /// **'App Walkthrough Tutorial'**
+  String get tutorial_replay_title;
+
+  /// No description provided for @tutorial_replay_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay step-by-step guide of gestures, shortcuts, and key features'**
+  String get tutorial_replay_subtitle;
+
+  /// No description provided for @tutorial_replay_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat Walkthrough'**
+  String get tutorial_replay_button;
+
+  /// No description provided for @tutorial_replay_reset_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Tutorial reset. Launching walkthrough...'**
+  String get tutorial_replay_reset_toast;
+
+  /// No description provided for @tutorial_step_counter.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String tutorial_step_counter(int current, int total);
+
+  /// No description provided for @tutorial_action_next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get tutorial_action_next;
+
+  /// No description provided for @tutorial_action_prev.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get tutorial_action_prev;
+
+  /// No description provided for @tutorial_action_skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Tutorial'**
+  String get tutorial_action_skip;
+
+  /// No description provided for @tutorial_action_finish.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get tutorial_action_finish;
+
+  /// No description provided for @tutorial_target_nav_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Adaptive Navigation & Gestures'**
+  String get tutorial_target_nav_title;
+
+  /// No description provided for @tutorial_target_nav_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch smoothly between Recipes, Ingredients, Tools, and Settings.'**
+  String get tutorial_target_nav_desc;
+
+  /// No description provided for @tutorial_target_nav_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Gesture tip: Swipe horizontally anywhere to switch between tabs instantly!'**
+  String get tutorial_target_nav_hint;
+
+  /// No description provided for @tutorial_target_quick_actions_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Action Shortcuts'**
+  String get tutorial_target_quick_actions_title;
+
+  /// No description provided for @tutorial_target_quick_actions_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new recipes, calculate costs, or add ingredients on the fly.'**
+  String get tutorial_target_quick_actions_desc;
+
+  /// No description provided for @tutorial_target_quick_actions_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: Tap \'New Recipe\' or \'New Ingredient\' to jump directly into editing.'**
+  String get tutorial_target_quick_actions_hint;
+
+  /// No description provided for @tutorial_target_recipes_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipes & Long-Press Preview'**
+  String get tutorial_target_recipes_title;
+
+  /// No description provided for @tutorial_target_recipes_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse and manage your recipe catalog with live cost metrics.'**
+  String get tutorial_target_recipes_desc;
+
+  /// No description provided for @tutorial_target_recipes_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden gesture: Long-press any recipe card to expand quick financial breakdown without leaving!'**
+  String get tutorial_target_recipes_hint;
+
+  /// No description provided for @tutorial_target_tools_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Utilities & Multi-Timers'**
+  String get tutorial_target_tools_title;
+
+  /// No description provided for @tutorial_target_tools_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Unit Converters, Rule of Three, and multi-alarm Kitchen Timers.'**
+  String get tutorial_target_tools_desc;
+
+  /// No description provided for @tutorial_target_tools_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature tip: Timers keep running in the background with audio alarms and auto-dismiss.'**
+  String get tutorial_target_tools_hint;
+
+  /// No description provided for @tutorial_target_settings_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Sync & Preferences'**
+  String get tutorial_target_settings_title;
+
+  /// No description provided for @tutorial_target_settings_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize styles, connect Firebase sync, and manage database backups.'**
+  String get tutorial_target_settings_desc;
+
+  /// No description provided for @tutorial_target_settings_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can replay this interactive walkthrough anytime from Settings.'**
+  String get tutorial_target_settings_hint;
+
+  /// No description provided for @tutorial_help_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View guided walkthrough'**
+  String get tutorial_help_tooltip;
+
+  /// No description provided for @tutorial_recipe_list_hold_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Quick Actions'**
+  String get tutorial_recipe_list_hold_title;
+
+  /// No description provided for @tutorial_recipe_list_hold_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap any recipe to open and edit it. But there is a powerful shortcut hidden here!'**
+  String get tutorial_recipe_list_hold_desc;
+
+  /// No description provided for @tutorial_recipe_list_hold_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold / Long-press this recipe card to reveal more options: Scale portions, Duplicate, Edit, or Delete directly from the list.'**
+  String get tutorial_recipe_list_hold_hint;
+
+  /// No description provided for @tutorial_recipe_list_finance_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Financial Breakdown'**
+  String get tutorial_recipe_list_finance_title;
+
+  /// No description provided for @tutorial_recipe_list_finance_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Every recipe card displays its live Total Cost, Estimated Profit, and Target Sale Price per portion.'**
+  String get tutorial_recipe_list_finance_desc;
+
+  /// No description provided for @tutorial_recipe_list_finance_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: These numbers recalculate automatically when ingredient costs or portions change.'**
+  String get tutorial_recipe_list_finance_hint;
+
+  /// No description provided for @tutorial_editor_finance_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Finance & Margins'**
+  String get tutorial_editor_finance_title;
+
+  /// No description provided for @tutorial_editor_finance_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate total cost, cost per portion, desired profit margin, overhead expenses, and target sale price.'**
+  String get tutorial_editor_finance_desc;
+
+  /// No description provided for @tutorial_editor_finance_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Key action: Tap the bottom finance bar to expand the full profit calculator and price simulator.'**
+  String get tutorial_editor_finance_hint;
+
+  /// No description provided for @tutorial_editor_gestures_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients & Yield Gestures'**
+  String get tutorial_editor_gestures_title;
+
+  /// No description provided for @tutorial_editor_gestures_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Add ingredients with accurate cost, specify portion yields, and organize preparation steps.'**
+  String get tutorial_editor_gestures_desc;
+
+  /// No description provided for @tutorial_editor_gestures_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Non-intuitive actions: Hold and drag ingredients to reorder them. Tap portion yield to automatically scale the entire recipe.'**
+  String get tutorial_editor_gestures_hint;
+
+  /// No description provided for @tutorial_editor_ingredient_hold_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredient Quick Actions'**
+  String get tutorial_editor_ingredient_hold_title;
+
+  /// No description provided for @tutorial_editor_ingredient_hold_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the quantity to edit amount directly. But you can also hold any ingredient for more options!'**
+  String get tutorial_editor_ingredient_hold_desc;
+
+  /// No description provided for @tutorial_editor_ingredient_hold_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.'**
+  String get tutorial_editor_ingredient_hold_hint;
+
+  /// No description provided for @sample_manufacturing_recipe_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Butter Cookies (Manufacturing Batch)'**
+  String get sample_manufacturing_recipe_title;
+
+  /// No description provided for @sample_manufacturing_recipe_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard 3:2:1 manufacturing batch for production costing, yield tracking, and industrial margin calculation.'**
+  String get sample_manufacturing_recipe_desc;
+
+  /// No description provided for @sample_manufacturing_yield_name.
+  ///
+  /// In en, this message translates to:
+  /// **'pieces'**
+  String get sample_manufacturing_yield_name;
+
+  /// No description provided for @sample_manufacturing_flour_name.
+  ///
+  /// In en, this message translates to:
+  /// **'All-Purpose Wheat Flour'**
+  String get sample_manufacturing_flour_name;
+
+  /// No description provided for @sample_manufacturing_butter_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsalted Butter'**
+  String get sample_manufacturing_butter_name;
+
+  /// No description provided for @sample_manufacturing_sugar_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Refined White Sugar'**
+  String get sample_manufacturing_sugar_name;
+
+  /// No description provided for @sample_manufacturing_step1.
+  ///
+  /// In en, this message translates to:
+  /// **'[timer:Industrial Creaming|240] Beat butter at medium-high speed until creamy and pale.'**
+  String get sample_manufacturing_step1;
+
+  /// No description provided for @sample_manufacturing_step2.
+  ///
+  /// In en, this message translates to:
+  /// **'Sift flour with sugar and incorporate at low speed in 2 parts until combined without overworking.'**
+  String get sample_manufacturing_step2;
+
+  /// No description provided for @sample_manufacturing_step3.
+  ///
+  /// In en, this message translates to:
+  /// **'[timer:Batch Baking|900] Portion 24 pieces of dough, arrange on baking sheet lined with parchment paper, and bake at 180°C.'**
+  String get sample_manufacturing_step3;
+
+  /// No description provided for @sample_manufacturing_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary Sample'**
+  String get sample_manufacturing_badge;
+
+  /// No description provided for @sample_manufacturing_banner_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.'**
+  String get sample_manufacturing_banner_desc;
+
+  /// No description provided for @sample_manufacturing_save_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Real Recipe'**
+  String get sample_manufacturing_save_btn;
+
+  /// No description provided for @sample_manufacturing_dismiss_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss Sample'**
+  String get sample_manufacturing_dismiss_btn;
+
+  /// No description provided for @sample_manufacturing_auto_removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Tutorial completed. Temporary sample recipe removed.'**
+  String get sample_manufacturing_auto_removed;
 }
 
 class _AppLocalizationsDelegate

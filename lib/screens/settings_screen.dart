@@ -14,6 +14,7 @@ import '../widgets/app_logo.dart';
 import '../constants.dart';
 import '../utils/app_logger.dart';
 import '../widgets/github_changelog_view.dart';
+import '../services/app_tutorial_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -121,6 +122,30 @@ class SettingsScreen extends ConsumerWidget {
                           webView: WebRightPaneView.settingsAbout,
                           isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsAbout,
                         ),
+                        const Divider(height: 1, indent: 20, endIndent: 20),
+                        _buildMenuTile(
+                          context,
+                          ref: ref,
+                          settings: settings,
+                          title: l10n.tutorial_replay_title,
+                          subtitle: l10n.tutorial_replay_subtitle,
+                          icon: Icons.school_outlined,
+                          iconColor: Colors.indigo,
+                          bgColor: Colors.indigo.withValues(alpha: 0.15),
+                          destination: const SizedBox.shrink(),
+                          onCustomTap: () async {
+                            await AppTutorialService.resetTutorial();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(l10n.tutorial_replay_reset_toast),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                              AppTutorialService.requestReplay();
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -145,6 +170,7 @@ class SettingsScreen extends ConsumerWidget {
     required Widget destination,
     WebRightPaneView? webView,
     bool isSelected = false,
+    VoidCallback? onCustomTap,
   }) {
     final theme = Theme.of(context);
     return ListTile(
@@ -178,6 +204,10 @@ class SettingsScreen extends ConsumerWidget {
       onTap: () {
         if (settings.hapticFeedbackEnabled) {
           HapticFeedback.lightImpact();
+        }
+        if (onCustomTap != null) {
+          onCustomTap();
+          return;
         }
         final isWide = MediaQuery.sizeOf(context).width >= 640;
         if (isWide && webView != null) {
@@ -2094,6 +2124,39 @@ class SettingsAboutScreen extends ConsumerWidget {
                             applicationIcon: const Padding(
                               padding: EdgeInsets.all(8.0),
                               child: AppIcon(size: 48),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.indigo.withValues(alpha: 0.15),
+                          child: const Icon(Icons.school_rounded, color: Colors.indigo),
+                        ),
+                        title: Text(
+                          l10n.tutorial_replay_title,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(l10n.tutorial_replay_subtitle),
+                        trailing: const Icon(Icons.play_circle_outline_rounded),
+                        onTap: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final navigator = Navigator.of(context);
+                          await AppTutorialService.resetTutorial();
+                          if (navigator.canPop()) {
+                            navigator.pop();
+                          }
+                          AppTutorialService.triggerReplay();
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                l10n.tutorial_replay_reset_toast,
+                                softWrap: true,
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         },
