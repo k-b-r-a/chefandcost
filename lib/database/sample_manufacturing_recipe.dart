@@ -53,6 +53,7 @@ AppLocalizations getSampleRecipeLocalizations({
 }
 
 /// Ensures the initial 3-ingredient manufacturing recipe exists on fresh app start.
+/// Both the recipe and its ingredients are only created if the database is empty.
 /// Adapts ingredient names, recipe title, description, and steps to the device language.
 /// Returns true if the recipe was created, false otherwise.
 Future<bool> ensureSampleManufacturingRecipe(
@@ -76,8 +77,11 @@ Future<bool> ensureSampleManufacturingRecipe(
     return false;
   }
 
+  // The sample recipe and its ingredients are only created if the database is completely empty.
+  // If the database already contains recipes or ingredients, do not create them.
   final allRecipes = await db.getAllRecipes();
-  if (allRecipes.isNotEmpty) {
+  final allIngredients = await db.getAllIngredients();
+  if (allRecipes.isNotEmpty || allIngredients.isNotEmpty) {
     return false;
   }
 

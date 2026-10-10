@@ -90,6 +90,54 @@ void main() {
       expect(recipes.length, 1);
     });
 
+    test('ensureSampleManufacturingRecipe does not create sample recipe or ingredients if database already contains ingredients', () async {
+      final units = await db.getAllUnits();
+      await db.insertIngredient(
+        IngredientsCompanion(
+          ingredientPk: const Value('pre_existing_ingredient'),
+          name: const Value('Harina Leudante'),
+          cost: const Value(2.0),
+          quantityForCost: const Value(1000.0),
+          unitFk: Value(units.first.unitPk),
+          dateCreated: Value(DateTime.now()),
+          dateTimeModified: Value(DateTime.now()),
+        ),
+      );
+
+      final created = await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect(created, isFalse);
+
+      final recipes = await db.getAllRecipes();
+      expect(recipes, isEmpty);
+
+      final ingredients = await db.getAllIngredients();
+      expect(ingredients.length, 1);
+      expect(ingredients.first.ingredientPk, 'pre_existing_ingredient');
+    });
+
+    test('ensureSampleManufacturingRecipe does not create sample recipe or ingredients if database already contains recipes', () async {
+      await db.insertRecipe(
+        RecipesCompanion(
+          recipePk: const Value('pre_existing_recipe'),
+          name: const Value('Pre-existing Cake'),
+          defaultYield: const Value(1.0),
+          yieldName: const Value('portions'),
+          dateCreated: Value(DateTime.now()),
+          dateTimeModified: Value(DateTime.now()),
+        ),
+      );
+
+      final created = await ensureSampleManufacturingRecipe(db, prefs: prefs);
+      expect(created, isFalse);
+
+      final recipes = await db.getAllRecipes();
+      expect(recipes.length, 1);
+      expect(recipes.first.recipePk, 'pre_existing_recipe');
+
+      final ingredients = await db.getAllIngredients();
+      expect(ingredients, isEmpty);
+    });
+
     test('ensureSampleManufacturingRecipe respects dismissed SharedPreferences key', () async {
       await prefs.setBool(kSampleManufacturingRecipeDismissedKey, true);
       final created = await ensureSampleManufacturingRecipe(db, prefs: prefs);
