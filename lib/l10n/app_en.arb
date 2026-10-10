@@ -634,5 +634,39 @@
   "settings_about_changelog_empty": "No release notes found.",
   "settings_about_changelog_error": "Could not load release notes.",
   "settings_about_changelog_retry": "Retry",
-  "settings_about_changelog_refresh": "Refresh"
+  "settings_about_changelog_refresh": "Refresh",
+  "tutorial_replay_title": "App Walkthrough Tutorial",
+  "tutorial_replay_subtitle": "Replay step-by-step guide of gestures, shortcuts, and key features",
+  "tutorial_replay_button": "Repeat Walkthrough",
+  "tutorial_replay_reset_toast": "Tutorial reset. Launching walkthrough...",
+  "tutorial_step_counter": "Step {current} of {total}",
+  "@tutorial_step_counter": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tutorial_action_next": "Next",
+  "tutorial_action_prev": "Previous",
+  "tutorial_action_skip": "Skip Tutorial",
+  "tutorial_action_finish": "Get Started",
+  "tutorial_target_nav_title": "Adaptive Navigation & Gestures",
+  "tutorial_target_nav_desc": "Switch smoothly between Recipes, Ingredients, Tools, and Settings.",
+  "tutorial_target_nav_hint": "Gesture tip: Swipe horizontally anywhere to switch between tabs instantly!",
+  "tutorial_target_quick_actions_title": "Quick Action Shortcuts",
+  "tutorial_target_quick_actions_desc": "Create new recipes, calculate costs, or add ingredients on the fly.",
+  "tutorial_target_quick_actions_hint": "Tip: Tap 'New Recipe' or 'New Ingredient' to jump directly into editing.",
+  "tutorial_target_recipes_title": "Recipes & Long-Press Preview",
+  "tutorial_target_recipes_desc": "Browse and manage your recipe catalog with live cost metrics.",
+  "tutorial_target_recipes_hint": "Hidden gesture: Long-press any recipe card to expand quick financial breakdown without leaving!",
+  "tutorial_target_tools_title": "Kitchen Utilities & Multi-Timers",
+  "tutorial_target_tools_desc": "Use Unit Converters, Rule of Three, and multi-alarm Kitchen Timers.",
+  "tutorial_target_tools_hint": "Feature tip: Timers keep running in the background with audio alarms and auto-dismiss.",
+  "tutorial_target_settings_title": "Cloud Sync & Preferences",
+  "tutorial_target_settings_desc": "Customize styles, connect Firebase sync, and manage database backups.",
+  "tutorial_target_settings_hint": "You can replay this interactive walkthrough anytime from Settings."
 }

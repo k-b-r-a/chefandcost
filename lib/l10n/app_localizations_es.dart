@@ -1475,4 +1475,92 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settings_about_changelog_refresh => 'Actualizar';
+
+  @override
+  String get tutorial_replay_title => 'Tutorial Interactivo';
+
+  @override
+  String get tutorial_replay_subtitle =>
+      'Repetir la guía paso a paso de gestos, atajos y funciones clave';
+
+  @override
+  String get tutorial_replay_button => 'Repetir Tutorial';
+
+  @override
+  String get tutorial_replay_reset_toast =>
+      'Tutorial reiniciado. Iniciando guía interactiva...';
+
+  @override
+  String tutorial_step_counter(int current, int total) {
+    return 'Paso $current de $total';
+  }
+
+  @override
+  String get tutorial_action_next => 'Siguiente';
+
+  @override
+  String get tutorial_action_prev => 'Anterior';
+
+  @override
+  String get tutorial_action_skip => 'Omitir Tutorial';
+
+  @override
+  String get tutorial_action_finish => '¡Comenzar!';
+
+  @override
+  String get tutorial_target_nav_title => 'Navegación Adaptativa y Gestos';
+
+  @override
+  String get tutorial_target_nav_desc =>
+      'Cambia fluidamente entre Recetas, Ingredientes, Herramientas y Ajustes.';
+
+  @override
+  String get tutorial_target_nav_hint =>
+      'Consejo de gesto: ¡Desliza horizontalmente (Swipe) para cambiar de pestaña al instante!';
+
+  @override
+  String get tutorial_target_quick_actions_title => 'Atajos de Acción Rápida';
+
+  @override
+  String get tutorial_target_quick_actions_desc =>
+      'Crea nuevas recetas, calcula costos o registra ingredientes al vuelo.';
+
+  @override
+  String get tutorial_target_quick_actions_hint =>
+      'Consejo: Toca \'Nueva Receta\' o \'Nuevo Ingrediente\' para acceder directamente.';
+
+  @override
+  String get tutorial_target_recipes_title => 'Recetas y Pulsación Larga';
+
+  @override
+  String get tutorial_target_recipes_desc =>
+      'Explora tu catálogo con métricas financieras y cálculo de costos en vivo.';
+
+  @override
+  String get tutorial_target_recipes_hint =>
+      'Gesto oculto: ¡Mantén pulsada (Long-press) cualquier receta para ver costos e ingredientes al instante!';
+
+  @override
+  String get tutorial_target_tools_title =>
+      'Herramientas y Multitemporizadores';
+
+  @override
+  String get tutorial_target_tools_desc =>
+      'Usa el Conversor de Medidas, Regla de Tres y Temporizadores de cocina múltiples.';
+
+  @override
+  String get tutorial_target_tools_hint =>
+      'Función clave: Los temporizadores siguen corriendo en segundo plano con avisos sonoros.';
+
+  @override
+  String get tutorial_target_settings_title =>
+      'Sincronización en la Nube y Ajustes';
+
+  @override
+  String get tutorial_target_settings_desc =>
+      'Personaliza temas, sincroniza con Firebase y administra copias de seguridad.';
+
+  @override
+  String get tutorial_target_settings_hint =>
+      'Puedes repetir este tutorial interactivo en cualquier momento desde Ajustes.';
 }

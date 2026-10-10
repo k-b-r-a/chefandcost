@@ -1457,4 +1457,90 @@ class AppLocalizationsCa extends AppLocalizations {
 
   @override
   String get settings_about_changelog_refresh => 'Refresh';
+
+  @override
+  String get tutorial_replay_title => 'App Walkthrough Tutorial';
+
+  @override
+  String get tutorial_replay_subtitle =>
+      'Replay step-by-step guide of gestures, shortcuts, and key features';
+
+  @override
+  String get tutorial_replay_button => 'Repeat Walkthrough';
+
+  @override
+  String get tutorial_replay_reset_toast =>
+      'Tutorial reset. Launching walkthrough...';
+
+  @override
+  String tutorial_step_counter(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get tutorial_action_next => 'Next';
+
+  @override
+  String get tutorial_action_prev => 'Previous';
+
+  @override
+  String get tutorial_action_skip => 'Skip Tutorial';
+
+  @override
+  String get tutorial_action_finish => 'Get Started';
+
+  @override
+  String get tutorial_target_nav_title => 'Adaptive Navigation & Gestures';
+
+  @override
+  String get tutorial_target_nav_desc =>
+      'Switch smoothly between Recipes, Ingredients, Tools, and Settings.';
+
+  @override
+  String get tutorial_target_nav_hint =>
+      'Gesture tip: Swipe horizontally anywhere to switch between tabs instantly!';
+
+  @override
+  String get tutorial_target_quick_actions_title => 'Quick Action Shortcuts';
+
+  @override
+  String get tutorial_target_quick_actions_desc =>
+      'Create new recipes, calculate costs, or add ingredients on the fly.';
+
+  @override
+  String get tutorial_target_quick_actions_hint =>
+      'Tip: Tap \'New Recipe\' or \'New Ingredient\' to jump directly into editing.';
+
+  @override
+  String get tutorial_target_recipes_title => 'Recipes & Long-Press Preview';
+
+  @override
+  String get tutorial_target_recipes_desc =>
+      'Browse and manage your recipe catalog with live cost metrics.';
+
+  @override
+  String get tutorial_target_recipes_hint =>
+      'Hidden gesture: Long-press any recipe card to expand quick financial breakdown without leaving!';
+
+  @override
+  String get tutorial_target_tools_title => 'Kitchen Utilities & Multi-Timers';
+
+  @override
+  String get tutorial_target_tools_desc =>
+      'Use Unit Converters, Rule of Three, and multi-alarm Kitchen Timers.';
+
+  @override
+  String get tutorial_target_tools_hint =>
+      'Feature tip: Timers keep running in the background with audio alarms and auto-dismiss.';
+
+  @override
+  String get tutorial_target_settings_title => 'Cloud Sync & Preferences';
+
+  @override
+  String get tutorial_target_settings_desc =>
+      'Customize styles, connect Firebase sync, and manage database backups.';
+
+  @override
+  String get tutorial_target_settings_hint =>
+      'You can replay this interactive walkthrough anytime from Settings.';
 }

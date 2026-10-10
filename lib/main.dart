@@ -1,4 +1,7 @@
+import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
@@ -19,6 +22,7 @@ import 'provider/settings_provider.dart';
 import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
 import 'widgets/app_logo.dart';
+import 'services/app_tutorial_service.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -212,6 +216,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   bool _isSearchHovered = false;
   bool _isAddHovered = false;
 
+  final AppTutorialKeys _tutorialKeys = AppTutorialKeys();
+  AppTutorialKeys get tutorialKeys => _tutorialKeys;
+  VoidCallback? _replayListener;
+  Timer? _initTutorialTimer;
+  Timer? _replayTutorialTimer;
+
   late final List<Widget> _screens;
 
   void _navigateToTab(int index) {
@@ -237,17 +247,63 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   void initState() {
     super.initState();
     _screens = [
-      HomeScreen(onNavigateToTab: _navigateToTab),
+      HomeScreen(
+        onNavigateToTab: _navigateToTab,
+        tutorialKeys: _tutorialKeys,
+      ),
       const RecipeListScreen(),
       const IngredientsScreen(),
       const ToolsScreen(),
       const SettingsScreen(),
     ];
     _pageController = PageController(initialPage: _currentIndex);
+
+    _replayListener = () {
+      if (!mounted) return;
+      final screenWidth = MediaQuery.sizeOf(context).width;
+      final isWide = screenWidth >= 640;
+      if (isWide) {
+        ref.read(webLayoutProvider.notifier).showHome();
+      } else {
+        if (_currentIndex != 0) {
+          _navigateToTab(0);
+        }
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _replayTutorialTimer?.cancel();
+        _replayTutorialTimer = Timer(const Duration(milliseconds: 350), () {
+          if (mounted) {
+            AppTutorialService.checkAndShowTutorial(
+              context,
+              keys: _tutorialKeys,
+              force: true,
+            );
+          }
+        });
+      });
+    };
+    AppTutorialService.replayNotifier.addListener(_replayListener!);
+
+    final isTesting = !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';
+    if (!isTesting) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initTutorialTimer?.cancel();
+        _initTutorialTimer = Timer(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            AppTutorialService.checkAndShowTutorial(context, keys: _tutorialKeys);
+          }
+        });
+      });
+    }
   }
 
   @override
   void dispose() {
+    _initTutorialTimer?.cancel();
+    _replayTutorialTimer?.cancel();
+    if (_replayListener != null) {
+      AppTutorialService.replayNotifier.removeListener(_replayListener!);
+    }
     _recipeSearchController.dispose();
     _ingredientSearchController.dispose();
     _pageController.dispose();
@@ -418,11 +474,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           : NavigationRailLabelType.none,
       minWidth: railWidth,
       minExtendedWidth: 200,
-      leading: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Tooltip(
-          message: l10n.brand_home_tooltip,
-          child: InkWell(
+      leading: KeyedSubtree(
+        key: _tutorialKeys.navBarKey,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Tooltip(
+            message: l10n.brand_home_tooltip,
+            child: InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: () async {
               final guard = ref.read(recipeCanLeaveGuardProvider);
@@ -437,6 +495,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             ),
           ),
         ),
+      ),
       ),
       trailing: Expanded(
         child: Align(
@@ -915,6 +974,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     // Always Home by default!
     return HomeScreen(
+      tutorialKeys: _tutorialKeys,
       onNavigateToTab: (index) {
         if (index == 1) {
           webNotifier.setMiddleTab(WebMiddleTab.recipes);
@@ -995,6 +1055,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             alignment: Alignment.bottomCenter,
             heightFactor: 1.0,
             child: ConstrainedBox(
+              key: _tutorialKeys.navBarKey,
               constraints: const BoxConstraints(maxWidth: 560),
               child: SizedBox(
                 width: double.infinity,

@@ -598,7 +598,6 @@ class FirestoreSyncService {
     await initPersistence();
 
     final prefs = await SharedPreferences.getInstance();
-    final lastSyncedAt = await getLastSyncedAt(activeUid);
     final syncStartTime = DateTime.now().toUtc();
 
     int recipesAdded = 0;

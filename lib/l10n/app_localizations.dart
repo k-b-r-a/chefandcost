@@ -2855,6 +2855,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh'**
   String get settings_about_changelog_refresh;
+
+  /// No description provided for @tutorial_replay_title.
+  ///
+  /// In en, this message translates to:
+  /// **'App Walkthrough Tutorial'**
+  String get tutorial_replay_title;
+
+  /// No description provided for @tutorial_replay_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay step-by-step guide of gestures, shortcuts, and key features'**
+  String get tutorial_replay_subtitle;
+
+  /// No description provided for @tutorial_replay_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat Walkthrough'**
+  String get tutorial_replay_button;
+
+  /// No description provided for @tutorial_replay_reset_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Tutorial reset. Launching walkthrough...'**
+  String get tutorial_replay_reset_toast;
+
+  /// No description provided for @tutorial_step_counter.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String tutorial_step_counter(int current, int total);
+
+  /// No description provided for @tutorial_action_next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get tutorial_action_next;
+
+  /// No description provided for @tutorial_action_prev.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get tutorial_action_prev;
+
+  /// No description provided for @tutorial_action_skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Tutorial'**
+  String get tutorial_action_skip;
+
+  /// No description provided for @tutorial_action_finish.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get tutorial_action_finish;
+
+  /// No description provided for @tutorial_target_nav_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Adaptive Navigation & Gestures'**
+  String get tutorial_target_nav_title;
+
+  /// No description provided for @tutorial_target_nav_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch smoothly between Recipes, Ingredients, Tools, and Settings.'**
+  String get tutorial_target_nav_desc;
+
+  /// No description provided for @tutorial_target_nav_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Gesture tip: Swipe horizontally anywhere to switch between tabs instantly!'**
+  String get tutorial_target_nav_hint;
+
+  /// No description provided for @tutorial_target_quick_actions_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Action Shortcuts'**
+  String get tutorial_target_quick_actions_title;
+
+  /// No description provided for @tutorial_target_quick_actions_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new recipes, calculate costs, or add ingredients on the fly.'**
+  String get tutorial_target_quick_actions_desc;
+
+  /// No description provided for @tutorial_target_quick_actions_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: Tap \'New Recipe\' or \'New Ingredient\' to jump directly into editing.'**
+  String get tutorial_target_quick_actions_hint;
+
+  /// No description provided for @tutorial_target_recipes_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipes & Long-Press Preview'**
+  String get tutorial_target_recipes_title;
+
+  /// No description provided for @tutorial_target_recipes_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse and manage your recipe catalog with live cost metrics.'**
+  String get tutorial_target_recipes_desc;
+
+  /// No description provided for @tutorial_target_recipes_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden gesture: Long-press any recipe card to expand quick financial breakdown without leaving!'**
+  String get tutorial_target_recipes_hint;
+
+  /// No description provided for @tutorial_target_tools_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Utilities & Multi-Timers'**
+  String get tutorial_target_tools_title;
+
+  /// No description provided for @tutorial_target_tools_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Unit Converters, Rule of Three, and multi-alarm Kitchen Timers.'**
+  String get tutorial_target_tools_desc;
+
+  /// No description provided for @tutorial_target_tools_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature tip: Timers keep running in the background with audio alarms and auto-dismiss.'**
+  String get tutorial_target_tools_hint;
+
+  /// No description provided for @tutorial_target_settings_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Sync & Preferences'**
+  String get tutorial_target_settings_title;
+
+  /// No description provided for @tutorial_target_settings_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize styles, connect Firebase sync, and manage database backups.'**
+  String get tutorial_target_settings_desc;
+
+  /// No description provided for @tutorial_target_settings_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can replay this interactive walkthrough anytime from Settings.'**
+  String get tutorial_target_settings_hint;
 }
 
 class _AppLocalizationsDelegate

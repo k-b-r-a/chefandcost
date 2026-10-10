@@ -18,13 +18,16 @@ import 'add_ingredient_screen.dart';
 import 'kitchen_timers_screen.dart';
 import 'rule_of_three_screen.dart';
 import 'unit_converter_screen.dart';
+import '../services/app_tutorial_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int index)? onNavigateToTab;
+  final AppTutorialKeys? tutorialKeys;
 
   const HomeScreen({
     super.key,
     this.onNavigateToTab,
+    this.tutorialKeys,
   });
 
   @override
@@ -93,21 +96,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const _LiveActiveTimersBanner(),
 
                       // 3. Quick Actions
-                      _buildQuickActionsSection(context, theme, l10n),
+                      KeyedSubtree(
+                        key: widget.tutorialKeys?.quickActionsKey,
+                        child: _buildQuickActionsSection(context, theme, l10n),
+                      ),
                       const SizedBox(height: 20),
 
                       // 5. Recent Recipes
-                      _buildRecentRecipesSection(
-                        context: context,
-                        theme: theme,
-                        l10n: l10n,
-                        settings: settings,
-                        recipesAsync: recipesAsync,
+                      KeyedSubtree(
+                        key: widget.tutorialKeys?.recentRecipesKey,
+                        child: _buildRecentRecipesSection(
+                          context: context,
+                          theme: theme,
+                          l10n: l10n,
+                          settings: settings,
+                          recipesAsync: recipesAsync,
+                        ),
                       ),
                       const SizedBox(height: 20),
 
                       // 6. Kitchen Tools Quick Launch
-                      _buildKitchenToolsSection(context, theme, l10n),
+                      KeyedSubtree(
+                        key: widget.tutorialKeys?.toolsSectionKey,
+                        child: _buildKitchenToolsSection(context, theme, l10n),
+                      ),
                     ],
                   ),
                 ),
