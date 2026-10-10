@@ -119,10 +119,14 @@ class _GlobalIngredientPickerSheetState
       if (sourceUnit != null &&
           targetUnit != null &&
           sourceUnit.category == targetUnit.category &&
-          sourceUnit.category != null) {
+          sourceUnit.category != null &&
+          sourceUnit.unitPk != targetUnit.unitPk &&
+          sourceUnit.factorToBase != targetUnit.factorToBase) {
         final base =
             amountInSource * targetUnit.factorToBase;
-        amountInSource = base / sourceUnit.factorToBase;
+        amountInSource = double.parse(
+          (base / sourceUnit.factorToBase).toStringAsFixed(6),
+        );
       }
 
       results.add((ing, amountInSource));
@@ -498,20 +502,21 @@ class _GlobalIngredientPickerSheetState
                                 parent: BouncingScrollPhysics(),
                               ),
                               padding: const EdgeInsets.only(
-                                top: 16,
+                                top: 8,
                                 bottom: 24,
                               ),
                               children: [
-                                AppEmptyState(
-                                  icon: Icons.search_off_rounded,
-                                  message: l10n.no_ingredients_found,
-                                ),
-                                const SizedBox(height: 16),
                                 _buildCreateNewIngredientCard(
                                   context,
                                   theme,
                                   l10n,
                                   trimmedQuery,
+                                ),
+                                const SizedBox(height: 12),
+                                AppEmptyState(
+                                  icon: Icons.search_off_rounded,
+                                  message: l10n.no_ingredients_found,
+                                  iconSize: 48,
                                 ),
                               ],
                             );

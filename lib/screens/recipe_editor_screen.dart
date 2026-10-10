@@ -456,10 +456,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       for (var initIng in widget.initialIngredients!) {
         final data = RecipeIngredientData(
           ingredient: initIng.ingredient,
-          initialAmount: RecipeUtils.formatNumber(
-            initIng.amount,
-            decimalDigits: 2,
-          ),
+          initialAmount: RecipeUtils.formatQuantity(initIng.amount),
         );
         data.amountController.addListener(_calculateSummary);
         _ingredients.add(data);
@@ -508,7 +505,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final initialIngData = _ingredients[selectedIdx];
     final initialAmt = RecipeUtils.parseFormattedNumber(initialIngData.amountController.text);
     final targetController = TextEditingController(
-      text: RecipeUtils.formatNumber(initialAmt > 0 ? initialAmt : 1.0),
+      text: RecipeUtils.formatQuantity(initialAmt > 0 ? initialAmt : 1.0),
     );
 
     showDialog<void>(
@@ -609,7 +606,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                 setDialogState(() {
                                   selectedIdx = newIdx;
                                   final newAmt = RecipeUtils.parseFormattedNumber(_ingredients[newIdx].amountController.text);
-                                  targetController.text = RecipeUtils.formatNumber(newAmt > 0 ? newAmt : 1.0);
+                                  targetController.text = RecipeUtils.formatQuantity(newAmt > 0 ? newAmt : 1.0);
                                 });
                               }
                             },
@@ -634,7 +631,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           ),
                         ),
                         Text(
-                          '${RecipeUtils.formatNumber(baseAmt)} $unitSymbol',
+                          '${RecipeUtils.formatQuantity(baseAmt)} $unitSymbol',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.onSurface,
@@ -718,7 +715,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '${l10n.unit_portions}: ${RecipeUtils.formatNumber(baseYield)} → ${RecipeUtils.formatNumber(scaledYield, decimalDigits: scaledYield % 1 == 0 ? 0 : 2)}',
+                              '${l10n.unit_portions}: ${RecipeUtils.formatQuantity(baseYield)} → ${RecipeUtils.formatQuantity(scaledYield)}',
                               style: TextStyle(
                                 fontSize: 11.5,
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -781,10 +778,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final currentYield = RecipeUtils.parseFormattedNumber(_yieldController.text);
     final baseYield = currentYield <= 0 ? 1.0 : currentYield;
     final scaledYield = baseYield * multiplier;
-    final scaledYieldText = RecipeUtils.formatNumber(
-      scaledYield,
-      decimalDigits: scaledYield % 1 == 0 ? 0 : 2,
-    );
+    final scaledYieldText = RecipeUtils.formatQuantity(scaledYield);
     final unitName = _yieldNameController.text.trim().isNotEmpty
         ? _yieldNameController.text.trim()
         : l10n.unit_portions.toLowerCase();
@@ -843,7 +837,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "$originalName (x${RecipeUtils.formatNumber(multiplier)})",
+                              "$originalName (x${RecipeUtils.formatQuantity(multiplier)})",
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -872,7 +866,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           ),
                         ),
                         child: Text(
-                          'x${RecipeUtils.formatNumber(multiplier)}',
+                          'x${RecipeUtils.formatQuantity(multiplier)}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -918,7 +912,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                               Expanded(
                                 child: Text(
                                   l10n.temporary_view_banner(
-                                    RecipeUtils.formatNumber(multiplier),
+                                    RecipeUtils.formatQuantity(multiplier),
                                   ),
                                   softWrap: true,
                                   style: TextStyle(
@@ -1085,7 +1079,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                           ),
                                         ),
                                         child: Text(
-                                          '${RecipeUtils.formatNumber(scaledAmt)} $unitDisplay',
+                                          '${RecipeUtils.formatQuantity(scaledAmt)} $unitDisplay',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12.5,
@@ -1220,15 +1214,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       for (var ingData in _ingredients) {
         final currentAmt = RecipeUtils.parseFormattedNumber(ingData.amountController.text);
         final newAmt = currentAmt * multiplier;
-        ingData.amountController.text = RecipeUtils.formatNumber(
-          newAmt,
-          decimalDigits: newAmt % 1 == 0 ? 0 : 2,
-        );
+        ingData.amountController.text = RecipeUtils.formatQuantity(newAmt);
       }
-      _yieldController.text = RecipeUtils.formatNumber(
-        scaledYield,
-        decimalDigits: scaledYield % 1 == 0 ? 0 : 2,
-      );
+      _yieldController.text = RecipeUtils.formatQuantity(scaledYield);
     });
     _calculateSummary();
   }
@@ -1621,9 +1609,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             : null;
         final data = RecipeIngredientData(
           ingredient: effectiveIng,
-          initialAmount: RecipeUtils.formatNumber(
+          initialAmount: RecipeUtils.formatQuantity(
             ingWithData.entry.amountNeeded,
-            decimalDigits: 2,
           ),
           sourceUnit: sourceUnit,
           targetUnit: targetUnit,
@@ -5591,7 +5578,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           return CurrencyText(
                             l10n.ingredient_price_per_quantity(
                               '$currency${RecipeUtils.formatNumber(data.ingredient.cost)}',
-                              RecipeUtils.formatNumber(data.ingredient.quantityForCost),
+                              RecipeUtils.formatQuantity(data.ingredient.quantityForCost),
                               originalUnitSymbol,
                             ),
                             currencySymbol: currency,
@@ -5832,7 +5819,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
           final data = RecipeIngredientData(
             ingredient: ing,
-            initialAmount: RecipeUtils.formatNumber(amountInSource),
+            initialAmount: RecipeUtils.formatQuantity(amountInSource),
             sourceUnit: sourceUnit,
             targetUnit: targetUnit,
           );

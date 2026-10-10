@@ -107,6 +107,55 @@ void main() {
       expect(RecipeUtils.calculateScaleMultiplier(currentAmount: -10, targetAmount: 50), 1.0);
     });
 
+    test('cleanTrailingZeros strips redundant decimals without affecting whole integer zeros', () {
+      expect(RecipeUtils.cleanTrailingZeros('2.0'), '2');
+      expect(RecipeUtils.cleanTrailingZeros('2.000'), '2');
+      expect(RecipeUtils.cleanTrailingZeros('2,00'), '2');
+      expect(RecipeUtils.cleanTrailingZeros('2.50'), '2.5');
+      expect(RecipeUtils.cleanTrailingZeros('2,50'), '2,5');
+      expect(RecipeUtils.cleanTrailingZeros('20'), '20');
+      expect(RecipeUtils.cleanTrailingZeros('100'), '100');
+      expect(RecipeUtils.cleanTrailingZeros('1000'), '1000');
+      expect(RecipeUtils.cleanTrailingZeros('0.750'), '0.75');
+      expect(RecipeUtils.cleanTrailingZeros('1.000,50'), '1.000,5');
+    });
+
+    test('formatQuantity cleanly formats numbers without trailing zeros', () {
+      expect(RecipeUtils.formatQuantity(2), '2');
+      expect(RecipeUtils.formatQuantity(2.0), '2');
+      expect(RecipeUtils.formatQuantity(2.5), '2.5');
+      expect(RecipeUtils.formatQuantity(0.125), '0.125');
+      expect(RecipeUtils.formatQuantity(2.0000000000000004), '2');
+      expect(RecipeUtils.formatQuantity(300.0), '300');
+      expect(RecipeUtils.formatQuantity(1000.0), '1000');
+    });
+
+    test('RecipeIngredientData preserves exact user input without appending zeros', () {
+      final ing = RecipeIngredientData(
+        ingredient: ingFlour,
+        initialAmount: '2',
+        sourceUnit: unitG,
+        targetUnit: unitG,
+      );
+      expect(ing.amountController.text, '2');
+
+      final ingWithZeros = RecipeIngredientData(
+        ingredient: ingFlour,
+        initialAmount: '2.000',
+        sourceUnit: unitG,
+        targetUnit: unitG,
+      );
+      expect(ingWithZeros.amountController.text, '2');
+
+      final ingDecimal = RecipeIngredientData(
+        ingredient: ingFlour,
+        initialAmount: '2.50',
+        sourceUnit: unitG,
+        targetUnit: unitG,
+      );
+      expect(ingDecimal.amountController.text, '2.5');
+    });
+
     test('calculateTotalWeightAndVolume sums mass and volume correctly and ignores count', () {
       final ingredients = [
         RecipeIngredientData(

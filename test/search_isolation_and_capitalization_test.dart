@@ -14,6 +14,7 @@ import 'package:recipetools/screens/ingredients_screen.dart';
 import 'package:recipetools/screens/kitchen_timers_screen.dart';
 import 'package:recipetools/utils/recipe_utils.dart';
 import 'package:recipetools/widgets/global_ingredient_picker_sheet.dart';
+import 'package:recipetools/utils/ui_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -295,6 +296,41 @@ void main() {
         ).first,
       );
       expect(pickerSearchField.textCapitalization, TextCapitalization.sentences);
+    });
+
+    testWidgets('GlobalIngredientPickerSheet positions Add [query] card directly below search bar when empty', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          home: Scaffold(
+            body: GlobalIngredientPickerSheet(
+              currentIngredients: const [],
+              showPickerIngredientOptionsModal: (a, b, c, d, e, f, g) {},
+              onAddIngredients: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final searchField = find.descendant(
+        of: find.byType(GlobalIngredientPickerSheet),
+        matching: find.byType(TextField),
+      ).first;
+      await tester.enterText(searchField, 'NonExistentIngredient');
+      await tester.pumpAndSettle();
+
+      final createCardFinder = find.byKey(const ValueKey('create_new_ingredient_card'));
+      expect(createCardFinder, findsOneWidget);
+
+      final searchBoxBottom = tester.getBottomLeft(searchField).dy;
+      final createCardTop = tester.getTopLeft(createCardFinder).dy;
+      expect(createCardTop, greaterThan(searchBoxBottom));
+
+      final emptyStateFinder = find.byType(AppEmptyState);
+      if (emptyStateFinder.evaluate().isNotEmpty) {
+        final emptyStateTop = tester.getTopLeft(emptyStateFinder).dy;
+        expect(createCardTop, lessThan(emptyStateTop));
+      }
     });
 
     testWidgets('RecipeEditorScreen fields have TextCapitalization.sentences', (tester) async {

@@ -25,21 +25,26 @@ class RecipeIngredientData {
 
   static String _getInitialAmountText(String initialAmount, Unit? source, Unit? target) {
     final parsed = RecipeUtils.parseFormattedNumber(initialAmount);
-    if (parsed == 0.0) return initialAmount;
+    if (parsed == 0.0) return RecipeUtils.cleanTrailingZeros(initialAmount);
     if (source != null && target != null && source.category == target.category && source.category != null) {
-      final valueInBase = parsed * source.factorToBase;
-      final valueInTarget = valueInBase / target.factorToBase;
-      return RecipeUtils.formatNumber(valueInTarget);
+      if (source.unitPk != target.unitPk && source.factorToBase != target.factorToBase) {
+        final valueInBase = parsed * source.factorToBase;
+        final valueInTarget = valueInBase / target.factorToBase;
+        return RecipeUtils.formatQuantity(valueInTarget);
+      }
     }
-    return initialAmount;
+    return RecipeUtils.cleanTrailingZeros(initialAmount);
   }
 
   double get amount {
     final parsed = RecipeUtils.parseFormattedNumber(amountController.text);
     if (sourceUnit != null && targetUnit != null && sourceUnit!.category == targetUnit!.category && sourceUnit!.category != null) {
-      // convert back to source unit
-      final valueInBase = parsed * targetUnit!.factorToBase;
-      return valueInBase / sourceUnit!.factorToBase;
+      if (sourceUnit!.unitPk != targetUnit!.unitPk && sourceUnit!.factorToBase != targetUnit!.factorToBase) {
+        // convert back to source unit
+        final valueInBase = parsed * targetUnit!.factorToBase;
+        final result = valueInBase / sourceUnit!.factorToBase;
+        return double.parse(result.toStringAsFixed(6));
+      }
     }
     return parsed;
   }
@@ -201,6 +206,59 @@ class RecipeUtils {
   }) {
     if (currentAmount <= 0 || targetAmount <= 0) return 1.0;
     return targetAmount / currentAmount;
+  }
+
+  /// Strips redundant decimal places and unnecessary trailing zeros from a numeric string.
+  /// E.g. "2.0" -> "2", "2.000" -> "2", "2,00" -> "2", "2.50" -> "2.5", "2,50" -> "2,5".
+  static String cleanTrailingZeros(String text) {
+    if (text.isEmpty) return text;
+    final trimmed = text.trim();
+    if (!trimmed.contains('.') && !trimmed.contains(',')) {
+      return trimmed;
+    }
+    final lastDot = trimmed.lastIndexOf('.');
+    final lastComma = trimmed.lastIndexOf(',');
+
+    if (lastDot > -1 && lastComma > -1) {
+      if (lastComma > lastDot) {
+        // e.g. "1.000,50" -> comma is decimal
+        var s = trimmed.replaceAll(RegExp(r'0+$'), '');
+        if (s.endsWith(',')) {
+          s = s.substring(0, s.length - 1);
+        }
+        return s.isEmpty ? '0' : s;
+      } else {
+        // e.g. "1,000.50" -> dot is decimal
+        var s = trimmed.replaceAll(RegExp(r'0+$'), '');
+        if (s.endsWith('.')) {
+          s = s.substring(0, s.length - 1);
+        }
+        return s.isEmpty ? '0' : s;
+      }
+    } else if (trimmed.contains('.')) {
+      var s = trimmed.replaceAll(RegExp(r'0+$'), '');
+      if (s.endsWith('.')) {
+        s = s.substring(0, s.length - 1);
+      }
+      return s.isEmpty ? '0' : s;
+    } else if (trimmed.contains(',')) {
+      var s = trimmed.replaceAll(RegExp(r'0+$'), '');
+      if (s.endsWith(',')) {
+        s = s.substring(0, s.length - 1);
+      }
+      return s.isEmpty ? '0' : s;
+    }
+    return trimmed;
+  }
+
+  /// Formats an ingredient quantity value cleanly without appending unnecessary trailing zeros.
+  /// E.g. 2.0 -> "2", 2.5 -> "2.5", 0.125 -> "0.125".
+  static String formatQuantity(num value, {int maxDecimalDigits = 4}) {
+    if (value % 1 == 0) {
+      return value.toInt().toString();
+    }
+    final fixed = value.toStringAsFixed(maxDecimalDigits);
+    return cleanTrailingZeros(fixed);
   }
 
   /// formats numbers with dots as thousands separator (e.g. 1.000)
