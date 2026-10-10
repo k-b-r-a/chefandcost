@@ -221,6 +221,7 @@ void main() {
 
     Widget createTestApp({
       required List<InitialIngredientInput> initialIngredients,
+      List<InitialStepInput>? initialSteps,
       bool isTemporary = true,
       String? recipeId,
     }) {
@@ -246,6 +247,7 @@ void main() {
             initialProfitMargin: '30',
             initialPrice: '10',
             initialIngredients: initialIngredients,
+            initialSteps: initialSteps,
           ),
         ),
       );
@@ -339,14 +341,14 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      // Long press Flour ingredient item to open options modal
+      // Long press Flour ingredient item to expand quick action dropdown
       final flourText = find.text('Flour');
       expect(flourText, findsOneWidget);
       await tester.longPress(flourText);
       await tester.pumpAndSettle();
 
-      // Tap "Scale by Ingredient" option in modal
-      final scaleOption = find.text('Scale by Ingredient');
+      // Tap "Scale" action in dropdown
+      final scaleOption = find.byKey(const ValueKey('ingredient_action_scale'));
       expect(scaleOption, findsOneWidget);
       await tester.tap(scaleOption);
       await tester.pumpAndSettle();
@@ -453,7 +455,7 @@ void main() {
       await tester.longPress(find.text('Flour'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Scale by Ingredient'));
+      await tester.tap(find.byKey(const ValueKey('ingredient_action_scale')));
       await tester.pumpAndSettle();
 
       final targetField = find.descendant(
@@ -658,5 +660,86 @@ void main() {
       // Verify custom portions chip is highlighted
       expect(find.byKey(const ValueKey('temporary_scale_banner')), findsOneWidget);
     });
+
+    testWidgets('Section headers and items show counters for ingredients and steps', (tester) async {
+      tester.view.physicalSize = const Size(500, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final initialIngredients = [
+        InitialIngredientInput(ingredient: ingFlour, amount: 100),
+        InitialIngredientInput(ingredient: ingMilk, amount: 200),
+      ];
+
+      final initialSteps = [
+        const InitialStepInput(instruction: 'Mix flour and milk'),
+        const InitialStepInput(instruction: 'Bake for 20 minutes'),
+      ];
+
+      await tester.pumpWidget(createTestApp(
+        initialIngredients: initialIngredients,
+        initialSteps: initialSteps,
+      ));
+      await tester.pumpAndSettle();
+
+      // Verify section header counter badges
+      final ingCounterBadge = find.byKey(const ValueKey('ingredients_counter_badge_mobile'));
+      expect(ingCounterBadge, findsOneWidget);
+      expect(find.descendant(of: ingCounterBadge, matching: find.text('2')), findsOneWidget);
+
+      final stepsCounterBadge = find.byKey(const ValueKey('steps_counter_badge_mobile'));
+      expect(stepsCounterBadge, findsOneWidget);
+      expect(find.descendant(of: stepsCounterBadge, matching: find.text('2')), findsOneWidget);
+
+      // Verify ingredient items display individual index counters (1 and 2)
+      expect(find.text('1'), findsWidgets);
+      expect(find.text('2'), findsWidgets);
+    });
+
+    testWidgets('Long pressing an ingredient item expands inline dropdown instead of opening modal popup', (tester) async {
+      tester.view.physicalSize = const Size(400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final initialIngredients = [
+        InitialIngredientInput(ingredient: ingFlour, amount: 100),
+        InitialIngredientInput(ingredient: ingMilk, amount: 200),
+      ];
+
+      await tester.pumpWidget(createTestApp(
+        initialIngredients: initialIngredients,
+      ));
+      await tester.pumpAndSettle();
+
+      // Before long press, quick action buttons should not be visible
+      expect(find.byKey(const ValueKey('ingredient_action_scale')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_edit')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_merge')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_delete')), findsNothing);
+      expect(find.byType(BottomSheet), findsNothing);
+
+      // Long press Flour
+      await tester.longPress(find.text('Flour'));
+      await tester.pumpAndSettle();
+
+      // Verify NO modal popup / bottom sheet was opened
+      expect(find.byType(BottomSheet), findsNothing);
+
+      // Verify inline dropdown actions are visible
+      expect(find.byKey(const ValueKey('ingredient_action_scale')), findsOneWidget);
+      expect(find.byKey(const ValueKey('ingredient_action_edit')), findsOneWidget);
+      expect(find.byKey(const ValueKey('ingredient_action_merge')), findsOneWidget);
+      expect(find.byKey(const ValueKey('ingredient_action_delete')), findsOneWidget);
+
+      // Long press Flour again to collapse inline dropdown
+      await tester.longPress(find.text('Flour'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('ingredient_action_scale')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_edit')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_merge')), findsNothing);
+      expect(find.byKey(const ValueKey('ingredient_action_delete')), findsNothing);
+    });
   });
 }
+

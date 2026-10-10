@@ -75,7 +75,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Chef&Cost'), findsOneWidget);
-      expect(find.textContaining('0.1.1-alpha+1'), findsOneWidget);
+      expect(find.textContaining('0.1.1-alpha+2'), findsOneWidget);
       expect(find.textContaining('Esquema DB v1'), findsOneWidget);
       expect(find.text('Canal Alpha'), findsOneWidget);
     });

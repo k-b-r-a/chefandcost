@@ -1602,28 +1602,40 @@ class AppLocalizationsEs extends AppLocalizations {
       'Acción clave: Toca la barra inferior de finanzas para desplegar la calculadora completa de márgenes y precios.';
 
   @override
+  String get tutorial_editor_scale_bar_title =>
+      'Escala de Porciones y Multiplicadores';
+
+  @override
+  String get tutorial_editor_scale_bar_desc =>
+      'Escala rápidamente las cantidades por 1/4x, 1/2x, 1x, 2x, 3x o porciones personalizadas sin alterar la receta base.';
+
+  @override
+  String get tutorial_editor_scale_bar_hint =>
+      'Consejo: Toca cualquier multiplicador para recalcular al instante todas las cantidades y el costo total.';
+
+  @override
   String get tutorial_editor_gestures_title =>
-      'Gestos en Ingredientes y Porciones';
+      'Contadores y Organización de Pasos';
 
   @override
   String get tutorial_editor_gestures_desc =>
-      'Agrega ingredientes con costos precisos, define porciones y organiza los pasos de preparación.';
+      'Supervisa el tamaño de la receta con insignias de contador en los encabezados y números de índice para ingredientes y pasos.';
 
   @override
   String get tutorial_editor_gestures_hint =>
-      'Acciones no intuitivas: Mantén presionado y arrastra ingredientes para reordenarlos. Toca las porciones para escalar automáticamente toda la receta.';
+      'Gestos: Arrastra para reordenar pasos o ingredientes. Las insignias reflejan los totales dinámicamente en tiempo real.';
 
   @override
   String get tutorial_editor_ingredient_hold_title =>
-      'Opciones Rápidas de Ingrediente';
+      'Acciones Desplegables del Ingrediente';
 
   @override
   String get tutorial_editor_ingredient_hold_desc =>
-      'Toca la cantidad para editarla directamente. ¡Pero también puedes mantener presionado cualquier ingrediente para ver más opciones!';
+      'Toca la cantidad para editarla directamente, o mantén presionado cualquier ingrediente para desplegar sus acciones.';
 
   @override
   String get tutorial_editor_ingredient_hold_hint =>
-      'Mantén presionado este ingrediente para ver más opciones: Escalar la receta según este ingrediente, Editar, Fusionar o Eliminar.';
+      'Menú desplegable: Escalar por ingrediente, Editar detalles, Fusionar o Eliminar directamente en la lista.';
 
   @override
   String get sample_manufacturing_recipe_title =>

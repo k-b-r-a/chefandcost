@@ -1581,27 +1581,38 @@ class AppLocalizationsFr extends AppLocalizations {
       'Key action: Tap the bottom finance bar to expand the full profit calculator and price simulator.';
 
   @override
-  String get tutorial_editor_gestures_title => 'Ingredients & Yield Gestures';
+  String get tutorial_editor_scale_bar_title => 'Portion Scaling & Multipliers';
+
+  @override
+  String get tutorial_editor_scale_bar_desc =>
+      'Quickly scale recipe quantities using 1/4x, 1/2x, 1x, 2x, 3x presets, or custom portions without modifying base recipe data.';
+
+  @override
+  String get tutorial_editor_scale_bar_hint =>
+      'Tip: Tap any multiplier chip to recalculate all ingredient amounts and costs on the fly.';
+
+  @override
+  String get tutorial_editor_gestures_title => 'Counters & Step Organization';
 
   @override
   String get tutorial_editor_gestures_desc =>
-      'Add ingredients with accurate cost, specify portion yields, and organize preparation steps.';
+      'Track recipe scale with header counter badges and item index numbers for ingredients and steps.';
 
   @override
   String get tutorial_editor_gestures_hint =>
-      'Non-intuitive actions: Hold and drag ingredients to reorder them. Tap portion yield to automatically scale the entire recipe.';
+      'Gestures: Drag to reorder steps or ingredients. Badges reflect dynamic item totals in real time.';
 
   @override
   String get tutorial_editor_ingredient_hold_title =>
-      'Ingredient Quick Actions';
+      'Ingredient Inline Actions';
 
   @override
   String get tutorial_editor_ingredient_hold_desc =>
-      'Tap the quantity to edit amount directly. But you can also hold any ingredient for more options!';
+      'Tap the quantity to edit directly, or hold any ingredient to reveal its inline actions dropdown.';
 
   @override
   String get tutorial_editor_ingredient_hold_hint =>
-      'Hold / Long-press this ingredient to reveal more options: Scale recipe proportionally by this ingredient, Edit, Merge, or Delete.';
+      'Inline dropdown: Scale by ingredient, Edit details, Merge/Swap, or Delete directly in the list.';
 
   @override
   String get sample_manufacturing_recipe_title =>

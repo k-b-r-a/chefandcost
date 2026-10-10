@@ -40,16 +40,19 @@ class RecipeListTutorialKeys {
 /// Container for the GlobalKeys used to highlight widgets during the Recipe Editor walkthrough tutorial.
 class RecipeEditorTutorialKeys {
   final GlobalKey recipeEditorFinanceKey;
-  final GlobalKey recipeEditorIngredientsKey;
+  final GlobalKey recipeEditorScaleBarKey;
   final GlobalKey recipeEditorFirstIngredientKey;
+  final GlobalKey recipeEditorIngredientsKey;
 
   RecipeEditorTutorialKeys({
     GlobalKey? recipeEditorFinanceKey,
-    GlobalKey? recipeEditorIngredientsKey,
+    GlobalKey? recipeEditorScaleBarKey,
     GlobalKey? recipeEditorFirstIngredientKey,
+    GlobalKey? recipeEditorIngredientsKey,
   })  : recipeEditorFinanceKey = recipeEditorFinanceKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorFinanceKey'),
-        recipeEditorIngredientsKey = recipeEditorIngredientsKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorIngredientsKey'),
-        recipeEditorFirstIngredientKey = recipeEditorFirstIngredientKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorFirstIngredientKey');
+        recipeEditorScaleBarKey = recipeEditorScaleBarKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorScaleBarKey'),
+        recipeEditorFirstIngredientKey = recipeEditorFirstIngredientKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorFirstIngredientKey'),
+        recipeEditorIngredientsKey = recipeEditorIngredientsKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorIngredientsKey');
 }
 
 /// Information model describing an individual step in the guided tour.
@@ -82,6 +85,28 @@ class AppTutorialService {
   static const String kTutorialCompletedKey = 'has_completed_app_walkthrough_tutorial_v2';
   static const String kTutorialRecipeListCompletedKey = 'has_completed_recipe_list_walkthrough_tutorial_v1';
   static const String kTutorialRecipeEditorCompletedKey = 'has_completed_recipe_editor_walkthrough_tutorial_v1';
+
+  /// Global lock tracking whether any walkthrough overlay is actively displayed.
+  static bool _isTutorialActive = false;
+  static TutorialCoachMark? _activeTutorial;
+
+  /// Returns true if any walkthrough tutorial is currently being displayed on screen.
+  static bool get isTutorialActive => _isTutorialActive;
+
+  /// Global notifier fired when a walkthrough tutorial finishes or is skipped,
+  /// allowing subsequent screens on tablet/multi-pane layouts to proceed without overlap.
+  static final ValueNotifier<int> tutorialStepCompletedNotifier = ValueNotifier<int>(0);
+
+  /// Dismisses and cleans up the currently active tutorial, if any.
+  static void dismissActiveTutorial() {
+    if (_isTutorialActive) {
+      try {
+        _activeTutorial?.finish();
+      } catch (_) {}
+      _activeTutorial = null;
+      _isTutorialActive = false;
+    }
+  }
 
   /// Global notifier to trigger a walkthrough replay from anywhere in the app.
   static final ValueNotifier<int> replayNotifier = ValueNotifier<int>(0);
@@ -128,22 +153,28 @@ class AppTutorialService {
 
   /// Resets all walkthrough tutorials so they will run again.
   static Future<void> resetTutorial([SharedPreferences? prefs]) async {
+    dismissActiveTutorial();
     final p = await _getPrefs(prefs);
     await p.setBool(kTutorialCompletedKey, false);
     await p.setBool(kTutorialRecipeListCompletedKey, false);
     await p.setBool(kTutorialRecipeEditorCompletedKey, false);
+    tutorialStepCompletedNotifier.value++;
   }
 
   /// Resets specifically the recipe list walkthrough status.
   static Future<void> resetRecipeListTutorial([SharedPreferences? prefs]) async {
+    dismissActiveTutorial();
     final p = await _getPrefs(prefs);
     await p.setBool(kTutorialRecipeListCompletedKey, false);
+    tutorialStepCompletedNotifier.value++;
   }
 
   /// Resets specifically the recipe editor walkthrough status.
   static Future<void> resetRecipeEditorTutorial([SharedPreferences? prefs]) async {
+    dismissActiveTutorial();
     final p = await _getPrefs(prefs);
     await p.setBool(kTutorialRecipeEditorCompletedKey, false);
+    tutorialStepCompletedNotifier.value++;
   }
 
   /// Signals that the tutorial should replay immediately.
@@ -171,6 +202,7 @@ class AppTutorialService {
       return CustomTargetContentPosition(
         bottom: bottomPadding + 20.0,
         left: 0.0,
+        right: 0.0,
       );
     }
 
@@ -179,6 +211,7 @@ class AppTutorialService {
       return CustomTargetContentPosition(
         bottom: bottomPadding + 20.0,
         left: 0.0,
+        right: 0.0,
       );
     }
 
@@ -210,6 +243,7 @@ class AppTutorialService {
       return CustomTargetContentPosition(
         top: top,
         left: 0.0,
+        right: 0.0,
       );
     } else {
       final maxAllowedBottom =
@@ -221,6 +255,7 @@ class AppTutorialService {
       return CustomTargetContentPosition(
         bottom: bottom,
         left: 0.0,
+        right: 0.0,
       );
     }
   }
@@ -400,7 +435,18 @@ class AppTutorialService {
         gestureHint: l10n.tutorial_editor_finance_hint,
         radius: 16.0,
       ),
-      // 2. Ingredient Long-Press / Quick Actions
+      // 2. Portion Scaling Bar & Multipliers
+      TutorialStepInfo(
+        id: 'step_recipe_editor_scale_bar',
+        keyTarget: keys.recipeEditorScaleBarKey,
+        align: ContentAlign.bottom,
+        icon: Icons.linear_scale_rounded,
+        title: l10n.tutorial_editor_scale_bar_title,
+        description: l10n.tutorial_editor_scale_bar_desc,
+        gestureHint: l10n.tutorial_editor_scale_bar_hint,
+        radius: 14.0,
+      ),
+      // 3. Ingredient Long-Press / Inline Actions Dropdown
       TutorialStepInfo(
         id: 'step_recipe_editor_ingredient_hold',
         keyTarget: keys.recipeEditorFirstIngredientKey,
@@ -411,7 +457,7 @@ class AppTutorialService {
         gestureHint: l10n.tutorial_editor_ingredient_hold_hint,
         radius: 14.0,
       ),
-      // 3. Ingredients reordering & Portion Scaling gestures
+      // 4. Ingredients, Counters & Step Organization
       TutorialStepInfo(
         id: 'step_recipe_editor_gestures',
         keyTarget: keys.recipeEditorIngredientsKey,
@@ -480,10 +526,16 @@ class AppTutorialService {
         }
       },
       onFinish: () {
+        _isTutorialActive = false;
+        _activeTutorial = null;
+        tutorialStepCompletedNotifier.value++;
         onComplete();
         onFinish?.call();
       },
       onSkip: () {
+        _isTutorialActive = false;
+        _activeTutorial = null;
+        tutorialStepCompletedNotifier.value++;
         onComplete();
         onSkip?.call();
         return true;
@@ -518,7 +570,16 @@ class AppTutorialService {
     VoidCallback? onFinish,
     VoidCallback? onSkip,
     SharedPreferences? prefs,
+    bool force = false,
   }) {
+    if (_isTutorialActive) {
+      if (force) {
+        dismissActiveTutorial();
+      } else {
+        return false;
+      }
+    }
+
     final tutorial = createTutorial(
       context: context,
       keys: keys,
@@ -528,6 +589,8 @@ class AppTutorialService {
     );
     if (tutorial == null) return false;
 
+    _isTutorialActive = true;
+    _activeTutorial = tutorial;
     tutorial.show(context: context, rootOverlay: true);
     return true;
   }
@@ -537,6 +600,7 @@ class AppTutorialService {
     BuildContext context, {
     required AppTutorialKeys keys,
     bool force = false,
+    bool bypassTestCheck = false,
     VoidCallback? onFinish,
     VoidCallback? onSkip,
     SharedPreferences? prefs,
@@ -555,13 +619,14 @@ class AppTutorialService {
     }
 
     if (!force) {
-      if (!kIsWeb) {
+      if (!kIsWeb && !bypassTestCheck) {
         try {
           if (Platform.environment['FLUTTER_TEST'] == 'true') {
             return false;
           }
         } catch (_) {}
       }
+      if (_isTutorialActive) return false;
       final isCompleted = await isTutorialCompleted(prefs);
       if (isCompleted) return false;
     }
@@ -576,6 +641,7 @@ class AppTutorialService {
         context,
         keys: keys,
         force: force,
+        bypassTestCheck: bypassTestCheck,
         onFinish: onFinish,
         onSkip: onSkip,
         prefs: prefs,
@@ -591,6 +657,7 @@ class AppTutorialService {
       onFinish: onFinish,
       onSkip: onSkip,
       prefs: prefs,
+      force: force,
     );
   }
 
@@ -602,7 +669,16 @@ class AppTutorialService {
     VoidCallback? onFinish,
     VoidCallback? onSkip,
     SharedPreferences? prefs,
+    bool force = false,
   }) {
+    if (_isTutorialActive) {
+      if (force) {
+        dismissActiveTutorial();
+      } else {
+        return false;
+      }
+    }
+
     final targets = createRecipeListTargets(context: context, keys: keys);
     if (targets.isEmpty) return false;
 
@@ -616,6 +692,8 @@ class AppTutorialService {
     );
     if (tutorial == null) return false;
 
+    _isTutorialActive = true;
+    _activeTutorial = tutorial;
     tutorial.show(context: context, rootOverlay: true);
     return true;
   }
@@ -625,6 +703,7 @@ class AppTutorialService {
     BuildContext context, {
     required RecipeListTutorialKeys keys,
     bool force = false,
+    bool bypassTestCheck = false,
     FutureOr<void> Function(String stepId)? onStepFocus,
     VoidCallback? onFinish,
     VoidCallback? onSkip,
@@ -632,13 +711,19 @@ class AppTutorialService {
     int maxRetries = 3,
   }) async {
     if (!force) {
-      if (!kIsWeb) {
+      if (!kIsWeb && !bypassTestCheck) {
         try {
           if (Platform.environment['FLUTTER_TEST'] == 'true') {
             return false;
           }
         } catch (_) {}
       }
+      if (_isTutorialActive) return false;
+
+      // On tablet or multi-pane layout, ensure Home walkthrough has completed first
+      final isHomeCompleted = await isTutorialCompleted(prefs);
+      if (!isHomeCompleted) return false;
+
       final isCompleted = await isRecipeListTutorialCompleted(prefs);
       if (isCompleted) return false;
     }
@@ -653,6 +738,7 @@ class AppTutorialService {
         context,
         keys: keys,
         force: force,
+        bypassTestCheck: bypassTestCheck,
         onStepFocus: onStepFocus,
         onFinish: onFinish,
         onSkip: onSkip,
@@ -670,6 +756,7 @@ class AppTutorialService {
       onFinish: onFinish,
       onSkip: onSkip,
       prefs: prefs,
+      force: force,
     );
   }
 
@@ -681,7 +768,16 @@ class AppTutorialService {
     VoidCallback? onFinish,
     VoidCallback? onSkip,
     SharedPreferences? prefs,
+    bool force = false,
   }) {
+    if (_isTutorialActive) {
+      if (force) {
+        dismissActiveTutorial();
+      } else {
+        return false;
+      }
+    }
+
     final targets = createRecipeEditorTargets(context: context, keys: keys);
     if (targets.isEmpty) return false;
 
@@ -695,6 +791,8 @@ class AppTutorialService {
     );
     if (tutorial == null) return false;
 
+    _isTutorialActive = true;
+    _activeTutorial = tutorial;
     tutorial.show(context: context, rootOverlay: true);
     return true;
   }
@@ -704,6 +802,7 @@ class AppTutorialService {
     BuildContext context, {
     required RecipeEditorTutorialKeys keys,
     bool force = false,
+    bool bypassTestCheck = false,
     FutureOr<void> Function(String stepId)? onStepFocus,
     VoidCallback? onFinish,
     VoidCallback? onSkip,
@@ -711,13 +810,25 @@ class AppTutorialService {
     int maxRetries = 3,
   }) async {
     if (!force) {
-      if (!kIsWeb) {
+      if (!kIsWeb && !bypassTestCheck) {
         try {
           if (Platform.environment['FLUTTER_TEST'] == 'true') {
             return false;
           }
         } catch (_) {}
       }
+      if (_isTutorialActive) return false;
+
+      // On tablet or multi-pane layout, ensure Home walkthrough has completed first
+      final isHomeCompleted = await isTutorialCompleted(prefs);
+      if (!isHomeCompleted) return false;
+
+      // On tablet/desktop (wide layout), also ensure Recipe List walkthrough has completed first
+      if (context.mounted && MediaQuery.sizeOf(context).width >= 640) {
+        final isListCompleted = await isRecipeListTutorialCompleted(prefs);
+        if (!isListCompleted) return false;
+      }
+
       final isCompleted = await isRecipeEditorTutorialCompleted(prefs);
       if (isCompleted) return false;
     }
@@ -732,6 +843,7 @@ class AppTutorialService {
         context,
         keys: keys,
         force: force,
+        bypassTestCheck: bypassTestCheck,
         onStepFocus: onStepFocus,
         onFinish: onFinish,
         onSkip: onSkip,
@@ -749,6 +861,7 @@ class AppTutorialService {
       onFinish: onFinish,
       onSkip: onSkip,
       prefs: prefs,
+      force: force,
     );
   }
 
