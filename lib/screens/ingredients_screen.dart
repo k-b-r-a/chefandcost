@@ -99,7 +99,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                       return SliverPadding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 20,
+                          vertical: 8,
                         ),
                         sliver: SliverList(
                           delegate: SliverChildListDelegate([
@@ -107,19 +107,22 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                               child: ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 860),
                                 child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    AppEmptyState(
-                                      icon: Icons.search_off_rounded,
-                                      message: l10n.no_ingredients_found,
-                                    ),
-                                    const SizedBox(height: 16),
                                     _buildCreateNewCard(
                                       context,
                                       theme,
                                       l10n,
                                       trimmedQuery,
                                       isWide: isWide,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    AppEmptyState(
+                                      icon: Icons.search_off_rounded,
+                                      message: l10n.no_ingredients_found,
+                                      iconSize: 48,
                                     ),
                                   ],
                                 ),
