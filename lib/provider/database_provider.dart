@@ -35,6 +35,7 @@ final recipesStreamProvider = StreamProvider<List<Recipe>>((ref) {
 /// Stream of recipes including their calculated financial summaries.
 final recipesWithFinancialsStreamProvider = StreamProvider<List<RecipeWithFinancials>>((ref) {
   final db = ref.watch(databaseProvider);
+  ref.watch(ingredientsStreamProvider);
   return db.watchAllRecipesWithFinancials();
 });
 
@@ -48,6 +49,7 @@ final ingredientsStreamProvider = StreamProvider<List<Ingredient>>((ref) {
 final recipeDetailProvider =
     FutureProvider.family<RecipeDetail, String>((ref, recipePk) {
   final db = ref.watch(databaseProvider);
+  ref.watch(ingredientsStreamProvider);
   return db.getRecipeDetail(recipePk);
 });
 

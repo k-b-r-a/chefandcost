@@ -114,8 +114,35 @@ class AppDatabase extends _$AppDatabase {
       (select(ingredients)..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
   Future<int> insertIngredient(IngredientsCompanion ingredient) =>
       into(ingredients).insert(ingredient);
-  Future<bool> updateIngredient(Ingredient ingredient) =>
-      update(ingredients).replace(ingredient);
+  Future<bool> updateIngredient(Ingredient ingredient) async {
+    return transaction(() async {
+      final old = await getIngredientById(ingredient.ingredientPk);
+      if (old != null && old.unitFk != ingredient.unitFk) {
+        final allUnits = await getAllUnits();
+        final oldUnit = allUnits.where((u) => u.unitPk == old.unitFk).firstOrNull;
+        final newUnit = allUnits.where((u) => u.unitPk == ingredient.unitFk).firstOrNull;
+        if (oldUnit != null &&
+            newUnit != null &&
+            oldUnit.category != null &&
+            oldUnit.category == newUnit.category &&
+            oldUnit.factorToBase != newUnit.factorToBase) {
+          final existingRecipeIngs = await (select(recipeIngredients)
+                ..where((t) => t.ingredientFk.equals(ingredient.ingredientPk)))
+              .get();
+          for (final entry in existingRecipeIngs) {
+            final base = entry.amountNeeded * oldUnit.factorToBase;
+            final converted = double.parse((base / newUnit.factorToBase).toStringAsFixed(6));
+            await (update(recipeIngredients)
+                  ..where((t) => t.recipeIngredientPk.equals(entry.recipeIngredientPk)))
+                .write(RecipeIngredientsCompanion(
+              amountNeeded: Value(converted),
+            ));
+          }
+        }
+      }
+      return update(ingredients).replace(ingredient);
+    });
+  }
   Future<int> deleteIngredient(Ingredient ingredient) =>
       delete(ingredients).delete(ingredient);
 
@@ -471,23 +498,24 @@ class AppDatabase extends _$AppDatabase {
   /// Returns: 1 if inserted, 2 if updated, 0 if kept local.
   Future<int> mergeIngredientFromRemote(Ingredient remoteIngredient) async {
     // Ensure the unit exists before inserting ingredient to satisfy FK constraint
+    var targetUnitFk = remoteIngredient.unitFk;
     final unitExists = (await (select(units)
-          ..where((t) => t.unitPk.equals(remoteIngredient.unitFk))
+          ..where((t) => t.unitPk.equals(targetUnitFk))
           ..limit(1))
         .get()).firstOrNull;
     if (unitExists == null) {
-      final defaultG = (await (select(units)
-            ..where((t) => t.symbol.equals('g'))
+      final defaultUnit = (await (select(units)
+            ..where((t) => t.symbol.equals('g') | t.name.equals('unit_grams'))
             ..limit(1))
           .get()).firstOrNull ??
           (await (select(units)..limit(1)).get()).firstOrNull;
       await into(units).insert(
         UnitsCompanion(
-          unitPk: Value(remoteIngredient.unitFk),
-          name: Value(defaultG?.name ?? 'Unit'),
-          symbol: Value(defaultG?.symbol ?? 'u'),
-          category: Value(defaultG?.category ?? 'mass'),
-          factorToBase: Value(defaultG?.factorToBase ?? 1.0),
+          unitPk: Value(targetUnitFk),
+          name: Value(defaultUnit?.name ?? 'unit_grams'),
+          symbol: Value(defaultUnit?.symbol ?? 'g'),
+          category: Value(defaultUnit?.category ?? 'mass'),
+          factorToBase: Value(defaultUnit?.factorToBase ?? 1.0),
           isMutable: const Value(false),
         ),
         mode: InsertMode.insertOrIgnore,
@@ -502,7 +530,7 @@ class AppDatabase extends _$AppDatabase {
           name: Value(remoteIngredient.name),
           cost: Value(remoteIngredient.cost),
           quantityForCost: Value(remoteIngredient.quantityForCost),
-          unitFk: Value(remoteIngredient.unitFk),
+          unitFk: Value(targetUnitFk),
           dateCreated: Value(remoteIngredient.dateCreated),
           dateTimeModified: Value(remoteIngredient.dateTimeModified),
         ),
@@ -518,7 +546,7 @@ class AppDatabase extends _$AppDatabase {
             name: Value(remoteIngredient.name),
             cost: Value(remoteIngredient.cost),
             quantityForCost: Value(remoteIngredient.quantityForCost),
-            unitFk: Value(remoteIngredient.unitFk),
+            unitFk: Value(targetUnitFk),
             dateTimeModified: Value(remoteIngredient.dateTimeModified ?? remoteIngredient.dateCreated),
           ),
         );
@@ -528,25 +556,37 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  /// Merges a unit from remote (non-destructive insert if absent).
+  /// Merges a unit from remote (non-destructive insert if absent, deduplicated by name).
   Future<void> mergeUnitFromRemote(Unit remoteUnit) async {
     final localUnit = (await (select(units)
           ..where((t) => t.unitPk.equals(remoteUnit.unitPk))
           ..limit(1))
         .get()).firstOrNull;
-    if (localUnit == null) {
-      await into(units).insert(
-        UnitsCompanion(
-          unitPk: Value(remoteUnit.unitPk),
-          name: Value(remoteUnit.name),
-          symbol: Value(remoteUnit.symbol),
-          category: Value(remoteUnit.category),
-          factorToBase: Value(remoteUnit.factorToBase),
-          isMutable: Value(remoteUnit.isMutable),
-        ),
-        mode: InsertMode.insertOrIgnore,
-      );
+    if (localUnit != null) return;
+
+    final normName = remoteUnit.name == 'unit_spoonfuls' ? 'unit_tablespoons' : remoteUnit.name;
+    final unitByName = (await (select(units)
+          ..where((t) => t.name.equals(normName))
+          ..limit(1))
+        .get()).firstOrNull;
+
+    if (unitByName != null) {
+      await (update(ingredients)..where((t) => t.unitFk.equals(remoteUnit.unitPk)))
+          .write(IngredientsCompanion(unitFk: Value(unitByName.unitPk)));
+      return;
     }
+
+    await into(units).insert(
+      UnitsCompanion(
+        unitPk: Value(remoteUnit.unitPk),
+        name: Value(remoteUnit.name),
+        symbol: Value(remoteUnit.symbol),
+        category: Value(remoteUnit.category),
+        factorToBase: Value(remoteUnit.factorToBase),
+        isMutable: Value(remoteUnit.isMutable),
+      ),
+      mode: InsertMode.insertOrIgnore,
+    );
   }
 
   /// Performs a two-way, non-destructive merge of [remoteDb] into this database.
@@ -578,29 +618,37 @@ class AppDatabase extends _$AppDatabase {
     int ingredientsUpdated = 0;
 
     await transaction(() async {
-      // 1. Merge Units (non-destructive)
+      // 1. Merge Units (non-destructive & deduplicated)
       final localUnits = await getAllUnits();
       final localUnitPks = {for (final u in localUnits) u.unitPk};
+      final localUnitsByName = {for (final u in localUnits) u.name: u};
+      final unitRemap = <String, String>{};
+
       for (final ru in remoteUnits) {
-        if (!localUnitPks.contains(ru.unitPk)) {
-          await into(units).insert(
-            UnitsCompanion(
-              unitPk: Value(ru.unitPk),
-              name: Value(ru.name),
-              symbol: Value(ru.symbol),
-              category: Value(ru.category),
-              factorToBase: Value(ru.factorToBase),
-              isMutable: Value(ru.isMutable),
-            ),
-            mode: InsertMode.insertOrIgnore,
-          );
+        if (localUnitPks.contains(ru.unitPk)) continue;
+        final normName = ru.name == 'unit_spoonfuls' ? 'unit_tablespoons' : ru.name;
+        if (localUnitsByName.containsKey(normName)) {
+          unitRemap[ru.unitPk] = localUnitsByName[normName]!.unitPk;
+          continue;
         }
+        await into(units).insert(
+          UnitsCompanion(
+            unitPk: Value(ru.unitPk),
+            name: Value(ru.name),
+            symbol: Value(ru.symbol),
+            category: Value(ru.category),
+            factorToBase: Value(ru.factorToBase),
+            isMutable: Value(ru.isMutable),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
       }
 
       // 2. Merge Ingredients (non-destructive, LWW based on updated_at)
       final localIngredients = await getAllIngredients();
       final localIngMap = {for (final i in localIngredients) i.ingredientPk: i};
       for (final ri in remoteIngredients) {
+        final effectiveUnitFk = unitRemap[ri.unitFk] ?? ri.unitFk;
         final localIng = localIngMap[ri.ingredientPk];
         if (localIng == null) {
           await into(ingredients).insert(
@@ -609,26 +657,24 @@ class AppDatabase extends _$AppDatabase {
               name: Value(ri.name),
               cost: Value(ri.cost),
               quantityForCost: Value(ri.quantityForCost),
-              unitFk: Value(ri.unitFk),
+              unitFk: Value(effectiveUnitFk),
               dateCreated: Value(ri.dateCreated),
               dateTimeModified: Value(ri.dateTimeModified),
             ),
+            mode: InsertMode.insertOrReplace,
           );
           ingredientsAdded++;
         } else {
           final localTime = localIng.dateTimeModified ?? localIng.dateCreated;
           final remoteTime = ri.dateTimeModified ?? ri.dateCreated;
           if (remoteTime.isAfter(localTime)) {
-            await (update(ingredients)
-                  ..where((t) => t.ingredientPk.equals(localIng.ingredientPk)))
-                .write(
+            await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
               IngredientsCompanion(
                 name: Value(ri.name),
                 cost: Value(ri.cost),
                 quantityForCost: Value(ri.quantityForCost),
-                unitFk: Value(ri.unitFk),
-                dateTimeModified:
-                    Value(ri.dateTimeModified ?? ri.dateCreated),
+                unitFk: Value(effectiveUnitFk),
+                dateTimeModified: Value(ri.dateTimeModified ?? ri.dateCreated),
               ),
             );
             ingredientsUpdated++;

@@ -2218,6 +2218,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       // Persist to cloud database if cloud sync is active
       await ref.read(cloudSyncProvider.notifier).saveRecipe(savedDetail);
 
+      ref.invalidate(recipesWithFinancialsStreamProvider);
       _initialSnapshot = _createSnapshot();
       if (mounted && popOnSuccess) {
         if (widget.onClose != null) {
@@ -2403,6 +2404,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       (previous, next) {
         next.whenData((allIngredients) {
           final map = {for (var i in allIngredients) i.ingredientPk: i};
+          final units = ref.read(unitsProvider).value ?? [];
+          final settings = ref.read(settingsProvider);
           bool changed = false;
           for (int idx = 0; idx < _ingredients.length; idx++) {
             final current = _ingredients[idx];
@@ -2412,11 +2415,16 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                  updated.name != current.ingredient.name ||
                  updated.unitFk != current.ingredient.unitFk ||
                  updated.quantityForCost != current.ingredient.quantityForCost)) {
+              final sourceUnit = units.where((u) => u.unitPk == updated.unitFk).firstOrNull;
+              final targetUnit = sourceUnit != null
+                  ? UnitUtils.getTargetUnit(sourceUnit, units, settings)
+                  : null;
+
               final updatedData = RecipeIngredientData(
                 ingredient: updated,
-                initialAmount: current.amountController.text,
-                sourceUnit: current.sourceUnit,
-                targetUnit: current.targetUnit,
+                initialTargetAmount: current.amountController.text,
+                sourceUnit: sourceUnit ?? current.sourceUnit,
+                targetUnit: targetUnit ?? current.targetUnit,
               );
               updatedData.amountController.addListener(_calculateSummary);
               current.amountController.removeListener(_calculateSummary);
@@ -2429,6 +2437,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             setState(() {
               _calculateSummary();
             });
+            if (widget.recipeId != null && !widget.isTemporary) {
+              _saveRecipe(popOnSuccess: false);
+            }
           }
         });
       },
@@ -3807,15 +3818,22 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   }
 
   void _updateIngredientInRecipe(Ingredient updated) {
+    final units = ref.read(unitsProvider).value ?? [];
+    final settings = ref.read(settingsProvider);
+    final sourceUnit = units.where((u) => u.unitPk == updated.unitFk).firstOrNull;
+    final targetUnit = sourceUnit != null
+        ? UnitUtils.getTargetUnit(sourceUnit, units, settings)
+        : null;
+
     bool changed = false;
     for (int i = 0; i < _ingredients.length; i++) {
       if (_ingredients[i].ingredient.ingredientPk == updated.ingredientPk) {
         final old = _ingredients[i];
         final updatedData = RecipeIngredientData(
           ingredient: updated,
-          initialAmount: old.amountController.text,
-          sourceUnit: old.sourceUnit,
-          targetUnit: old.targetUnit,
+          initialTargetAmount: old.amountController.text,
+          sourceUnit: sourceUnit ?? old.sourceUnit,
+          targetUnit: targetUnit ?? old.targetUnit,
         );
         updatedData.amountController.addListener(_calculateSummary);
         old.amountController.removeListener(_calculateSummary);
@@ -3824,8 +3842,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         changed = true;
       }
     }
-    if (changed) {
-      _calculateSummary();
+    if (changed && mounted) {
+      setState(() {
+        _calculateSummary();
+      });
+      if (widget.recipeId != null && !widget.isTemporary) {
+        _saveRecipe(popOnSuccess: false);
+      }
     }
   }
 

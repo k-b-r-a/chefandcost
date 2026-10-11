@@ -98,8 +98,18 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
       ),
       body: unitsAsync.when(
         data: (allUnits) {
+          // Deduplicate allUnits by canonical name
+          final uniqueUnits = <Unit>[];
+          final seenUnitNames = <String>{};
+          for (final u in allUnits) {
+            final norm = u.name == 'unit_spoonfuls' ? 'unit_tablespoons' : u.name;
+            if (seenUnitNames.add(norm)) {
+              uniqueUnits.add(u);
+            }
+          }
+
           // Categories list
-          final categories = allUnits
+          final categories = uniqueUnits
               .map((u) => u.category)
               .whereType<String>()
               .toSet()
@@ -110,7 +120,7 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
           if (!categories.contains('volume')) categories.add('volume');
           if (!categories.contains('count')) categories.add('count');
 
-          final filteredUnits = allUnits
+          final filteredUnits = uniqueUnits
               .where((u) => u.category == _selectedCategory)
               .toList();
 
