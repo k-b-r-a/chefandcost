@@ -1662,4 +1662,109 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get sample_manufacturing_auto_removed =>
       'Tutorial completed. Temporary sample recipe removed.';
+
+  @override
+  String get share_recipe_menu_title => 'Share Recipe';
+
+  @override
+  String get share_recipe_bottom_sheet_title => 'Share Recipe';
+
+  @override
+  String get share_recipe_format_chefy_title => 'Chef&Cost Recipe (.chefy)';
+
+  @override
+  String get share_recipe_format_chefy_subtitle =>
+      'Exchange file to open and import in Chef&Cost on another device';
+
+  @override
+  String get share_recipe_format_pdf_title => 'PDF Recipe Sheet (.pdf)';
+
+  @override
+  String get share_recipe_format_pdf_subtitle =>
+      'Printable document with ingredients, costs and instructions';
+
+  @override
+  String get share_recipe_format_csv_title => 'CSV Spreadsheet (.csv)';
+
+  @override
+  String get share_recipe_format_csv_subtitle =>
+      'Spreadsheet for Excel or Google Sheets with ingredients and costs';
+
+  @override
+  String get share_recipe_generating => 'Generating file...';
+
+  @override
+  String get share_recipe_success => 'Recipe shared successfully';
+
+  @override
+  String get share_recipe_pdf_instructions_title => 'Preparation Steps';
+
+  @override
+  String get share_recipe_pdf_ingredients_title => 'Ingredients & Cost';
+
+  @override
+  String get share_recipe_pdf_summary_title => 'Financial Summary';
+
+  @override
+  String get share_recipe_pdf_cost_per_unit => 'Cost/Unit';
+
+  @override
+  String get share_recipe_pdf_amount => 'Amount';
+
+  @override
+  String get share_recipe_pdf_unit => 'Unit';
+
+  @override
+  String get share_recipe_pdf_subtotal => 'Subtotal';
+
+  @override
+  String get share_recipe_pdf_timers_title => 'Kitchen Timers';
+
+  @override
+  String get share_recipe_pdf_footer => 'Generated with Chef&Cost';
+
+  @override
+  String get import_recipe_button => 'Import Recipe';
+
+  @override
+  String get import_recipe_dialog_title => 'Import Recipe';
+
+  @override
+  String get import_recipe_dialog_desc =>
+      'Do you want to import this recipe into your collection?';
+
+  @override
+  String import_recipe_name_conflict_warning(String name) {
+    return 'A recipe with this name already exists. It will be imported as \"$name\".';
+  }
+
+  @override
+  String import_recipe_success(String name) {
+    return 'Recipe \"$name\" imported successfully';
+  }
+
+  @override
+  String get import_recipe_invalid_file =>
+      'The selected file is not a valid Chef&Cost recipe file';
+
+  @override
+  String import_recipe_ingredients_count(int count) {
+    return '$count ingredients';
+  }
+
+  @override
+  String import_recipe_steps_count(int count) {
+    return '$count steps';
+  }
+
+  @override
+  String import_recipe_portions(String yield, String yieldName) {
+    return 'Yield: $yield $yieldName';
+  }
+
+  @override
+  String get import_recipe_confirm_btn => 'Import';
+
+  @override
+  String get import_recipe_open_now_action => 'Open';
 }

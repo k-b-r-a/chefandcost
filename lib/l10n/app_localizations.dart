@@ -3197,6 +3197,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tutorial completed. Temporary sample recipe removed.'**
   String get sample_manufacturing_auto_removed;
+
+  /// No description provided for @share_recipe_menu_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Recipe'**
+  String get share_recipe_menu_title;
+
+  /// No description provided for @share_recipe_bottom_sheet_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Recipe'**
+  String get share_recipe_bottom_sheet_title;
+
+  /// No description provided for @share_recipe_format_chefy_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Chef&Cost Recipe (.chefy)'**
+  String get share_recipe_format_chefy_title;
+
+  /// No description provided for @share_recipe_format_chefy_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exchange file to open and import in Chef&Cost on another device'**
+  String get share_recipe_format_chefy_subtitle;
+
+  /// No description provided for @share_recipe_format_pdf_title.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF Recipe Sheet (.pdf)'**
+  String get share_recipe_format_pdf_title;
+
+  /// No description provided for @share_recipe_format_pdf_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Printable document with ingredients, costs and instructions'**
+  String get share_recipe_format_pdf_subtitle;
+
+  /// No description provided for @share_recipe_format_csv_title.
+  ///
+  /// In en, this message translates to:
+  /// **'CSV Spreadsheet (.csv)'**
+  String get share_recipe_format_csv_title;
+
+  /// No description provided for @share_recipe_format_csv_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheet for Excel or Google Sheets with ingredients and costs'**
+  String get share_recipe_format_csv_subtitle;
+
+  /// No description provided for @share_recipe_generating.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating file...'**
+  String get share_recipe_generating;
+
+  /// No description provided for @share_recipe_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe shared successfully'**
+  String get share_recipe_success;
+
+  /// No description provided for @share_recipe_pdf_instructions_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation Steps'**
+  String get share_recipe_pdf_instructions_title;
+
+  /// No description provided for @share_recipe_pdf_ingredients_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients & Cost'**
+  String get share_recipe_pdf_ingredients_title;
+
+  /// No description provided for @share_recipe_pdf_summary_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Summary'**
+  String get share_recipe_pdf_summary_title;
+
+  /// No description provided for @share_recipe_pdf_cost_per_unit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost/Unit'**
+  String get share_recipe_pdf_cost_per_unit;
+
+  /// No description provided for @share_recipe_pdf_amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get share_recipe_pdf_amount;
+
+  /// No description provided for @share_recipe_pdf_unit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get share_recipe_pdf_unit;
+
+  /// No description provided for @share_recipe_pdf_subtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get share_recipe_pdf_subtotal;
+
+  /// No description provided for @share_recipe_pdf_timers_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Timers'**
+  String get share_recipe_pdf_timers_title;
+
+  /// No description provided for @share_recipe_pdf_footer.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated with Chef&Cost'**
+  String get share_recipe_pdf_footer;
+
+  /// No description provided for @import_recipe_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Recipe'**
+  String get import_recipe_button;
+
+  /// No description provided for @import_recipe_dialog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Recipe'**
+  String get import_recipe_dialog_title;
+
+  /// No description provided for @import_recipe_dialog_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to import this recipe into your collection?'**
+  String get import_recipe_dialog_desc;
+
+  /// No description provided for @import_recipe_name_conflict_warning.
+  ///
+  /// In en, this message translates to:
+  /// **'A recipe with this name already exists. It will be imported as \"{name}\".'**
+  String import_recipe_name_conflict_warning(String name);
+
+  /// No description provided for @import_recipe_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe \"{name}\" imported successfully'**
+  String import_recipe_success(String name);
+
+  /// No description provided for @import_recipe_invalid_file.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected file is not a valid Chef&Cost recipe file'**
+  String get import_recipe_invalid_file;
+
+  /// No description provided for @import_recipe_ingredients_count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} ingredients'**
+  String import_recipe_ingredients_count(int count);
+
+  /// No description provided for @import_recipe_steps_count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} steps'**
+  String import_recipe_steps_count(int count);
+
+  /// No description provided for @import_recipe_portions.
+  ///
+  /// In en, this message translates to:
+  /// **'Yield: {yield} {yieldName}'**
+  String import_recipe_portions(String yield, String yieldName);
+
+  /// No description provided for @import_recipe_confirm_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get import_recipe_confirm_btn;
+
+  /// No description provided for @import_recipe_open_now_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get import_recipe_open_now_action;
 }
 
 class _AppLocalizationsDelegate

@@ -20,6 +20,7 @@ import 'kitchen_timers_screen.dart';
 import 'compare_ingredients_screen.dart';
 import '../services/app_tutorial_service.dart';
 import '../database/sample_manufacturing_recipe.dart';
+import '../widgets/share_recipe_sheet.dart';
 
 enum WebRecipeRightPanelMode {
   financials,
@@ -213,6 +214,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   late final Future<bool> Function() _guardFunction;
   RecipeCanLeaveGuardNotifier? _guardNotifier;
   _RecipeSnapshot? _initialSnapshot;
+  String? _currentRecipePk;
 
   // controllers
   final _nameController = TextEditingController();
@@ -315,6 +317,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   @override
   void initState() {
     super.initState();
+    _currentRecipePk = widget.recipeId;
     _tutorialCompletedListener = () {
       if (!mounted) return;
       _maybeTriggerTutorial();
@@ -1635,6 +1638,47 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     }
   }
 
+  Future<void> _shareCurrentRecipe() async {
+    final l10n = AppLocalizations.of(context)!;
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.recipe_editor_please_enter_name,
+            softWrap: true,
+            overflow: TextOverflow.clip,
+          ),
+        ),
+      );
+      setState(() {
+        _isEditingName = true;
+      });
+      _nameFocusNode.requestFocus();
+      return;
+    }
+
+    final targetPk = _currentRecipePk ?? widget.recipeId;
+    if (_hasUnsavedChanges() || targetPk == null) {
+      final saved = await _saveRecipe(popOnSuccess: false);
+      if (!saved) return;
+    }
+
+    final finalPk = _currentRecipePk ?? widget.recipeId;
+    if (finalPk == null) return;
+
+    final db = ref.read(databaseProvider);
+    try {
+      final detail = await db.getRecipeDetail(finalPk);
+      if (mounted) {
+        ShareRecipeSheet.show(context, recipeDetail: detail);
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showError(context, l10n.error_prefix(e.toString()));
+      }
+    }
+  }
+
   PopupMenuItem<double> _buildPopupMenuItem(
     BuildContext context,
     double value,
@@ -2210,7 +2254,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
       final savedDetail = await RecipeUtils.saveRecipe(
         db: db,
-        recipePk: widget.recipeId,
+        recipePk: _currentRecipePk ?? widget.recipeId,
         name: name,
         description: description,
         yieldText: yieldVal,
@@ -2220,6 +2264,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         ingredients: _ingredients,
         steps: stepsToSave,
       );
+
+      _currentRecipePk = savedDetail.recipe.recipePk;
 
       // Persist to cloud database if cloud sync is active
       await ref.read(cloudSyncProvider.notifier).saveRecipe(savedDetail);
@@ -2834,6 +2880,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       onSelected: (value) async {
         if (value == 'duplicate') {
           _duplicateCurrentRecipe();
+        } else if (value == 'share_recipe') {
+          _shareCurrentRecipe();
         } else if (value == 'kitchen_timers') {
           Navigator.of(context).push(
             MaterialPageRoute(
@@ -2886,19 +2934,37 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         }
       },
       itemBuilder: (context) => [
-        if (widget.recipeId != null && !widget.isTemporary) ...[
+        if (!widget.isTemporary) ...[
+          if (widget.recipeId != null || _currentRecipePk != null)
+            PopupMenuItem<String>(
+              value: 'duplicate',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.copy_rounded,
+                    size: 20,
+                    color: theme.colorScheme.secondary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.duplicate_button,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
           PopupMenuItem<String>(
-            value: 'duplicate',
+            value: 'share_recipe',
             child: Row(
               children: [
                 Icon(
-                  Icons.copy_rounded,
+                  Icons.share_rounded,
                   size: 20,
-                  color: theme.colorScheme.secondary,
+                  color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  l10n.duplicate_button,
+                  l10n.share_recipe_menu_title,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],

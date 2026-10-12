@@ -701,5 +701,73 @@
   "sample_manufacturing_banner_desc": "Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.",
   "sample_manufacturing_save_btn": "Save as Real Recipe",
   "sample_manufacturing_dismiss_btn": "Dismiss Sample",
-  "sample_manufacturing_auto_removed": "Tutorial completed. Temporary sample recipe removed."
+  "sample_manufacturing_auto_removed": "Tutorial completed. Temporary sample recipe removed.",
+  "share_recipe_menu_title": "Share Recipe",
+  "share_recipe_bottom_sheet_title": "Share Recipe",
+  "share_recipe_format_chefy_title": "Chef&Cost Recipe (.chefy)",
+  "share_recipe_format_chefy_subtitle": "Exchange file to open and import in Chef&Cost on another device",
+  "share_recipe_format_pdf_title": "PDF Recipe Sheet (.pdf)",
+  "share_recipe_format_pdf_subtitle": "Printable document with ingredients, costs and instructions",
+  "share_recipe_format_csv_title": "CSV Spreadsheet (.csv)",
+  "share_recipe_format_csv_subtitle": "Spreadsheet for Excel or Google Sheets with ingredients and costs",
+  "share_recipe_generating": "Generating file...",
+  "share_recipe_success": "Recipe shared successfully",
+  "share_recipe_pdf_instructions_title": "Preparation Steps",
+  "share_recipe_pdf_ingredients_title": "Ingredients & Cost",
+  "share_recipe_pdf_summary_title": "Financial Summary",
+  "share_recipe_pdf_cost_per_unit": "Cost/Unit",
+  "share_recipe_pdf_amount": "Amount",
+  "share_recipe_pdf_unit": "Unit",
+  "share_recipe_pdf_subtotal": "Subtotal",
+  "share_recipe_pdf_timers_title": "Kitchen Timers",
+  "share_recipe_pdf_footer": "Generated with Chef&Cost",
+  "import_recipe_button": "Import Recipe",
+  "import_recipe_dialog_title": "Import Recipe",
+  "import_recipe_dialog_desc": "Do you want to import this recipe into your collection?",
+  "import_recipe_name_conflict_warning": "A recipe with this name already exists. It will be imported as \"{name}\".",
+  "@import_recipe_name_conflict_warning": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "import_recipe_success": "Recipe \"{name}\" imported successfully",
+  "@import_recipe_success": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "import_recipe_invalid_file": "The selected file is not a valid Chef&Cost recipe file",
+  "import_recipe_ingredients_count": "{count} ingredients",
+  "@import_recipe_ingredients_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "import_recipe_steps_count": "{count} steps",
+  "@import_recipe_steps_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "import_recipe_portions": "Yield: {yield} {yieldName}",
+  "@import_recipe_portions": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      },
+      "yieldName": {
+        "type": "String"
+      }
+    }
+  },
+  "import_recipe_confirm_btn": "Import",
+  "import_recipe_open_now_action": "Open"
 }

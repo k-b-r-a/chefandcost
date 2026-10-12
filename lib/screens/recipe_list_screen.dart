@@ -12,6 +12,11 @@ import '../widgets/floating_pill_app_bar.dart';
 import '../provider/web_layout_provider.dart';
 import '../services/app_tutorial_service.dart';
 import '../database/sample_manufacturing_recipe.dart';
+import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
+import '../services/recipe_share_service.dart';
+import '../widgets/share_recipe_sheet.dart';
+import '../widgets/import_recipe_dialog.dart';
 import 'recipe_editor_screen.dart';
 
 class RecipeListScreen extends ConsumerStatefulWidget {
@@ -116,6 +121,11 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
             title: l10n.recipes_title,
             controller: _scrollController,
             actions: [
+              IconButton(
+                icon: const Icon(Icons.file_download_outlined),
+                tooltip: l10n.import_recipe_button,
+                onPressed: () => _importRecipeFromDevice(context),
+              ),
               IconButton(
                 icon: const Icon(Icons.help_outline_rounded),
                 tooltip: l10n.tutorial_help_tooltip,
@@ -481,6 +491,16 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                               Expanded(
                                                 child: _buildMenuButton(
                                                   context: context,
+                                                  icon: Icons.share_rounded,
+                                                  label: l10n.share_recipe_menu_title,
+                                                  onTap: () {
+                                                    _shareRecipeFromList(context, recipe);
+                                                  },
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: _buildMenuButton(
+                                                  context: context,
                                                   icon: Icons.delete_outline_rounded,
                                                   label: l10n.delete_button,
                                                   color: theme.colorScheme.error,
@@ -663,6 +683,92 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
           AppSnackBar.showError(context, "${l10n.error_prefix}: $e");
         }
       }
+    }
+  }
+
+  void _shareRecipeFromList(BuildContext context, Recipe recipe) async {
+    final db = ref.read(databaseProvider);
+    try {
+      final detail = await db.getRecipeDetail(recipe.recipePk);
+      if (context.mounted) {
+        ShareRecipeSheet.show(context, recipeDetail: detail);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        AppSnackBar.showError(context, "${l10n.error_prefix}: $e");
+      }
+    }
+  }
+
+  Future<void> _importRecipeFromDevice(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final db = ref.read(databaseProvider);
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: l10n.import_recipe_dialog_title,
+        type: FileType.any,
+        withData: true,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final pickedFile = result.files.first;
+      final bytes = pickedFile.bytes;
+      if (bytes == null || bytes.isEmpty) {
+        if (!context.mounted) return;
+        AppSnackBar.showError(context, l10n.import_recipe_invalid_file);
+        return;
+      }
+
+      final jsonContent = utf8.decode(bytes);
+      final allRecipes = await db.getAllRecipes();
+      final preview =
+          RecipeShareService.previewRecipeFromJson(jsonContent, allRecipes);
+
+      if (!context.mounted) return;
+
+      final shouldImport =
+          await ImportRecipeDialog.show(context, preview: preview);
+      if (shouldImport != true || !context.mounted) return;
+
+      final importResult = await RecipeShareService.importRecipeFromJson(
+        jsonContent: jsonContent,
+        db: db,
+        overrideRecipeName: preview.hasExistingRecipeWithSameName
+            ? preview.suggestedName
+            : null,
+      );
+
+      if (!context.mounted) return;
+
+      ref.invalidate(recipesWithFinancialsStreamProvider);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.import_recipe_success(importResult.recipe.name),
+            softWrap: true,
+            overflow: TextOverflow.clip,
+          ),
+          action: SnackBarAction(
+            label: l10n.import_recipe_open_now_action,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => RecipeEditorScreen(
+                    recipeId: importResult.recipe.recipePk,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      AppSnackBar.showError(context, "${l10n.import_recipe_invalid_file}: $e");
     }
   }
 
