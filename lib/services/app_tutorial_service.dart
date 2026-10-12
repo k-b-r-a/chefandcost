@@ -64,6 +64,7 @@ class TutorialStepInfo {
   final String title;
   final String description;
   final String? gestureHint;
+  final IconData? gestureIcon;
   final ShapeLightFocus shape;
   final double radius;
 
@@ -75,6 +76,7 @@ class TutorialStepInfo {
     required this.title,
     required this.description,
     this.gestureHint,
+    this.gestureIcon,
     this.shape = ShapeLightFocus.RRect,
     this.radius = 18.0,
   });
@@ -295,7 +297,8 @@ class AppTutorialService {
           radius: step.radius,
           enableOverlayTab: false,
           enableTargetTab: step.id == 'step_recipe_list_hold' ||
-              step.id == 'step_recipe_editor_ingredient_hold',
+              step.id == 'step_recipe_editor_ingredient_hold' ||
+              step.id == 'step_recipe_editor_scale_bar',
           contents: [
             TargetContent(
               align: ContentAlign.custom,
@@ -444,6 +447,7 @@ class AppTutorialService {
         title: l10n.tutorial_editor_scale_bar_title,
         description: l10n.tutorial_editor_scale_bar_desc,
         gestureHint: l10n.tutorial_editor_scale_bar_hint,
+        gestureIcon: Icons.swipe_rounded,
         radius: 14.0,
       ),
       // 3. Ingredient Long-Press / Inline Actions Dropdown
@@ -1028,7 +1032,7 @@ class AppTutorialService {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          Icons.touch_app_rounded,
+                          step.gestureIcon ?? Icons.touch_app_rounded,
                           size: 16,
                           color: theme.colorScheme.tertiary,
                         ),

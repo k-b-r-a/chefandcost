@@ -76,6 +76,7 @@ class RecipeEditorScreen extends ConsumerStatefulWidget {
   final String? initialPrice;
   final List<InitialIngredientInput>? initialIngredients;
   final List<InitialStepInput>? initialSteps;
+  final RecipeEditorTutorialKeys? tutorialKeys;
 
   const RecipeEditorScreen({
     super.key,
@@ -90,6 +91,7 @@ class RecipeEditorScreen extends ConsumerStatefulWidget {
     this.initialPrice,
     this.initialIngredients,
     this.initialSteps,
+    this.tutorialKeys,
     this.onClose,
   });
 
@@ -190,7 +192,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   String get currency => ref.watch(settingsProvider).currencySymbol;
 
   final _formKey = GlobalKey<FormState>();
-  final RecipeEditorTutorialKeys _editorTutorialKeys = RecipeEditorTutorialKeys();
+  late final RecipeEditorTutorialKeys _editorTutorialKeys =
+      widget.tutorialKeys ?? RecipeEditorTutorialKeys();
   bool _isLoading = false;
   bool _isSaving = false;
   bool _isCalculating = false;
@@ -249,6 +252,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   double? _activeScaleMultiplier;
   Map<String, String>? _unscaledIngredientAmounts;
   String? _unscaledYieldText;
+  final ScrollController _scaleBarScrollController = ScrollController();
+  String? _currentTutorialStepId;
 
   _RecipeSnapshot _createSnapshot() {
     return _RecipeSnapshot(
@@ -1978,6 +1983,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
   @override
   void dispose() {
+    _scaleBarScrollController.dispose();
     if (_tutorialCompletedListener != null) {
       AppTutorialService.tutorialStepCompletedNotifier.removeListener(_tutorialCompletedListener!);
     }
@@ -2332,7 +2338,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   }
 
   Future<void> _handleTutorialStepFocus(String stepId) async {
-    if (stepId == 'step_recipe_editor_ingredient_hold') {
+    _currentTutorialStepId = stepId;
+    if (stepId == 'step_recipe_editor_scale_bar') {
+      _animateScaleBarHorizontalScroll();
+    } else if (stepId == 'step_recipe_editor_ingredient_hold') {
       if (_ingredients.isNotEmpty) {
         final units = ref.read(unitsProvider).value ?? [];
         final sortedIndices = RecipeUtils.getSortedIngredientIndices(
@@ -2362,7 +2371,41 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     }
   }
 
+  Future<void> _animateScaleBarHorizontalScroll() async {
+    if (!mounted) return;
+    await Future.delayed(const Duration(milliseconds: 350));
+    if (!mounted ||
+        !_scaleBarScrollController.hasClients ||
+        _currentTutorialStepId != 'step_recipe_editor_scale_bar') {
+      return;
+    }
+
+    final maxScroll = _scaleBarScrollController.position.maxScrollExtent;
+    if (maxScroll > 0) {
+      await _scaleBarScrollController.animateTo(
+        maxScroll,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeInOutCubic,
+      );
+      if (!mounted || _currentTutorialStepId != 'step_recipe_editor_scale_bar') {
+        return;
+      }
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted ||
+          !_scaleBarScrollController.hasClients ||
+          _currentTutorialStepId != 'step_recipe_editor_scale_bar') {
+        return;
+      }
+      await _scaleBarScrollController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
   Future<void> _handleTutorialEnd() async {
+    _currentTutorialStepId = null;
     if (mounted && _tutorialExpandedIngredientIndex != null) {
       setState(() {
         _tutorialExpandedIngredientIndex = null;
@@ -5210,6 +5253,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       key: const ValueKey('recipe_scale_selector_bar'),
       padding: const EdgeInsets.only(bottom: 8.0),
       child: SingleChildScrollView(
+        controller: _scaleBarScrollController,
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         child: Row(
@@ -5242,6 +5286,20 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               ),
             ),
             const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: _buildScaleOptionChip(
+                theme: theme,
+                icon: Icons.people_outline_rounded,
+                label: isCustomActive
+                    ? '${RecipeUtils.formatMultiplier(activeMultiplier)} (${_yieldController.text} ${l10n.unit_portions.toLowerCase()})'
+                    : '${l10n.unit_portions}...',
+                isSelected: isCustomActive,
+                key: const ValueKey('scale_chip_custom_portions'),
+                tooltip: l10n.unit_portions,
+                onTap: () => _showScaleByPortionsDialog(theme, l10n),
+              ),
+            ),
             ...presets.map((mult) {
               final isSelected = !_isScaledTemporarily
                   ? mult == 1.0
@@ -5273,20 +5331,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 ),
               );
             }),
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: _buildScaleOptionChip(
-                theme: theme,
-                icon: Icons.people_outline_rounded,
-                label: isCustomActive
-                    ? '${RecipeUtils.formatMultiplier(activeMultiplier)} (${_yieldController.text} ${l10n.unit_portions.toLowerCase()})'
-                    : '${l10n.unit_portions}...',
-                isSelected: isCustomActive,
-                key: const ValueKey('scale_chip_custom_portions'),
-                tooltip: l10n.unit_portions,
-                onTap: () => _showScaleByPortionsDialog(theme, l10n),
-              ),
-            ),
           ],
         ),
       ),

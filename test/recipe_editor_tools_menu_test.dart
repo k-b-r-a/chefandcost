@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recipetools/database/database.dart';
 import 'package:recipetools/provider/database_provider.dart';
 import 'package:recipetools/screens/recipe_editor_screen.dart';
+import 'package:recipetools/services/app_tutorial_service.dart';
 import 'package:recipetools/l10n/app_localizations.dart';
 import 'package:recipetools/provider/settings_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,6 +55,7 @@ void main() {
     Widget createTestApp({
       bool isTemporary = false,
       String? recipeId = 'rec_1',
+      RecipeEditorTutorialKeys? tutorialKeys,
     }) {
       return ProviderScope(
         overrides: [
@@ -76,6 +78,7 @@ void main() {
             initialYield: '4',
             initialProfitMargin: '30',
             initialPrice: '10',
+            tutorialKeys: tutorialKeys,
             initialIngredients: [
               InitialIngredientInput(
                 ingredient: ingFlour,
@@ -148,6 +151,49 @@ void main() {
 
       // Tools button exists in AppBar
       expect(find.byKey(const ValueKey('recipe_tools_menu_button')), findsOneWidget);
+    });
+    testWidgets('Portions button is positioned to the left of the multiplier presets', (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      final portionsChip = find.byKey(const ValueKey('scale_chip_custom_portions'));
+      final quarterChip = find.byKey(const ValueKey('scale_chip_0_25'));
+      final oneXChip = find.byKey(const ValueKey('scale_chip_1'));
+
+      expect(portionsChip, findsOneWidget);
+      expect(quarterChip, findsOneWidget);
+      expect(oneXChip, findsOneWidget);
+
+      final portionsX = tester.getTopLeft(portionsChip).dx;
+      final quarterX = tester.getTopLeft(quarterChip).dx;
+      final oneXX = tester.getTopLeft(oneXChip).dx;
+
+      expect(portionsX, lessThan(quarterX), reason: 'Portions button must be to the left of 1/4x preset');
+      expect(portionsX, lessThan(oneXX), reason: 'Portions button must be to the left of 1x preset');
+    });
+
+    testWidgets('Scale bar tutorial step includes swipe gesture icon and scroll explanation', (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final keys = RecipeEditorTutorialKeys();
+      await tester.pumpWidget(createTestApp(tutorialKeys: keys));
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(RecipeEditorScreen));
+      final targets = AppTutorialService.createRecipeEditorTargets(
+        context: context,
+        keys: keys,
+      );
+
+      final scaleStep = targets.firstWhere((t) => t.identify == 'step_recipe_editor_scale_bar');
+      expect(scaleStep, isNotNull);
+      expect(scaleStep.enableTargetTab, isTrue);
     });
   });
 }

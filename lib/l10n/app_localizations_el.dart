@@ -1585,11 +1585,11 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get tutorial_editor_scale_bar_desc =>
-      'Quickly scale recipe quantities using 1/4x, 1/2x, 1x, 2x, 3x presets, or custom portions without modifying base recipe data.';
+      'Quickly scale recipe quantities using custom portions or 1/4x, 1/2x, 1x, 2x, 3x presets without modifying base recipe data.';
 
   @override
   String get tutorial_editor_scale_bar_hint =>
-      'Tip: Tap any multiplier chip to recalculate all ingredient amounts and costs on the fly.';
+      'Tip: Scroll horizontally to view all scaling options. Tap any option to recalculate all ingredient amounts on the fly.';
 
   @override
   String get tutorial_editor_gestures_title => 'Counters & Step Organization';
