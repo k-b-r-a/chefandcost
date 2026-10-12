@@ -64,6 +64,7 @@ dependencies:
   printing: ^5.14.3
   csv: ^8.0.0
   image: ">=4.0.0 <4.11.0"
+  web: ^1.0.0
 
 dev_dependencies:
   flutter_test:

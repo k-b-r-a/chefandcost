@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -12,6 +14,7 @@ import 'package:drift/drift.dart' as drift;
 import '../database/database.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/recipe_utils.dart';
+import 'web_file_download.dart';
 
 class RecipeImportPreview {
   final String name;
@@ -654,20 +657,45 @@ class RecipeShareService {
     String? subject,
     Rect? sharePositionOrigin,
   }) async {
+    if (kIsWeb) {
+      final handled = await webShareOrDownloadFile(
+        bytes: bytes,
+        filename: filename,
+        mimeType: mimeType,
+        subject: subject,
+      );
+      if (handled) {
+        return const ShareResult('', ShareResultStatus.success);
+      }
+    }
+
     final xFile = XFile.fromData(
       bytes,
       name: filename,
       mimeType: mimeType,
     );
 
-    return SharePlus.instance.share(
-      ShareParams(
-        files: [xFile],
-        subject: subject,
-        sharePositionOrigin: sharePositionOrigin,
-        downloadFallbackEnabled: true,
-      ),
-    );
+    try {
+      return await SharePlus.instance.share(
+        ShareParams(
+          files: [xFile],
+          subject: subject,
+          sharePositionOrigin: sharePositionOrigin,
+          downloadFallbackEnabled: true,
+        ),
+      );
+    } on MissingPluginException catch (_) {
+      if (kIsWeb) {
+        await webShareOrDownloadFile(
+          bytes: bytes,
+          filename: filename,
+          mimeType: mimeType,
+          subject: subject,
+        );
+        return const ShareResult('', ShareResultStatus.success);
+      }
+      rethrow;
+    }
   }
 
   /// Parses JSON content into preview information before database insertion
