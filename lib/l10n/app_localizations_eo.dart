@@ -1724,6 +1724,23 @@ class AppLocalizationsEo extends AppLocalizations {
   String get share_recipe_pdf_footer => 'Generated with Chef&Cost';
 
   @override
+  String get share_recipe_with_cost => 'With costs';
+
+  @override
+  String get share_recipe_without_cost => 'Without costs (Kitchen)';
+
+  @override
+  String get share_recipe_cost_options_title => 'Cost Options';
+
+  @override
+  String get share_recipe_format_pdf_subtitle_no_cost =>
+      'Kitchen sheet with ingredients, quantities and steps (no prices)';
+
+  @override
+  String get share_recipe_format_csv_subtitle_no_cost =>
+      'Spreadsheet with ingredients, quantities and steps (no prices)';
+
+  @override
   String get import_recipe_button => 'Import Recipe';
 
   @override

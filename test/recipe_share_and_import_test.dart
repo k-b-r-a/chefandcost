@@ -222,16 +222,58 @@ void main() {
       expect(text.contains('Apple Pie'), isTrue);
       expect(text.contains('Apples'), isTrue);
       expect(text.contains('Flour'), isTrue);
+      expect(text.contains('Cost/Unit'), isTrue);
+      expect(text.contains('Subtotal'), isTrue);
+      expect(text.contains('TOTAL'), isTrue);
       expect(text.contains('Peel and slice [Apples].'), isTrue);
     });
 
-    test('exportAsPdf generates non-empty PDF bytes', () async {
+    test('exportAsCsv without cost excludes pricing, totals, and profit margins', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final bytes = RecipeShareService.exportAsCsv(
+        detail: sampleDetail,
+        allUnits: [unitG, unitKg],
+        currency: r'$',
+        l10n: l10n,
+        includeCosts: false,
+      );
+
+      expect(bytes.isNotEmpty, isTrue);
+      final text = utf8.decode(bytes.sublist(3));
+      expect(text.contains('Apple Pie'), isTrue);
+      expect(text.contains('Apples'), isTrue);
+      expect(text.contains('Flour'), isTrue);
+      expect(text.contains('Peel and slice [Apples].'), isTrue);
+      // Ensure costs and financial columns are omitted
+      expect(text.contains('Cost/Unit'), isFalse);
+      expect(text.contains('Subtotal'), isFalse);
+      expect(text.contains('TOTAL'), isFalse);
+      expect(text.contains('Profit Margin'), isFalse);
+      expect(text.contains('Cost per Portion'), isFalse);
+    });
+
+    test('exportAsPdf generates non-empty PDF bytes with cost', () async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       final bytes = await RecipeShareService.exportAsPdf(
         detail: sampleDetail,
         allUnits: [unitG, unitKg],
         currency: r'$',
         l10n: l10n,
+        includeCosts: true,
+      );
+
+      expect(bytes.isNotEmpty, isTrue);
+      expect(bytes.length, greaterThan(100));
+    });
+
+    test('exportAsPdf generates non-empty PDF bytes without cost', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final bytes = await RecipeShareService.exportAsPdf(
+        detail: sampleDetail,
+        allUnits: [unitG, unitKg],
+        currency: r'$',
+        l10n: l10n,
+        includeCosts: false,
       );
 
       expect(bytes.isNotEmpty, isTrue);
@@ -240,7 +282,7 @@ void main() {
   });
 
   group('Share & Import UI Widget Tests', () {
-    testWidgets('ShareRecipeSheet renders options for Chefy, PDF, and CSV', (tester) async {
+    testWidgets('ShareRecipeSheet renders options for Chefy, PDF, and CSV with cost choices', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -261,6 +303,10 @@ void main() {
       expect(find.text('Chef&Cost'), findsOneWidget);
       expect(find.text('PDF'), findsOneWidget);
       expect(find.text('CSV'), findsOneWidget);
+
+      // Verify "With costs" and "Without costs (Kitchen)" buttons for PDF and CSV
+      expect(find.text('With costs'), findsNWidgets(2));
+      expect(find.text('Without costs (Kitchen)'), findsNWidgets(2));
     });
 
     testWidgets('ImportRecipeDialog renders recipe preview with metadata badges and confirm action', (tester) async {

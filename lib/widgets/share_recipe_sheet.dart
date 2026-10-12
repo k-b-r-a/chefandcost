@@ -81,7 +81,7 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
     }
   }
 
-  Future<void> _sharePdf() async {
+  Future<void> _sharePdf({bool includeCosts = true}) async {
     final l10n = AppLocalizations.of(context)!;
     final box = context.findRenderObject() as RenderBox?;
     final origin = box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
@@ -101,10 +101,13 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
         allUnits: allUnits,
         currency: currency,
         l10n: l10n,
+        includeCosts: includeCosts,
       );
 
+      final isEs = l10n.localeName.startsWith('es');
+      final suffix = includeCosts ? '' : (isEs ? '_sin_costos' : '_no_cost');
       final filename =
-          '${RecipeShareService.sanitizeFileName(widget.recipeDetail.recipe.name)}.pdf';
+          '${RecipeShareService.sanitizeFileName(widget.recipeDetail.recipe.name)}$suffix.pdf';
 
       await RecipeShareService.shareRecipeFile(
         bytes: bytes,
@@ -136,7 +139,7 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
     }
   }
 
-  Future<void> _shareCsv() async {
+  Future<void> _shareCsv({bool includeCosts = true}) async {
     final l10n = AppLocalizations.of(context)!;
     final box = context.findRenderObject() as RenderBox?;
     final origin = box != null ? (box.localToGlobal(Offset.zero) & box.size) : null;
@@ -156,10 +159,13 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
         allUnits: allUnits,
         currency: currency,
         l10n: l10n,
+        includeCosts: includeCosts,
       );
 
+      final isEs = l10n.localeName.startsWith('es');
+      final suffix = includeCosts ? '' : (isEs ? '_sin_costos' : '_no_cost');
       final filename =
-          '${RecipeShareService.sanitizeFileName(widget.recipeDetail.recipe.name)}.csv';
+          '${RecipeShareService.sanitizeFileName(widget.recipeDetail.recipe.name)}$suffix.csv';
 
       await RecipeShareService.shareRecipeFile(
         bytes: bytes,
@@ -210,132 +216,137 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
 
-            // Header Row
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
+              // Header Row
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.share_rounded,
+                      color: theme.colorScheme.onPrimaryContainer,
+                      size: 24,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.share_rounded,
-                    color: theme.colorScheme.onPrimaryContainer,
-                    size: 24,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.share_recipe_bottom_sheet_title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          softWrap: true,
+                          overflow: TextOverflow.clip,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          recipeName,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              if (_isExporting) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 36),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
                       Text(
-                        l10n.share_recipe_bottom_sheet_title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        _exportingStatus ?? l10n.share_recipe_generating,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         softWrap: true,
                         overflow: TextOverflow.clip,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        recipeName,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        softWrap: true,
-                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            if (_isExporting) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 36),
-                child: Column(
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      _exportingStatus ?? l10n.share_recipe_generating,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      softWrap: true,
-                      overflow: TextOverflow.clip,
-                    ),
-                  ],
+              ] else ...[
+                // Option 1: Chefy File
+                _buildShareOption(
+                  context: context,
+                  icon: Icons.inventory_2_outlined,
+                  iconColor: theme.colorScheme.primary,
+                  iconBgColor: theme.colorScheme.primaryContainer,
+                  title: l10n.share_recipe_format_chefy_title,
+                  subtitle: l10n.share_recipe_format_chefy_subtitle,
+                  badge: 'Chef&Cost',
+                  badgeColor: theme.colorScheme.primary,
+                  onTap: _shareChefy,
                 ),
-              ),
-            ] else ...[
-              // Option 1: Chefy File
-              _buildShareOption(
-                context: context,
-                icon: Icons.inventory_2_outlined,
-                iconColor: theme.colorScheme.primary,
-                iconBgColor: theme.colorScheme.primaryContainer,
-                title: l10n.share_recipe_format_chefy_title,
-                subtitle: l10n.share_recipe_format_chefy_subtitle,
-                badge: 'Chef&Cost',
-                badgeColor: theme.colorScheme.primary,
-                onTap: _shareChefy,
-              ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // Option 2: PDF
-              _buildShareOption(
-                context: context,
-                icon: Icons.picture_as_pdf_outlined,
-                iconColor: Colors.red.shade700,
-                iconBgColor: Colors.red.shade50,
-                title: l10n.share_recipe_format_pdf_title,
-                subtitle: l10n.share_recipe_format_pdf_subtitle,
-                badge: 'PDF',
-                badgeColor: Colors.red.shade700,
-                onTap: _sharePdf,
-              ),
+                // Option 2: PDF (With Cost / Without Cost)
+                _buildDualShareOption(
+                  context: context,
+                  icon: Icons.picture_as_pdf_outlined,
+                  iconColor: Colors.red.shade700,
+                  iconBgColor: Colors.red.shade50,
+                  title: l10n.share_recipe_format_pdf_title,
+                  subtitle: l10n.share_recipe_format_pdf_subtitle,
+                  badge: 'PDF',
+                  badgeColor: Colors.red.shade700,
+                  onWithCostTap: () => _sharePdf(includeCosts: true),
+                  onWithoutCostTap: () => _sharePdf(includeCosts: false),
+                ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // Option 3: CSV
-              _buildShareOption(
-                context: context,
-                icon: Icons.table_chart_outlined,
-                iconColor: Colors.green.shade700,
-                iconBgColor: Colors.green.shade50,
-                title: l10n.share_recipe_format_csv_title,
-                subtitle: l10n.share_recipe_format_csv_subtitle,
-                badge: 'CSV',
-                badgeColor: Colors.green.shade700,
-                onTap: _shareCsv,
-              ),
+                // Option 3: CSV (With Cost / Without Cost)
+                _buildDualShareOption(
+                  context: context,
+                  icon: Icons.table_chart_outlined,
+                  iconColor: Colors.green.shade700,
+                  iconBgColor: Colors.green.shade50,
+                  title: l10n.share_recipe_format_csv_title,
+                  subtitle: l10n.share_recipe_format_csv_subtitle,
+                  badge: 'CSV',
+                  badgeColor: Colors.green.shade700,
+                  onWithCostTap: () => _shareCsv(includeCosts: true),
+                  onWithoutCostTap: () => _shareCsv(includeCosts: false),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -431,6 +442,161 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDualShareOption({
+    required BuildContext context,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required String title,
+    required String subtitle,
+    required String badge,
+    required Color badgeColor,
+    required VoidCallback onWithCostTap,
+    required VoidCallback onWithoutCostTap,
+  }) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              title,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              softWrap: true,
+                              overflow: TextOverflow.clip,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              badge,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: badgeColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                              softWrap: true,
+                              overflow: TextOverflow.clip,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        softWrap: true,
+                        overflow: TextOverflow.clip,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onWithCostTap,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
+                      side: BorderSide(
+                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: Icon(
+                      Icons.attach_money_rounded,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                    label: Text(
+                      l10n.share_recipe_with_cost,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      softWrap: true,
+                      overflow: TextOverflow.clip,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onWithoutCostTap,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
+                      side: BorderSide(
+                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: Icon(
+                      Icons.money_off_rounded,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    label: Text(
+                      l10n.share_recipe_without_cost,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      softWrap: true,
+                      overflow: TextOverflow.clip,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

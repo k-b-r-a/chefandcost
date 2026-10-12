@@ -130,6 +130,7 @@ class RecipeShareService {
     required List<Unit> allUnits,
     required String currency,
     required AppLocalizations l10n,
+    bool includeCosts = true,
   }) {
     final unitMap = {for (final u in allUnits) u.unitPk: u};
     final financials = RecipeUtils.calculateSummaryFromDetail(detail);
@@ -146,58 +147,84 @@ class RecipeShareService {
       l10n.recipe_yield,
       '${RecipeUtils.formatQuantity(detail.recipe.defaultYield)} ${detail.recipe.yieldName}',
     ]);
-    rows.add([
-      l10n.target_profit_margin,
-      '${RecipeUtils.formatNumber(detail.recipe.targetProfitMargin, decimalDigits: 1)}%',
-    ]);
-    rows.add([
-      l10n.target_price_portion,
-      '$currency ${RecipeUtils.formatNumber(detail.recipe.targetPricePerPortion, decimalDigits: 2)}',
-    ]);
-    rows.add([
-      l10n.cost_per_portion,
-      '$currency ${RecipeUtils.formatNumber(financials.costPerPortion, decimalDigits: 2)}',
-    ]);
-    rows.add([
-      l10n.total_cost,
-      '$currency ${RecipeUtils.formatNumber(financials.totalCost, decimalDigits: 2)}',
-    ]);
+    if (includeCosts) {
+      rows.add([
+        l10n.target_profit_margin,
+        '${RecipeUtils.formatNumber(detail.recipe.targetProfitMargin, decimalDigits: 1)}%',
+      ]);
+      rows.add([
+        l10n.target_price_portion,
+        '$currency ${RecipeUtils.formatNumber(detail.recipe.targetPricePerPortion, decimalDigits: 2)}',
+      ]);
+      rows.add([
+        l10n.cost_per_portion,
+        '$currency ${RecipeUtils.formatNumber(financials.costPerPortion, decimalDigits: 2)}',
+      ]);
+      rows.add([
+        l10n.total_cost,
+        '$currency ${RecipeUtils.formatNumber(financials.totalCost, decimalDigits: 2)}',
+      ]);
+    }
 
     rows.add([]); // empty line separator
 
     // Ingredients section
-    rows.add([l10n.share_recipe_pdf_ingredients_title]);
     rows.add([
-      l10n.ingredient_name,
-      l10n.share_recipe_pdf_amount,
-      l10n.share_recipe_pdf_unit,
-      l10n.share_recipe_pdf_cost_per_unit,
-      l10n.share_recipe_pdf_subtotal,
+      includeCosts
+          ? l10n.share_recipe_pdf_ingredients_title
+          : l10n.ingredients_title,
     ]);
 
-    for (final item in detail.ingredients) {
-      final unit = unitMap[item.ingredient.unitFk];
-      final unitSymbol = unit?.symbol ?? '';
-      final unitCost =
-          item.ingredient.cost / (item.ingredient.quantityForCost > 0 ? item.ingredient.quantityForCost : 1.0);
-      final subtotal = unitCost * item.entry.amountNeeded;
+    if (includeCosts) {
+      rows.add([
+        l10n.ingredient_name,
+        l10n.share_recipe_pdf_amount,
+        l10n.share_recipe_pdf_unit,
+        l10n.share_recipe_pdf_cost_per_unit,
+        l10n.share_recipe_pdf_subtotal,
+      ]);
+
+      for (final item in detail.ingredients) {
+        final unit = unitMap[item.ingredient.unitFk];
+        final unitSymbol = unit?.symbol ?? '';
+        final unitCost =
+            item.ingredient.cost / (item.ingredient.quantityForCost > 0 ? item.ingredient.quantityForCost : 1.0);
+        final subtotal = unitCost * item.entry.amountNeeded;
+
+        rows.add([
+          item.ingredient.name,
+          RecipeUtils.formatQuantity(item.entry.amountNeeded),
+          unitSymbol,
+          '$currency ${RecipeUtils.formatNumber(unitCost, decimalDigits: 2)}',
+          '$currency ${RecipeUtils.formatNumber(subtotal, decimalDigits: 2)}',
+        ]);
+      }
 
       rows.add([
-        item.ingredient.name,
-        RecipeUtils.formatQuantity(item.entry.amountNeeded),
-        unitSymbol,
-        '$currency ${RecipeUtils.formatNumber(unitCost, decimalDigits: 2)}',
-        '$currency ${RecipeUtils.formatNumber(subtotal, decimalDigits: 2)}',
+        'TOTAL',
+        '',
+        '',
+        '',
+        '$currency ${RecipeUtils.formatNumber(financials.totalCost, decimalDigits: 2)}',
       ]);
-    }
+    } else {
+      rows.add([
+        l10n.ingredient_name,
+        l10n.share_recipe_pdf_amount,
+        l10n.share_recipe_pdf_unit,
+      ]);
 
-    rows.add([
-      'TOTAL',
-      '',
-      '',
-      '',
-      '$currency ${RecipeUtils.formatNumber(financials.totalCost, decimalDigits: 2)}',
-    ]);
+      for (final item in detail.ingredients) {
+        final unit = unitMap[item.ingredient.unitFk];
+        final unitSymbol = unit?.symbol ?? '';
+
+        rows.add([
+          item.ingredient.name,
+          RecipeUtils.formatQuantity(item.entry.amountNeeded),
+          unitSymbol,
+        ]);
+      }
+    }
 
     rows.add([]); // empty line separator
 
@@ -229,6 +256,7 @@ class RecipeShareService {
     required List<Unit> allUnits,
     required String currency,
     required AppLocalizations l10n,
+    bool includeCosts = true,
   }) async {
     final unitMap = {for (final u in allUnits) u.unitPk: u};
     final financials = RecipeUtils.calculateSummaryFromDetail(detail);
@@ -335,7 +363,7 @@ class RecipeShareService {
             ],
             pw.SizedBox(height: 14),
 
-            // Financial & Yield Cards Row
+            // Financial & Yield Cards Row (or Yield only if includeCosts is false)
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(
@@ -345,41 +373,60 @@ class RecipeShareService {
               ),
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-                children: [
-                  _buildPdfStatItem(
-                    title: l10n.recipe_yield,
-                    value:
-                        '${RecipeUtils.formatQuantity(detail.recipe.defaultYield)} ${detail.recipe.yieldName}',
-                  ),
-                  _buildPdfStatItem(
-                    title: l10n.cost_per_portion,
-                    value:
-                        '$currency ${RecipeUtils.formatNumber(financials.costPerPortion, decimalDigits: 2)}',
-                  ),
-                  _buildPdfStatItem(
-                    title: l10n.target_price_portion,
-                    value:
-                        '$currency ${RecipeUtils.formatNumber(detail.recipe.targetPricePerPortion, decimalDigits: 2)}',
-                  ),
-                  _buildPdfStatItem(
-                    title: l10n.target_profit_margin,
-                    value:
-                        '${RecipeUtils.formatNumber(detail.recipe.targetProfitMargin, decimalDigits: 0)}%',
-                  ),
-                  _buildPdfStatItem(
-                    title: l10n.total_cost,
-                    value:
-                        '$currency ${RecipeUtils.formatNumber(financials.totalCost, decimalDigits: 2)}',
-                    isHighlight: true,
-                  ),
-                ],
+                children: includeCosts
+                    ? [
+                        _buildPdfStatItem(
+                          title: l10n.recipe_yield,
+                          value:
+                              '${RecipeUtils.formatQuantity(detail.recipe.defaultYield)} ${detail.recipe.yieldName}',
+                        ),
+                        _buildPdfStatItem(
+                          title: l10n.cost_per_portion,
+                          value:
+                              '$currency ${RecipeUtils.formatNumber(financials.costPerPortion, decimalDigits: 2)}',
+                        ),
+                        _buildPdfStatItem(
+                          title: l10n.target_price_portion,
+                          value:
+                              '$currency ${RecipeUtils.formatNumber(detail.recipe.targetPricePerPortion, decimalDigits: 2)}',
+                        ),
+                        _buildPdfStatItem(
+                          title: l10n.target_profit_margin,
+                          value:
+                              '${RecipeUtils.formatNumber(detail.recipe.targetProfitMargin, decimalDigits: 0)}%',
+                        ),
+                        _buildPdfStatItem(
+                          title: l10n.total_cost,
+                          value:
+                              '$currency ${RecipeUtils.formatNumber(financials.totalCost, decimalDigits: 2)}',
+                          isHighlight: true,
+                        ),
+                      ]
+                    : [
+                        _buildPdfStatItem(
+                          title: l10n.recipe_yield,
+                          value:
+                              '${RecipeUtils.formatQuantity(detail.recipe.defaultYield)} ${detail.recipe.yieldName}',
+                          isHighlight: true,
+                        ),
+                        _buildPdfStatItem(
+                          title: l10n.ingredients_title,
+                          value: '${detail.ingredients.length}',
+                        ),
+                        _buildPdfStatItem(
+                          title: l10n.recipe_steps,
+                          value: '${detail.steps.length}',
+                        ),
+                      ],
               ),
             ),
             pw.SizedBox(height: 18),
 
-            // Ingredients Section
+            // Ingredients Section Title
             pw.Text(
-              l10n.share_recipe_pdf_ingredients_title,
+              includeCosts
+                  ? l10n.share_recipe_pdf_ingredients_title
+                  : l10n.ingredients_title,
               style: pw.TextStyle(
                 fontSize: 14,
                 fontWeight: pw.FontWeight.bold,
@@ -391,13 +438,19 @@ class RecipeShareService {
             // Ingredients Table
             pw.TableHelper.fromTextArray(
               context: context,
-              headers: [
-                l10n.ingredient_name,
-                l10n.share_recipe_pdf_amount,
-                l10n.share_recipe_pdf_unit,
-                l10n.share_recipe_pdf_cost_per_unit,
-                l10n.share_recipe_pdf_subtotal,
-              ],
+              headers: includeCosts
+                  ? [
+                      l10n.ingredient_name,
+                      l10n.share_recipe_pdf_amount,
+                      l10n.share_recipe_pdf_unit,
+                      l10n.share_recipe_pdf_cost_per_unit,
+                      l10n.share_recipe_pdf_subtotal,
+                    ]
+                  : [
+                      l10n.ingredient_name,
+                      l10n.share_recipe_pdf_amount,
+                      l10n.share_recipe_pdf_unit,
+                    ],
               headerStyle: pw.TextStyle(
                 fontWeight: pw.FontWeight.bold,
                 fontSize: 9,
@@ -408,42 +461,60 @@ class RecipeShareService {
               ),
               headerAlignment: pw.Alignment.centerLeft,
               cellAlignment: pw.Alignment.centerLeft,
-              cellAlignments: {
-                1: pw.Alignment.centerRight,
-                2: pw.Alignment.center,
-                3: pw.Alignment.centerRight,
-                4: pw.Alignment.centerRight,
-              },
+              cellAlignments: includeCosts
+                  ? {
+                      1: pw.Alignment.centerRight,
+                      2: pw.Alignment.center,
+                      3: pw.Alignment.centerRight,
+                      4: pw.Alignment.centerRight,
+                    }
+                  : {
+                      1: pw.Alignment.centerRight,
+                      2: pw.Alignment.center,
+                    },
               cellStyle: const pw.TextStyle(fontSize: 9),
               oddRowDecoration: const pw.BoxDecoration(color: PdfColors.grey100),
               cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-              data: [
-                ...detail.ingredients.map((item) {
-                  final unit = unitMap[item.ingredient.unitFk];
-                  final unitSymbol = unit?.symbol ?? '';
-                  final unitCost = item.ingredient.cost /
-                      (item.ingredient.quantityForCost > 0
-                          ? item.ingredient.quantityForCost
-                          : 1.0);
-                  final subtotal = unitCost * item.entry.amountNeeded;
+              data: includeCosts
+                  ? [
+                      ...detail.ingredients.map((item) {
+                        final unit = unitMap[item.ingredient.unitFk];
+                        final unitSymbol = unit?.symbol ?? '';
+                        final unitCost = item.ingredient.cost /
+                            (item.ingredient.quantityForCost > 0
+                                ? item.ingredient.quantityForCost
+                                : 1.0);
+                        final subtotal = unitCost * item.entry.amountNeeded;
 
-                  return [
-                    item.ingredient.name,
-                    RecipeUtils.formatQuantity(item.entry.amountNeeded),
-                    unitSymbol,
-                    '$currency ${RecipeUtils.formatNumber(unitCost, decimalDigits: 2)}',
-                    '$currency ${RecipeUtils.formatNumber(subtotal, decimalDigits: 2)}',
-                  ];
-                }),
-                // Total row
-                [
-                  'TOTAL',
-                  '',
-                  '',
-                  '',
-                  '$currency ${RecipeUtils.formatNumber(financials.totalCost, decimalDigits: 2)}',
-                ],
-              ],
+                        return [
+                          item.ingredient.name,
+                          RecipeUtils.formatQuantity(item.entry.amountNeeded),
+                          unitSymbol,
+                          '$currency ${RecipeUtils.formatNumber(unitCost, decimalDigits: 2)}',
+                          '$currency ${RecipeUtils.formatNumber(subtotal, decimalDigits: 2)}',
+                        ];
+                      }),
+                      // Total row
+                      [
+                        'TOTAL',
+                        '',
+                        '',
+                        '',
+                        '$currency ${RecipeUtils.formatNumber(financials.totalCost, decimalDigits: 2)}',
+                      ],
+                    ]
+                  : [
+                      ...detail.ingredients.map((item) {
+                        final unit = unitMap[item.ingredient.unitFk];
+                        final unitSymbol = unit?.symbol ?? '';
+
+                        return [
+                          item.ingredient.name,
+                          RecipeUtils.formatQuantity(item.entry.amountNeeded),
+                          unitSymbol,
+                        ];
+                      }),
+                    ],
             ),
             pw.SizedBox(height: 18),
 

@@ -3312,6 +3312,36 @@ abstract class AppLocalizations {
   /// **'Generated with Chef&Cost'**
   String get share_recipe_pdf_footer;
 
+  /// No description provided for @share_recipe_with_cost.
+  ///
+  /// In en, this message translates to:
+  /// **'With costs'**
+  String get share_recipe_with_cost;
+
+  /// No description provided for @share_recipe_without_cost.
+  ///
+  /// In en, this message translates to:
+  /// **'Without costs (Kitchen)'**
+  String get share_recipe_without_cost;
+
+  /// No description provided for @share_recipe_cost_options_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost Options'**
+  String get share_recipe_cost_options_title;
+
+  /// No description provided for @share_recipe_format_pdf_subtitle_no_cost.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen sheet with ingredients, quantities and steps (no prices)'**
+  String get share_recipe_format_pdf_subtitle_no_cost;
+
+  /// No description provided for @share_recipe_format_csv_subtitle_no_cost.
+  ///
+  /// In en, this message translates to:
+  /// **'Spreadsheet with ingredients, quantities and steps (no prices)'**
+  String get share_recipe_format_csv_subtitle_no_cost;
+
   /// No description provided for @import_recipe_button.
   ///
   /// In en, this message translates to:

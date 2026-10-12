@@ -1747,6 +1747,23 @@ class AppLocalizationsEs extends AppLocalizations {
   String get share_recipe_pdf_footer => 'Generado con Chef&Cost';
 
   @override
+  String get share_recipe_with_cost => 'Con costos';
+
+  @override
+  String get share_recipe_without_cost => 'Sin costos (Cocina)';
+
+  @override
+  String get share_recipe_cost_options_title => 'Opciones de costo';
+
+  @override
+  String get share_recipe_format_pdf_subtitle_no_cost =>
+      'Ficha de cocina con ingredientes, cantidades y pasos (sin precios)';
+
+  @override
+  String get share_recipe_format_csv_subtitle_no_cost =>
+      'Hoja de cálculo con ingredientes, cantidades y pasos (sin precios)';
+
+  @override
   String get import_recipe_button => 'Importar receta';
 
   @override
