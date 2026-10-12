@@ -19,9 +19,16 @@ class RecipeIngredientData {
     String initialAmount = '0',
     this.sourceUnit,
     this.targetUnit,
-  }) : amountController = TextEditingController(
-          text: _getInitialAmountText(initialAmount, sourceUnit, targetUnit),
-        );
+    String? initialTargetAmount,
+    TextEditingController? customController,
+  }) : amountController = customController ??
+            TextEditingController(
+              text: initialTargetAmount != null
+                  ? (initialTargetAmount.isEmpty
+                      ? ''
+                      : RecipeUtils.cleanTrailingZeros(initialTargetAmount))
+                  : _getInitialAmountText(initialAmount, sourceUnit, targetUnit),
+            );
 
   static String _getInitialAmountText(String initialAmount, Unit? source, Unit? target) {
     final parsed = RecipeUtils.parseFormattedNumber(initialAmount);

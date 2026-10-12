@@ -64,6 +64,7 @@ class TutorialStepInfo {
   final String title;
   final String description;
   final String? gestureHint;
+  final IconData? gestureIcon;
   final ShapeLightFocus shape;
   final double radius;
 
@@ -75,6 +76,7 @@ class TutorialStepInfo {
     required this.title,
     required this.description,
     this.gestureHint,
+    this.gestureIcon,
     this.shape = ShapeLightFocus.RRect,
     this.radius = 18.0,
   });
@@ -89,6 +91,10 @@ class AppTutorialService {
   /// Global lock tracking whether any walkthrough overlay is actively displayed.
   static bool _isTutorialActive = false;
   static TutorialCoachMark? _activeTutorial;
+  static final Map<String, ContentAlign> _stepAlignments = {};
+  static final Map<String, TutorialStepInfo> _activeStepsMap = {};
+  static final Map<String, int> _activeStepIndices = {};
+  static int _activeTotalSteps = 0;
 
   /// Returns true if any walkthrough tutorial is currently being displayed on screen.
   static bool get isTutorialActive => _isTutorialActive;
@@ -189,18 +195,39 @@ class AppTutorialService {
   static CustomTargetContentPosition calculateSafeTargetPosition({
     required BuildContext context,
     required GlobalKey keyTarget,
+    ContentAlign? preferredAlign,
   }) {
     final screenHeight = MediaQuery.sizeOf(context).height;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final bottomPadding = MediaQuery.paddingOf(context).bottom;
-    const estimatedCardHeight = 260.0;
-    const safeMargin = 16.0;
-    const gap = 12.0;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom +
+        MediaQuery.viewInsetsOf(context).bottom;
+
+    final isSmallScreen = screenHeight < 680 || screenWidth < 380;
+    final isVerySmallScreen = screenHeight < 580 || screenWidth < 340;
+
+    final safeMargin = isVerySmallScreen
+        ? 6.0
+        : (isSmallScreen ? 8.0 : 16.0);
+    final gap = isVerySmallScreen
+        ? 4.0
+        : (isSmallScreen ? 6.0 : 12.0);
+
+    final minTop = topPadding + safeMargin;
+    final minBottom = bottomPadding + safeMargin;
+
+    // Use a realistic estimate of card height so clamping never pushes
+    // the card off the screen edges.
+    final estimatedCardHeight = isVerySmallScreen
+        ? (screenHeight * 0.38).clamp(160.0, 220.0)
+        : isSmallScreen
+            ? (screenHeight * 0.42).clamp(180.0, 260.0)
+            : (screenHeight * 0.35).clamp(200.0, 320.0);
 
     final ctx = keyTarget.currentContext;
     if (ctx == null) {
       return CustomTargetContentPosition(
-        bottom: bottomPadding + 20.0,
+        bottom: minBottom,
         left: 0.0,
         right: 0.0,
       );
@@ -209,7 +236,7 @@ class AppTutorialService {
     final renderBox = ctx.findRenderObject();
     if (renderBox is! RenderBox || !renderBox.hasSize) {
       return CustomTargetContentPosition(
-        bottom: bottomPadding + 20.0,
+        bottom: minBottom,
         left: 0.0,
         right: 0.0,
       );
@@ -220,38 +247,80 @@ class AppTutorialService {
     final targetHeight = renderBox.size.height;
     final targetBottom = targetTop + targetHeight;
 
-    final availableBelow =
-        screenHeight - bottomPadding - safeMargin - targetBottom;
-    final availableAbove = targetTop - topPadding - safeMargin;
+    // Available screen space strictly outside the target
+    final availableBelow = screenHeight - minBottom - targetBottom - gap;
+    final availableAbove = targetTop - minTop - gap;
 
-    // Place below if there is enough space; otherwise place above
+    final isTargetTall = targetHeight > (screenHeight * 0.35);
+    final canFitBelow = availableBelow >= estimatedCardHeight;
+    final canFitAbove = availableAbove >= estimatedCardHeight;
+
+    // Determine placement:
     final bool placeBelow;
-    if (availableBelow >= estimatedCardHeight) {
+    if (isTargetTall) {
+      // Large targets occupying a large portion of the screen (e.g. recipe editor step 4
+      // list view) cannot fit normal exterior cards; prefer docking at the bottom so
+      // next/finish controls remain comfortably thumb-accessible and top header stays visible.
       placeBelow = true;
-    } else if (availableAbove >= estimatedCardHeight) {
-      placeBelow = false;
+    } else if (preferredAlign == ContentAlign.bottom) {
+      if (canFitBelow) {
+        placeBelow = true;
+      } else if (canFitAbove) {
+        placeBelow = false;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
+      }
+    } else if (preferredAlign == ContentAlign.top) {
+      if (canFitAbove) {
+        placeBelow = false;
+      } else if (canFitBelow) {
+        placeBelow = true;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
+      }
     } else {
-      placeBelow = availableBelow >= availableAbove;
+      if (canFitBelow && !canFitAbove) {
+        placeBelow = true;
+      } else if (canFitAbove && !canFitBelow) {
+        placeBelow = false;
+      } else if (canFitBelow && canFitAbove) {
+        placeBelow = availableBelow >= availableAbove;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
+      }
     }
 
     if (placeBelow) {
+      if (!canFitBelow && !canFitAbove) {
+        // Target takes almost all screen space: dock cleanly to screen bottom
+        return CustomTargetContentPosition(
+          bottom: minBottom,
+          left: 0.0,
+          right: 0.0,
+        );
+      }
       final maxAllowedTop =
-          (screenHeight - bottomPadding - safeMargin - estimatedCardHeight)
-              .clamp(topPadding + safeMargin, double.infinity);
+          (screenHeight - minBottom - estimatedCardHeight).clamp(minTop, double.infinity);
       final desiredTop = targetBottom + gap;
-      final top = desiredTop.clamp(topPadding + safeMargin, maxAllowedTop);
+      final top = desiredTop.clamp(minTop, maxAllowedTop);
       return CustomTargetContentPosition(
         top: top,
         left: 0.0,
         right: 0.0,
       );
     } else {
+      if (!canFitAbove && !canFitBelow) {
+        // Target takes almost all screen space: dock cleanly to screen top
+        return CustomTargetContentPosition(
+          top: minTop,
+          left: 0.0,
+          right: 0.0,
+        );
+      }
       final maxAllowedBottom =
-          (screenHeight - topPadding - safeMargin - estimatedCardHeight)
-              .clamp(bottomPadding + safeMargin, double.infinity);
+          (screenHeight - minTop - estimatedCardHeight).clamp(minBottom, double.infinity);
       final desiredBottom = (screenHeight - targetTop) + gap;
-      final bottom =
-          desiredBottom.clamp(bottomPadding + safeMargin, maxAllowedBottom);
+      final bottom = desiredBottom.clamp(minBottom, maxAllowedBottom);
       return CustomTargetContentPosition(
         bottom: bottom,
         left: 0.0,
@@ -275,6 +344,21 @@ class AppTutorialService {
 
     if (activeSteps.isEmpty) return const [];
 
+    _activeStepsMap.clear();
+    _activeStepIndices.clear();
+    _activeTotalSteps = activeSteps.length;
+
+    for (int i = 0; i < activeSteps.length; i++) {
+      final step = activeSteps[i];
+      _stepAlignments[step.id] = step.align;
+      _activeStepsMap[step.id] = step;
+      _activeStepIndices[step.id] = i;
+    }
+
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isSmallScreen = screenWidth < 380 || screenHeight < 680;
+
     final totalSteps = activeSteps.length;
     final targets = <TargetFocus>[];
 
@@ -285,6 +369,7 @@ class AppTutorialService {
       final customPos = calculateSafeTargetPosition(
         context: context,
         keyTarget: step.keyTarget,
+        preferredAlign: step.align,
       );
 
       targets.add(
@@ -295,12 +380,16 @@ class AppTutorialService {
           radius: step.radius,
           enableOverlayTab: false,
           enableTargetTab: step.id == 'step_recipe_list_hold' ||
-              step.id == 'step_recipe_editor_ingredient_hold',
+              step.id == 'step_recipe_editor_ingredient_hold' ||
+              step.id == 'step_recipe_editor_scale_bar',
           contents: [
             TargetContent(
               align: ContentAlign.custom,
               customPosition: customPos,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 6.0 : 16.0,
+                vertical: isSmallScreen ? 2.0 : 4.0,
+              ),
               builder: (ctx, controller) {
                 return _buildStepCard(
                   context: ctx,
@@ -309,6 +398,7 @@ class AppTutorialService {
                   stepIndex: stepIndex,
                   totalSteps: totalSteps,
                   l10n: l10n,
+                  customPosition: customPos,
                 );
               },
             ),
@@ -444,6 +534,7 @@ class AppTutorialService {
         title: l10n.tutorial_editor_scale_bar_title,
         description: l10n.tutorial_editor_scale_bar_desc,
         gestureHint: l10n.tutorial_editor_scale_bar_hint,
+        gestureIcon: Icons.swipe_rounded,
         radius: 14.0,
       ),
       // 3. Ingredient Long-Press / Inline Actions Dropdown
@@ -486,22 +577,43 @@ class AppTutorialService {
 
     TutorialCoachMark? tutorialInstance;
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isSmallScreen = screenWidth < 380 || screenHeight < 680;
+
     tutorialInstance = TutorialCoachMark(
       targets: targets,
       colorShadow: Colors.black,
       opacityShadow: 0.82,
-      paddingFocus: 8,
+      paddingFocus: isSmallScreen ? 4 : 8,
       hideSkip: true, // We embed dedicated skip controls in every step card
       beforeFocus: (target) async {
         final key = target.keyTarget;
         final ctx = key?.currentContext;
+        final preferred =
+            target.identify != null ? _stepAlignments[target.identify!] : null;
         if (ctx != null) {
           try {
+            double scrollAlign = 0.50;
+            final rb = ctx.findRenderObject();
+            final isTall = rb is RenderBox &&
+                rb.hasSize &&
+                rb.size.height > (screenHeight * 0.35);
+
+            if (isTall) {
+              scrollAlign = 0.06;
+            } else if (isSmallScreen && preferred != null) {
+              if (preferred == ContentAlign.bottom) {
+                scrollAlign = 0.18;
+              } else if (preferred == ContentAlign.top) {
+                scrollAlign = 0.82;
+              }
+            }
             await Scrollable.ensureVisible(
               ctx,
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
-              alignment: 0.50,
+              alignment: scrollAlign,
             );
           } catch (_) {}
         }
@@ -515,13 +627,34 @@ class AppTutorialService {
           final updatedPos = calculateSafeTargetPosition(
             context: context,
             keyTarget: key,
+            preferredAlign: preferred,
           );
           final oldContent = target.contents!.first;
+          final step = target.identify != null ? _activeStepsMap[target.identify!] : null;
+          final stepIndex = target.identify != null ? (_activeStepIndices[target.identify!] ?? 0) : 0;
+          final total = _activeTotalSteps > 0 ? _activeTotalSteps : targets.length;
+
           target.contents![0] = TargetContent(
             align: ContentAlign.custom,
             customPosition: updatedPos,
-            padding: oldContent.padding,
-            builder: oldContent.builder,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 6.0 : 16.0,
+              vertical: isSmallScreen ? 2.0 : 4.0,
+            ),
+            builder: (c, ctrl) {
+              if (step != null) {
+                return _buildStepCard(
+                  context: c,
+                  controller: ctrl,
+                  step: step,
+                  stepIndex: stepIndex,
+                  totalSteps: total,
+                  l10n: AppLocalizations.of(c)!,
+                  customPosition: updatedPos,
+                );
+              }
+              return oldContent.builder?.call(c, ctrl) ?? const SizedBox.shrink();
+            },
           );
         }
       },
@@ -873,6 +1006,7 @@ class AppTutorialService {
     required int stepIndex,
     required int totalSteps,
     required AppLocalizations l10n,
+    CustomTargetContentPosition? customPosition,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -883,10 +1017,26 @@ class AppTutorialService {
 
     final screenWidth = MediaQuery.sizeOf(context).width;
     final screenHeight = MediaQuery.sizeOf(context).height;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom +
+        MediaQuery.viewInsetsOf(context).bottom;
+
+    final isSmallScreen = screenHeight < 680 || screenWidth < 380;
+    final isVerySmallScreen = screenHeight < 580 || screenWidth < 340;
+
+    final cardHorizontalMargin = isVerySmallScreen
+        ? 6.0
+        : (isSmallScreen ? 8.0 : 12.0);
+    final cardPadding = isVerySmallScreen
+        ? const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0)
+        : isSmallScreen
+            ? const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0)
+            : const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0);
+
+    final cardMaxWidth = (screenWidth - (cardHorizontalMargin * 2) - 16.0)
+        .clamp(260.0, 420.0);
 
     double horizontalAlignment = 0.0;
-    const cardMaxWidth = 420.0;
-
     final keyCtx = step.keyTarget.currentContext;
     if (keyCtx != null && screenWidth > (cardMaxWidth + 32.0)) {
       final rb = keyCtx.findRenderObject();
@@ -902,63 +1052,100 @@ class AppTutorialService {
       }
     }
 
+    final resolvedPos = customPosition ??
+        calculateSafeTargetPosition(
+          context: context,
+          keyTarget: step.keyTarget,
+          preferredAlign: step.align,
+        );
+
+    final defaultMaxHeight = isVerySmallScreen
+        ? (screenHeight * 0.55).clamp(160.0, 260.0)
+        : isSmallScreen
+            ? (screenHeight * 0.48).clamp(180.0, 300.0)
+            : (screenHeight * 0.38).clamp(200.0, 360.0);
+
+    final safeMargin = isVerySmallScreen ? 6.0 : (isSmallScreen ? 8.0 : 16.0);
+    double remainingVerticalSpace =
+        screenHeight - topPadding - bottomPadding - (safeMargin * 2);
+
+    if (resolvedPos.top != null) {
+      remainingVerticalSpace =
+          screenHeight - resolvedPos.top! - bottomPadding - safeMargin;
+    } else if (resolvedPos.bottom != null) {
+      remainingVerticalSpace =
+          screenHeight - resolvedPos.bottom! - topPadding - safeMargin;
+    }
+
+    final safeMaxCardHeight = defaultMaxHeight.clamp(
+      120.0,
+      remainingVerticalSpace.clamp(120.0, screenHeight),
+    );
+
     return Align(
       alignment: Alignment(horizontalAlignment, 0.0),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: cardMaxWidth,
-          maxHeight: (screenHeight * 0.42).clamp(220.0, 480.0),
+          maxHeight: safeMaxCardHeight,
         ),
         child: Material(
           color: Colors.transparent,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+            margin: EdgeInsets.symmetric(
+              horizontal: cardHorizontalMargin,
+              vertical: isVerySmallScreen ? 2.0 : 4.0,
+            ),
+            padding: cardPadding,
             decoration: BoxDecoration(
               color: cardBg,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 22),
               border: Border.all(
                 color: theme.colorScheme.primary.withValues(alpha: 0.35),
-                width: 1.5,
+                width: isSmallScreen ? 1.0 : 1.5,
               ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  blurRadius: isSmallScreen ? 12 : 20,
+                  offset: Offset(0, isSmallScreen ? 4 : 8),
                 ),
               ],
             ),
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header: Step Badge & Skip Action
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Header: Step Badge & Skip Action (Pinned at top)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 8 : 10,
+                          vertical: isSmallScreen ? 3 : 4,
+                        ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 10),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               step.icon,
-                              size: 14,
+                              size: isSmallScreen ? 13 : 14,
                               color: theme.colorScheme.primary,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 5),
                             Flexible(
                               child: Text(
                                 l10n.tutorial_step_counter(stepIndex + 1, totalSteps),
-                                style: theme.textTheme.labelSmall?.copyWith(
+                                style: (isSmallScreen
+                                        ? theme.textTheme.labelSmall?.copyWith(fontSize: 10.5)
+                                        : theme.textTheme.labelSmall)
+                                    ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: theme.colorScheme.primary,
                                 ),
@@ -970,124 +1157,175 @@ class AppTutorialService {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: TextButton.icon(
-                        style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          foregroundColor: theme.colorScheme.onSurfaceVariant,
+                    const SizedBox(width: 6),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 6 : 8,
+                          vertical: isSmallScreen ? 2 : 4,
                         ),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        label: Text(
-                          l10n.tutorial_action_skip,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onPressed: () => controller.skip(),
+                        foregroundColor: theme.colorScheme.onSurfaceVariant,
                       ),
+                      icon: Icon(Icons.close_rounded, size: isSmallScreen ? 14 : 16),
+                      label: Text(
+                        l10n.tutorial_action_skip,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 11 : 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onPressed: () => controller.skip(),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: isSmallScreen ? 6 : 10),
 
-                // Title
-                Text(
-                  step.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Description
-                Text(
-                  step.description,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.35,
-                  ),
-                ),
-
-                // Highlight Gesture Hint Banner (if present)
-                if (step.gestureHint != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.tertiary.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Row(
+                // 2. Scrollable Body: Title, Description, Gesture Hint Banner
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.touch_app_rounded,
-                          size: 16,
-                          color: theme.colorScheme.tertiary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            step.gestureHint!,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onTertiaryContainer,
-                              height: 1.3,
-                            ),
+                        // Title
+                        Text(
+                          step.title,
+                          style: (isSmallScreen
+                                  ? theme.textTheme.titleSmall
+                                  : theme.textTheme.titleMedium)
+                              ?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            fontSize: isSmallScreen ? 14.0 : null,
                           ),
                         ),
+                        SizedBox(height: isSmallScreen ? 3 : 6),
+
+                        // Description
+                        Text(
+                          step.description,
+                          style: (isSmallScreen
+                                  ? theme.textTheme.bodySmall
+                                  : theme.textTheme.bodyMedium)
+                              ?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.3,
+                            fontSize: isSmallScreen ? 12.0 : null,
+                          ),
+                        ),
+
+                        // Highlight Gesture Hint Banner (if present)
+                        if (step.gestureHint != null) ...[
+                          SizedBox(height: isSmallScreen ? 6 : 10),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 8 : 12,
+                              vertical: isSmallScreen ? 5 : 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                              border: Border.all(
+                                color: theme.colorScheme.tertiary.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  step.gestureIcon ?? Icons.touch_app_rounded,
+                                  size: isSmallScreen ? 14 : 16,
+                                  color: theme.colorScheme.tertiary,
+                                ),
+                                SizedBox(width: isSmallScreen ? 6 : 8),
+                                Expanded(
+                                  child: Text(
+                                    step.gestureHint!,
+                                    style: (isSmallScreen
+                                            ? theme.textTheme.labelSmall
+                                            : theme.textTheme.labelMedium)
+                                        ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onTertiaryContainer,
+                                      height: 1.25,
+                                      fontSize: isSmallScreen ? 11.0 : null,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                ],
-                const SizedBox(height: 18),
+                ),
+                SizedBox(height: isSmallScreen ? 8 : 14),
 
-                // Navigation Controls (Previous, Next / Finish)
+                // 3. Navigation Controls (Always visible, pinned at bottom of card)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: stepIndex > 0
+                      ? MainAxisAlignment.spaceBetween
+                      : MainAxisAlignment.end,
                   children: [
                     if (stepIndex > 0)
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      Flexible(
+                        flex: 1,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 8 : 12,
+                              vertical: isSmallScreen ? 4 : 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                            ),
+                          ),
+                          onPressed: () => controller.previous(),
+                          icon: Icon(Icons.arrow_back_rounded, size: isSmallScreen ? 14 : 16),
+                          label: Text(
+                            l10n.tutorial_action_prev,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: isSmallScreen ? 11.5 : null),
                           ),
                         ),
-                        onPressed: () => controller.previous(),
-                        icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                        label: Text(l10n.tutorial_action_prev),
-                      )
-                    else
-                      const SizedBox.shrink(),
-                    const Spacer(),
-                    FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                      ),
+                    if (stepIndex > 0) const SizedBox(width: 8),
+                    Flexible(
+                      flex: 1,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 10 : 16,
+                            vertical: isSmallScreen ? 4 : 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                          ),
                         ),
-                      ),
-                      onPressed: () => controller.next(),
-                      icon: Icon(
-                        stepIndex == totalSteps - 1
-                            ? Icons.check_rounded
-                            : Icons.arrow_forward_rounded,
-                        size: 16,
-                      ),
-                      label: Text(
-                        stepIndex == totalSteps - 1
-                            ? l10n.tutorial_action_finish
-                            : l10n.tutorial_action_next,
+                        onPressed: () => controller.next(),
+                        icon: Icon(
+                          stepIndex == totalSteps - 1
+                              ? Icons.check_rounded
+                              : Icons.arrow_forward_rounded,
+                          size: isSmallScreen ? 14 : 16,
+                        ),
+                        label: Text(
+                          stepIndex == totalSteps - 1
+                              ? l10n.tutorial_action_finish
+                              : l10n.tutorial_action_next,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: isSmallScreen ? 11.5 : null),
+                        ),
                       ),
                     ),
                   ],
@@ -1097,7 +1335,6 @@ class AppTutorialService {
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }

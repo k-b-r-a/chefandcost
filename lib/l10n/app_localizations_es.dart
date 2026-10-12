@@ -1607,11 +1607,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tutorial_editor_scale_bar_desc =>
-      'Escala rápidamente las cantidades por 1/4x, 1/2x, 1x, 2x, 3x o porciones personalizadas sin alterar la receta base.';
+      'Escala rápidamente las cantidades por porciones personalizadas o multiplicadores (1/4x, 1/2x, 1x, 2x, 3x) sin alterar la receta base.';
 
   @override
   String get tutorial_editor_scale_bar_hint =>
-      'Consejo: Toca cualquier multiplicador para recalcular al instante todas las cantidades y el costo total.';
+      'Consejo: Desliza horizontalmente para ver todas las opciones de escala. Toca cualquier opción para recalcular al instante.';
 
   @override
   String get tutorial_editor_gestures_title =>

@@ -9,6 +9,22 @@ import 'package:recipetools/provider/settings_provider.dart';
 import 'package:recipetools/screens/settings_screen.dart';
 import 'package:recipetools/services/app_tutorial_service.dart';
 import 'package:drift/native.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+
+class FakeTutorialCoachMarkController implements TutorialCoachMarkController {
+  bool nextCalled = false;
+  bool prevCalled = false;
+  bool skipCalled = false;
+
+  @override
+  void next() => nextCalled = true;
+
+  @override
+  void previous() => prevCalled = true;
+
+  @override
+  void skip() => skipCalled = true;
+}
 
 class MockDatabaseNotifier extends DatabaseNotifier {
   final AppDatabase _db;
@@ -314,6 +330,235 @@ void main() {
       expect(bottomPos.top, isNull);
       // Screen height is 900, target top is 750 -> distance from bottom is 150 + gap 12 = 162.
       expect(bottomPos.bottom, closeTo(162.0, 5.0));
+    });
+
+    testWidgets('calculateSafeTargetPosition adapts for small screens (320x568)', (WidgetTester tester) async {
+      final widgetKey = GlobalKey();
+
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Stack(
+              children: [
+                Positioned(
+                  top: 250,
+                  left: 20,
+                  child: SizedBox(key: widgetKey, height: 40, width: 280, child: const Text('Small Screen Widget')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(Scaffold));
+
+      // With preferredAlign bottom:
+      final posBottom = AppTutorialService.calculateSafeTargetPosition(
+        context: context,
+        keyTarget: widgetKey,
+        preferredAlign: ContentAlign.bottom,
+      );
+      expect(posBottom.top, isNotNull);
+      expect(posBottom.bottom, isNull);
+      expect(posBottom.top! >= 290.0, isTrue);
+
+      // With preferredAlign top:
+      final posTop = AppTutorialService.calculateSafeTargetPosition(
+        context: context,
+        keyTarget: widgetKey,
+        preferredAlign: ContentAlign.top,
+      );
+      expect(posTop.bottom, isNotNull);
+      expect(posTop.top, isNull);
+    });
+
+    testWidgets('Tutorial step card renders adaptively on small screen (320x568) without overflow', (WidgetTester tester) async {
+      final navKey = GlobalKey();
+      final quickActionsKey = GlobalKey();
+      final keys = AppTutorialKeys(
+        navBarKey: navKey,
+        quickActionsKey: quickActionsKey,
+      );
+
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final fakeController = FakeTutorialCoachMarkController();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Builder(
+              builder: (ctx) {
+                return Column(
+                  children: [
+                    SizedBox(key: navKey, height: 50, width: 280, child: const Text('Nav')),
+                    SizedBox(key: quickActionsKey, height: 50, width: 280, child: const Text('Quick')),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final scaffoldContext = tester.element(find.byType(Scaffold));
+      final targets = AppTutorialService.createTargets(context: scaffoldContext, keys: keys);
+      expect(targets.length, 2);
+
+      final firstTarget = targets.first;
+      final content = firstTarget.contents!.first;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Builder(
+              builder: (ctx) {
+                return content.builder!(ctx, fakeController);
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure no layout or RenderFlex overflow exceptions occurred
+      expect(tester.takeException(), isNull);
+
+      // Verify Skip button renders and responds
+      final skipFinder = find.byIcon(Icons.close_rounded);
+      expect(skipFinder, findsOneWidget);
+      await tester.tap(skipFinder);
+      expect(fakeController.skipCalled, isTrue);
+
+      // Verify Next button renders and responds
+      final nextFinder = find.byIcon(Icons.arrow_forward_rounded);
+      expect(nextFinder, findsOneWidget);
+      await tester.tap(nextFinder);
+      expect(fakeController.nextCalled, isTrue);
+    });
+
+    testWidgets('Step 4 in recipe tutorial (tall target) never renders out of screen on compact viewport (360x640)', (WidgetTester tester) async {
+      final financeKey = GlobalKey();
+      final scaleBarKey = GlobalKey();
+      final firstIngredientKey = GlobalKey();
+      final ingredientsKey = GlobalKey();
+      final keys = RecipeEditorTutorialKeys(
+        recipeEditorFinanceKey: financeKey,
+        recipeEditorScaleBarKey: scaleBarKey,
+        recipeEditorFirstIngredientKey: firstIngredientKey,
+        recipeEditorIngredientsKey: ingredientsKey,
+      );
+
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final fakeController = FakeTutorialCoachMarkController();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  SizedBox(key: financeKey, height: 60, width: 340, child: const Text('Finance')),
+                  SizedBox(key: scaleBarKey, height: 50, width: 340, child: const Text('Scale Bar')),
+                  SizedBox(key: firstIngredientKey, height: 50, width: 340, child: const Text('First Ingredient')),
+                  // Tall ingredients list (450px) spanning most of the 640px screen
+                  SizedBox(key: ingredientsKey, height: 450, width: 340, child: const Text('Ingredients List')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final scaffoldContext = tester.element(find.byType(Scaffold));
+      final targets = AppTutorialService.createRecipeEditorTargets(context: scaffoldContext, keys: keys);
+      expect(targets.length, 4);
+
+      // Target 4 is step_recipe_editor_gestures
+      final step4Target = targets[3];
+      expect(step4Target.identify, 'step_recipe_editor_gestures');
+
+      // Verify safe target position docks safely at bottom (not pushing off screen)
+      final step4Pos = AppTutorialService.calculateSafeTargetPosition(
+        context: scaffoldContext,
+        keyTarget: ingredientsKey,
+        preferredAlign: ContentAlign.bottom,
+      );
+      expect(step4Pos.bottom, isNotNull);
+
+      // Build Step 4 card inside a screen-sized Stack like TutorialCoachMark does
+      final step4Content = step4Target.contents!.first;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Stack(
+              children: [
+                Positioned(
+                  bottom: step4Pos.bottom,
+                  left: step4Pos.left,
+                  right: step4Pos.right,
+                  child: Builder(
+                    builder: (ctx) => step4Content.builder!(ctx, fakeController),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify no overflow exceptions
+      expect(tester.takeException(), isNull);
+
+      // Verify Step 4 title and badge are rendered
+      expect(find.text('Paso 4 de 4'), findsOneWidget);
+
+      // Verify Finish button is rendered (step 4 is the final step) and functions
+      final finishFinder = find.byIcon(Icons.check_rounded);
+      expect(finishFinder, findsOneWidget);
+      await tester.tap(finishFinder);
+      expect(fakeController.nextCalled, isTrue);
+
+      // Verify Skip button is rendered and functions
+      final skipFinder = find.byIcon(Icons.close_rounded);
+      expect(skipFinder, findsOneWidget);
+      await tester.tap(skipFinder);
+      expect(fakeController.skipCalled, isTrue);
+
+      // Verify the entire card bounds are strictly inside the 360x640 screen
+      final cardFinder = find.byType(Material).first;
+      final cardRect = tester.getRect(cardFinder);
+      expect(cardRect.top >= 0.0, isTrue);
+      expect(cardRect.bottom <= 640.0, isTrue);
     });
   });
 

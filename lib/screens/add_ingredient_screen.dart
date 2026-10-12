@@ -102,6 +102,8 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
         }
 
         if (mounted) {
+          ref.invalidate(ingredientsStreamProvider);
+          ref.invalidate(recipesWithFinancialsStreamProvider);
           _isDismissing = true;
           if (widget.onClose != null) {
             widget.onClose!();
@@ -320,6 +322,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                       children: [
                         Expanded(
                           child: TextFormField(
+                            key: const ValueKey('ingredient_cost_input'),
                             controller: _costController,
                             decoration: InputDecoration(
                               labelText: l10n.ingredient_cost,
@@ -355,17 +358,44 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                     const SizedBox(height: 16),
                     unitsAsync.when(
                       data: (units) {
-                        if (_selectedUnitPk == null && units.isNotEmpty) {
-                          _selectedUnitPk = units.first.unitPk;
-                          _initialUnitPk ??= _selectedUnitPk;
+                        // Deduplicate units so dropdown never shows duplicate units
+                        final uniqueUnits = <Unit>[];
+                        final seenLabels = <String>{};
+                        for (final unit in units) {
+                          final normName = unit.name == 'unit_spoonfuls' ? 'unit_tablespoons' : unit.name;
+                          final label = '${RecipeUtils.translateUnitName(context, normName)} (${unit.symbol})'.toLowerCase();
+                          if (seenLabels.add(label)) {
+                            uniqueUnits.add(unit);
+                          }
                         }
+
+                        if (_selectedUnitPk == null && uniqueUnits.isNotEmpty) {
+                          _selectedUnitPk = uniqueUnits.first.unitPk;
+                          _initialUnitPk ??= _selectedUnitPk;
+                        } else if (_selectedUnitPk != null && !uniqueUnits.any((u) => u.unitPk == _selectedUnitPk)) {
+                          final current = units.where((u) => u.unitPk == _selectedUnitPk).firstOrNull;
+                          if (current != null) {
+                            final currentNorm = current.name == 'unit_spoonfuls' ? 'unit_tablespoons' : current.name;
+                            final currentLabel = '${RecipeUtils.translateUnitName(context, currentNorm)} (${current.symbol})'.toLowerCase();
+                            final match = uniqueUnits.where((u) {
+                              final norm = u.name == 'unit_spoonfuls' ? 'unit_tablespoons' : u.name;
+                              return '${RecipeUtils.translateUnitName(context, norm)} (${u.symbol})'.toLowerCase() == currentLabel;
+                            }).firstOrNull;
+                            if (match != null) {
+                              _selectedUnitPk = match.unitPk;
+                            } else if (uniqueUnits.isNotEmpty) {
+                              _selectedUnitPk = uniqueUnits.first.unitPk;
+                            }
+                          }
+                        }
+
                         return DropdownButtonFormField<String>(
                           initialValue: _selectedUnitPk,
                           decoration: InputDecoration(
                             labelText: l10n.units_title,
                             border: const OutlineInputBorder(),
                           ),
-                          items: units.map((unit) {
+                          items: uniqueUnits.map((unit) {
                             return DropdownMenuItem(
                               value: unit.unitPk,
                               child: Text(
@@ -388,6 +418,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
+                        key: const ValueKey('save_ingredient_button'),
                         onPressed: _save,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,

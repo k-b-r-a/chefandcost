@@ -619,10 +619,18 @@ class FirestoreSyncService {
     // PHASE 1: PULL REMOTE UPDATES
     // -------------------------------------------------------------
 
-    // 1. Remote Units (Pull all units so foreign keys never fail)
+    // 1. Remote Units (Pull all units so foreign keys never fail & purge remote duplicates)
     final remoteUnitsSnap = await unitsCol.get();
+    final seenRemoteUnitNames = <String>{};
     for (final doc in remoteUnitsSnap.docs) {
       final unit = unitFromFirestore(doc.data(), fallbackId: doc.id);
+      final normName = unit.name == 'unit_spoonfuls' ? 'unit_tablespoons' : unit.name;
+      if (!seenRemoteUnitNames.add(normName)) {
+        // Redundant duplicate unit on Firestore - delete it from remote collection
+        try {
+          await doc.reference.delete();
+        } catch (_) {}
+      }
       await db.mergeUnitFromRemote(unit);
     }
 

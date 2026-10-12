@@ -3069,13 +3069,13 @@ abstract class AppLocalizations {
   /// No description provided for @tutorial_editor_scale_bar_desc.
   ///
   /// In en, this message translates to:
-  /// **'Quickly scale recipe quantities using 1/4x, 1/2x, 1x, 2x, 3x presets, or custom portions without modifying base recipe data.'**
+  /// **'Quickly scale recipe quantities using custom portions or 1/4x, 1/2x, 1x, 2x, 3x presets without modifying base recipe data.'**
   String get tutorial_editor_scale_bar_desc;
 
   /// No description provided for @tutorial_editor_scale_bar_hint.
   ///
   /// In en, this message translates to:
-  /// **'Tip: Tap any multiplier chip to recalculate all ingredient amounts and costs on the fly.'**
+  /// **'Tip: Scroll horizontally to view all scaling options. Tap any option to recalculate all ingredient amounts on the fly.'**
   String get tutorial_editor_scale_bar_hint;
 
   /// No description provided for @tutorial_editor_gestures_title.
