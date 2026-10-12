@@ -454,6 +454,112 @@ void main() {
       await tester.tap(nextFinder);
       expect(fakeController.nextCalled, isTrue);
     });
+
+    testWidgets('Step 4 in recipe tutorial (tall target) never renders out of screen on compact viewport (360x640)', (WidgetTester tester) async {
+      final financeKey = GlobalKey();
+      final scaleBarKey = GlobalKey();
+      final firstIngredientKey = GlobalKey();
+      final ingredientsKey = GlobalKey();
+      final keys = RecipeEditorTutorialKeys(
+        recipeEditorFinanceKey: financeKey,
+        recipeEditorScaleBarKey: scaleBarKey,
+        recipeEditorFirstIngredientKey: firstIngredientKey,
+        recipeEditorIngredientsKey: ingredientsKey,
+      );
+
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final fakeController = FakeTutorialCoachMarkController();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  SizedBox(key: financeKey, height: 60, width: 340, child: const Text('Finance')),
+                  SizedBox(key: scaleBarKey, height: 50, width: 340, child: const Text('Scale Bar')),
+                  SizedBox(key: firstIngredientKey, height: 50, width: 340, child: const Text('First Ingredient')),
+                  // Tall ingredients list (450px) spanning most of the 640px screen
+                  SizedBox(key: ingredientsKey, height: 450, width: 340, child: const Text('Ingredients List')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final scaffoldContext = tester.element(find.byType(Scaffold));
+      final targets = AppTutorialService.createRecipeEditorTargets(context: scaffoldContext, keys: keys);
+      expect(targets.length, 4);
+
+      // Target 4 is step_recipe_editor_gestures
+      final step4Target = targets[3];
+      expect(step4Target.identify, 'step_recipe_editor_gestures');
+
+      // Verify safe target position docks safely at bottom (not pushing off screen)
+      final step4Pos = AppTutorialService.calculateSafeTargetPosition(
+        context: scaffoldContext,
+        keyTarget: ingredientsKey,
+        preferredAlign: ContentAlign.bottom,
+      );
+      expect(step4Pos.bottom, isNotNull);
+
+      // Build Step 4 card inside a screen-sized Stack like TutorialCoachMark does
+      final step4Content = step4Target.contents!.first;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          home: Scaffold(
+            body: Stack(
+              children: [
+                Positioned(
+                  bottom: step4Pos.bottom,
+                  left: step4Pos.left,
+                  right: step4Pos.right,
+                  child: Builder(
+                    builder: (ctx) => step4Content.builder!(ctx, fakeController),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify no overflow exceptions
+      expect(tester.takeException(), isNull);
+
+      // Verify Step 4 title and badge are rendered
+      expect(find.text('Paso 4 de 4'), findsOneWidget);
+
+      // Verify Finish button is rendered (step 4 is the final step) and functions
+      final finishFinder = find.byIcon(Icons.check_rounded);
+      expect(finishFinder, findsOneWidget);
+      await tester.tap(finishFinder);
+      expect(fakeController.nextCalled, isTrue);
+
+      // Verify Skip button is rendered and functions
+      final skipFinder = find.byIcon(Icons.close_rounded);
+      expect(skipFinder, findsOneWidget);
+      await tester.tap(skipFinder);
+      expect(fakeController.skipCalled, isTrue);
+
+      // Verify the entire card bounds are strictly inside the 360x640 screen
+      final cardFinder = find.byType(Material).first;
+      final cardRect = tester.getRect(cardFinder);
+      expect(cardRect.top >= 0.0, isTrue);
+      expect(cardRect.bottom <= 640.0, isTrue);
+    });
   });
 
   group('Settings Walkthrough replay trigger tests', () {

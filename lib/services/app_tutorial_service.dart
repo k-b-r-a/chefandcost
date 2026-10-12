@@ -92,6 +92,9 @@ class AppTutorialService {
   static bool _isTutorialActive = false;
   static TutorialCoachMark? _activeTutorial;
   static final Map<String, ContentAlign> _stepAlignments = {};
+  static final Map<String, TutorialStepInfo> _activeStepsMap = {};
+  static final Map<String, int> _activeStepIndices = {};
+  static int _activeTotalSteps = 0;
 
   /// Returns true if any walkthrough tutorial is currently being displayed on screen.
   static bool get isTutorialActive => _isTutorialActive;
@@ -203,9 +206,6 @@ class AppTutorialService {
     final isSmallScreen = screenHeight < 680 || screenWidth < 380;
     final isVerySmallScreen = screenHeight < 580 || screenWidth < 340;
 
-    final estimatedCardHeight = isVerySmallScreen
-        ? 170.0
-        : (isSmallScreen ? 190.0 : 250.0);
     final safeMargin = isVerySmallScreen
         ? 6.0
         : (isSmallScreen ? 8.0 : 16.0);
@@ -213,10 +213,21 @@ class AppTutorialService {
         ? 4.0
         : (isSmallScreen ? 6.0 : 12.0);
 
+    final minTop = topPadding + safeMargin;
+    final minBottom = bottomPadding + safeMargin;
+
+    // Use a realistic estimate of card height so clamping never pushes
+    // the card off the screen edges.
+    final estimatedCardHeight = isVerySmallScreen
+        ? (screenHeight * 0.38).clamp(160.0, 220.0)
+        : isSmallScreen
+            ? (screenHeight * 0.42).clamp(180.0, 260.0)
+            : (screenHeight * 0.35).clamp(200.0, 320.0);
+
     final ctx = keyTarget.currentContext;
     if (ctx == null) {
       return CustomTargetContentPosition(
-        bottom: bottomPadding + safeMargin,
+        bottom: minBottom,
         left: 0.0,
         right: 0.0,
       );
@@ -225,7 +236,7 @@ class AppTutorialService {
     final renderBox = ctx.findRenderObject();
     if (renderBox is! RenderBox || !renderBox.hasSize) {
       return CustomTargetContentPosition(
-        bottom: bottomPadding + safeMargin,
+        bottom: minBottom,
         left: 0.0,
         right: 0.0,
       );
@@ -236,52 +247,80 @@ class AppTutorialService {
     final targetHeight = renderBox.size.height;
     final targetBottom = targetTop + targetHeight;
 
-    final availableBelow =
-        screenHeight - bottomPadding - safeMargin - targetBottom;
-    final availableAbove = targetTop - topPadding - safeMargin;
+    // Available screen space strictly outside the target
+    final availableBelow = screenHeight - minBottom - targetBottom - gap;
+    final availableAbove = targetTop - minTop - gap;
 
-    // Determine placement based on preferred alignment and available space
+    final isTargetTall = targetHeight > (screenHeight * 0.35);
+    final canFitBelow = availableBelow >= estimatedCardHeight;
+    final canFitAbove = availableAbove >= estimatedCardHeight;
+
+    // Determine placement:
     final bool placeBelow;
-    if (preferredAlign == ContentAlign.bottom) {
-      if (availableBelow >= estimatedCardHeight || availableBelow >= availableAbove) {
+    if (isTargetTall) {
+      // Large targets occupying a large portion of the screen (e.g. recipe editor step 4
+      // list view) cannot fit normal exterior cards; prefer docking at the bottom so
+      // next/finish controls remain comfortably thumb-accessible and top header stays visible.
+      placeBelow = true;
+    } else if (preferredAlign == ContentAlign.bottom) {
+      if (canFitBelow) {
         placeBelow = true;
-      } else {
+      } else if (canFitAbove) {
         placeBelow = false;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
       }
     } else if (preferredAlign == ContentAlign.top) {
-      if (availableAbove >= estimatedCardHeight || availableAbove >= availableBelow) {
+      if (canFitAbove) {
         placeBelow = false;
-      } else {
+      } else if (canFitBelow) {
         placeBelow = true;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
       }
     } else {
-      if (availableBelow >= estimatedCardHeight) {
+      if (canFitBelow && !canFitAbove) {
         placeBelow = true;
-      } else if (availableAbove >= estimatedCardHeight) {
+      } else if (canFitAbove && !canFitBelow) {
         placeBelow = false;
+      } else if (canFitBelow && canFitAbove) {
+        placeBelow = availableBelow >= availableAbove;
       } else {
         placeBelow = availableBelow >= availableAbove;
       }
     }
 
     if (placeBelow) {
+      if (!canFitBelow && !canFitAbove) {
+        // Target takes almost all screen space: dock cleanly to screen bottom
+        return CustomTargetContentPosition(
+          bottom: minBottom,
+          left: 0.0,
+          right: 0.0,
+        );
+      }
       final maxAllowedTop =
-          (screenHeight - bottomPadding - safeMargin - estimatedCardHeight)
-              .clamp(topPadding + safeMargin, double.infinity);
+          (screenHeight - minBottom - estimatedCardHeight).clamp(minTop, double.infinity);
       final desiredTop = targetBottom + gap;
-      final top = desiredTop.clamp(topPadding + safeMargin, maxAllowedTop);
+      final top = desiredTop.clamp(minTop, maxAllowedTop);
       return CustomTargetContentPosition(
         top: top,
         left: 0.0,
         right: 0.0,
       );
     } else {
+      if (!canFitAbove && !canFitBelow) {
+        // Target takes almost all screen space: dock cleanly to screen top
+        return CustomTargetContentPosition(
+          top: minTop,
+          left: 0.0,
+          right: 0.0,
+        );
+      }
       final maxAllowedBottom =
-          (screenHeight - topPadding - safeMargin - estimatedCardHeight)
-              .clamp(bottomPadding + safeMargin, double.infinity);
+          (screenHeight - minTop - estimatedCardHeight).clamp(minBottom, double.infinity);
       final desiredBottom = (screenHeight - targetTop) + gap;
-      final bottom =
-          desiredBottom.clamp(bottomPadding + safeMargin, maxAllowedBottom);
+      final bottom = desiredBottom.clamp(minBottom, maxAllowedBottom);
       return CustomTargetContentPosition(
         bottom: bottom,
         left: 0.0,
@@ -305,8 +344,15 @@ class AppTutorialService {
 
     if (activeSteps.isEmpty) return const [];
 
-    for (final step in activeSteps) {
+    _activeStepsMap.clear();
+    _activeStepIndices.clear();
+    _activeTotalSteps = activeSteps.length;
+
+    for (int i = 0; i < activeSteps.length; i++) {
+      final step = activeSteps[i];
       _stepAlignments[step.id] = step.align;
+      _activeStepsMap[step.id] = step;
+      _activeStepIndices[step.id] = i;
     }
 
     final screenWidth = MediaQuery.sizeOf(context).width;
@@ -352,6 +398,7 @@ class AppTutorialService {
                   stepIndex: stepIndex,
                   totalSteps: totalSteps,
                   l10n: l10n,
+                  customPosition: customPos,
                 );
               },
             ),
@@ -548,7 +595,14 @@ class AppTutorialService {
         if (ctx != null) {
           try {
             double scrollAlign = 0.50;
-            if (isSmallScreen && preferred != null) {
+            final rb = ctx.findRenderObject();
+            final isTall = rb is RenderBox &&
+                rb.hasSize &&
+                rb.size.height > (screenHeight * 0.35);
+
+            if (isTall) {
+              scrollAlign = 0.06;
+            } else if (isSmallScreen && preferred != null) {
               if (preferred == ContentAlign.bottom) {
                 scrollAlign = 0.18;
               } else if (preferred == ContentAlign.top) {
@@ -576,6 +630,10 @@ class AppTutorialService {
             preferredAlign: preferred,
           );
           final oldContent = target.contents!.first;
+          final step = target.identify != null ? _activeStepsMap[target.identify!] : null;
+          final stepIndex = target.identify != null ? (_activeStepIndices[target.identify!] ?? 0) : 0;
+          final total = _activeTotalSteps > 0 ? _activeTotalSteps : targets.length;
+
           target.contents![0] = TargetContent(
             align: ContentAlign.custom,
             customPosition: updatedPos,
@@ -583,7 +641,20 @@ class AppTutorialService {
               horizontal: isSmallScreen ? 6.0 : 16.0,
               vertical: isSmallScreen ? 2.0 : 4.0,
             ),
-            builder: oldContent.builder,
+            builder: (c, ctrl) {
+              if (step != null) {
+                return _buildStepCard(
+                  context: c,
+                  controller: ctrl,
+                  step: step,
+                  stepIndex: stepIndex,
+                  totalSteps: total,
+                  l10n: AppLocalizations.of(c)!,
+                  customPosition: updatedPos,
+                );
+              }
+              return oldContent.builder?.call(c, ctrl) ?? const SizedBox.shrink();
+            },
           );
         }
       },
@@ -935,6 +1006,7 @@ class AppTutorialService {
     required int stepIndex,
     required int totalSteps,
     required AppLocalizations l10n,
+    CustomTargetContentPosition? customPosition,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -945,6 +1017,9 @@ class AppTutorialService {
 
     final screenWidth = MediaQuery.sizeOf(context).width;
     final screenHeight = MediaQuery.sizeOf(context).height;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom +
+        MediaQuery.viewInsetsOf(context).bottom;
 
     final isSmallScreen = screenHeight < 680 || screenWidth < 380;
     final isVerySmallScreen = screenHeight < 580 || screenWidth < 340;
@@ -977,18 +1052,42 @@ class AppTutorialService {
       }
     }
 
-    final maxCardHeight = isVerySmallScreen
-        ? (screenHeight * 0.72).clamp(160.0, 360.0)
+    final resolvedPos = customPosition ??
+        calculateSafeTargetPosition(
+          context: context,
+          keyTarget: step.keyTarget,
+          preferredAlign: step.align,
+        );
+
+    final defaultMaxHeight = isVerySmallScreen
+        ? (screenHeight * 0.55).clamp(160.0, 260.0)
         : isSmallScreen
-            ? (screenHeight * 0.62).clamp(180.0, 420.0)
-            : (screenHeight * 0.45).clamp(240.0, 520.0);
+            ? (screenHeight * 0.48).clamp(180.0, 300.0)
+            : (screenHeight * 0.38).clamp(200.0, 360.0);
+
+    final safeMargin = isVerySmallScreen ? 6.0 : (isSmallScreen ? 8.0 : 16.0);
+    double remainingVerticalSpace =
+        screenHeight - topPadding - bottomPadding - (safeMargin * 2);
+
+    if (resolvedPos.top != null) {
+      remainingVerticalSpace =
+          screenHeight - resolvedPos.top! - bottomPadding - safeMargin;
+    } else if (resolvedPos.bottom != null) {
+      remainingVerticalSpace =
+          screenHeight - resolvedPos.bottom! - topPadding - safeMargin;
+    }
+
+    final safeMaxCardHeight = defaultMaxHeight.clamp(
+      120.0,
+      remainingVerticalSpace.clamp(120.0, screenHeight),
+    );
 
     return Align(
       alignment: Alignment(horizontalAlignment, 0.0),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: cardMaxWidth,
-          maxHeight: maxCardHeight,
+          maxHeight: safeMaxCardHeight,
         ),
         child: Material(
           color: Colors.transparent,
