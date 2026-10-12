@@ -91,6 +91,7 @@ class AppTutorialService {
   /// Global lock tracking whether any walkthrough overlay is actively displayed.
   static bool _isTutorialActive = false;
   static TutorialCoachMark? _activeTutorial;
+  static final Map<String, ContentAlign> _stepAlignments = {};
 
   /// Returns true if any walkthrough tutorial is currently being displayed on screen.
   static bool get isTutorialActive => _isTutorialActive;
@@ -191,18 +192,31 @@ class AppTutorialService {
   static CustomTargetContentPosition calculateSafeTargetPosition({
     required BuildContext context,
     required GlobalKey keyTarget,
+    ContentAlign? preferredAlign,
   }) {
     final screenHeight = MediaQuery.sizeOf(context).height;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final bottomPadding = MediaQuery.paddingOf(context).bottom;
-    const estimatedCardHeight = 260.0;
-    const safeMargin = 16.0;
-    const gap = 12.0;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom +
+        MediaQuery.viewInsetsOf(context).bottom;
+
+    final isSmallScreen = screenHeight < 680 || screenWidth < 380;
+    final isVerySmallScreen = screenHeight < 580 || screenWidth < 340;
+
+    final estimatedCardHeight = isVerySmallScreen
+        ? 170.0
+        : (isSmallScreen ? 190.0 : 250.0);
+    final safeMargin = isVerySmallScreen
+        ? 6.0
+        : (isSmallScreen ? 8.0 : 16.0);
+    final gap = isVerySmallScreen
+        ? 4.0
+        : (isSmallScreen ? 6.0 : 12.0);
 
     final ctx = keyTarget.currentContext;
     if (ctx == null) {
       return CustomTargetContentPosition(
-        bottom: bottomPadding + 20.0,
+        bottom: bottomPadding + safeMargin,
         left: 0.0,
         right: 0.0,
       );
@@ -211,7 +225,7 @@ class AppTutorialService {
     final renderBox = ctx.findRenderObject();
     if (renderBox is! RenderBox || !renderBox.hasSize) {
       return CustomTargetContentPosition(
-        bottom: bottomPadding + 20.0,
+        bottom: bottomPadding + safeMargin,
         left: 0.0,
         right: 0.0,
       );
@@ -226,14 +240,28 @@ class AppTutorialService {
         screenHeight - bottomPadding - safeMargin - targetBottom;
     final availableAbove = targetTop - topPadding - safeMargin;
 
-    // Place below if there is enough space; otherwise place above
+    // Determine placement based on preferred alignment and available space
     final bool placeBelow;
-    if (availableBelow >= estimatedCardHeight) {
-      placeBelow = true;
-    } else if (availableAbove >= estimatedCardHeight) {
-      placeBelow = false;
+    if (preferredAlign == ContentAlign.bottom) {
+      if (availableBelow >= estimatedCardHeight || availableBelow >= availableAbove) {
+        placeBelow = true;
+      } else {
+        placeBelow = false;
+      }
+    } else if (preferredAlign == ContentAlign.top) {
+      if (availableAbove >= estimatedCardHeight || availableAbove >= availableBelow) {
+        placeBelow = false;
+      } else {
+        placeBelow = true;
+      }
     } else {
-      placeBelow = availableBelow >= availableAbove;
+      if (availableBelow >= estimatedCardHeight) {
+        placeBelow = true;
+      } else if (availableAbove >= estimatedCardHeight) {
+        placeBelow = false;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
+      }
     }
 
     if (placeBelow) {
@@ -277,6 +305,14 @@ class AppTutorialService {
 
     if (activeSteps.isEmpty) return const [];
 
+    for (final step in activeSteps) {
+      _stepAlignments[step.id] = step.align;
+    }
+
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isSmallScreen = screenWidth < 380 || screenHeight < 680;
+
     final totalSteps = activeSteps.length;
     final targets = <TargetFocus>[];
 
@@ -287,6 +323,7 @@ class AppTutorialService {
       final customPos = calculateSafeTargetPosition(
         context: context,
         keyTarget: step.keyTarget,
+        preferredAlign: step.align,
       );
 
       targets.add(
@@ -303,7 +340,10 @@ class AppTutorialService {
             TargetContent(
               align: ContentAlign.custom,
               customPosition: customPos,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 6.0 : 16.0,
+                vertical: isSmallScreen ? 2.0 : 4.0,
+              ),
               builder: (ctx, controller) {
                 return _buildStepCard(
                   context: ctx,
@@ -490,22 +530,36 @@ class AppTutorialService {
 
     TutorialCoachMark? tutorialInstance;
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isSmallScreen = screenWidth < 380 || screenHeight < 680;
+
     tutorialInstance = TutorialCoachMark(
       targets: targets,
       colorShadow: Colors.black,
       opacityShadow: 0.82,
-      paddingFocus: 8,
+      paddingFocus: isSmallScreen ? 4 : 8,
       hideSkip: true, // We embed dedicated skip controls in every step card
       beforeFocus: (target) async {
         final key = target.keyTarget;
         final ctx = key?.currentContext;
+        final preferred =
+            target.identify != null ? _stepAlignments[target.identify!] : null;
         if (ctx != null) {
           try {
+            double scrollAlign = 0.50;
+            if (isSmallScreen && preferred != null) {
+              if (preferred == ContentAlign.bottom) {
+                scrollAlign = 0.18;
+              } else if (preferred == ContentAlign.top) {
+                scrollAlign = 0.82;
+              }
+            }
             await Scrollable.ensureVisible(
               ctx,
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
-              alignment: 0.50,
+              alignment: scrollAlign,
             );
           } catch (_) {}
         }
@@ -519,12 +573,16 @@ class AppTutorialService {
           final updatedPos = calculateSafeTargetPosition(
             context: context,
             keyTarget: key,
+            preferredAlign: preferred,
           );
           final oldContent = target.contents!.first;
           target.contents![0] = TargetContent(
             align: ContentAlign.custom,
             customPosition: updatedPos,
-            padding: oldContent.padding,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 6.0 : 16.0,
+              vertical: isSmallScreen ? 2.0 : 4.0,
+            ),
             builder: oldContent.builder,
           );
         }
@@ -888,9 +946,22 @@ class AppTutorialService {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final screenHeight = MediaQuery.sizeOf(context).height;
 
-    double horizontalAlignment = 0.0;
-    const cardMaxWidth = 420.0;
+    final isSmallScreen = screenHeight < 680 || screenWidth < 380;
+    final isVerySmallScreen = screenHeight < 580 || screenWidth < 340;
 
+    final cardHorizontalMargin = isVerySmallScreen
+        ? 6.0
+        : (isSmallScreen ? 8.0 : 12.0);
+    final cardPadding = isVerySmallScreen
+        ? const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0)
+        : isSmallScreen
+            ? const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0)
+            : const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0);
+
+    final cardMaxWidth = (screenWidth - (cardHorizontalMargin * 2) - 16.0)
+        .clamp(260.0, 420.0);
+
+    double horizontalAlignment = 0.0;
     final keyCtx = step.keyTarget.currentContext;
     if (keyCtx != null && screenWidth > (cardMaxWidth + 32.0)) {
       final rb = keyCtx.findRenderObject();
@@ -906,63 +977,76 @@ class AppTutorialService {
       }
     }
 
+    final maxCardHeight = isVerySmallScreen
+        ? (screenHeight * 0.72).clamp(160.0, 360.0)
+        : isSmallScreen
+            ? (screenHeight * 0.62).clamp(180.0, 420.0)
+            : (screenHeight * 0.45).clamp(240.0, 520.0);
+
     return Align(
       alignment: Alignment(horizontalAlignment, 0.0),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: cardMaxWidth,
-          maxHeight: (screenHeight * 0.42).clamp(220.0, 480.0),
+          maxHeight: maxCardHeight,
         ),
         child: Material(
           color: Colors.transparent,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+            margin: EdgeInsets.symmetric(
+              horizontal: cardHorizontalMargin,
+              vertical: isVerySmallScreen ? 2.0 : 4.0,
+            ),
+            padding: cardPadding,
             decoration: BoxDecoration(
               color: cardBg,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 22),
               border: Border.all(
                 color: theme.colorScheme.primary.withValues(alpha: 0.35),
-                width: 1.5,
+                width: isSmallScreen ? 1.0 : 1.5,
               ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  blurRadius: isSmallScreen ? 12 : 20,
+                  offset: Offset(0, isSmallScreen ? 4 : 8),
                 ),
               ],
             ),
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header: Step Badge & Skip Action
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Header: Step Badge & Skip Action (Pinned at top)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 8 : 10,
+                          vertical: isSmallScreen ? 3 : 4,
+                        ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 10),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               step.icon,
-                              size: 14,
+                              size: isSmallScreen ? 13 : 14,
                               color: theme.colorScheme.primary,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 5),
                             Flexible(
                               child: Text(
                                 l10n.tutorial_step_counter(stepIndex + 1, totalSteps),
-                                style: theme.textTheme.labelSmall?.copyWith(
+                                style: (isSmallScreen
+                                        ? theme.textTheme.labelSmall?.copyWith(fontSize: 10.5)
+                                        : theme.textTheme.labelSmall)
+                                    ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: theme.colorScheme.primary,
                                 ),
@@ -974,124 +1058,175 @@ class AppTutorialService {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: TextButton.icon(
-                        style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          foregroundColor: theme.colorScheme.onSurfaceVariant,
+                    const SizedBox(width: 6),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 6 : 8,
+                          vertical: isSmallScreen ? 2 : 4,
                         ),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        label: Text(
-                          l10n.tutorial_action_skip,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onPressed: () => controller.skip(),
+                        foregroundColor: theme.colorScheme.onSurfaceVariant,
                       ),
+                      icon: Icon(Icons.close_rounded, size: isSmallScreen ? 14 : 16),
+                      label: Text(
+                        l10n.tutorial_action_skip,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 11 : 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onPressed: () => controller.skip(),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: isSmallScreen ? 6 : 10),
 
-                // Title
-                Text(
-                  step.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Description
-                Text(
-                  step.description,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.35,
-                  ),
-                ),
-
-                // Highlight Gesture Hint Banner (if present)
-                if (step.gestureHint != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.tertiary.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Row(
+                // 2. Scrollable Body: Title, Description, Gesture Hint Banner
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          step.gestureIcon ?? Icons.touch_app_rounded,
-                          size: 16,
-                          color: theme.colorScheme.tertiary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            step.gestureHint!,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onTertiaryContainer,
-                              height: 1.3,
-                            ),
+                        // Title
+                        Text(
+                          step.title,
+                          style: (isSmallScreen
+                                  ? theme.textTheme.titleSmall
+                                  : theme.textTheme.titleMedium)
+                              ?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            fontSize: isSmallScreen ? 14.0 : null,
                           ),
                         ),
+                        SizedBox(height: isSmallScreen ? 3 : 6),
+
+                        // Description
+                        Text(
+                          step.description,
+                          style: (isSmallScreen
+                                  ? theme.textTheme.bodySmall
+                                  : theme.textTheme.bodyMedium)
+                              ?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.3,
+                            fontSize: isSmallScreen ? 12.0 : null,
+                          ),
+                        ),
+
+                        // Highlight Gesture Hint Banner (if present)
+                        if (step.gestureHint != null) ...[
+                          SizedBox(height: isSmallScreen ? 6 : 10),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 8 : 12,
+                              vertical: isSmallScreen ? 5 : 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                              border: Border.all(
+                                color: theme.colorScheme.tertiary.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  step.gestureIcon ?? Icons.touch_app_rounded,
+                                  size: isSmallScreen ? 14 : 16,
+                                  color: theme.colorScheme.tertiary,
+                                ),
+                                SizedBox(width: isSmallScreen ? 6 : 8),
+                                Expanded(
+                                  child: Text(
+                                    step.gestureHint!,
+                                    style: (isSmallScreen
+                                            ? theme.textTheme.labelSmall
+                                            : theme.textTheme.labelMedium)
+                                        ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onTertiaryContainer,
+                                      height: 1.25,
+                                      fontSize: isSmallScreen ? 11.0 : null,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                ],
-                const SizedBox(height: 18),
+                ),
+                SizedBox(height: isSmallScreen ? 8 : 14),
 
-                // Navigation Controls (Previous, Next / Finish)
+                // 3. Navigation Controls (Always visible, pinned at bottom of card)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: stepIndex > 0
+                      ? MainAxisAlignment.spaceBetween
+                      : MainAxisAlignment.end,
                   children: [
                     if (stepIndex > 0)
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      Flexible(
+                        flex: 1,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 8 : 12,
+                              vertical: isSmallScreen ? 4 : 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                            ),
+                          ),
+                          onPressed: () => controller.previous(),
+                          icon: Icon(Icons.arrow_back_rounded, size: isSmallScreen ? 14 : 16),
+                          label: Text(
+                            l10n.tutorial_action_prev,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: isSmallScreen ? 11.5 : null),
                           ),
                         ),
-                        onPressed: () => controller.previous(),
-                        icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                        label: Text(l10n.tutorial_action_prev),
-                      )
-                    else
-                      const SizedBox.shrink(),
-                    const Spacer(),
-                    FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                      ),
+                    if (stepIndex > 0) const SizedBox(width: 8),
+                    Flexible(
+                      flex: 1,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 10 : 16,
+                            vertical: isSmallScreen ? 4 : 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                          ),
                         ),
-                      ),
-                      onPressed: () => controller.next(),
-                      icon: Icon(
-                        stepIndex == totalSteps - 1
-                            ? Icons.check_rounded
-                            : Icons.arrow_forward_rounded,
-                        size: 16,
-                      ),
-                      label: Text(
-                        stepIndex == totalSteps - 1
-                            ? l10n.tutorial_action_finish
-                            : l10n.tutorial_action_next,
+                        onPressed: () => controller.next(),
+                        icon: Icon(
+                          stepIndex == totalSteps - 1
+                              ? Icons.check_rounded
+                              : Icons.arrow_forward_rounded,
+                          size: isSmallScreen ? 14 : 16,
+                        ),
+                        label: Text(
+                          stepIndex == totalSteps - 1
+                              ? l10n.tutorial_action_finish
+                              : l10n.tutorial_action_next,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: isSmallScreen ? 11.5 : null),
+                        ),
                       ),
                     ),
                   ],
@@ -1101,7 +1236,6 @@ class AppTutorialService {
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
