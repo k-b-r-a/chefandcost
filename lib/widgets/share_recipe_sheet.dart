@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -60,7 +61,22 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
       );
 
       if (mounted) {
+        final messenger = ScaffoldMessenger.of(context);
+        final l10n = AppLocalizations.of(context)!;
         Navigator.pop(context);
+        if (kIsWeb) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.share_recipe_success,
+                softWrap: true,
+                overflow: TextOverflow.clip,
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -118,7 +134,21 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
       );
 
       if (mounted) {
+        final messenger = ScaffoldMessenger.of(context);
         Navigator.pop(context);
+        if (kIsWeb) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.share_recipe_success,
+                softWrap: true,
+                overflow: TextOverflow.clip,
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -176,7 +206,21 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
       );
 
       if (mounted) {
+        final messenger = ScaffoldMessenger.of(context);
         Navigator.pop(context);
+        if (kIsWeb) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.share_recipe_success,
+                softWrap: true,
+                overflow: TextOverflow.clip,
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
