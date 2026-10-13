@@ -79,15 +79,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             context: context,
             title: l10n.home_title,
             controller: _scrollController,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.file_download_outlined),
-                tooltip: l10n.import_recipe_button,
-                onPressed: () =>
-                    RecipeImportHelper.importRecipeFromDevice(context, ref),
-              ),
-              const SizedBox(width: 8),
-            ],
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 100.0),
