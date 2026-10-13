@@ -68,12 +68,18 @@ class RecipeShareService {
   static const int currentFormatVersion = 1;
   static const Uuid _uuid = Uuid();
 
-  /// Cleans strings to be safe for filenames across OSes
+  /// Cleans strings to be safe for filenames across OSes.
+  /// Removes emojis, symbols, and punctuation while preserving letters in any script,
+  /// numbers, spaces, hyphens, and underscores.
   static String sanitizeFileName(String name) {
-    final clean = name
-        .trim()
-        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
-        .replaceAll(RegExp(r'\s+'), '_');
+    final filtered = name
+        .replaceAll(RegExp(r'[^\p{L}\p{N}\s_-]', unicode: true), ' ')
+        .trim();
+
+    final clean = filtered
+        .replaceAll(RegExp(r'[\s_]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+
     return clean.isEmpty ? 'recipe' : clean;
   }
 

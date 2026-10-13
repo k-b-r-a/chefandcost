@@ -132,6 +132,19 @@ void main() {
       await db.close();
     });
 
+    test('sanitizeFileName filters emojis, symbols, and punctuation properly', () {
+      expect(RecipeShareService.sanitizeFileName('🍕 Pizza Margherita! 😋'), equals('Pizza_Margherita'));
+      expect(RecipeShareService.sanitizeFileName('Apple Pie (Best #1!)'), equals('Apple_Pie_Best_1'));
+      expect(RecipeShareService.sanitizeFileName('🍫 ¡Tarta de Café con Nuez & Chocolate! ☕'), equals('Tarta_de_Café_con_Nuez_Chocolate'));
+      expect(RecipeShareService.sanitizeFileName('Ñoquis Caseros (100% Caseros!)'), equals('Ñoquis_Caseros_100_Caseros'));
+      expect(RecipeShareService.sanitizeFileName('Gluten-Free Cookies :)'), equals('Gluten-Free_Cookies'));
+      expect(RecipeShareService.sanitizeFileName('🎉✨🍕'), equals('recipe'));
+      expect(RecipeShareService.sanitizeFileName('***???///'), equals('recipe'));
+      expect(RecipeShareService.sanitizeFileName('   '), equals('recipe'));
+      expect(RecipeShareService.sanitizeFileName(''), equals('recipe'));
+      expect(RecipeShareService.sanitizeFileName('Matcha & Green Tea Ice Cream'), equals('Matcha_Green_Tea_Ice_Cream'));
+    });
+
     test('exportAsChefy exports valid JSON matching schema', () {
       final bytes = RecipeShareService.exportAsChefy(sampleDetail, [unitG, unitKg]);
       final jsonStr = utf8.decode(bytes);
