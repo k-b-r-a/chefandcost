@@ -2720,7 +2720,26 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 );
               },
             ),
-            _buildToolsMenu(theme, l10n),
+            if (!isSmallScreen) ...[
+              if (!widget.isTemporary &&
+                  (widget.recipeId != null || _currentRecipePk != null))
+                IconButton(
+                  key: const ValueKey('recipe_duplicate_button'),
+                  icon: const Icon(Icons.copy_rounded),
+                  tooltip: l10n.duplicate_button,
+                  onPressed: _duplicateCurrentRecipe,
+                ),
+              _buildTimersMenu(theme, l10n),
+            ] else ...[
+              _buildToolsMenu(theme, l10n),
+            ],
+            if (!widget.isTemporary)
+              IconButton(
+                key: const ValueKey('recipe_share_button'),
+                icon: const Icon(Icons.share_rounded),
+                tooltip: l10n.share_recipe_menu_title,
+                onPressed: _shareCurrentRecipe,
+              ),
             if (!widget.isTemporary) ...[
               IconButton(
                 icon: const Icon(Icons.check),
@@ -2869,6 +2888,137 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     );
   }
 
+  void _startTimerFromMenu(String value, AppLocalizations l10n) {
+    final index = int.tryParse(value.replaceFirst('start_timer_', ''));
+    if (index != null && index >= 0 && index < _recipeTimers.length) {
+      final timerData = _recipeTimers[index];
+      final timerName = timerData.nameController.text.trim().isEmpty
+          ? (_nameController.text.isEmpty
+              ? l10n.recipe_timer_single
+              : _nameController.text)
+          : timerData.nameController.text.trim();
+      ref.read(kitchenTimersProvider.notifier).addTimer(
+            timerName,
+            timerData.durationSeconds,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            content: Text(
+              l10n.timer_started_snackbar(
+                timerName,
+                timerData.formattedDuration,
+              ),
+              softWrap: true,
+            ),
+            action: SnackBarAction(
+              label: l10n.view_button,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const KitchenTimersScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildTimersMenu(ThemeData theme, AppLocalizations l10n) {
+    if (_recipeTimers.isEmpty) {
+      return IconButton(
+        key: const ValueKey('recipe_timers_button'),
+        icon: const Icon(Icons.timer_outlined),
+        tooltip: l10n.timers_title,
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const KitchenTimersScreen(),
+            ),
+          );
+        },
+      );
+    }
+
+    return PopupMenuButton<String>(
+      key: const ValueKey('recipe_timers_button'),
+      icon: const Icon(Icons.timer_outlined),
+      tooltip: l10n.timers_title,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      onSelected: (value) async {
+        if (value == 'kitchen_timers') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const KitchenTimersScreen(),
+            ),
+          );
+        } else if (value == 'add_timer') {
+          _showAddRecipeTimerDialog(theme, l10n);
+        } else if (value.startsWith('start_timer_')) {
+          _startTimerFromMenu(value, l10n);
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'kitchen_timers',
+          child: Row(
+            children: [
+              Icon(Icons.timer_outlined, size: 20, color: theme.colorScheme.primary),
+              const SizedBox(width: 12),
+              Text(l10n.timers_title, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'add_timer',
+          child: Row(
+            children: [
+              Icon(Icons.add_alarm_rounded, size: 20, color: theme.colorScheme.primary),
+              const SizedBox(width: 12),
+              Text(l10n.recipe_timer_add_badge, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+        if (_recipeTimers.isNotEmpty) ...[
+          const PopupMenuDivider(),
+          ..._recipeTimers.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final timer = entry.value;
+            final name = timer.nameController.text.trim().isEmpty
+                ? l10n.recipe_timer_single
+                : timer.nameController.text.trim();
+            return PopupMenuItem<String>(
+              value: 'start_timer_$idx',
+              child: Row(
+                children: [
+                  Icon(Icons.play_arrow_rounded, size: 20, color: theme.colorScheme.secondary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '$name (${timer.formattedDuration})',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ],
+    );
+  }
+
   Widget _buildToolsMenu(ThemeData theme, AppLocalizations l10n) {
     return PopupMenuButton<String>(
       key: const ValueKey('recipe_tools_menu_button'),
@@ -2891,46 +3041,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         } else if (value == 'add_timer') {
           _showAddRecipeTimerDialog(theme, l10n);
         } else if (value.startsWith('start_timer_')) {
-          final index = int.tryParse(value.replaceFirst('start_timer_', ''));
-          if (index != null && index >= 0 && index < _recipeTimers.length) {
-            final timerData = _recipeTimers[index];
-            final timerName = timerData.nameController.text.trim().isEmpty
-                ? (_nameController.text.isEmpty
-                    ? l10n.recipe_timer_single
-                    : _nameController.text)
-                : timerData.nameController.text.trim();
-            ref.read(kitchenTimersProvider.notifier).addTimer(
-                  timerName,
-                  timerData.durationSeconds,
-                );
-            if (mounted) {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  duration: const Duration(seconds: 3),
-                  behavior: SnackBarBehavior.floating,
-                  content: Text(
-                    l10n.timer_started_snackbar(
-                      timerName,
-                      timerData.formattedDuration,
-                    ),
-                    softWrap: true,
-                  ),
-                  action: SnackBarAction(
-                    label: l10n.view_button,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const KitchenTimersScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              );
-            }
-          }
+          _startTimerFromMenu(value, l10n);
         }
       },
       itemBuilder: (context) => [

@@ -19,6 +19,7 @@ import 'kitchen_timers_screen.dart';
 import 'rule_of_three_screen.dart';
 import 'unit_converter_screen.dart';
 import '../services/app_tutorial_service.dart';
+import '../utils/recipe_import_helper.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int index)? onNavigateToTab;
@@ -78,6 +79,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             context: context,
             title: l10n.home_title,
             controller: _scrollController,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.file_download_outlined),
+                tooltip: l10n.import_recipe_button,
+                onPressed: () =>
+                    RecipeImportHelper.importRecipeFromDevice(context, ref),
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 100.0),
@@ -257,6 +267,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                   }
                 },
+              ),
+              const SizedBox(width: 10),
+              _buildQuickActionButton(
+                context: context,
+                theme: theme,
+                label: l10n.import_recipe_button,
+                icon: Icons.file_download_outlined,
+                isPrimary: false,
+                onTap: () =>
+                    RecipeImportHelper.importRecipeFromDevice(context, ref),
               ),
               const SizedBox(width: 10),
               _buildQuickActionButton(

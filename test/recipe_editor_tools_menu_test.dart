@@ -90,20 +90,21 @@ void main() {
       );
     }
 
-    testWidgets('Tools menu button is in AppBar and opens menu with Duplicate and Timers', (tester) async {
-      tester.view.physicalSize = const Size(800, 1200);
+    testWidgets('Mobile tools menu button is in AppBar and opens menu with Duplicate and Timers', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
       await tester.pumpWidget(createTestApp());
       await tester.pumpAndSettle();
 
-      // Verify handyman icon button exists in the AppBar
+      // Verify handyman icon button and dedicated share button exist in the AppBar
       final toolsButton = find.byKey(const ValueKey('recipe_tools_menu_button'));
       expect(toolsButton, findsOneWidget);
       expect(find.byIcon(Icons.handyman_rounded), findsOneWidget);
+      expect(find.byKey(const ValueKey('recipe_share_button')), findsOneWidget);
 
-      // Verify old duplicate icon button is NOT in the AppBar actions
+      // Verify direct duplicate icon button is NOT in the AppBar actions on mobile
       expect(find.byIcon(Icons.copy_rounded), findsNothing);
 
       // Open tools menu
@@ -134,11 +135,12 @@ void main() {
       expect(find.byIcon(Icons.copy_rounded), findsNothing);
       expect(find.byIcon(Icons.timer_outlined), findsNothing);
 
-      // Tools button still exists in AppBar
+      // Tools button still exists in AppBar on mobile
       expect(find.byKey(const ValueKey('recipe_tools_menu_button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('recipe_share_button')), findsOneWidget);
     });
 
-    testWidgets('Desktop web layout has no duplicate button next to description', (tester) async {
+    testWidgets('Desktop / wide screen layout directly exposes duplicate, timers, and share in AppBar without tools menu', (tester) async {
       tester.view.physicalSize = const Size(1200, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -146,11 +148,13 @@ void main() {
       await tester.pumpWidget(createTestApp());
       await tester.pumpAndSettle();
 
-      // Ensure no duplicate button in body
-      expect(find.byIcon(Icons.copy_rounded), findsNothing);
+      // On wide screen, handyman tool menu button is NOT used
+      expect(find.byKey(const ValueKey('recipe_tools_menu_button')), findsNothing);
 
-      // Tools button exists in AppBar
-      expect(find.byKey(const ValueKey('recipe_tools_menu_button')), findsOneWidget);
+      // Direct duplicate, timers, and share buttons are present in AppBar
+      expect(find.byKey(const ValueKey('recipe_duplicate_button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('recipe_timers_button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('recipe_share_button')), findsOneWidget);
     });
     testWidgets('Portions button is positioned to the left of the multiplier presets', (tester) async {
       tester.view.physicalSize = const Size(800, 1200);
