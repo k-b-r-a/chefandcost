@@ -7,6 +7,9 @@
         android:roundIcon="@mipmap/ic_launcher_round">
         <activity
             android:name=".MainActivity"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:label="Chef&amp;Cost"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -28,7 +31,10 @@
             </intent-filter>
 
             <!-- Intent filters for opening and importing .chefy files -->
-            <intent-filter>
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -39,7 +45,10 @@
                 <data android:pathSuffix=".chefy" />
             </intent-filter>
 
-            <intent-filter>
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -50,7 +59,10 @@
                 <data android:pathSuffix=".chefy" />
             </intent-filter>
 
-            <intent-filter>
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -60,7 +72,10 @@
                 <data android:pathSuffix=".chefy" />
             </intent-filter>
 
-            <intent-filter>
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -69,7 +84,10 @@
                 <data android:mimeType="application/x-chefy" />
             </intent-filter>
 
-            <intent-filter>
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -81,7 +99,10 @@
             </intent-filter>
 
             <!-- Intent filter for sharing recipe files into Chef&Cost -->
-            <intent-filter>
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/octet-stream" />
