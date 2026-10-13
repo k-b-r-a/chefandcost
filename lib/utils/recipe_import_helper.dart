@@ -14,11 +14,21 @@ import '../services/recipe_share_service.dart';
 import '../widgets/import_recipe_dialog.dart';
 
 class RecipeImportHelper {
+  static bool _isImportInProgress = false;
+
+  /// Returns true if an import dialog or operation is currently active.
+  static bool get isImportInProgress => _isImportInProgress;
+
   /// Opens file picker to select and import a .chefy recipe file.
   static Future<RecipeImportResult?> importRecipeFromDevice(
     BuildContext context,
     WidgetRef ref,
   ) async {
+    if (_isImportInProgress) {
+      debugPrint('RecipeImportHelper: Import already in progress, ignoring duplicate call');
+      return null;
+    }
+    _isImportInProgress = true;
     final l10n = AppLocalizations.of(context)!;
 
     try {
@@ -55,7 +65,7 @@ class RecipeImportHelper {
 
       final jsonContent = utf8.decode(bytes);
       if (!context.mounted) return null;
-      return await importRecipeFromString(
+      return await _executeImportFromString(
         context,
         ref,
         jsonContent: jsonContent,
@@ -73,12 +83,37 @@ class RecipeImportHelper {
         ),
       );
       return null;
+    } finally {
+      _isImportInProgress = false;
     }
   }
 
   /// Imports a recipe from raw JSON content string, displaying the
   /// preview confirmation dialog and handling insertion & notifications.
   static Future<RecipeImportResult?> importRecipeFromString(
+    BuildContext context,
+    WidgetRef ref, {
+    required String jsonContent,
+    String? sourceFileName,
+  }) async {
+    if (_isImportInProgress) {
+      debugPrint('RecipeImportHelper: Import already in progress, ignoring duplicate call');
+      return null;
+    }
+    _isImportInProgress = true;
+    try {
+      return await _executeImportFromString(
+        context,
+        ref,
+        jsonContent: jsonContent,
+        sourceFileName: sourceFileName,
+      );
+    } finally {
+      _isImportInProgress = false;
+    }
+  }
+
+  static Future<RecipeImportResult?> _executeImportFromString(
     BuildContext context,
     WidgetRef ref, {
     required String jsonContent,

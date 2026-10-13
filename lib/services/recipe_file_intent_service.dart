@@ -15,6 +15,21 @@ class RecipeFileIntentService {
       _fileStreamController.stream;
 
   static bool _initialized = false;
+  static String? _lastHandledContent;
+  static DateTime? _lastHandledTime;
+
+  /// Prevents processing the exact same file payload multiple times in rapid succession
+  static bool _shouldHandle(String content) {
+    final now = DateTime.now();
+    if (_lastHandledContent == content &&
+        _lastHandledTime != null &&
+        now.difference(_lastHandledTime!) < const Duration(seconds: 4)) {
+      return false;
+    }
+    _lastHandledContent = content;
+    _lastHandledTime = now;
+    return true;
+  }
 
   /// Initializes listening for file intents delivered while app is running.
   static void initialize() {
@@ -27,7 +42,7 @@ class RecipeFileIntentService {
           final map = Map<String, dynamic>.from(call.arguments as Map);
           final fileName = map['fileName']?.toString() ?? 'recipe.chefy';
           final content = map['content']?.toString() ?? '';
-          if (content.isNotEmpty) {
+          if (content.isNotEmpty && _shouldHandle(content)) {
             _fileStreamController.add({
               'fileName': fileName,
               'content': content,
@@ -47,7 +62,7 @@ class RecipeFileIntentService {
         final map = Map<String, dynamic>.from(result);
         final fileName = map['fileName']?.toString() ?? 'recipe.chefy';
         final content = map['content']?.toString() ?? '';
-        if (content.isNotEmpty) {
+        if (content.isNotEmpty && _shouldHandle(content)) {
           return {
             'fileName': fileName,
             'content': content,

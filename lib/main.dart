@@ -323,6 +323,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final fileName = fileData['fileName'];
     if (content == null || content.isEmpty) return;
 
+    if (RecipeImportHelper.isImportInProgress) {
+      return;
+    }
+
     final targetContext =
         ChefAndCostApp.navigatorKey.currentContext ?? context;
     if (!targetContext.mounted) return;

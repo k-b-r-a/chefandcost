@@ -18,16 +18,19 @@ class MainActivity : FlutterActivity() {
 
     private var fileChannel: MethodChannel? = null
     private var pendingFilePayload: Map<String, String>? = null
+    private var lastHandledUriString: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        intent?.let { handleFileIntent(it) }
+        if (savedInstanceState == null) {
+            intent?.let { handleFileIntent(it, isNewIntent = false) }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleFileIntent(intent)
+        handleFileIntent(intent, isNewIntent = true)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -82,13 +85,9 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
-
-        pendingFilePayload?.let { payload ->
-            fileChannel?.invokeMethod("onFileReceived", payload)
-        }
     }
 
-    private fun handleFileIntent(intent: Intent) {
+    private fun handleFileIntent(intent: Intent, isNewIntent: Boolean) {
         val action = intent.action
         val rawUri: Uri? = when (action) {
             Intent.ACTION_VIEW -> intent.data
@@ -99,6 +98,12 @@ class MainActivity : FlutterActivity() {
             else -> null
         }
         val uri: Uri = rawUri ?: return
+
+        val uriString = uri.toString()
+        if (uriString == lastHandledUriString && !isNewIntent) {
+            return
+        }
+        lastHandledUriString = uriString
 
         try {
             val fileName = getFileName(uri)
@@ -111,8 +116,14 @@ class MainActivity : FlutterActivity() {
                         "fileName" to fileName,
                         "content" to content
                     )
-                    pendingFilePayload = payload
-                    fileChannel?.invokeMethod("onFileReceived", payload)
+                    if (isNewIntent) {
+                        // Warm start: app is already open, stream the event to Flutter
+                        pendingFilePayload = null
+                        fileChannel?.invokeMethod("onFileReceived", payload)
+                    } else {
+                        // Cold start: cache for getInitialFile to fetch once on launch
+                        pendingFilePayload = payload
+                    }
                 }
             }
         } catch (e: Exception) {

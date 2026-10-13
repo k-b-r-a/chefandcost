@@ -515,5 +515,94 @@ void main() {
       final dbRecipes = await inMemoryDb.getAllRecipes();
       expect(dbRecipes.any((r) => r.name == 'Apple Pie'), isTrue);
     });
+
+    test('RecipeFileIntentService drops duplicate events within 4 seconds', () async {
+      RecipeFileIntentService.initialize();
+
+      const channel = MethodChannel('com.chefandcost.app/file_intent');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+        if (call.method == 'getInitialFile') {
+          return {
+            'fileName': 'dup.chefy',
+            'content': '{"format":"chefy_recipe","name":"UniqueDuplicateTest"}',
+          };
+        }
+        return null;
+      });
+
+      final firstFetch = await RecipeFileIntentService.getInitialFile();
+      expect(firstFetch, isNotNull);
+
+      // Immediate second call should be ignored by debouncer
+      final secondFetch = await RecipeFileIntentService.getInitialFile();
+      expect(secondFetch, isNull);
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    testWidgets('RecipeImportHelper blocks concurrent import calls with isImportInProgress', (tester) async {
+      final inMemoryDb = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(() => inMemoryDb.close());
+
+      final chefyJson = utf8.decode(RecipeShareService.exportAsChefy(sampleDetail, [unitG, unitKg]));
+
+      int dialogOpenCount = 0;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            databaseProvider.overrideWith(() => MockDatabaseNotifier(inMemoryDb)),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) => ElevatedButton(
+                  onPressed: () async {
+                    dialogOpenCount++;
+                    // Try launching first import
+                    final future1 = RecipeImportHelper.importRecipeFromString(
+                      context,
+                      ref,
+                      jsonContent: chefyJson,
+                      sourceFileName: 'Apple_Pie_1.chefy',
+                    );
+
+                    // Try launching second import immediately while first is in progress
+                    final result2 = await RecipeImportHelper.importRecipeFromString(
+                      context,
+                      ref,
+                      jsonContent: chefyJson,
+                      sourceFileName: 'Apple_Pie_2.chefy',
+                    );
+
+                    // Second one MUST return null immediately because first is in progress
+                    expect(result2, isNull);
+
+                    await future1;
+                  },
+                  child: const Text('Concurrent Import Test'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Concurrent Import Test'));
+      await tester.pumpAndSettle();
+
+      // Only ONE dialog is showing on screen
+      expect(find.text('Import Recipe'), findsOneWidget);
+
+      await tester.tap(find.text('Import'));
+      await tester.pumpAndSettle();
+
+      expect(dialogOpenCount, equals(1));
+    });
   });
 }
