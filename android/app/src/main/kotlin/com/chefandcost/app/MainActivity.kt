@@ -90,14 +90,15 @@ class MainActivity : FlutterActivity() {
 
     private fun handleFileIntent(intent: Intent) {
         val action = intent.action
-        val uri: Uri? = when (action) {
+        val rawUri: Uri? = when (action) {
             Intent.ACTION_VIEW -> intent.data
             Intent.ACTION_SEND -> {
                 @Suppress("DEPRECATION")
                 intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
             }
             else -> null
-        } ?: return
+        }
+        val uri: Uri = rawUri ?: return
 
         try {
             val fileName = getFileName(uri)
@@ -119,7 +120,8 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun getFileName(uri: Uri): String {
+    private fun getFileName(uri: Uri?): String {
+        if (uri == null) return "recipe.chefy"
         var name = "recipe.chefy"
         if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
             try {
@@ -150,7 +152,8 @@ class MainActivity : FlutterActivity() {
         return name
     }
 
-    private fun readFileContent(uri: Uri): String? {
+    private fun readFileContent(uri: Uri?): String? {
+        if (uri == null) return null
         return try {
             contentResolver.openInputStream(uri)?.use { inputStream ->
                 inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
