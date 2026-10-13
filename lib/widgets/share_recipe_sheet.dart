@@ -55,7 +55,7 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
       await RecipeShareService.shareRecipeFile(
         bytes: bytes,
         filename: filename,
-        mimeType: 'application/json',
+        mimeType: 'application/octet-stream',
         subject: widget.recipeDetail.recipe.name,
         sharePositionOrigin: origin,
       );
