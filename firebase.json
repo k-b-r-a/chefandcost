@@ -107,6 +107,14 @@
       ],
       "rewrites": [
         {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/delete-account",
+          "destination": "/delete-account.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -196,6 +204,14 @@
       ],
       "rewrites": [
         {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/delete-account",
+          "destination": "/delete-account.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -284,6 +300,14 @@
         }
       ],
       "rewrites": [
+        {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/delete-account",
+          "destination": "/delete-account.html"
+        },
         {
           "source": "**",
           "destination": "/index.html"

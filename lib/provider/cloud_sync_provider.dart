@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -213,7 +214,12 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         return;
       }
       final cred = await _firestoreService.signInWithGoogle();
-      final userEmail = cred?.user?.email ?? 'Google User';
+      if (cred == null) {
+        // Clean cancellation - no error banner, spinner dismisses cleanly
+        state = state.copyWith(loading: false);
+        return;
+      }
+      final userEmail = cred.user?.email ?? 'Google User';
       state = state.copyWith(
         signedIn: true,
         email: userEmail,
@@ -221,9 +227,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         successMessage: 'Conectado a Firestore con Google: $userEmail',
       );
     } catch (e) {
+      final err = _formatAuthError(e, isGoogle: true);
       state = state.copyWith(
         loading: false,
-        errorMessage: _formatAuthError(e, isGoogle: true),
+        errorMessage: err == 'error_sign_in_canceled' ? null : err,
       );
     }
   }
@@ -246,6 +253,15 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   String _formatAuthError(Object error, {bool isGoogle = false}) {
+    if (error is GoogleDriveScopeDeniedException) {
+      return 'error_drive_permission_denied';
+    }
+    if (error is GoogleSignInException) {
+      if (error.code == GoogleSignInExceptionCode.canceled) {
+        return 'error_sign_in_canceled';
+      }
+      return error.description ?? error.code.name;
+    }
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'user-not-found':
@@ -267,12 +283,46 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         case 'operation-not-allowed':
           return 'Este método no está activado en Firebase. En Firebase Console > Authentication > Sign-in method activa "Correo/Contraseña" o "Google".';
         case 'popup-closed-by-user':
-          return 'Inicio de sesión con Google cancelado.';
+        case 'cancelled-popup-request':
+          return 'error_sign_in_canceled';
         case 'user-disabled':
           return 'Esta cuenta ha sido inhabilitada.';
+        case 'network-request-failed':
+          return 'error_network';
+        case 'requires-recent-login':
+          return 'error_requires_recent_login';
         default:
           return error.message ?? error.code;
       }
+    }
+    if (error is SocketException) {
+      return 'error_network';
+    }
+    if (error is PlatformException) {
+      final code = error.code.toLowerCase();
+      final message = (error.message ?? '').toLowerCase();
+      if (code == 'sign_in_canceled' || code == '12501' || message.contains('canceled') || message.contains('cancelled')) {
+        return 'error_sign_in_canceled';
+      }
+      if (code == 'network_error' || code == '7' || message.contains('network')) {
+        return 'error_network';
+      }
+    }
+    final errStr = error.toString().toLowerCase();
+    if (errStr.contains('canceled') || errStr.contains('cancelled') || errStr.contains('12501')) {
+      return 'error_sign_in_canceled';
+    }
+    if (errStr.contains('socketexception') || errStr.contains('network') || errStr.contains('failed host lookup')) {
+      return 'error_network';
+    }
+    if (errStr.contains('permission') && (errStr.contains('denied') || errStr.contains('scope'))) {
+      return 'error_drive_permission_denied';
+    }
+    if (errStr.contains('drive.googleapis.com') || errStr.contains('194514517992') || errStr.contains('api is disabled')) {
+      return 'El servicio de Google Drive no está disponible o requiere activación en Google Cloud. Puedes usar Firestore para sincronizar.';
+    }
+    if (errStr.contains('requires-recent-login')) {
+      return 'error_requires_recent_login';
     }
     return error.toString();
   }
@@ -310,15 +360,16 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           successMessage: 'Connected successfully.',
         );
       } else {
+        // Clean dismissal on cancel
         state = state.copyWith(
           loading: false,
-          errorMessage: 'Sign-in cancelled by user.',
         );
       }
     } catch (e) {
+      final formatted = _formatAuthError(e);
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Connection failed: ${_formatAuthError(e)}',
+        errorMessage: formatted == 'error_sign_in_canceled' ? null : formatted,
       );
     }
   }
@@ -349,6 +400,35 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       storageType: storageType,
       backups: list,
     );
+  }
+
+  /// Permanently deletes the user's account and all associated cloud data in Firestore.
+  /// Complies with Google Play Account Deletion policy.
+  Future<bool> deleteAccountAndCloudData({String? password}) async {
+    state = state.copyWith(loading: true, errorMessage: null, successMessage: null);
+    final storageType = await _syncService.getStorageType();
+    if (storageType == CloudSyncStorageType.firestore) {
+      try {
+        await _firestoreService.deleteAccountAndCloudData(reauthPassword: password);
+        ref.read(googleUserProvider.notifier).setUser(null);
+        state = CloudSyncState(
+          storageType: storageType,
+          signedIn: false,
+          email: null,
+          loading: false,
+          successMessage: 'cloud_sync_delete_account_success',
+        );
+        return true;
+      } catch (e) {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: _formatAuthError(e),
+        );
+        return false;
+      }
+    }
+    state = state.copyWith(loading: false);
+    return false;
   }
 
   Future<void> refreshBackups() async {
@@ -490,6 +570,65 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       if (state.loading) {
         state = state.copyWith(loading: false);
       }
+    }
+  }
+
+  Future<void> disconnectGoogleAccount() async {
+    state = state.copyWith(loading: true);
+    try {
+      await _syncService.disconnect();
+      ref.read(googleUserProvider.notifier).setUser(null);
+      state = CloudSyncState(
+        storageType: state.storageType,
+        signedIn: false,
+        email: null,
+        backups: const [],
+        loading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: _formatAuthError(e),
+      );
+    }
+  }
+
+  Future<bool> deleteAllBackups() async {
+    state = state.copyWith(loading: true);
+    try {
+      final success = await _syncService.deleteAllBackups();
+      final list = await _syncService.getBackups();
+      state = state.copyWith(
+        backups: list,
+        loading: false,
+        successMessage: success ? 'cloud_sync_delete_all_backups_success' : null,
+        errorMessage: success ? null : 'Failed to delete backups.',
+      );
+      return success;
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Delete error: $e',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> deleteFirestoreCloudData() async {
+    state = state.copyWith(loading: true);
+    try {
+      await _firestoreService.deleteFirestoreCloudData();
+      state = state.copyWith(
+        loading: false,
+        successMessage: 'cloud_sync_delete_cloud_data_success',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'Error deleting cloud data: $e',
+      );
+      return false;
     }
   }
 

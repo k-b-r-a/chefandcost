@@ -1,11 +1,18 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+
+class GoogleDriveScopeDeniedException implements Exception {
+  const GoogleDriveScopeDeniedException();
+  @override
+  String toString() => 'GoogleDriveScopeDeniedException: Google Drive AppData permission was denied.';
+}
 
 enum CloudSyncStorageType { googleDrive, localDirectory, firestore }
 
@@ -107,10 +114,53 @@ class GoogleDriveSyncService {
       serverClientId: defaultServerClientId,
     );
     
-    return await GoogleSignIn.instance.authenticate();
+    GoogleSignInAccount? account;
+    try {
+      account = await GoogleSignIn.instance.authenticate();
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        return null;
+      }
+      rethrow;
+    } on PlatformException catch (e) {
+      if (e.code == 'sign_in_canceled' || e.code == '12501') {
+        return null;
+      }
+      rethrow;
+    } catch (e) {
+      final str = e.toString().toLowerCase();
+      if (str.contains('canceled') || str.contains('cancelled') || str.contains('12501')) {
+        return null;
+      }
+      rethrow;
+    }
+
+    if (account == null) return null;
+
+    // Immediately prompt and verify driveAppdataScope authorization
+    try {
+      final authHeaders = await account.authorizationClient.authorizationHeaders([
+        drive.DriveApi.driveAppdataScope,
+      ], promptIfNecessary: true);
+
+      if (authHeaders == null) {
+        await GoogleSignIn.instance.signOut();
+        throw const GoogleDriveScopeDeniedException();
+      }
+    } catch (e) {
+      if (e is GoogleDriveScopeDeniedException) rethrow;
+      final str = e.toString().toLowerCase();
+      if (str.contains('canceled') || str.contains('cancelled') || str.contains('denied') || str.contains('12501')) {
+        await GoogleSignIn.instance.signOut();
+        throw const GoogleDriveScopeDeniedException();
+      }
+      rethrow;
+    }
+
+    return account;
   }
 
-  /// Signs the user out / disconnects.
+  /// Signs the user out locally.
   Future<void> signOut() async {
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
@@ -123,6 +173,21 @@ class GoogleDriveSyncService {
     } catch (e) {
       debugPrint('GoogleSignIn.signOut failed or unimplemented: $e');
     }
+  }
+
+  /// Disconnects from Google account and revokes access permissions.
+  Future<void> disconnect() async {
+    final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
+    if (isSim) {
+      await signOut();
+      return;
+    }
+    try {
+      await GoogleSignIn.instance.disconnect();
+    } catch (e) {
+      debugPrint('GoogleSignIn.disconnect notice: $e');
+    }
+    await signOut();
   }
 
   /// Gets the local SQLite file directory.
@@ -448,6 +513,54 @@ class GoogleDriveSyncService {
       return true;
     } catch (e) {
       debugPrint('Error deleting Google Drive backup: $e');
+      return false;
+    }
+  }
+
+  /// Deletes all backups stored in Google Drive AppData folder (or local directory in simulation mode).
+  Future<bool> deleteAllBackups() async {
+    final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
+    if (isSim) {
+      if (kIsWeb) {
+        await _saveWebSimBackups([]);
+        return true;
+      }
+      final mockDir = await _getMockDriveDirectory();
+      if (await mockDir.exists()) {
+        final files = mockDir.listSync();
+        for (final f in files) {
+          if (f is File && f.path.endsWith('.sqlite')) {
+            try { f.deleteSync(); } catch (_) {}
+          }
+        }
+      }
+      return true;
+    }
+
+    try {
+      final client = await _getGoogleClient();
+      if (client == null) return false;
+
+      final driveApi = drive.DriveApi(client);
+      final fileList = await driveApi.files.list(
+        spaces: 'appDataFolder',
+        $fields: 'files(id)',
+      );
+
+      if (fileList.files != null) {
+        for (var file in fileList.files!) {
+          if (file.id != null) {
+            try {
+              await driveApi.files.delete(file.id!);
+            } catch (e) {
+              debugPrint('Error deleting file ${file.id}: $e');
+            }
+          }
+        }
+      }
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting all Google Drive backups: $e');
       return false;
     }
   }

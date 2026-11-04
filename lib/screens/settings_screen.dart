@@ -15,6 +15,7 @@ import '../constants.dart';
 import '../utils/app_logger.dart';
 import '../widgets/github_changelog_view.dart';
 import '../services/app_tutorial_service.dart';
+import '../services/url_launcher_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -1675,6 +1676,13 @@ class SettingsAboutScreen extends ConsumerWidget {
           ),
         ),
         actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: Text(l10n.settings_about_privacy_view_online),
+            onPressed: () {
+              UrlLauncherService.openPrivacyPolicy();
+            },
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.close_button),
@@ -2102,6 +2110,21 @@ class SettingsAboutScreen extends ConsumerWidget {
                         subtitle: Text(l10n.settings_about_privacy_terms_desc),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => _showPrivacyTermsDialog(context, theme, l10n),
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.indigo.withValues(alpha: 0.15),
+                          child: const Icon(Icons.language_outlined, color: Colors.indigo),
+                        ),
+                        title: Text(
+                          l10n.settings_about_privacy_view_online,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text('https://chefandcost.app/privacy'),
+                        trailing: const Icon(Icons.open_in_new, size: 20),
+                        onTap: () => UrlLauncherService.openPrivacyPolicy(),
                       ),
                       const Divider(height: 1, indent: 16, endIndent: 16),
                       ListTile(

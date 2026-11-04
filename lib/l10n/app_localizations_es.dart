@@ -1419,6 +1419,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'La aplicación únicamente solicita permisos de notificaciones y audio para avisarte cuando finaliza un temporizador de cocción.';
 
   @override
+  String get settings_about_privacy_view_online =>
+      'Ver Política de Privacidad Online';
+
+  @override
+  String get settings_about_privacy_delete_portal =>
+      'Portal Web de Eliminación de Cuenta y Datos';
+
+  @override
   String get cloud_sync_load_local_backup_btn =>
       'Cargar Copia de Seguridad Local';
 
@@ -1807,4 +1815,73 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get import_recipe_open_now_action => 'Abrir';
+
+  @override
+  String get cloud_sync_delete_account_btn =>
+      'Eliminar cuenta y datos de la nube';
+
+  @override
+  String get cloud_sync_delete_account_title => 'Eliminar cuenta y datos';
+
+  @override
+  String get cloud_sync_delete_account_confirm_desc =>
+      '¿Estás seguro de que deseas eliminar permanentemente tu cuenta y todos los datos sincronizados en la nube? Esta acción borrará tus recetas, ingredientes y copias de seguridad de Firestore y no se puede deshacer. Las recetas guardadas localmente en este dispositivo no se eliminarán.';
+
+  @override
+  String get cloud_sync_delete_account_password_prompt =>
+      'Introduce tu contraseña para confirmar la eliminación:';
+
+  @override
+  String get cloud_sync_delete_account_confirm_btn => 'Eliminar definitivamente';
+
+  @override
+  String get cloud_sync_delete_account_deleting =>
+      'Eliminando cuenta y datos de la nube...';
+
+  @override
+  String get cloud_sync_delete_account_success =>
+      'Cuenta y datos en la nube eliminados con éxito.';
+
+  @override
+  String get cloud_sync_delete_account_reauth_required =>
+      'Por seguridad, se requiere reautenticación reciente. Vuelve a iniciar sesión e inténtalo de nuevo.';
+
+  @override
+  String get cloud_sync_sign_in_canceled => 'Inicio de sesión cancelado.';
+
+  @override
+  String get cloud_sync_error_network => 'Sin conexión a internet. Verifica tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get cloud_sync_error_drive_permission_denied => 'Permiso de Google Drive denegado. Concede el permiso para respaldar tus datos.';
+
+  @override
+  String get cloud_sync_revoke_google_btn => 'Desconectar y revocar acceso';
+
+  @override
+  String get cloud_sync_delete_cloud_data_btn => 'Eliminar datos de la nube';
+
+  @override
+  String get cloud_sync_delete_cloud_data_confirm_title => '¿Eliminar todos los datos de la nube?';
+
+  @override
+  String get cloud_sync_delete_cloud_data_confirm_desc => 'Esto eliminará permanentemente todas las recetas, ingredientes y unidades almacenadas en Firestore. Los datos locales de este dispositivo no se eliminarán.';
+
+  @override
+  String get cloud_sync_delete_cloud_data_success => 'Datos de la nube eliminados con éxito.';
+
+  @override
+  String get cloud_sync_delete_all_backups_btn => 'Eliminar todas las copias';
+
+  @override
+  String get cloud_sync_delete_all_backups_confirm_title => '¿Eliminar todas las copias en la nube?';
+
+  @override
+  String get cloud_sync_delete_all_backups_confirm_desc => '¿Estás seguro de que deseas eliminar todas las copias de seguridad de Google Drive? Esta acción no se puede deshacer.';
+
+  @override
+  String get cloud_sync_delete_all_backups_success => 'Todas las copias en la nube han sido eliminadas.';
+
+  @override
+  String get cloud_sync_account_management_title => 'Gestión de cuenta y datos';
 }

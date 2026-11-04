@@ -2766,6 +2766,18 @@ abstract class AppLocalizations {
   /// **'The application only requests notification and audio permissions to alert you when recipe cooking timers complete.'**
   String get settings_about_privacy_permissions_desc;
 
+  /// No description provided for @settings_about_privacy_view_online.
+  ///
+  /// In en, this message translates to:
+  /// **'View Online Privacy Policy'**
+  String get settings_about_privacy_view_online;
+
+  /// No description provided for @settings_about_privacy_delete_portal.
+  ///
+  /// In en, this message translates to:
+  /// **'Web Account & Data Deletion Portal'**
+  String get settings_about_privacy_delete_portal;
+
   /// No description provided for @cloud_sync_load_local_backup_btn.
   ///
   /// In en, this message translates to:
@@ -3407,6 +3419,73 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get import_recipe_open_now_action;
+
+  /// No description provided for @cloud_sync_delete_account_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account & cloud data'**
+  String get cloud_sync_delete_account_btn => 'Delete account & cloud data';
+
+  /// No description provided for @cloud_sync_delete_account_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account & data'**
+  String get cloud_sync_delete_account_title => 'Delete account & data';
+
+  /// No description provided for @cloud_sync_delete_account_confirm_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to permanently delete your account and all data synced to the cloud? This action will remove your recipes, ingredients, and backups from Firestore and cannot be undone. Recipes stored locally on this device will not be deleted.'**
+  String get cloud_sync_delete_account_confirm_desc =>
+      'Are you sure you want to permanently delete your account and all data synced to the cloud? This action will remove your recipes, ingredients, and backups from Firestore and cannot be undone. Recipes stored locally on this device will not be deleted.';
+
+  /// No description provided for @cloud_sync_delete_account_password_prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password to confirm deletion:'**
+  String get cloud_sync_delete_account_password_prompt =>
+      'Enter your password to confirm deletion:';
+
+  /// No description provided for @cloud_sync_delete_account_confirm_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete'**
+  String get cloud_sync_delete_account_confirm_btn => 'Permanently delete';
+
+  /// No description provided for @cloud_sync_delete_account_deleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting account and cloud data...'**
+  String get cloud_sync_delete_account_deleting =>
+      'Deleting account and cloud data...';
+
+  /// No description provided for @cloud_sync_delete_account_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Account and cloud data successfully deleted.'**
+  String get cloud_sync_delete_account_success =>
+      'Account and cloud data successfully deleted.';
+
+  /// No description provided for @cloud_sync_delete_account_reauth_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent authentication required. Please sign in again and retry.'**
+  String get cloud_sync_delete_account_reauth_required =>
+      'Recent authentication required. Please sign in again and retry.';
+
+  String get cloud_sync_sign_in_canceled => 'Sign-in was canceled.';
+  String get cloud_sync_error_network => 'No internet connection. Please check your network and try again.';
+  String get cloud_sync_error_drive_permission_denied => 'Google Drive permission was denied. Please grant permission to back up your data.';
+  String get cloud_sync_revoke_google_btn => 'Disconnect & Revoke Google Access';
+  String get cloud_sync_delete_cloud_data_btn => 'Delete Cloud Data';
+  String get cloud_sync_delete_cloud_data_confirm_title => 'Delete All Cloud Data?';
+  String get cloud_sync_delete_cloud_data_confirm_desc => 'This will permanently delete all recipes, ingredients, and units stored in Firestore. Local data on this device will not be deleted.';
+  String get cloud_sync_delete_cloud_data_success => 'Cloud data deleted successfully.';
+  String get cloud_sync_delete_all_backups_btn => 'Delete All Backups';
+  String get cloud_sync_delete_all_backups_confirm_title => 'Delete All Cloud Backups?';
+  String get cloud_sync_delete_all_backups_confirm_desc => 'Are you sure you want to delete all backups from Google Drive? This action cannot be undone.';
+  String get cloud_sync_delete_all_backups_success => 'All cloud backups have been deleted.';
+  String get cloud_sync_account_management_title => 'Account & Data Management';
 }
 
 class _AppLocalizationsDelegate

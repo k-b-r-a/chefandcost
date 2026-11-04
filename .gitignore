@@ -53,3 +53,5 @@ app.*.map.json
 *.jks
 android/key.properties
 key.properties
+repomix.xml
+
