@@ -26,6 +26,13 @@ class MockCloudSyncNotifier extends CloudSyncNotifier {
   @override
   Future<void> checkStatus() async {}
 
+  bool syncTwoWayCalled = false;
+  @override
+  Future<SyncMergeResult?> syncTwoWay({String? targetBackupId}) async {
+    syncTwoWayCalled = true;
+    return const SyncMergeResult();
+  }
+
   bool forceOverwriteCalled = false;
   @override
   Future<bool> forceOverwriteCloud() async {
@@ -350,16 +357,18 @@ void main() {
   });
 
   group('CloudSyncScreen Widget Tests', () {
-    testWidgets('Renders Two-Way Cloud Sync button and opens confirmation dialog', (WidgetTester tester) async {
+    testWidgets('Renders Two-Way Cloud Sync button and triggers sync directly without confirmation dialog', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
+      final mockNotifier = MockCloudSyncNotifier();
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            cloudSyncProvider.overrideWith(MockCloudSyncNotifier.new),
+            cloudSyncProvider.overrideWith(() => mockNotifier),
           ],
           child: const MaterialApp(
             locale: Locale('en'),
@@ -379,7 +388,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(mockNotifier.syncTwoWayCalled, isTrue);
     });
 
     testWidgets('Force Overwrite Cloud enforces double-confirmation and case-sensitive OVERWRITE validation', (WidgetTester tester) async {

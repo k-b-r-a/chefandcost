@@ -483,7 +483,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ElevatedButton.icon(
-          onPressed: () => _confirmSync(context, notifier, l10n),
+          onPressed: state.loading ? null : () => notifier.syncTwoWay(),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
             backgroundColor: theme.colorScheme.primary,
@@ -712,34 +712,6 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     );
   }
 
-  void _confirmSync(BuildContext context, CloudSyncNotifier notifier, AppLocalizations l10n) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.sync),
-            const SizedBox(width: 8),
-            Expanded(child: Text(l10n.cloud_sync_sync_confirm_title)),
-          ],
-        ),
-        content: Text(l10n.cloud_sync_sync_confirm_desc),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.discard_button),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              notifier.syncTwoWay();
-            },
-            child: Text(l10n.cloud_sync_sync_btn),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showForceOverwriteDialog(
     BuildContext context,
