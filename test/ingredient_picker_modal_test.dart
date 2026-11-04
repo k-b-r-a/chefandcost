@@ -20,6 +20,7 @@ void main() {
       quantityForCost: 1000.0,
       unitFk: 'unit_g',
       dateCreated: DateTime.now(),
+        isDeleted: false,
     );
 
     const testUnit = Unit(

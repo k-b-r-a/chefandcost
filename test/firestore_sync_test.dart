@@ -76,6 +76,7 @@ void main() {
         unitFk: 'unit-g',
         dateCreated: now,
         dateTimeModified: null,
+        isDeleted: false,
       );
 
       final recipeIngredient = RecipeIngredient(
@@ -177,6 +178,7 @@ void main() {
         unitFk: 'unit-g',
         dateCreated: now,
         dateTimeModified: now.add(const Duration(days: 2)),
+        isDeleted: false,
       );
 
       final ingMap = FirestoreSyncService.ingredientToFirestore(ing);
@@ -389,6 +391,7 @@ void main() {
         unitFk: 'unit-kg',
         dateCreated: t1,
         dateTimeModified: t2,
+        isDeleted: false,
       ));
 
       // Older remote edit
@@ -400,6 +403,7 @@ void main() {
         unitFk: 'unit-kg',
         dateCreated: t1,
         dateTimeModified: t1,
+        isDeleted: false,
       ));
 
       expect(res, 0);
@@ -439,6 +443,7 @@ void main() {
         unitFk: 'unit-g',
         dateCreated: now,
         dateTimeModified: now,
+        isDeleted: false,
       );
 
       await db.mergeRecipeFromRemote(
@@ -464,6 +469,7 @@ void main() {
         unitFk: 'unit-g',
         dateCreated: now,
         dateTimeModified: now,
+        isDeleted: false,
       );
       await db.into(db.ingredients).insert(ingredient);
 
@@ -504,6 +510,7 @@ void main() {
         unitFk: 'unit-unknown-uuid-1234',
         dateCreated: now,
         dateTimeModified: now,
+        isDeleted: false,
       );
 
       // Should not throw SqliteException for foreign key violation
@@ -551,6 +558,7 @@ void main() {
         unitFk: 'unit-not-existing-yet',
         dateCreated: now,
         dateTimeModified: now,
+        isDeleted: false,
       );
 
       // Should safely pick first matching unit without throwing "Too many elements"
@@ -651,6 +659,615 @@ void main() {
       expect(parsed.nestedIngredients.first.cost, 0.0);
       expect(parsed.steps, hasLength(1));
       expect(parsed.steps.first.instruction, '');
+    });
+  });
+
+  group('Soft Delete Repository and DAO Tests', () {
+    late AppDatabase db;
+
+    setUp(() {
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('deleteIngredient soft-deletes ingredient and sets deletedAt and dateTimeModified', () async {
+      final now = DateTime.utc(2026, 6, 1, 10, 0, 0);
+      final ing = Ingredient(
+        ingredientPk: 'ing-soft-1',
+        name: 'Fresh Basil',
+        cost: 1.5,
+        quantityForCost: 50.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: false,
+      );
+      await db.into(db.ingredients).insert(ing);
+
+      final beforeDelete = await db.getAllIngredients();
+      expect(beforeDelete.any((i) => i.ingredientPk == 'ing-soft-1'), isTrue);
+
+      await db.deleteIngredient(ing);
+
+      final afterDelete = await db.getAllIngredients();
+      expect(afterDelete.any((i) => i.ingredientPk == 'ing-soft-1'), isFalse);
+
+      final allIncludingDeleted = await db.getAllIngredients(includeDeleted: true);
+      final deletedIng = allIncludingDeleted.firstWhere((i) => i.ingredientPk == 'ing-soft-1');
+      expect(deletedIng.isDeleted, isTrue);
+      expect(deletedIng.deletedAt, isNotNull);
+      expect(deletedIng.dateTimeModified, isNotNull);
+    });
+
+    test('restoreIngredient reactivates soft-deleted ingredient', () async {
+      final now = DateTime.utc(2026, 6, 1, 10, 0, 0);
+      final ing = Ingredient(
+        ingredientPk: 'ing-soft-restore',
+        name: 'Rosemary',
+        cost: 2.0,
+        quantityForCost: 30.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: true,
+        deletedAt: now,
+      );
+      await db.into(db.ingredients).insert(ing);
+
+      expect(await db.getIngredientById('ing-soft-restore'), isNull);
+
+      await db.restoreIngredient('ing-soft-restore');
+
+      final restored = await db.getIngredientById('ing-soft-restore');
+      expect(restored, isNotNull);
+      expect(restored!.isDeleted, isFalse);
+      expect(restored.deletedAt, isNull);
+    });
+
+    test('watchAllIngredients emits only non-deleted ingredients by default', () async {
+      final now = DateTime.utc(2026, 6, 1);
+      await db.into(db.ingredients).insert(Ingredient(
+        ingredientPk: 'ing-stream-act',
+        name: 'Thyme Active',
+        cost: 1.0,
+        quantityForCost: 20.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: false,
+      ));
+      await db.into(db.ingredients).insert(Ingredient(
+        ingredientPk: 'ing-stream-del',
+        name: 'Thyme Deleted',
+        cost: 1.0,
+        quantityForCost: 20.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: true,
+        deletedAt: now,
+      ));
+
+      final activeList = await db.watchAllIngredients().first;
+      expect(activeList.any((i) => i.ingredientPk == 'ing-stream-act'), isTrue);
+      expect(activeList.any((i) => i.ingredientPk == 'ing-stream-del'), isFalse);
+
+      final allList = await db.watchAllIngredients(includeDeleted: true).first;
+      expect(allList.any((i) => i.ingredientPk == 'ing-stream-del'), isTrue);
+    });
+
+    test('searchIngredients excludes soft-deleted ingredients', () async {
+      final now = DateTime.utc(2026, 6, 1);
+      await db.into(db.ingredients).insert(Ingredient(
+        ingredientPk: 'ing-search-1',
+        name: 'Matcha Powder Active',
+        cost: 10.0,
+        quantityForCost: 100.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: false,
+      ));
+      await db.into(db.ingredients).insert(Ingredient(
+        ingredientPk: 'ing-search-2',
+        name: 'Matcha Powder Deleted',
+        cost: 10.0,
+        quantityForCost: 100.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: true,
+        deletedAt: now,
+      ));
+
+      final searchResults = await db.searchIngredients('Matcha').first;
+      expect(searchResults.any((i) => i.ingredientPk == 'ing-search-1'), isTrue);
+      expect(searchResults.any((i) => i.ingredientPk == 'ing-search-2'), isFalse);
+    });
+
+    test('getRecipeDetail filters out soft-deleted ingredients from recipe calculations', () async {
+      final now = DateTime.utc(2026, 6, 1);
+      final rec = Recipe(
+        recipePk: 'rec-detail-filter',
+        name: 'Filtered Recipe',
+        defaultYield: 1.0,
+        yieldName: 'portion',
+        targetProfitMargin: 0.5,
+        targetPricePerPortion: 10.0,
+        fixedOverheadCost: 0.0,
+        dateCreated: now,
+        archived: false,
+      );
+      final ingActive = Ingredient(
+        ingredientPk: 'ing-act',
+        name: 'Active Sugar',
+        cost: 2.0,
+        quantityForCost: 1000.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: false,
+      );
+      final ingDeleted = Ingredient(
+        ingredientPk: 'ing-del',
+        name: 'Deleted Spice',
+        cost: 5.0,
+        quantityForCost: 100.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: true,
+        deletedAt: now,
+      );
+      await db.into(db.recipes).insert(rec);
+      await db.into(db.ingredients).insert(ingActive);
+      await db.into(db.ingredients).insert(ingDeleted);
+      await db.into(db.recipeIngredients).insert(RecipeIngredient(
+        recipeIngredientPk: 'ri-act',
+        recipeFk: 'rec-detail-filter',
+        ingredientFk: 'ing-act',
+        amountNeeded: 200.0,
+      ));
+      await db.into(db.recipeIngredients).insert(RecipeIngredient(
+        recipeIngredientPk: 'ri-del',
+        recipeFk: 'rec-detail-filter',
+        ingredientFk: 'ing-del',
+        amountNeeded: 50.0,
+      ));
+
+      final detail = await db.getRecipeDetail('rec-detail-filter');
+      expect(detail.ingredients.length, 1);
+      expect(detail.ingredients.first.ingredient.ingredientPk, 'ing-act');
+      expect(detail.ingredients.any((ri) => ri.ingredient.ingredientPk == 'ing-del'), isFalse);
+    });
+  });
+
+  group('Sync Deletion Tracking and Inbound Sync Filtering Tests', () {
+    late AppDatabase db;
+
+    setUp(() {
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('Delete ingredient locally -> sync -> verify ingredient is NOT re-downloaded when local deletion >= remote updated_at', () async {
+      final tCreated = DateTime.utc(2026, 6, 1, 10, 0, 0);
+      final tDeleted = DateTime.utc(2026, 6, 1, 12, 0, 0);
+      final tRemoteOld = DateTime.utc(2026, 6, 1, 11, 0, 0);
+
+      // Local ingredient was deleted at 12:00
+      final localIng = Ingredient(
+        ingredientPk: 'ing-sync-del',
+        name: 'Local Deleted Salt',
+        cost: 1.0,
+        quantityForCost: 1000.0,
+        unitFk: 'unit-g',
+        dateCreated: tCreated,
+        dateTimeModified: tCreated,
+        isDeleted: true,
+        deletedAt: tDeleted,
+      );
+      await db.into(db.ingredients).insert(localIng);
+
+      // Remote attempts to push an older active salt (11:00 < 12:00)
+      final remoteIng = Ingredient(
+        ingredientPk: 'ing-sync-del',
+        name: 'Old Remote Salt',
+        cost: 1.0,
+        quantityForCost: 1000.0,
+        unitFk: 'unit-g',
+        dateCreated: tCreated,
+        dateTimeModified: tRemoteOld,
+        isDeleted: false,
+      );
+
+      final res = await db.mergeIngredientFromRemote(remoteIng);
+      expect(res, 0); // Must be rejected / ignored
+
+      // Local ingredient must remain deleted
+      final inDb = await db.getIngredientById('ing-sync-del', includeDeleted: true);
+      expect(inDb?.isDeleted, isTrue);
+      expect(inDb?.deletedAt?.toUtc(), tDeleted);
+      expect(inDb?.name, 'Local Deleted Salt');
+    });
+
+    test('Inbound sync filtering: Firestore sends is_deleted: true -> applies deletion to Drift', () async {
+      final t1 = DateTime.utc(2026, 6, 1, 10, 0, 0);
+      final t2 = DateTime.utc(2026, 6, 1, 14, 0, 0);
+
+      // Local active ingredient at 10:00
+      final localActive = Ingredient(
+        ingredientPk: 'ing-remote-del',
+        name: 'Local Active Pepper',
+        cost: 3.0,
+        quantityForCost: 100.0,
+        unitFk: 'unit-g',
+        dateCreated: t1,
+        dateTimeModified: t1,
+        isDeleted: false,
+      );
+      await db.into(db.ingredients).insert(localActive);
+
+      // Remote sends deleted tombstone at 14:00
+      final remoteDeleted = Ingredient(
+        ingredientPk: 'ing-remote-del',
+        name: 'Remote Deleted Pepper',
+        cost: 3.0,
+        quantityForCost: 100.0,
+        unitFk: 'unit-g',
+        dateCreated: t1,
+        dateTimeModified: t2,
+        isDeleted: true,
+        deletedAt: t2,
+      );
+
+      final res = await db.mergeIngredientFromRemote(remoteDeleted);
+      expect(res, 2); // Applied update
+
+      final inDb = await db.getIngredientById('ing-remote-del', includeDeleted: true);
+      expect(inDb?.isDeleted, isTrue);
+      expect(inDb?.deletedAt?.toUtc(), t2);
+    });
+
+    test('Inbound sync filtering: Remote ingredient active and newer than local deletion -> resurrects ingredient', () async {
+      final t1 = DateTime.utc(2026, 6, 1, 10, 0, 0);
+      final tDeleted = DateTime.utc(2026, 6, 1, 11, 0, 0);
+      final tRemoteNew = DateTime.utc(2026, 6, 1, 15, 0, 0);
+
+      final localIng = Ingredient(
+        ingredientPk: 'ing-resurrect',
+        name: 'Deleted Ginger',
+        cost: 2.0,
+        quantityForCost: 100.0,
+        unitFk: 'unit-g',
+        dateCreated: t1,
+        dateTimeModified: t1,
+        isDeleted: true,
+        deletedAt: tDeleted,
+      );
+      await db.into(db.ingredients).insert(localIng);
+
+      final remoteNewer = Ingredient(
+        ingredientPk: 'ing-resurrect',
+        name: 'Resurrected Ginger',
+        cost: 2.5,
+        quantityForCost: 100.0,
+        unitFk: 'unit-g',
+        dateCreated: t1,
+        dateTimeModified: tRemoteNew,
+        isDeleted: false,
+      );
+
+      final res = await db.mergeIngredientFromRemote(remoteNewer);
+      expect(res, 2); // Resurrected
+
+      final inDb = await db.getIngredientById('ing-resurrect');
+      expect(inDb, isNotNull);
+      expect(inDb?.isDeleted, isFalse);
+      expect(inDb?.deletedAt, isNull);
+      expect(inDb?.name, 'Resurrected Ginger');
+      expect(inDb?.cost, 2.5);
+    });
+
+    test('Ingredient serialization preserves is_deleted and deleted_at for Firestore sync push', () {
+      final now = DateTime.utc(2026, 6, 1, 12, 0, 0);
+      final ing = Ingredient(
+        ingredientPk: 'ing-tombstone',
+        name: 'Deleted Herb',
+        cost: 1.0,
+        quantityForCost: 50.0,
+        unitFk: 'unit-g',
+        dateCreated: now,
+        isDeleted: true,
+        deletedAt: now,
+      );
+
+      final firestoreMap = FirestoreSyncService.ingredientToFirestore(ing);
+      expect(firestoreMap['is_deleted'], isTrue);
+      expect(firestoreMap['deleted_at'], now.toIso8601String());
+
+      final restored = FirestoreSyncService.ingredientFromFirestore(firestoreMap);
+      expect(restored.ingredientPk, 'ing-tombstone');
+      expect(restored.isDeleted, isTrue);
+      expect(restored.deletedAt?.toUtc(), now);
+    });
+  });
+
+  group('Recipe Dependency Conflict Resolver Tests', () {
+    late AppDatabase db;
+
+    setUp(() {
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('Case 1 (Recipe Updated AFTER Deletion: recipe.updated_at > ingredient.deleted_at): resurrects ingredient and preserves recipe integrity', () async {
+      final tCreated = DateTime.utc(2026, 6, 1, 10, 0, 0);
+      final tDeleted = DateTime.utc(2026, 6, 1, 12, 0, 0);
+      final tRecipeUpdated = DateTime.utc(2026, 6, 1, 14, 0, 0);
+
+      // 1. Local ingredient was deleted at 12:00
+      final localIng = Ingredient(
+        ingredientPk: 'ing-c1-cinnamon',
+        name: 'Cinnamon Powder',
+        cost: 4.0,
+        quantityForCost: 100.0,
+        unitFk: 'unit-g',
+        dateCreated: tCreated,
+        dateTimeModified: tCreated,
+        isDeleted: true,
+        deletedAt: tDeleted,
+      );
+      await db.into(db.ingredients).insert(localIng);
+
+      // 2. Incoming remote recipe was modified at 14:00 (after deletion) referencing Cinnamon
+      final remoteRecipe = Recipe(
+        recipePk: 'rec-c1-rolls',
+        name: 'Cinnamon Rolls',
+        defaultYield: 8.0,
+        yieldName: 'rolls',
+        targetProfitMargin: 0.6,
+        targetPricePerPortion: 4.0,
+        fixedOverheadCost: 0.5,
+        dateCreated: tCreated,
+        dateTimeModified: tRecipeUpdated,
+        archived: false,
+      );
+      final remoteRi = RecipeIngredient(
+        recipeIngredientPk: 'ri-c1-1',
+        recipeFk: 'rec-c1-rolls',
+        ingredientFk: 'ing-c1-cinnamon',
+        amountNeeded: 25.0,
+        dateTimeModified: tRecipeUpdated,
+      );
+
+      final res = await db.mergeRecipeFromRemote(
+        remoteRecipe: remoteRecipe,
+        remoteIngredients: [remoteRi],
+        remoteSteps: [],
+      );
+      expect(res, 1);
+
+      // Verification: ingredient must be reactivated (isDeleted == false, deletedAt == null)
+      final inDbIng = await db.getIngredientById('ing-c1-cinnamon');
+      expect(inDbIng, isNotNull);
+      expect(inDbIng!.isDeleted, isFalse);
+      expect(inDbIng.deletedAt, isNull);
+
+      // Verification: recipe detail must retain the ingredient reference
+      final detail = await db.getRecipeDetail('rec-c1-rolls');
+      expect(detail.ingredients, hasLength(1));
+      expect(detail.ingredients.first.ingredient.ingredientPk, 'ing-c1-cinnamon');
+      expect(detail.ingredients.first.entry.amountNeeded, 25.0);
+    });
+
+    test('Case 2 (Deletion NEWER Than Recipe: ingredient.deleted_at >= recipe.updated_at): retains deletion and detaches dead ingredient', () async {
+      final tRecipeUpdated = DateTime.utc(2026, 6, 1, 10, 0, 0);
+      final tDeleted = DateTime.utc(2026, 6, 1, 15, 0, 0);
+
+      // 1. Local ingredient was deleted at 15:00
+      final localIng = Ingredient(
+        ingredientPk: 'ing-c2-nutmeg',
+        name: 'Nutmeg',
+        cost: 3.0,
+        quantityForCost: 50.0,
+        unitFk: 'unit-g',
+        dateCreated: tRecipeUpdated,
+        dateTimeModified: tRecipeUpdated,
+        isDeleted: true,
+        deletedAt: tDeleted,
+      );
+      await db.into(db.ingredients).insert(localIng);
+
+      // 2. Incoming remote recipe was last edited at 10:00 (before deletion) referencing Nutmeg
+      final remoteRecipe = Recipe(
+        recipePk: 'rec-c2-nog',
+        name: 'Eggnog',
+        defaultYield: 4.0,
+        yieldName: 'glasses',
+        targetProfitMargin: 0.5,
+        targetPricePerPortion: 3.0,
+        fixedOverheadCost: 0.2,
+        dateCreated: tRecipeUpdated,
+        dateTimeModified: tRecipeUpdated,
+        archived: false,
+      );
+      final remoteRi = RecipeIngredient(
+        recipeIngredientPk: 'ri-c2-1',
+        recipeFk: 'rec-c2-nog',
+        ingredientFk: 'ing-c2-nutmeg',
+        amountNeeded: 5.0,
+        dateTimeModified: tRecipeUpdated,
+      );
+
+      // Merging should succeed without database crash or invalid foreign key
+      final res = await db.mergeRecipeFromRemote(
+        remoteRecipe: remoteRecipe,
+        remoteIngredients: [remoteRi],
+        remoteSteps: [],
+      );
+      expect(res, 1);
+
+      // Verification: ingredient remains deleted
+      final inDbIng = await db.getIngredientById('ing-c2-nutmeg', includeDeleted: true);
+      expect(inDbIng, isNotNull);
+      expect(inDbIng!.isDeleted, isTrue);
+      expect(inDbIng.deletedAt?.toUtc(), tDeleted);
+
+      // Verification: dead ingredient reference was detached from recipe
+      final detail = await db.getRecipeDetail('rec-c2-nog');
+      expect(detail.ingredients, isEmpty);
+    });
+
+    test('Case 3 (Simultaneous / Ambiguous): foreign-key assignments wrapped safely with stub creation', () async {
+      final now = DateTime.utc(2026, 6, 1, 12, 0, 0);
+      final remoteRecipe = Recipe(
+        recipePk: 'rec-c3-phantom',
+        name: 'Mystery Soup',
+        defaultYield: 2.0,
+        yieldName: 'bowls',
+        targetProfitMargin: 0.5,
+        targetPricePerPortion: 4.0,
+        fixedOverheadCost: 0.0,
+        dateCreated: now,
+        dateTimeModified: now,
+        archived: false,
+      );
+      final remoteRi = RecipeIngredient(
+        recipeIngredientPk: 'ri-c3-1',
+        recipeFk: 'rec-c3-phantom',
+        ingredientFk: 'ing-completely-unknown-12345',
+        amountNeeded: 10.0,
+        dateTimeModified: now,
+      );
+
+      // Should not throw SQLite foreign key constraint exception
+      final res = await db.mergeRecipeFromRemote(
+        remoteRecipe: remoteRecipe,
+        remoteIngredients: [remoteRi],
+        remoteSteps: [],
+      );
+      expect(res, 1);
+
+      final detail = await db.getRecipeDetail('rec-c3-phantom');
+      expect(detail.ingredients, hasLength(1));
+      expect(detail.ingredients.first.ingredient.ingredientPk, 'ing-completely-unknown-12345');
+    });
+
+    test('Case 3b: Nested ingredient marked deleted resurrects when recipe is updated after deletion', () async {
+      final tCreated = DateTime.utc(2026, 6, 1, 10, 0, 0);
+      final tDeleted = DateTime.utc(2026, 6, 1, 11, 0, 0);
+      final tRecipeUpdated = DateTime.utc(2026, 6, 1, 13, 0, 0);
+
+      final nestedDeleted = Ingredient(
+        ingredientPk: 'ing-c3b-nested',
+        name: 'Nested Cardamom',
+        cost: 6.0,
+        quantityForCost: 50.0,
+        unitFk: 'unit-g',
+        dateCreated: tCreated,
+        dateTimeModified: tDeleted,
+        isDeleted: true,
+        deletedAt: tDeleted,
+      );
+
+      final remoteRecipe = Recipe(
+        recipePk: 'rec-c3b-chai',
+        name: 'Chai Tea',
+        defaultYield: 2.0,
+        yieldName: 'cups',
+        targetProfitMargin: 0.7,
+        targetPricePerPortion: 2.5,
+        fixedOverheadCost: 0.1,
+        dateCreated: tCreated,
+        dateTimeModified: tRecipeUpdated,
+        archived: false,
+      );
+
+      final remoteRi = RecipeIngredient(
+        recipeIngredientPk: 'ri-c3b-1',
+        recipeFk: 'rec-c3b-chai',
+        ingredientFk: 'ing-c3b-nested',
+        amountNeeded: 5.0,
+        dateTimeModified: tRecipeUpdated,
+      );
+
+      final res = await db.mergeRecipeFromRemote(
+        remoteRecipe: remoteRecipe,
+        remoteIngredients: [remoteRi],
+        remoteSteps: [],
+        nestedIngredients: [nestedDeleted],
+      );
+      expect(res, 1);
+
+      final ingInDb = await db.getIngredientById('ing-c3b-nested');
+      expect(ingInDb, isNotNull);
+      expect(ingInDb!.isDeleted, isFalse);
+
+      final detail = await db.getRecipeDetail('rec-c3b-chai');
+      expect(detail.ingredients, hasLength(1));
+      expect(detail.ingredients.first.ingredient.ingredientPk, 'ing-c3b-nested');
+    });
+  });
+
+  group('Drift Schema Migration v1 to v2 Tests', () {
+    test('Database schema version is 2 and table schema includes is_deleted and deleted_at', () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      expect(db.schemaVersion, 2);
+
+      final cols = await db.customSelect("PRAGMA table_info('ingredients');").get();
+      final colNames = cols.map((row) => row.data['name'] as String).toList();
+      expect(colNames, contains('is_deleted'));
+      expect(colNames, contains('deleted_at'));
+
+      await db.close();
+    });
+
+    test('Incremental migration v1 to v2 preserves existing user data', () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+
+      // Drop current ingredients table and re-create as v1 (without is_deleted and deleted_at)
+      await db.customStatement('DROP TABLE ingredients;');
+      await db.customStatement('''
+        CREATE TABLE ingredients (
+          ingredient_pk TEXT NOT NULL PRIMARY KEY,
+          name TEXT NOT NULL,
+          cost REAL NOT NULL,
+          quantity_for_cost REAL NOT NULL,
+          unit_fk TEXT NOT NULL REFERENCES units(unit_pk),
+          date_created INTEGER NOT NULL,
+          date_time_modified INTEGER
+        );
+      ''');
+      await db.customStatement('''
+        INSERT INTO ingredients (ingredient_pk, name, cost, quantity_for_cost, unit_fk, date_created)
+        VALUES ('ing-v1-flour', 'Original Pre-Migration Flour', 2.5, 1000.0, 'unit-g', 1700000000);
+      ''');
+
+      // Execute onUpgrade migration step from 1 to 2
+      final migrator = db.createMigrator();
+      await db.migration.onUpgrade(migrator, 1, 2);
+
+      // Verify original data is preserved and columns have appropriate defaults
+      final allIngs = await db.getAllIngredients();
+      expect(allIngs.any((i) => i.ingredientPk == 'ing-v1-flour'), isTrue);
+      final flour = allIngs.firstWhere((i) => i.ingredientPk == 'ing-v1-flour');
+      expect(flour.name, 'Original Pre-Migration Flour');
+      expect(flour.cost, 2.5);
+      expect(flour.isDeleted, isFalse);
+      expect(flour.deletedAt, isNull);
+
+      // Verify soft delete functions properly on the migrated row
+      await db.deleteIngredient(flour);
+      final activeAfterDelete = await db.getAllIngredients();
+      expect(activeAfterDelete.any((i) => i.ingredientPk == 'ing-v1-flour'), isFalse);
+
+      final deletedRecord = await db.getIngredientById('ing-v1-flour', includeDeleted: true);
+      expect(deletedRecord?.isDeleted, isTrue);
+      expect(deletedRecord?.deletedAt, isNotNull);
+
+      await db.close();
     });
   });
 

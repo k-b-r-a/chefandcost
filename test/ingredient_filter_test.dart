@@ -67,6 +67,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'unit_g',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
 
       final milk = Ingredient(
@@ -76,6 +77,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'unit_ml',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
 
       final egg = Ingredient(
@@ -85,6 +87,7 @@ void main() {
         quantityForCost: 1,
         unitFk: 'unit_pcs',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
 
       final unitMap = {

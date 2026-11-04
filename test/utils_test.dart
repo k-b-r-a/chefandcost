@@ -86,6 +86,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'u_g',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
       final ing2 = Ingredient(
         ingredientPk: '2',
@@ -94,6 +95,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'u_ml',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
       final ing3 = Ingredient(
         ingredientPk: '3',
@@ -102,6 +104,7 @@ void main() {
         quantityForCost: 6,
         unitFk: 'u_pcs',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
 
       final ingredients = [ing1, ing2, ing3];

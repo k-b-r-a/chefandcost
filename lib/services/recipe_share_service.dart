@@ -889,6 +889,7 @@ class RecipeShareService {
             quantityForCost: ingQtyForCost,
             unitFk: resolvedUnitPk,
             dateCreated: DateTime.now(),
+            isDeleted: false,
           );
         } else {
           resolvedIngPk = existingIng.ingredientPk;

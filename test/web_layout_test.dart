@@ -114,6 +114,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'unit_g',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
       container.read(webLayoutProvider.notifier).openIngredient(ingredient);
 
@@ -154,6 +155,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'unit_g',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
       container.read(webLayoutProvider.notifier).openIngredient(ingredient);
       expect(container.read(webLayoutProvider).leftPaneIngredient, ingredient);
@@ -177,6 +179,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'unit_g',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
       container.read(webLayoutProvider.notifier).openIngredient(ingredient);
 
@@ -501,6 +504,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'unit_g',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
 
       await tester.pumpWidget(
@@ -551,6 +555,7 @@ void main() {
         quantityForCost: 1000,
         unitFk: 'unit_g',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
 
       await tester.pumpWidget(

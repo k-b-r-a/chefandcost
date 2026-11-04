@@ -650,6 +650,8 @@ class RecipeUtils {
             unitFk: drift.Value(ingData.ingredient.unitFk),
             dateCreated: drift.Value(ingData.ingredient.dateCreated),
             dateTimeModified: drift.Value(now),
+            isDeleted: const drift.Value(false),
+            deletedAt: const drift.Value(null),
           ),
         );
 

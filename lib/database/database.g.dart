@@ -1254,6 +1254,32 @@ class $IngredientsTable extends Ingredients
         requiredDuringInsert: false,
         defaultValue: Constant(DateTime.now()),
       );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ingredientPk,
@@ -1263,6 +1289,8 @@ class $IngredientsTable extends Ingredients
     unitFk,
     dateCreated,
     dateTimeModified,
+    isDeleted,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1338,6 +1366,18 @@ class $IngredientsTable extends Ingredients
         ),
       );
     }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -1375,6 +1415,14 @@ class $IngredientsTable extends Ingredients
         DriftSqlType.dateTime,
         data['${effectivePrefix}date_time_modified'],
       ),
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -1392,6 +1440,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final String unitFk;
   final DateTime dateCreated;
   final DateTime? dateTimeModified;
+  final bool isDeleted;
+  final DateTime? deletedAt;
   const Ingredient({
     required this.ingredientPk,
     required this.name,
@@ -1400,6 +1450,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     required this.unitFk,
     required this.dateCreated,
     this.dateTimeModified,
+    required this.isDeleted,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1412,6 +1464,10 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     map['date_created'] = Variable<DateTime>(dateCreated);
     if (!nullToAbsent || dateTimeModified != null) {
       map['date_time_modified'] = Variable<DateTime>(dateTimeModified);
+    }
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
     return map;
   }
@@ -1427,6 +1483,10 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       dateTimeModified: dateTimeModified == null && nullToAbsent
           ? const Value.absent()
           : Value(dateTimeModified),
+      isDeleted: Value(isDeleted),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -1445,6 +1505,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       dateTimeModified: serializer.fromJson<DateTime?>(
         json['dateTimeModified'],
       ),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -1458,6 +1520,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'unitFk': serializer.toJson<String>(unitFk),
       'dateCreated': serializer.toJson<DateTime>(dateCreated),
       'dateTimeModified': serializer.toJson<DateTime?>(dateTimeModified),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -1469,6 +1533,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     String? unitFk,
     DateTime? dateCreated,
     Value<DateTime?> dateTimeModified = const Value.absent(),
+    bool? isDeleted,
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => Ingredient(
     ingredientPk: ingredientPk ?? this.ingredientPk,
     name: name ?? this.name,
@@ -1479,6 +1545,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     dateTimeModified: dateTimeModified.present
         ? dateTimeModified.value
         : this.dateTimeModified,
+    isDeleted: isDeleted ?? this.isDeleted,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   Ingredient copyWithCompanion(IngredientsCompanion data) {
     return Ingredient(
@@ -1497,6 +1565,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       dateTimeModified: data.dateTimeModified.present
           ? data.dateTimeModified.value
           : this.dateTimeModified,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -1509,7 +1579,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           ..write('quantityForCost: $quantityForCost, ')
           ..write('unitFk: $unitFk, ')
           ..write('dateCreated: $dateCreated, ')
-          ..write('dateTimeModified: $dateTimeModified')
+          ..write('dateTimeModified: $dateTimeModified, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -1523,6 +1595,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     unitFk,
     dateCreated,
     dateTimeModified,
+    isDeleted,
+    deletedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1534,7 +1608,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           other.quantityForCost == this.quantityForCost &&
           other.unitFk == this.unitFk &&
           other.dateCreated == this.dateCreated &&
-          other.dateTimeModified == this.dateTimeModified);
+          other.dateTimeModified == this.dateTimeModified &&
+          other.isDeleted == this.isDeleted &&
+          other.deletedAt == this.deletedAt);
 }
 
 class IngredientsCompanion extends UpdateCompanion<Ingredient> {
@@ -1545,6 +1621,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<String> unitFk;
   final Value<DateTime> dateCreated;
   final Value<DateTime?> dateTimeModified;
+  final Value<bool> isDeleted;
+  final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const IngredientsCompanion({
     this.ingredientPk = const Value.absent(),
@@ -1554,6 +1632,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.unitFk = const Value.absent(),
     this.dateCreated = const Value.absent(),
     this.dateTimeModified = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   IngredientsCompanion.insert({
@@ -1564,6 +1644,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     required String unitFk,
     this.dateCreated = const Value.absent(),
     this.dateTimeModified = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name),
        cost = Value(cost),
@@ -1577,6 +1659,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Expression<String>? unitFk,
     Expression<DateTime>? dateCreated,
     Expression<DateTime>? dateTimeModified,
+    Expression<bool>? isDeleted,
+    Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1587,6 +1671,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       if (unitFk != null) 'unit_fk': unitFk,
       if (dateCreated != null) 'date_created': dateCreated,
       if (dateTimeModified != null) 'date_time_modified': dateTimeModified,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1599,6 +1685,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Value<String>? unitFk,
     Value<DateTime>? dateCreated,
     Value<DateTime?>? dateTimeModified,
+    Value<bool>? isDeleted,
+    Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
     return IngredientsCompanion(
@@ -1609,6 +1697,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       unitFk: unitFk ?? this.unitFk,
       dateCreated: dateCreated ?? this.dateCreated,
       dateTimeModified: dateTimeModified ?? this.dateTimeModified,
+      isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1637,6 +1727,12 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     if (dateTimeModified.present) {
       map['date_time_modified'] = Variable<DateTime>(dateTimeModified.value);
     }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1653,6 +1749,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
           ..write('unitFk: $unitFk, ')
           ..write('dateCreated: $dateCreated, ')
           ..write('dateTimeModified: $dateTimeModified, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3357,6 +3455,8 @@ typedef $$IngredientsTableCreateCompanionBuilder =
       required String unitFk,
       Value<DateTime> dateCreated,
       Value<DateTime?> dateTimeModified,
+      Value<bool> isDeleted,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 typedef $$IngredientsTableUpdateCompanionBuilder =
@@ -3368,6 +3468,8 @@ typedef $$IngredientsTableUpdateCompanionBuilder =
       Value<String> unitFk,
       Value<DateTime> dateCreated,
       Value<DateTime?> dateTimeModified,
+      Value<bool> isDeleted,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 
@@ -3462,6 +3564,16 @@ class $$IngredientsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$UnitsTableFilterComposer get unitFk {
     final $$UnitsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -3550,6 +3662,16 @@ class $$IngredientsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$UnitsTableOrderingComposer get unitFk {
     final $$UnitsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3608,6 +3730,12 @@ class $$IngredientsTableAnnotationComposer
     column: $table.dateTimeModified,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   $$UnitsTableAnnotationComposer get unitFk {
     final $$UnitsTableAnnotationComposer composer = $composerBuilder(
@@ -3694,6 +3822,8 @@ class $$IngredientsTableTableManager
                 Value<String> unitFk = const Value.absent(),
                 Value<DateTime> dateCreated = const Value.absent(),
                 Value<DateTime?> dateTimeModified = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => IngredientsCompanion(
                 ingredientPk: ingredientPk,
@@ -3703,6 +3833,8 @@ class $$IngredientsTableTableManager
                 unitFk: unitFk,
                 dateCreated: dateCreated,
                 dateTimeModified: dateTimeModified,
+                isDeleted: isDeleted,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3714,6 +3846,8 @@ class $$IngredientsTableTableManager
                 required String unitFk,
                 Value<DateTime> dateCreated = const Value.absent(),
                 Value<DateTime?> dateTimeModified = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => IngredientsCompanion.insert(
                 ingredientPk: ingredientPk,
@@ -3723,6 +3857,8 @@ class $$IngredientsTableTableManager
                 unitFk: unitFk,
                 dateCreated: dateCreated,
                 dateTimeModified: dateTimeModified,
+                isDeleted: isDeleted,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

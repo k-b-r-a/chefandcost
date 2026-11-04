@@ -245,6 +245,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
           quantityForCost: double.tryParse(_quantityController.text) ?? 1.0,
           unitFk: _selectedUnitPk ?? '',
           dateCreated: DateTime.now(),
+          isDeleted: false,
         );
 
     Navigator.push(

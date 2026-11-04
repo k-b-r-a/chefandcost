@@ -71,6 +71,7 @@ void main() {
     quantityForCost: 1000,
     unitFk: 'u_g',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
   final ingSugar = Ingredient(
     ingredientPk: 'ing_sugar',
@@ -79,6 +80,7 @@ void main() {
     quantityForCost: 1000,
     unitFk: 'u_g',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
   final ingMilk = Ingredient(
     ingredientPk: 'ing_milk',
@@ -87,6 +89,7 @@ void main() {
     quantityForCost: 1000,
     unitFk: 'u_ml',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
   final ingEggs = Ingredient(
     ingredientPk: 'ing_eggs',
@@ -95,6 +98,7 @@ void main() {
     quantityForCost: 12,
     unitFk: 'u_pcs',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
 
   group('Recipe Scaling & Weight/Volume Unit Tests', () {

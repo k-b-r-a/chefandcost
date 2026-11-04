@@ -251,6 +251,8 @@ class FirestoreSyncService {
         'unitFk': ri.ingredient.unitFk,
         'dateCreated': ri.ingredient.dateCreated.toIso8601String(),
         'ingredientDateTimeModified': ri.ingredient.dateTimeModified?.toIso8601String(),
+        'is_deleted': ri.ingredient.isDeleted,
+        'deleted_at': ri.ingredient.deletedAt?.toIso8601String(),
       }).toList(),
       'steps': detail.steps.map((st) => {
         'stepPk': st.stepPk,
@@ -310,6 +312,8 @@ class FirestoreSyncService {
       if (ingMap.containsKey('name') && ingMap['name'] != null) {
         final ingPk = (ingMap['ingredientPk'] ?? ingredientFk) as String;
         if (ingPk.isNotEmpty) {
+          final isDeleted = (ingMap['is_deleted'] ?? ingMap['isDeleted']) as bool? ?? false;
+          final deletedAt = _parseNullableDate(ingMap['deleted_at'] ?? ingMap['deletedAt']);
           nestedIngredients.add(
             Ingredient(
               ingredientPk: ingPk,
@@ -321,6 +325,8 @@ class FirestoreSyncService {
               dateTimeModified: _parseNullableDate(
                 ingMap['dateTimeModified'] ?? ingMap['ingredientDateTimeModified'],
               ),
+              isDeleted: isDeleted,
+              deletedAt: deletedAt,
             ),
           );
         }
@@ -356,7 +362,9 @@ class FirestoreSyncService {
 
   /// Serializes an [Ingredient] into Firestore format.
   static Map<String, dynamic> ingredientToFirestore(Ingredient ing) {
-    final updatedAt = ing.dateTimeModified ?? ing.dateCreated;
+    final updatedAt = ing.isDeleted
+        ? (ing.deletedAt ?? ing.dateTimeModified ?? ing.dateCreated)
+        : (ing.dateTimeModified ?? ing.dateCreated);
     return {
       'ingredientPk': ing.ingredientPk,
       'name': ing.name,
@@ -366,12 +374,16 @@ class FirestoreSyncService {
       'dateCreated': ing.dateCreated.toIso8601String(),
       'dateTimeModified': ing.dateTimeModified?.toIso8601String(),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'is_deleted': ing.isDeleted,
+      'deleted_at': ing.deletedAt?.toIso8601String(),
     };
   }
 
   /// Parses an [Ingredient] from Firestore format.
   static Ingredient ingredientFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
     final pk = (d['ingredientPk'] as String?) ?? fallbackId;
+    final isDeleted = (d['is_deleted'] ?? d['isDeleted']) as bool? ?? false;
+    final deletedAt = _parseNullableDate(d['deleted_at'] ?? d['deletedAt']);
     return Ingredient(
       ingredientPk: pk.isNotEmpty ? pk : 'ing_${DateTime.now().millisecondsSinceEpoch}',
       name: (d['name'] as String?) ?? 'Ingrediente',
@@ -380,6 +392,8 @@ class FirestoreSyncService {
       unitFk: (d['unitFk'] as String?) ?? 'unit-g',
       dateCreated: _parseDate(d['dateCreated']),
       dateTimeModified: _parseNullableDate(d['dateTimeModified']),
+      isDeleted: isDeleted,
+      deletedAt: deletedAt,
     );
   }
 
@@ -670,7 +684,7 @@ class FirestoreSyncService {
     // PHASE 2: PUSH LOCAL UPDATES
     // -------------------------------------------------------------
     final localUnits = await db.getAllUnits();
-    final localIngredients = await db.getAllIngredients();
+    final localIngredients = await db.getAllIngredients(includeDeleted: true);
     final localRecipes = (await db.getAllRecipeDetails())
         .where((r) => !isSampleManufacturingRecipe(r.recipe.recipePk))
         .toList();
@@ -695,7 +709,9 @@ class FirestoreSyncService {
     // Push Ingredients
     final pushedIngIds = <String>{};
     for (final ing in localIngredients) {
-      final localTime = ing.dateTimeModified ?? ing.dateCreated;
+      final localTime = ing.isDeleted
+          ? (ing.deletedAt ?? ing.dateTimeModified ?? ing.dateCreated)
+          : (ing.dateTimeModified ?? ing.dateCreated);
       final remoteTime = remoteIngUpdatedTimes[ing.ingredientPk];
       // If remote was strictly newer, remote already won locally; don't push older local edit
       if (remoteTime != null && remoteTime.isAfter(localTime)) {

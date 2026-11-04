@@ -66,6 +66,10 @@ class Ingredients extends Table {
   DateTimeColumn get dateTimeModified =>
       dateTime().withDefault(Constant(DateTime.now())).nullable()();
 
+  BoolColumn get isDeleted =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
   @override
   Set<Column> get primaryKey => {ingredientPk};
 }
