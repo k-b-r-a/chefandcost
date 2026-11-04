@@ -26,6 +26,7 @@
     {
       "site": "chefycost",
       "public": "build/web",
+      "cleanUrls": true,
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -123,6 +124,7 @@
     {
       "site": "chefycostbeta",
       "public": "build/web",
+      "cleanUrls": true,
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -220,6 +222,7 @@
     {
       "site": "chefycostalpha",
       "public": "build/web",
+      "cleanUrls": true,
       "ignore": [
         "firebase.json",
         "**/.*",

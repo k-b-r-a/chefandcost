@@ -1860,4 +1860,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cloud_sync_account_management_title => 'Account & Data Management';
+  @override
+  String get cloud_sync_terms_dialog_title => 'Cloud Sync Terms & Privacy';
+  @override
+  String get cloud_sync_terms_dialog_subtitle => 'Please review and accept how Chef&Cost syncs your data with Firebase and Google Drive before proceeding.';
+  @override
+  String get cloud_sync_terms_firestore_title => 'Google Firebase Firestore';
+  @override
+  String get cloud_sync_terms_firestore_desc => 'Synchronizes your recipes, ingredient costs, and settings in real-time across your authorized devices.';
+  @override
+  String get cloud_sync_terms_drive_title => 'Google Drive (AppData)';
+  @override
+  String get cloud_sync_terms_drive_desc => 'Uploads database backups strictly to Chef&Cost\'s hidden application folder. We cannot access or see any of your personal Google Drive files.';
+  @override
+  String get cloud_sync_terms_privacy_title => '100% Data Ownership & Privacy';
+  @override
+  String get cloud_sync_terms_privacy_desc => 'Your recipes, yields, and business financial figures belong exclusively to you. Your data is never sold, shared, or mined for third parties.';
+  @override
+  String get cloud_sync_terms_control_title => 'Full Revocation & Deletion Rights';
+  @override
+  String get cloud_sync_terms_control_desc => 'You can disconnect your account, revoke Google authorization, or delete all cloud-stored data permanently at any time.';
+  @override
+  String get cloud_sync_terms_view_privacy => 'Read Full Privacy Policy online';
+  @override
+  String get cloud_sync_terms_accept_btn => 'Accept & Continue';
+  @override
+  String get cloud_sync_terms_decline_btn => 'Not Now';
+  @override
+  String get cloud_sync_terms_banner_unaccepted => 'Cloud Terms & Privacy must be accepted before syncing with Firebase or Google Drive.';
+  @override
+  String get cloud_sync_terms_accepted_badge => 'Cloud Terms & Privacy Policy Accepted';
+  @override
+  String get cloud_sync_terms_review_btn => 'Review Terms';
+  @override
+  String get cloud_sync_terms_required_warning => 'You must accept the terms of service and privacy policy to connect to cloud services.';
 }

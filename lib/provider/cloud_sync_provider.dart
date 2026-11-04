@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
 import '../database/sample_manufacturing_recipe.dart';
 import '../utils/cloud_sync_service.dart';
@@ -19,6 +20,7 @@ class CloudSyncState {
   final String? errorMessage;
   final String? successMessage;
   final CloudSyncStorageType storageType;
+  final bool hasAcceptedTerms;
 
   CloudSyncState({
     this.signedIn = false,
@@ -28,6 +30,7 @@ class CloudSyncState {
     this.errorMessage,
     this.successMessage,
     this.storageType = CloudSyncStorageType.firestore,
+    this.hasAcceptedTerms = false,
   });
 
   CloudSyncState copyWith({
@@ -38,6 +41,7 @@ class CloudSyncState {
     String? errorMessage,
     String? successMessage,
     CloudSyncStorageType? storageType,
+    bool? hasAcceptedTerms,
   }) {
     return CloudSyncState(
       signedIn: signedIn ?? this.signedIn,
@@ -47,6 +51,7 @@ class CloudSyncState {
       errorMessage: errorMessage,
       successMessage: successMessage,
       storageType: storageType ?? this.storageType,
+      hasAcceptedTerms: hasAcceptedTerms ?? this.hasAcceptedTerms,
     );
   }
 }
@@ -78,6 +83,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     if (_disposed) return;
     state = state.copyWith(loading: true);
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final acceptedTermsPref = prefs.getBool('cloud_terms_accepted') ?? false;
+
       final storageType = await _syncService.getStorageType();
       if (_disposed) return;
 
@@ -85,12 +93,17 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         final user = _firestoreService.authCurrentUser;
         final signedIn = _firestoreService.isConfigured && user != null;
         final email = user?.email;
+        final hasAccepted = acceptedTermsPref || signedIn;
+        if (signedIn && !acceptedTermsPref) {
+          await prefs.setBool('cloud_terms_accepted', true);
+        }
         if (_disposed) return;
         state = state.copyWith(
           signedIn: signedIn,
           email: email,
           backups: const [],
           storageType: storageType,
+          hasAcceptedTerms: hasAccepted,
           loading: false,
         );
         return;
@@ -113,6 +126,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       }
       
       final signedIn = storageType == CloudSyncStorageType.localDirectory || account != null;
+      final hasAccepted = acceptedTermsPref || signedIn;
+      if (signedIn && !acceptedTermsPref) {
+        await prefs.setBool('cloud_terms_accepted', true);
+      }
       String? email;
       if (signedIn) {
         email = storageType == CloudSyncStorageType.localDirectory ? 'Local Backup' : account?.email;
@@ -126,6 +143,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         email: email,
         backups: backups,
         storageType: storageType,
+        hasAcceptedTerms: hasAccepted,
         loading: false,
       );
     } catch (e) {
@@ -152,6 +170,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         email: email,
         backups: const [],
         loading: false,
+        hasAcceptedTerms: state.hasAcceptedTerms || signedIn,
       );
       return;
     }
@@ -164,7 +183,19 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       email: type == CloudSyncStorageType.localDirectory ? 'Local Backup' : null,
       backups: backups,
       loading: false,
+      hasAcceptedTerms: state.hasAcceptedTerms || type == CloudSyncStorageType.localDirectory,
     );
+  }
+
+  /// Persists acceptance of Cloud Sync Terms of Service and Privacy Policy
+  Future<void> acceptTerms() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('cloud_terms_accepted', true);
+      state = state.copyWith(hasAcceptedTerms: true);
+    } catch (_) {
+      state = state.copyWith(hasAcceptedTerms: true);
+    }
   }
 
   /// Signs in with Email and Password (or registers if isRegister is true)
@@ -173,6 +204,13 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     required String password,
     bool isRegister = false,
   }) async {
+    if (!state.hasAcceptedTerms) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'cloud_sync_terms_required_warning',
+      );
+      return;
+    }
     state = state.copyWith(loading: true);
     try {
       if (!_firestoreService.isConfigured) {
@@ -204,6 +242,13 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
 
   /// Signs in with Google account (native popup on web, GoogleSignIn on mobile)
   Future<void> signInWithGoogle() async {
+    if (!state.hasAcceptedTerms) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'cloud_sync_terms_required_warning',
+      );
+      return;
+    }
     state = state.copyWith(loading: true);
     try {
       if (!_firestoreService.isConfigured) {
@@ -328,9 +373,17 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<void> signIn() async {
+    final currentStorage = await _syncService.getStorageType();
+    if (!state.hasAcceptedTerms && currentStorage != CloudSyncStorageType.localDirectory) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'cloud_sync_terms_required_warning',
+      );
+      return;
+    }
     state = state.copyWith(loading: true);
     try {
-      final storageType = await _syncService.getStorageType();
+      final storageType = currentStorage;
       if (storageType == CloudSyncStorageType.firestore) {
         state = state.copyWith(
           loading: false,
@@ -387,6 +440,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         storageType: storageType,
         signedIn: false,
         email: null,
+        hasAcceptedTerms: state.hasAcceptedTerms,
       );
       return;
     }
@@ -399,6 +453,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     state = CloudSyncState(
       storageType: storageType,
       backups: list,
+      hasAcceptedTerms: state.hasAcceptedTerms,
     );
   }
 
@@ -416,6 +471,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           signedIn: false,
           email: null,
           loading: false,
+          hasAcceptedTerms: state.hasAcceptedTerms,
           successMessage: 'cloud_sync_delete_account_success',
         );
         return true;
@@ -584,6 +640,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         email: null,
         backups: const [],
         loading: false,
+        hasAcceptedTerms: state.hasAcceptedTerms,
       );
     } catch (e) {
       state = state.copyWith(

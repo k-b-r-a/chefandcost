@@ -3486,6 +3486,23 @@ abstract class AppLocalizations {
   String get cloud_sync_delete_all_backups_confirm_desc => 'Are you sure you want to delete all backups from Google Drive? This action cannot be undone.';
   String get cloud_sync_delete_all_backups_success => 'All cloud backups have been deleted.';
   String get cloud_sync_account_management_title => 'Account & Data Management';
+  String get cloud_sync_terms_dialog_title => 'Cloud Sync Terms & Privacy';
+  String get cloud_sync_terms_dialog_subtitle => 'Please review and accept how Chef&Cost syncs your data with Firebase and Google Drive before proceeding.';
+  String get cloud_sync_terms_firestore_title => 'Google Firebase Firestore';
+  String get cloud_sync_terms_firestore_desc => 'Synchronizes your recipes, ingredient costs, and settings in real-time across your authorized devices.';
+  String get cloud_sync_terms_drive_title => 'Google Drive (AppData)';
+  String get cloud_sync_terms_drive_desc => 'Uploads database backups strictly to Chef&Cost\'s hidden application folder. We cannot access or see any of your personal Google Drive files.';
+  String get cloud_sync_terms_privacy_title => '100% Data Ownership & Privacy';
+  String get cloud_sync_terms_privacy_desc => 'Your recipes, yields, and business financial figures belong exclusively to you. Your data is never sold, shared, or mined for third parties.';
+  String get cloud_sync_terms_control_title => 'Full Revocation & Deletion Rights';
+  String get cloud_sync_terms_control_desc => 'You can disconnect your account, revoke Google authorization, or delete all cloud-stored data permanently at any time.';
+  String get cloud_sync_terms_view_privacy => 'Read Full Privacy Policy online';
+  String get cloud_sync_terms_accept_btn => 'Accept & Continue';
+  String get cloud_sync_terms_decline_btn => 'Not Now';
+  String get cloud_sync_terms_banner_unaccepted => 'Cloud Terms & Privacy must be accepted before syncing with Firebase or Google Drive.';
+  String get cloud_sync_terms_accepted_badge => 'Cloud Terms & Privacy Policy Accepted';
+  String get cloud_sync_terms_review_btn => 'Review Terms';
+  String get cloud_sync_terms_required_warning => 'You must accept the terms of service and privacy policy to connect to cloud services.';
 }
 
 class _AppLocalizationsDelegate

@@ -18,6 +18,8 @@ import 'screens/rule_of_three_screen.dart';
 import 'screens/unit_converter_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/cloud_sync_screen.dart';
+import 'screens/privacy_policy_screen.dart';
+import 'screens/delete_account_screen.dart';
 import 'provider/settings_provider.dart';
 import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
@@ -201,6 +203,26 @@ class ChefAndCostApp extends ConsumerWidget {
         );
       },
       home: const MainNavigationScreen(),
+      onGenerateRoute: (routeSettings) {
+        final uri = Uri.tryParse(routeSettings.name ?? '') ?? Uri();
+        final path = uri.path.toLowerCase();
+        if (path == '/privacy' || path == '/privacy.html') {
+          return MaterialPageRoute(
+            settings: routeSettings,
+            builder: (_) => const PrivacyPolicyScreen(),
+          );
+        }
+        if (path == '/delete-account' || path == '/delete-account.html') {
+          return MaterialPageRoute(
+            settings: routeSettings,
+            builder: (_) => const DeleteAccountScreen(),
+          );
+        }
+        return MaterialPageRoute(
+          settings: routeSettings,
+          builder: (_) => const MainNavigationScreen(),
+        );
+      },
     );
   }
 }
