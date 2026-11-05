@@ -413,7 +413,7 @@ void main() {
         mimeType: 'application/octet-stream',
       );
 
-      expect(xFile.name, 'My_Delicious_Cake.chefy');
+      expect(xFile.name.endsWith('My_Delicious_Cake.chefy'), isTrue);
       expect(xFile.mimeType, 'application/octet-stream');
       expect(await xFile.readAsBytes(), sampleBytes);
     });

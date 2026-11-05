@@ -702,6 +702,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
             cloudSyncProvider.overrideWith(() => mockSyncNotifier),
           ],
@@ -742,6 +743,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
             cloudSyncProvider.overrideWith(() => mockSyncNotifier),
           ],

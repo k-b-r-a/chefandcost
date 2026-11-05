@@ -86,7 +86,6 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
-
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, URL_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "openUrl" -> {
@@ -130,6 +129,9 @@ class MainActivity : FlutterActivity() {
 
         try {
             val fileName = getFileName(uri)
+            if (!fileName.endsWith(".chefy", ignoreCase = true)) {
+                return
+            }
             val content = readFileContent(uri)
 
             if (!content.isNullOrBlank()) {
