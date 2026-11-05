@@ -7,6 +7,35 @@ const int nameLimit = 250;
 const int noteLimit = 500;
 const int colourLimit = 50;
 
+@DataClassName('Group')
+class Groups extends Table {
+  TextColumn get id => text().clientDefault(() => uuid.v4())();
+  TextColumn get name => text().withLength(max: 50)();
+  TextColumn get iconName => text().named('icon_name').nullable()();
+  TextColumn get colorHex => text().named('color_hex').nullable()();
+  BoolColumn get isActive =>
+      boolean().named('is_active').withDefault(const Constant(true))();
+  DateTimeColumn get createdAt =>
+      dateTime().named('created_at').clientDefault(() => DateTime.now())();
+  DateTimeColumn get updatedAt =>
+      dateTime().named('updated_at').clientDefault(() => DateTime.now())();
+  BoolColumn get isDeleted =>
+      boolean().named('is_deleted').withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('Category')
+class Categories extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text().withLength(max: 50)();
+  TextColumn get iconName => text().named('icon_name').nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DataClassName('Recipe')
 class Recipes extends Table {
   TextColumn get recipePk => text().clientDefault(() => uuid.v4())();
@@ -30,6 +59,11 @@ class Recipes extends Table {
       dateTime().withDefault(Constant(DateTime.now())).nullable()();
 
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
+
+  TextColumn get groupId =>
+      text().named('group_id').nullable().references(Groups, #id)();
+  TextColumn get category =>
+      text().withLength(max: 50).withDefault(const Constant('cocina')).nullable()();
 
   @override
   Set<Column> get primaryKey => {recipePk};
@@ -65,6 +99,23 @@ class Ingredients extends Table {
       dateTime().clientDefault(() => DateTime.now())();
   DateTimeColumn get dateTimeModified =>
       dateTime().withDefault(Constant(DateTime.now())).nullable()();
+
+  BoolColumn get isDeleted =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  TextColumn get groupId =>
+      text().named('group_id').nullable().references(Groups, #id)();
+  TextColumn get category => text().withLength(max: 50).nullable()();
+
+  RealColumn get currentStock =>
+      real().named('current_stock').withDefault(const Constant(0.0)).nullable()();
+  RealColumn get minimumStock => real().named('minimum_stock').nullable()();
+  TextColumn get stockUnit => text().named('stock_unit').nullable()();
+  RealColumn get costPerStockUnit =>
+      real().named('cost_per_stock_unit').nullable()();
+  DateTimeColumn get lastStockUpdate =>
+      dateTime().named('last_stock_update').nullable()();
 
   @override
   Set<Column> get primaryKey => {ingredientPk};

@@ -39,6 +39,7 @@ void main() {
     quantityForCost: 1000.0,
     unitFk: 'u_g',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
 
   group('RecipeEditorScreen Tools Menu and Redundant Button Removal Tests', () {

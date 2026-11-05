@@ -10,6 +10,7 @@ import '../provider/timers_provider.dart';
 import '../utils/recipe_utils.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../widgets/tool_card.dart';
+import '../widgets/active_group_chip.dart';
 import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
 
@@ -83,6 +84,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             title: l10n.home_title,
             controller: _scrollController,
             actions: [
+              const ActiveGroupChip(isCompact: true),
               IconButton(
                 key: const ValueKey('home_sync_button'),
                 icon: syncState.loading

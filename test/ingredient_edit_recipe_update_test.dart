@@ -64,6 +64,7 @@ void main() {
         quantityForCost: 1.0,
         unitFk: 'u_kg',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
 
       // Construct with initialTargetAmount: '10' (meaning 10 grams)
@@ -89,6 +90,7 @@ void main() {
         quantityForCost: 1.0,
         unitFk: 'u_kg',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
 
       // Loading from DB where amountNeeded is stored in source unit (0.01 kg)
@@ -166,6 +168,7 @@ void main() {
         quantityForCost: 1.0,
         unitFk: 'u_kg',
         dateCreated: DateTime.now(),
+        isDeleted: false,
       );
       await db.into(db.ingredients).insert(flour);
 

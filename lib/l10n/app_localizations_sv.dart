@@ -1407,13 +1407,6 @@ class AppLocalizationsSv extends AppLocalizations {
       'The application only requests notification and audio permissions to alert you when recipe cooking timers complete.';
 
   @override
-  String get settings_about_privacy_view_online => 'View Online Privacy Policy';
-
-  @override
-  String get settings_about_privacy_delete_portal =>
-      'Web Account & Data Deletion Portal';
-
-  @override
   String get cloud_sync_load_local_backup_btn => 'Load Local Backup';
 
   @override
@@ -1791,6 +1784,87 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get import_recipe_open_now_action => 'Open';
+
+  @override
+  String get category_all => 'All';
+
+  @override
+  String get category_cocina => 'Kitchen';
+
+  @override
+  String get category_pasteleria => 'Pastry';
+
+  @override
+  String get category_cocteleria => 'Cocktails';
+
+  @override
+  String get category_label => 'Category';
+
+  @override
+  String get category_filter_tooltip => 'Filter by category';
+
+  @override
+  String get groups_title => 'Workspaces & Groups';
+
+  @override
+  String get group_default_name => 'Main';
+
+  @override
+  String get group_switcher_tooltip => 'Switch workspace';
+
+  @override
+  String get group_active_label => 'Active Workspace';
+
+  @override
+  String get group_add_new => 'New Workspace';
+
+  @override
+  String get group_edit => 'Edit Workspace';
+
+  @override
+  String get group_name_label => 'Workspace Name';
+
+  @override
+  String get group_name_hint => 'e.g., Main Kitchen, Barú...';
+
+  @override
+  String get group_color_label => 'Color';
+
+  @override
+  String get group_icon_label => 'Icon';
+
+  @override
+  String get group_delete => 'Delete Workspace';
+
+  @override
+  String get group_delete_confirm =>
+      'Are you sure you want to delete this workspace?';
+
+  @override
+  String get group_delete_cannot_last =>
+      'You cannot delete the only remaining workspace.';
+
+  @override
+  String group_switch_success(String name) {
+    return 'Switched to $name';
+  }
+
+  @override
+  String get group_all_workspaces => 'All Workspaces';
+
+  @override
+  String get group_select_prompt => 'Select a workspace to manage its recipes';
+
+  @override
+  String get group_management_subtitle =>
+      'Manage venues, kitchens and operational workspaces';
+
+  @override
+  String get settings_about_privacy_view_online => 'View Online Privacy Policy';
+
+  @override
+  String get settings_about_privacy_delete_portal =>
+      'Web Account & Data Deletion Portal';
 
   @override
   String get cloud_sync_delete_account_btn => 'Delete account & cloud data';

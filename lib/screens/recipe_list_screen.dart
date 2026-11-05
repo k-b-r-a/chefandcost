@@ -12,7 +12,11 @@ import '../widgets/floating_pill_app_bar.dart';
 import '../provider/web_layout_provider.dart';
 import '../services/app_tutorial_service.dart';
 import '../database/sample_manufacturing_recipe.dart';
+import '../database/recipe_category.dart';
 import '../widgets/share_recipe_sheet.dart';
+import '../widgets/recipe_category_filter_chips_row.dart';
+import '../widgets/recipe_category_badge.dart';
+import '../widgets/active_group_chip.dart';
 import '../utils/recipe_import_helper.dart';
 import 'recipe_editor_screen.dart';
 
@@ -118,6 +122,8 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
             title: l10n.recipes_title,
             controller: _scrollController,
             actions: [
+              const ActiveGroupChip(isCompact: true),
+              const SizedBox(width: 4),
               IconButton(
                 icon: const Icon(Icons.file_download_outlined),
                 tooltip: l10n.import_recipe_button,
@@ -139,6 +145,19 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
               const SizedBox(width: 8),
             ],
           ),
+          SliverToBoxAdapter(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 860),
+                child: RecipeCategoryFilterChipsRow(
+                  selectedCategory: ref.watch(recipeCategoryFilterProvider),
+                  onCategorySelected: (cat) {
+                    ref.read(recipeCategoryFilterProvider.notifier).setCategory(cat);
+                  },
+                ),
+              ),
+            ),
+          ),
           recipesAsync.when(
             data: (recipes) {
               final hasSample = recipes.any(
@@ -156,11 +175,21 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 }
               }
 
+              final selectedCategory = ref.watch(recipeCategoryFilterProvider);
+
               final filteredRecipes = recipes.where((item) {
                 final effectiveName = isSampleManufacturingRecipe(item.recipe.recipePk)
                     ? l10n.sample_manufacturing_recipe_title
                     : item.recipe.name;
-                return effectiveName.toLowerCase().contains(searchQuery);
+                final matchesSearch = effectiveName.toLowerCase().contains(searchQuery);
+                if (!matchesSearch) return false;
+
+                if (selectedCategory != null) {
+                  final cat = RecipeCategory.fromString(item.recipe.category);
+                  if (cat != selectedCategory) return false;
+                }
+
+                return true;
               }).toList();
 
               if (!_tutorialChecked && filteredRecipes.isNotEmpty) {
@@ -310,6 +339,11 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                               ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            RecipeCategoryBadge(
+                                              categoryString: recipe.category,
+                                              isCompact: true,
                                             ),
                                             if (isSampleManufacturingRecipe(recipe.recipePk)) ...[
                                               const SizedBox(width: 6),
