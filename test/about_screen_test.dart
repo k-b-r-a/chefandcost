@@ -75,9 +75,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Chef&Cost'), findsOneWidget);
-      expect(find.textContaining('0.1.2-alpha+7'), findsOneWidget);
+      expect(find.textContaining('0.1.2+7'), findsOneWidget);
       expect(find.textContaining('Esquema DB v2'), findsOneWidget);
-      expect(find.text('Canal Alpha'), findsOneWidget);
+      expect(find.text('Canal Estable'), findsOneWidget);
     });
 
     testWidgets('Displays Developer Info and copies email to clipboard', (WidgetTester tester) async {
