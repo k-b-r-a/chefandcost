@@ -2766,6 +2766,18 @@ abstract class AppLocalizations {
   /// **'The application only requests notification and audio permissions to alert you when recipe cooking timers complete.'**
   String get settings_about_privacy_permissions_desc;
 
+  /// No description provided for @settings_about_privacy_view_online.
+  ///
+  /// In en, this message translates to:
+  /// **'View Online Privacy Policy'**
+  String get settings_about_privacy_view_online;
+
+  /// No description provided for @settings_about_privacy_delete_portal.
+  ///
+  /// In en, this message translates to:
+  /// **'Web Account & Data Deletion Portal'**
+  String get settings_about_privacy_delete_portal;
+
   /// No description provided for @cloud_sync_load_local_backup_btn.
   ///
   /// In en, this message translates to:
@@ -3407,6 +3419,234 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get import_recipe_open_now_action;
+
+  /// No description provided for @cloud_sync_delete_account_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account & cloud data'**
+  String get cloud_sync_delete_account_btn;
+
+  /// No description provided for @cloud_sync_delete_account_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account & data'**
+  String get cloud_sync_delete_account_title;
+
+  /// No description provided for @cloud_sync_delete_account_confirm_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to permanently delete your account and all data synced to the cloud? This action will remove your recipes, ingredients, and backups from Firestore and cannot be undone. Recipes stored locally on this device will not be deleted.'**
+  String get cloud_sync_delete_account_confirm_desc;
+
+  /// No description provided for @cloud_sync_delete_account_password_prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password to confirm deletion:'**
+  String get cloud_sync_delete_account_password_prompt;
+
+  /// No description provided for @cloud_sync_delete_account_confirm_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete'**
+  String get cloud_sync_delete_account_confirm_btn;
+
+  /// No description provided for @cloud_sync_delete_account_deleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting account and cloud data...'**
+  String get cloud_sync_delete_account_deleting;
+
+  /// No description provided for @cloud_sync_delete_account_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Account and cloud data successfully deleted.'**
+  String get cloud_sync_delete_account_success;
+
+  /// No description provided for @cloud_sync_delete_account_reauth_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent authentication required. Please sign in again and retry.'**
+  String get cloud_sync_delete_account_reauth_required;
+
+  /// No description provided for @cloud_sync_sign_in_canceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in was canceled.'**
+  String get cloud_sync_sign_in_canceled;
+
+  /// No description provided for @cloud_sync_error_network.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Please check your network and try again.'**
+  String get cloud_sync_error_network;
+
+  /// No description provided for @cloud_sync_error_drive_permission_denied.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive permission was denied. Please grant permission to back up your data.'**
+  String get cloud_sync_error_drive_permission_denied;
+
+  /// No description provided for @cloud_sync_revoke_google_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect & Revoke Google Access'**
+  String get cloud_sync_revoke_google_btn;
+
+  /// No description provided for @cloud_sync_delete_cloud_data_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Cloud Data'**
+  String get cloud_sync_delete_cloud_data_btn;
+
+  /// No description provided for @cloud_sync_delete_cloud_data_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete All Cloud Data?'**
+  String get cloud_sync_delete_cloud_data_confirm_title;
+
+  /// No description provided for @cloud_sync_delete_cloud_data_confirm_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete all recipes, ingredients, and units stored in Firestore. Local data on this device will not be deleted.'**
+  String get cloud_sync_delete_cloud_data_confirm_desc;
+
+  /// No description provided for @cloud_sync_delete_cloud_data_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud data deleted successfully.'**
+  String get cloud_sync_delete_cloud_data_success;
+
+  /// No description provided for @cloud_sync_delete_all_backups_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete All Backups'**
+  String get cloud_sync_delete_all_backups_btn;
+
+  /// No description provided for @cloud_sync_delete_all_backups_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete All Cloud Backups?'**
+  String get cloud_sync_delete_all_backups_confirm_title;
+
+  /// No description provided for @cloud_sync_delete_all_backups_confirm_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete all backups from Google Drive? This action cannot be undone.'**
+  String get cloud_sync_delete_all_backups_confirm_desc;
+
+  /// No description provided for @cloud_sync_delete_all_backups_success.
+  ///
+  /// In en, this message translates to:
+  /// **'All cloud backups have been deleted.'**
+  String get cloud_sync_delete_all_backups_success;
+
+  /// No description provided for @cloud_sync_account_management_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Account & Data Management'**
+  String get cloud_sync_account_management_title;
+
+  /// No description provided for @cloud_sync_terms_dialog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Sync Terms & Privacy'**
+  String get cloud_sync_terms_dialog_title;
+
+  /// No description provided for @cloud_sync_terms_dialog_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please review and accept how Chef&Cost syncs your data with Firebase and Google Drive before proceeding.'**
+  String get cloud_sync_terms_dialog_subtitle;
+
+  /// No description provided for @cloud_sync_terms_firestore_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Firebase Firestore'**
+  String get cloud_sync_terms_firestore_title;
+
+  /// No description provided for @cloud_sync_terms_firestore_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronizes your recipes, ingredient costs, and settings in real-time across your authorized devices.'**
+  String get cloud_sync_terms_firestore_desc;
+
+  /// No description provided for @cloud_sync_terms_drive_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive (AppData)'**
+  String get cloud_sync_terms_drive_title;
+
+  /// No description provided for @cloud_sync_terms_drive_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploads database backups strictly to Chef&Cost\'s hidden application folder. We cannot access or see any of your personal Google Drive files.'**
+  String get cloud_sync_terms_drive_desc;
+
+  /// No description provided for @cloud_sync_terms_privacy_title.
+  ///
+  /// In en, this message translates to:
+  /// **'100% Data Ownership & Privacy'**
+  String get cloud_sync_terms_privacy_title;
+
+  /// No description provided for @cloud_sync_terms_privacy_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your recipes, yields, and business financial figures belong exclusively to you. Your data is never sold, shared, or mined for third parties.'**
+  String get cloud_sync_terms_privacy_desc;
+
+  /// No description provided for @cloud_sync_terms_control_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Revocation & Deletion Rights'**
+  String get cloud_sync_terms_control_title;
+
+  /// No description provided for @cloud_sync_terms_control_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'You can disconnect your account, revoke Google authorization, or delete all cloud-stored data permanently at any time.'**
+  String get cloud_sync_terms_control_desc;
+
+  /// No description provided for @cloud_sync_terms_view_privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Read Full Privacy Policy online'**
+  String get cloud_sync_terms_view_privacy;
+
+  /// No description provided for @cloud_sync_terms_accept_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept & Continue'**
+  String get cloud_sync_terms_accept_btn;
+
+  /// No description provided for @cloud_sync_terms_decline_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Now'**
+  String get cloud_sync_terms_decline_btn;
+
+  /// No description provided for @cloud_sync_terms_banner_unaccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Terms & Privacy must be accepted before syncing with Firebase or Google Drive.'**
+  String get cloud_sync_terms_banner_unaccepted;
+
+  /// No description provided for @cloud_sync_terms_accepted_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Terms & Privacy Policy Accepted'**
+  String get cloud_sync_terms_accepted_badge;
+
+  /// No description provided for @cloud_sync_terms_review_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Terms'**
+  String get cloud_sync_terms_review_btn;
+
+  /// No description provided for @cloud_sync_terms_required_warning.
+  ///
+  /// In en, this message translates to:
+  /// **'You must accept the terms of service and privacy policy to connect to cloud services.'**
+  String get cloud_sync_terms_required_warning;
 }
 
 class _AppLocalizationsDelegate

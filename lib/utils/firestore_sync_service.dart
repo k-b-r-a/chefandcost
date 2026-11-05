@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -149,24 +150,53 @@ class FirestoreSyncService {
     if (!isConfigured) {
       throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
     }
-    UserCredential cred;
+    UserCredential? cred;
     if (kIsWeb) {
       final googleProvider = GoogleAuthProvider();
       googleProvider.addScope('email');
       googleProvider.setCustomParameters({'prompt': 'select_account'});
-      cred = await _auth.signInWithPopup(googleProvider);
+      try {
+        cred = await _auth.signInWithPopup(googleProvider);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          return null;
+        }
+        rethrow;
+      }
     } else {
       await GoogleSignIn.instance.initialize(
         serverClientId: defaultFirebaseWebClientId,
       );
-      final googleUser = await GoogleSignIn.instance.authenticate();
+      GoogleSignInAccount? googleUser;
+      try {
+        googleUser = await GoogleSignIn.instance.authenticate();
+      } on GoogleSignInException catch (e) {
+        if (e.code == GoogleSignInExceptionCode.canceled) {
+          return null;
+        }
+        rethrow;
+      } on PlatformException catch (e) {
+        if (e.code == 'sign_in_canceled' || e.code == '12501') {
+          return null;
+        }
+        rethrow;
+      } catch (e) {
+        final str = e.toString().toLowerCase();
+        if (str.contains('canceled') || str.contains('cancelled') || str.contains('12501')) {
+          return null;
+        }
+        rethrow;
+      }
+
+      if (googleUser == null) return null;
+
       final auth = googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         idToken: auth.idToken,
       );
       cred = await _auth.signInWithCredential(credential);
     }
-    final uid = cred.user?.uid;
+    final uid = cred?.user?.uid;
     if (uid != null) {
       await setCustomUserId(uid);
     }
@@ -179,6 +209,145 @@ class FirestoreSyncService {
       await _auth.signOut();
     } catch (_) {}
     await clearCustomUserId();
+  }
+
+  /// Permanently deletes all remote recipes, ingredients, custom units, and sync metadata
+  /// from Firestore for the given user, without deleting local database records.
+  Future<void> deleteFirestoreCloudData({String? userId}) async {
+    if (!isConfigured) return;
+    final activeUid = userId ?? await getActiveUserId();
+    if (activeUid == null || activeUid.isEmpty) return;
+
+    final userDoc = _firestore.collection('users').doc(activeUid);
+    final subcollections = ['recipes', 'ingredients', 'units', 'sync_meta'];
+
+    for (final subcol in subcollections) {
+      try {
+        final snapshot = await userDoc.collection(subcol).get();
+        if (snapshot.docs.isNotEmpty) {
+          for (var i = 0; i < snapshot.docs.length; i += 400) {
+            final batch = _firestore.batch();
+            final chunk = snapshot.docs.sublist(
+              i,
+              (i + 400 > snapshot.docs.length) ? snapshot.docs.length : i + 400,
+            );
+            for (final doc in chunk) {
+              batch.delete(doc.reference);
+            }
+            await batch.commit();
+          }
+        }
+      } catch (e) {
+        debugPrint('Error deleting subcollection: $e');
+      }
+    }
+
+    try {
+      await userDoc.delete();
+    } catch (_) {}
+
+    await clearLastSyncedAt(activeUid);
+  }
+
+  /// Permanently deletes all user data from Cloud Firestore (recipes, ingredients, units, sync_meta, and user doc)
+  /// and deletes the Firebase Auth account.
+  /// Handles `requires-recent-login` re-authentication when [reauthPassword] is provided or Google credentials are used.
+  Future<void> deleteAccountAndCloudData({String? reauthPassword}) async {
+    if (!isConfigured) {
+      throw StateError('Firebase is not initialized.');
+    }
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('No authenticated user found to delete.');
+    }
+    final uid = user.uid;
+
+    // 1. Delete all Firestore collections belonging to this user
+    try {
+      final userDoc = _firestore.collection('users').doc(uid);
+      final subcollections = ['recipes', 'ingredients', 'units', 'sync_meta'];
+
+      for (final subcol in subcollections) {
+        final snapshot = await userDoc.collection(subcol).get();
+        if (snapshot.docs.isNotEmpty) {
+          // Delete in batches of 400 to respect Firestore batch limit (500)
+          for (var i = 0; i < snapshot.docs.length; i += 400) {
+            final batch = _firestore.batch();
+            final chunk = snapshot.docs.sublist(
+              i,
+              (i + 400 > snapshot.docs.length) ? snapshot.docs.length : i + 400,
+            );
+            for (final doc in chunk) {
+              batch.delete(doc.reference);
+            }
+            await batch.commit();
+          }
+        }
+      }
+
+      // Delete the root user doc
+      await userDoc.delete();
+    } catch (e) {
+      debugPrint('Warning deleting Firestore data during account deletion: $e');
+    }
+
+    // 2. Re-authenticate if password is provided
+    if (reauthPassword != null && reauthPassword.isNotEmpty && user.email != null) {
+      try {
+        final credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: reauthPassword,
+        );
+        await user.reauthenticateWithCredential(credential);
+      } catch (e) {
+        debugPrint('Error during re-authentication: $e');
+        rethrow;
+      }
+    }
+
+    // 3. Delete Firebase Auth User
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        // Attempt reauthentication via Google if user signed in with Google
+        final isGoogleUser = user.providerData.any((p) => p.providerId == 'google.com');
+        if (isGoogleUser) {
+          if (kIsWeb) {
+            final googleProvider = GoogleAuthProvider();
+            googleProvider.addScope('email');
+            googleProvider.setCustomParameters({'prompt': 'select_account'});
+            await user.reauthenticateWithPopup(googleProvider);
+            await user.delete();
+          } else {
+            await GoogleSignIn.instance.initialize(
+              serverClientId: defaultFirebaseWebClientId,
+            );
+            final googleUser = await GoogleSignIn.instance.authenticate();
+            final auth = googleUser.authentication;
+            final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
+            await user.reauthenticateWithCredential(credential);
+            await user.delete();
+          }
+        } else {
+          rethrow;
+        }
+      } else {
+        rethrow;
+      }
+    }
+
+    // 4. Sign out and disconnect from GoogleSignIn if active
+    try {
+      await GoogleSignIn.instance.disconnect();
+    } catch (_) {}
+    try {
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {}
+
+    // 5. Clean up local Sync ID and last synced timestamps
+    await clearCustomUserId();
+    await clearLastSyncedAt(uid);
   }
 
   /// Connects with Google account using existing GoogleSignInAccount credential.

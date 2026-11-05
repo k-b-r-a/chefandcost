@@ -18,12 +18,16 @@ import 'screens/rule_of_three_screen.dart';
 import 'screens/unit_converter_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/cloud_sync_screen.dart';
+import 'screens/privacy_policy_screen.dart';
+import 'screens/delete_account_screen.dart';
 import 'provider/settings_provider.dart';
 import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
 import 'utils/cloud_sync_service.dart';
 import 'widgets/app_logo.dart';
 import 'services/app_tutorial_service.dart';
+import 'services/recipe_file_intent_service.dart';
+import 'utils/recipe_import_helper.dart';
 import 'database/sample_manufacturing_recipe.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -100,6 +104,9 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 typedef RecipetoolsApp = ChefAndCostApp;
 
 class ChefAndCostApp extends ConsumerWidget {
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   const ChefAndCostApp({super.key});
 
   @override
@@ -178,6 +185,7 @@ class ChefAndCostApp extends ConsumerWidget {
     }
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Chef&Cost',
       onGenerateTitle: (context) => 'Chef&Cost',
       locale: settings.locale,
@@ -196,6 +204,26 @@ class ChefAndCostApp extends ConsumerWidget {
         );
       },
       home: const MainNavigationScreen(),
+      onGenerateRoute: (routeSettings) {
+        final uri = Uri.tryParse(routeSettings.name ?? '') ?? Uri();
+        final path = uri.path.toLowerCase();
+        if (path == '/privacy' || path == '/privacy.html') {
+          return MaterialPageRoute(
+            settings: routeSettings,
+            builder: (_) => const PrivacyPolicyScreen(),
+          );
+        }
+        if (path == '/delete-account' || path == '/delete-account.html') {
+          return MaterialPageRoute(
+            settings: routeSettings,
+            builder: (_) => const DeleteAccountScreen(),
+          );
+        }
+        return MaterialPageRoute(
+          settings: routeSettings,
+          builder: (_) => const MainNavigationScreen(),
+        );
+      },
     );
   }
 }
@@ -223,6 +251,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   VoidCallback? _replayListener;
   Timer? _initTutorialTimer;
   Timer? _replayTutorialTimer;
+  StreamSubscription<Map<String, String>>? _fileIntentSubscription;
 
   late final List<Widget> _screens;
 
@@ -288,19 +317,54 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     final isTesting = !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';
     if (!isTesting) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      RecipeFileIntentService.initialize();
+      _fileIntentSubscription =
+          RecipeFileIntentService.fileStream.listen((fileData) {
+        if (mounted) {
+          _handleIncomingRecipeFile(fileData);
+        }
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         _initTutorialTimer?.cancel();
         _initTutorialTimer = Timer(const Duration(milliseconds: 600), () {
           if (mounted) {
             AppTutorialService.checkAndShowTutorial(context, keys: _tutorialKeys);
           }
         });
+
+        final initialFile = await RecipeFileIntentService.getInitialFile();
+        if (initialFile != null && mounted) {
+          _handleIncomingRecipeFile(initialFile);
+        }
       });
     }
   }
 
+  Future<void> _handleIncomingRecipeFile(Map<String, String> fileData) async {
+    final content = fileData['content'];
+    final fileName = fileData['fileName'];
+    if (content == null || content.isEmpty) return;
+
+    if (RecipeImportHelper.isImportInProgress) {
+      return;
+    }
+
+    final targetContext =
+        ChefAndCostApp.navigatorKey.currentContext ?? context;
+    if (!targetContext.mounted) return;
+
+    await RecipeImportHelper.importRecipeFromString(
+      targetContext,
+      ref,
+      jsonContent: content,
+      sourceFileName: fileName,
+    );
+  }
+
   @override
   void dispose() {
+    _fileIntentSubscription?.cancel();
     _initTutorialTimer?.cancel();
     _replayTutorialTimer?.cancel();
     if (_replayListener != null) {
