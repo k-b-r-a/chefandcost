@@ -3,6 +3,514 @@
 part of 'database.dart';
 
 // ignore_for_file: type=lint
+class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: () => uuid.v4(),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 50),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _iconNameMeta = const VerificationMeta(
+    'iconName',
+  );
+  @override
+  late final GeneratedColumn<String> iconName = GeneratedColumn<String>(
+    'icon_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _colorHexMeta = const VerificationMeta(
+    'colorHex',
+  );
+  @override
+  late final GeneratedColumn<String> colorHex = GeneratedColumn<String>(
+    'color_hex',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    iconName,
+    colorHex,
+    isActive,
+    createdAt,
+    updatedAt,
+    isDeleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Group> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('icon_name')) {
+      context.handle(
+        _iconNameMeta,
+        iconName.isAcceptableOrUnknown(data['icon_name']!, _iconNameMeta),
+      );
+    }
+    if (data.containsKey('color_hex')) {
+      context.handle(
+        _colorHexMeta,
+        colorHex.isAcceptableOrUnknown(data['color_hex']!, _colorHexMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Group map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Group(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      iconName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}icon_name'],
+      ),
+      colorHex: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color_hex'],
+      ),
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $GroupsTable createAlias(String alias) {
+    return $GroupsTable(attachedDatabase, alias);
+  }
+}
+
+class Group extends DataClass implements Insertable<Group> {
+  final String id;
+  final String name;
+  final String? iconName;
+  final String? colorHex;
+  final bool isActive;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final bool isDeleted;
+  const Group({
+    required this.id,
+    required this.name,
+    this.iconName,
+    this.colorHex,
+    required this.isActive,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isDeleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || iconName != null) {
+      map['icon_name'] = Variable<String>(iconName);
+    }
+    if (!nullToAbsent || colorHex != null) {
+      map['color_hex'] = Variable<String>(colorHex);
+    }
+    map['is_active'] = Variable<bool>(isActive);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    return map;
+  }
+
+  GroupsCompanion toCompanion(bool nullToAbsent) {
+    return GroupsCompanion(
+      id: Value(id),
+      name: Value(name),
+      iconName: iconName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(iconName),
+      colorHex: colorHex == null && nullToAbsent
+          ? const Value.absent()
+          : Value(colorHex),
+      isActive: Value(isActive),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      isDeleted: Value(isDeleted),
+    );
+  }
+
+  factory Group.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Group(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      iconName: serializer.fromJson<String?>(json['iconName']),
+      colorHex: serializer.fromJson<String?>(json['colorHex']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'iconName': serializer.toJson<String?>(iconName),
+      'colorHex': serializer.toJson<String?>(colorHex),
+      'isActive': serializer.toJson<bool>(isActive),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+    };
+  }
+
+  Group copyWith({
+    String? id,
+    String? name,
+    Value<String?> iconName = const Value.absent(),
+    Value<String?> colorHex = const Value.absent(),
+    bool? isActive,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isDeleted,
+  }) => Group(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    iconName: iconName.present ? iconName.value : this.iconName,
+    colorHex: colorHex.present ? colorHex.value : this.colorHex,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
+  Group copyWithCompanion(GroupsCompanion data) {
+    return Group(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      iconName: data.iconName.present ? data.iconName.value : this.iconName,
+      colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Group(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('iconName: $iconName, ')
+          ..write('colorHex: $colorHex, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    name,
+    iconName,
+    colorHex,
+    isActive,
+    createdAt,
+    updatedAt,
+    isDeleted,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Group &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.iconName == this.iconName &&
+          other.colorHex == this.colorHex &&
+          other.isActive == this.isActive &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.isDeleted == this.isDeleted);
+}
+
+class GroupsCompanion extends UpdateCompanion<Group> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String?> iconName;
+  final Value<String?> colorHex;
+  final Value<bool> isActive;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> isDeleted;
+  final Value<int> rowid;
+  const GroupsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.iconName = const Value.absent(),
+    this.colorHex = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GroupsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.iconName = const Value.absent(),
+    this.colorHex = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<Group> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? iconName,
+    Expression<String>? colorHex,
+    Expression<bool>? isActive,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? isDeleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (iconName != null) 'icon_name': iconName,
+      if (colorHex != null) 'color_hex': colorHex,
+      if (isActive != null) 'is_active': isActive,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GroupsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String?>? iconName,
+    Value<String?>? colorHex,
+    Value<bool>? isActive,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? isDeleted,
+    Value<int>? rowid,
+  }) {
+    return GroupsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      iconName: iconName ?? this.iconName,
+      colorHex: colorHex ?? this.colorHex,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (iconName.present) {
+      map['icon_name'] = Variable<String>(iconName.value);
+    }
+    if (colorHex.present) {
+      map['color_hex'] = Variable<String>(colorHex.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('iconName: $iconName, ')
+          ..write('colorHex: $colorHex, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -152,6 +660,33 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES "groups" (id)',
+    ),
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 50),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('cocina'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     recipePk,
@@ -166,6 +701,8 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
     dateCreated,
     dateTimeModified,
     archived,
+    groupId,
+    category,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -278,6 +815,18 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
         archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
       );
     }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
     return context;
   }
 
@@ -335,6 +884,14 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
         DriftSqlType.bool,
         data['${effectivePrefix}archived'],
       )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      ),
     );
   }
 
@@ -357,6 +914,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
   final DateTime dateCreated;
   final DateTime? dateTimeModified;
   final bool archived;
+  final String? groupId;
+  final String? category;
   const Recipe({
     required this.recipePk,
     required this.name,
@@ -370,6 +929,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     required this.dateCreated,
     this.dateTimeModified,
     required this.archived,
+    this.groupId,
+    this.category,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -392,6 +953,12 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       map['date_time_modified'] = Variable<DateTime>(dateTimeModified);
     }
     map['archived'] = Variable<bool>(archived);
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    if (!nullToAbsent || category != null) {
+      map['category'] = Variable<String>(category);
+    }
     return map;
   }
 
@@ -415,6 +982,12 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           ? const Value.absent()
           : Value(dateTimeModified),
       archived: Value(archived),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      category: category == null && nullToAbsent
+          ? const Value.absent()
+          : Value(category),
     );
   }
 
@@ -442,6 +1015,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
         json['dateTimeModified'],
       ),
       archived: serializer.fromJson<bool>(json['archived']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      category: serializer.fromJson<String?>(json['category']),
     );
   }
   @override
@@ -460,6 +1035,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       'dateCreated': serializer.toJson<DateTime>(dateCreated),
       'dateTimeModified': serializer.toJson<DateTime?>(dateTimeModified),
       'archived': serializer.toJson<bool>(archived),
+      'groupId': serializer.toJson<String?>(groupId),
+      'category': serializer.toJson<String?>(category),
     };
   }
 
@@ -476,6 +1053,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     DateTime? dateCreated,
     Value<DateTime?> dateTimeModified = const Value.absent(),
     bool? archived,
+    Value<String?> groupId = const Value.absent(),
+    Value<String?> category = const Value.absent(),
   }) => Recipe(
     recipePk: recipePk ?? this.recipePk,
     name: name ?? this.name,
@@ -491,6 +1070,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
         ? dateTimeModified.value
         : this.dateTimeModified,
     archived: archived ?? this.archived,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    category: category.present ? category.value : this.category,
   );
   Recipe copyWithCompanion(RecipesCompanion data) {
     return Recipe(
@@ -520,6 +1101,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           ? data.dateTimeModified.value
           : this.dateTimeModified,
       archived: data.archived.present ? data.archived.value : this.archived,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      category: data.category.present ? data.category.value : this.category,
     );
   }
 
@@ -537,7 +1120,9 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           ..write('colour: $colour, ')
           ..write('dateCreated: $dateCreated, ')
           ..write('dateTimeModified: $dateTimeModified, ')
-          ..write('archived: $archived')
+          ..write('archived: $archived, ')
+          ..write('groupId: $groupId, ')
+          ..write('category: $category')
           ..write(')'))
         .toString();
   }
@@ -556,6 +1141,8 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     dateCreated,
     dateTimeModified,
     archived,
+    groupId,
+    category,
   );
   @override
   bool operator ==(Object other) =>
@@ -572,7 +1159,9 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           other.colour == this.colour &&
           other.dateCreated == this.dateCreated &&
           other.dateTimeModified == this.dateTimeModified &&
-          other.archived == this.archived);
+          other.archived == this.archived &&
+          other.groupId == this.groupId &&
+          other.category == this.category);
 }
 
 class RecipesCompanion extends UpdateCompanion<Recipe> {
@@ -588,6 +1177,8 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
   final Value<DateTime> dateCreated;
   final Value<DateTime?> dateTimeModified;
   final Value<bool> archived;
+  final Value<String?> groupId;
+  final Value<String?> category;
   final Value<int> rowid;
   const RecipesCompanion({
     this.recipePk = const Value.absent(),
@@ -602,6 +1193,8 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     this.dateCreated = const Value.absent(),
     this.dateTimeModified = const Value.absent(),
     this.archived = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.category = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   RecipesCompanion.insert({
@@ -617,6 +1210,8 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     this.dateCreated = const Value.absent(),
     this.dateTimeModified = const Value.absent(),
     this.archived = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.category = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name),
        defaultYield = Value(defaultYield),
@@ -634,6 +1229,8 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     Expression<DateTime>? dateCreated,
     Expression<DateTime>? dateTimeModified,
     Expression<bool>? archived,
+    Expression<String>? groupId,
+    Expression<String>? category,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -651,6 +1248,8 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
       if (dateCreated != null) 'date_created': dateCreated,
       if (dateTimeModified != null) 'date_time_modified': dateTimeModified,
       if (archived != null) 'archived': archived,
+      if (groupId != null) 'group_id': groupId,
+      if (category != null) 'category': category,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -668,6 +1267,8 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     Value<DateTime>? dateCreated,
     Value<DateTime?>? dateTimeModified,
     Value<bool>? archived,
+    Value<String?>? groupId,
+    Value<String?>? category,
     Value<int>? rowid,
   }) {
     return RecipesCompanion(
@@ -684,6 +1285,8 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
       dateCreated: dateCreated ?? this.dateCreated,
       dateTimeModified: dateTimeModified ?? this.dateTimeModified,
       archived: archived ?? this.archived,
+      groupId: groupId ?? this.groupId,
+      category: category ?? this.category,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -729,6 +1332,12 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     if (archived.present) {
       map['archived'] = Variable<bool>(archived.value);
     }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -750,6 +1359,8 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
           ..write('dateCreated: $dateCreated, ')
           ..write('dateTimeModified: $dateTimeModified, ')
           ..write('archived: $archived, ')
+          ..write('groupId: $groupId, ')
+          ..write('category: $category, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1280,6 +1891,89 @@ class $IngredientsTable extends Ingredients
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES "groups" (id)',
+    ),
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 50),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currentStockMeta = const VerificationMeta(
+    'currentStock',
+  );
+  @override
+  late final GeneratedColumn<double> currentStock = GeneratedColumn<double>(
+    'current_stock',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _minimumStockMeta = const VerificationMeta(
+    'minimumStock',
+  );
+  @override
+  late final GeneratedColumn<double> minimumStock = GeneratedColumn<double>(
+    'minimum_stock',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stockUnitMeta = const VerificationMeta(
+    'stockUnit',
+  );
+  @override
+  late final GeneratedColumn<String> stockUnit = GeneratedColumn<String>(
+    'stock_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _costPerStockUnitMeta = const VerificationMeta(
+    'costPerStockUnit',
+  );
+  @override
+  late final GeneratedColumn<double> costPerStockUnit = GeneratedColumn<double>(
+    'cost_per_stock_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastStockUpdateMeta = const VerificationMeta(
+    'lastStockUpdate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastStockUpdate =
+      GeneratedColumn<DateTime>(
+        'last_stock_update',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     ingredientPk,
@@ -1291,6 +1985,13 @@ class $IngredientsTable extends Ingredients
     dateTimeModified,
     isDeleted,
     deletedAt,
+    groupId,
+    category,
+    currentStock,
+    minimumStock,
+    stockUnit,
+    costPerStockUnit,
+    lastStockUpdate,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1378,6 +2079,60 @@ class $IngredientsTable extends Ingredients
         deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
       );
     }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
+    if (data.containsKey('current_stock')) {
+      context.handle(
+        _currentStockMeta,
+        currentStock.isAcceptableOrUnknown(
+          data['current_stock']!,
+          _currentStockMeta,
+        ),
+      );
+    }
+    if (data.containsKey('minimum_stock')) {
+      context.handle(
+        _minimumStockMeta,
+        minimumStock.isAcceptableOrUnknown(
+          data['minimum_stock']!,
+          _minimumStockMeta,
+        ),
+      );
+    }
+    if (data.containsKey('stock_unit')) {
+      context.handle(
+        _stockUnitMeta,
+        stockUnit.isAcceptableOrUnknown(data['stock_unit']!, _stockUnitMeta),
+      );
+    }
+    if (data.containsKey('cost_per_stock_unit')) {
+      context.handle(
+        _costPerStockUnitMeta,
+        costPerStockUnit.isAcceptableOrUnknown(
+          data['cost_per_stock_unit']!,
+          _costPerStockUnitMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_stock_update')) {
+      context.handle(
+        _lastStockUpdateMeta,
+        lastStockUpdate.isAcceptableOrUnknown(
+          data['last_stock_update']!,
+          _lastStockUpdateMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1423,6 +2178,34 @@ class $IngredientsTable extends Ingredients
         DriftSqlType.dateTime,
         data['${effectivePrefix}deleted_at'],
       ),
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      ),
+      currentStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}current_stock'],
+      ),
+      minimumStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}minimum_stock'],
+      ),
+      stockUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stock_unit'],
+      ),
+      costPerStockUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cost_per_stock_unit'],
+      ),
+      lastStockUpdate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_stock_update'],
+      ),
     );
   }
 
@@ -1442,6 +2225,13 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final DateTime? dateTimeModified;
   final bool isDeleted;
   final DateTime? deletedAt;
+  final String? groupId;
+  final String? category;
+  final double? currentStock;
+  final double? minimumStock;
+  final String? stockUnit;
+  final double? costPerStockUnit;
+  final DateTime? lastStockUpdate;
   const Ingredient({
     required this.ingredientPk,
     required this.name,
@@ -1452,6 +2242,13 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     this.dateTimeModified,
     required this.isDeleted,
     this.deletedAt,
+    this.groupId,
+    this.category,
+    this.currentStock,
+    this.minimumStock,
+    this.stockUnit,
+    this.costPerStockUnit,
+    this.lastStockUpdate,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1468,6 +2265,27 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     map['is_deleted'] = Variable<bool>(isDeleted);
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    if (!nullToAbsent || category != null) {
+      map['category'] = Variable<String>(category);
+    }
+    if (!nullToAbsent || currentStock != null) {
+      map['current_stock'] = Variable<double>(currentStock);
+    }
+    if (!nullToAbsent || minimumStock != null) {
+      map['minimum_stock'] = Variable<double>(minimumStock);
+    }
+    if (!nullToAbsent || stockUnit != null) {
+      map['stock_unit'] = Variable<String>(stockUnit);
+    }
+    if (!nullToAbsent || costPerStockUnit != null) {
+      map['cost_per_stock_unit'] = Variable<double>(costPerStockUnit);
+    }
+    if (!nullToAbsent || lastStockUpdate != null) {
+      map['last_stock_update'] = Variable<DateTime>(lastStockUpdate);
     }
     return map;
   }
@@ -1487,6 +2305,27 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(deletedAt),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      category: category == null && nullToAbsent
+          ? const Value.absent()
+          : Value(category),
+      currentStock: currentStock == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentStock),
+      minimumStock: minimumStock == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minimumStock),
+      stockUnit: stockUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stockUnit),
+      costPerStockUnit: costPerStockUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(costPerStockUnit),
+      lastStockUpdate: lastStockUpdate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastStockUpdate),
     );
   }
 
@@ -1507,6 +2346,13 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       ),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      category: serializer.fromJson<String?>(json['category']),
+      currentStock: serializer.fromJson<double?>(json['currentStock']),
+      minimumStock: serializer.fromJson<double?>(json['minimumStock']),
+      stockUnit: serializer.fromJson<String?>(json['stockUnit']),
+      costPerStockUnit: serializer.fromJson<double?>(json['costPerStockUnit']),
+      lastStockUpdate: serializer.fromJson<DateTime?>(json['lastStockUpdate']),
     );
   }
   @override
@@ -1522,6 +2368,13 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'dateTimeModified': serializer.toJson<DateTime?>(dateTimeModified),
       'isDeleted': serializer.toJson<bool>(isDeleted),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'groupId': serializer.toJson<String?>(groupId),
+      'category': serializer.toJson<String?>(category),
+      'currentStock': serializer.toJson<double?>(currentStock),
+      'minimumStock': serializer.toJson<double?>(minimumStock),
+      'stockUnit': serializer.toJson<String?>(stockUnit),
+      'costPerStockUnit': serializer.toJson<double?>(costPerStockUnit),
+      'lastStockUpdate': serializer.toJson<DateTime?>(lastStockUpdate),
     };
   }
 
@@ -1535,6 +2388,13 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     Value<DateTime?> dateTimeModified = const Value.absent(),
     bool? isDeleted,
     Value<DateTime?> deletedAt = const Value.absent(),
+    Value<String?> groupId = const Value.absent(),
+    Value<String?> category = const Value.absent(),
+    Value<double?> currentStock = const Value.absent(),
+    Value<double?> minimumStock = const Value.absent(),
+    Value<String?> stockUnit = const Value.absent(),
+    Value<double?> costPerStockUnit = const Value.absent(),
+    Value<DateTime?> lastStockUpdate = const Value.absent(),
   }) => Ingredient(
     ingredientPk: ingredientPk ?? this.ingredientPk,
     name: name ?? this.name,
@@ -1547,6 +2407,17 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
         : this.dateTimeModified,
     isDeleted: isDeleted ?? this.isDeleted,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    category: category.present ? category.value : this.category,
+    currentStock: currentStock.present ? currentStock.value : this.currentStock,
+    minimumStock: minimumStock.present ? minimumStock.value : this.minimumStock,
+    stockUnit: stockUnit.present ? stockUnit.value : this.stockUnit,
+    costPerStockUnit: costPerStockUnit.present
+        ? costPerStockUnit.value
+        : this.costPerStockUnit,
+    lastStockUpdate: lastStockUpdate.present
+        ? lastStockUpdate.value
+        : this.lastStockUpdate,
   );
   Ingredient copyWithCompanion(IngredientsCompanion data) {
     return Ingredient(
@@ -1567,6 +2438,21 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           : this.dateTimeModified,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      category: data.category.present ? data.category.value : this.category,
+      currentStock: data.currentStock.present
+          ? data.currentStock.value
+          : this.currentStock,
+      minimumStock: data.minimumStock.present
+          ? data.minimumStock.value
+          : this.minimumStock,
+      stockUnit: data.stockUnit.present ? data.stockUnit.value : this.stockUnit,
+      costPerStockUnit: data.costPerStockUnit.present
+          ? data.costPerStockUnit.value
+          : this.costPerStockUnit,
+      lastStockUpdate: data.lastStockUpdate.present
+          ? data.lastStockUpdate.value
+          : this.lastStockUpdate,
     );
   }
 
@@ -1581,7 +2467,14 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           ..write('dateCreated: $dateCreated, ')
           ..write('dateTimeModified: $dateTimeModified, ')
           ..write('isDeleted: $isDeleted, ')
-          ..write('deletedAt: $deletedAt')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('groupId: $groupId, ')
+          ..write('category: $category, ')
+          ..write('currentStock: $currentStock, ')
+          ..write('minimumStock: $minimumStock, ')
+          ..write('stockUnit: $stockUnit, ')
+          ..write('costPerStockUnit: $costPerStockUnit, ')
+          ..write('lastStockUpdate: $lastStockUpdate')
           ..write(')'))
         .toString();
   }
@@ -1597,6 +2490,13 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     dateTimeModified,
     isDeleted,
     deletedAt,
+    groupId,
+    category,
+    currentStock,
+    minimumStock,
+    stockUnit,
+    costPerStockUnit,
+    lastStockUpdate,
   );
   @override
   bool operator ==(Object other) =>
@@ -1610,7 +2510,14 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           other.dateCreated == this.dateCreated &&
           other.dateTimeModified == this.dateTimeModified &&
           other.isDeleted == this.isDeleted &&
-          other.deletedAt == this.deletedAt);
+          other.deletedAt == this.deletedAt &&
+          other.groupId == this.groupId &&
+          other.category == this.category &&
+          other.currentStock == this.currentStock &&
+          other.minimumStock == this.minimumStock &&
+          other.stockUnit == this.stockUnit &&
+          other.costPerStockUnit == this.costPerStockUnit &&
+          other.lastStockUpdate == this.lastStockUpdate);
 }
 
 class IngredientsCompanion extends UpdateCompanion<Ingredient> {
@@ -1623,6 +2530,13 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<DateTime?> dateTimeModified;
   final Value<bool> isDeleted;
   final Value<DateTime?> deletedAt;
+  final Value<String?> groupId;
+  final Value<String?> category;
+  final Value<double?> currentStock;
+  final Value<double?> minimumStock;
+  final Value<String?> stockUnit;
+  final Value<double?> costPerStockUnit;
+  final Value<DateTime?> lastStockUpdate;
   final Value<int> rowid;
   const IngredientsCompanion({
     this.ingredientPk = const Value.absent(),
@@ -1634,6 +2548,13 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.dateTimeModified = const Value.absent(),
     this.isDeleted = const Value.absent(),
     this.deletedAt = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.category = const Value.absent(),
+    this.currentStock = const Value.absent(),
+    this.minimumStock = const Value.absent(),
+    this.stockUnit = const Value.absent(),
+    this.costPerStockUnit = const Value.absent(),
+    this.lastStockUpdate = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   IngredientsCompanion.insert({
@@ -1646,6 +2567,13 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.dateTimeModified = const Value.absent(),
     this.isDeleted = const Value.absent(),
     this.deletedAt = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.category = const Value.absent(),
+    this.currentStock = const Value.absent(),
+    this.minimumStock = const Value.absent(),
+    this.stockUnit = const Value.absent(),
+    this.costPerStockUnit = const Value.absent(),
+    this.lastStockUpdate = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name),
        cost = Value(cost),
@@ -1661,6 +2589,13 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Expression<DateTime>? dateTimeModified,
     Expression<bool>? isDeleted,
     Expression<DateTime>? deletedAt,
+    Expression<String>? groupId,
+    Expression<String>? category,
+    Expression<double>? currentStock,
+    Expression<double>? minimumStock,
+    Expression<String>? stockUnit,
+    Expression<double>? costPerStockUnit,
+    Expression<DateTime>? lastStockUpdate,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1673,6 +2608,13 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       if (dateTimeModified != null) 'date_time_modified': dateTimeModified,
       if (isDeleted != null) 'is_deleted': isDeleted,
       if (deletedAt != null) 'deleted_at': deletedAt,
+      if (groupId != null) 'group_id': groupId,
+      if (category != null) 'category': category,
+      if (currentStock != null) 'current_stock': currentStock,
+      if (minimumStock != null) 'minimum_stock': minimumStock,
+      if (stockUnit != null) 'stock_unit': stockUnit,
+      if (costPerStockUnit != null) 'cost_per_stock_unit': costPerStockUnit,
+      if (lastStockUpdate != null) 'last_stock_update': lastStockUpdate,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1687,6 +2629,13 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Value<DateTime?>? dateTimeModified,
     Value<bool>? isDeleted,
     Value<DateTime?>? deletedAt,
+    Value<String?>? groupId,
+    Value<String?>? category,
+    Value<double?>? currentStock,
+    Value<double?>? minimumStock,
+    Value<String?>? stockUnit,
+    Value<double?>? costPerStockUnit,
+    Value<DateTime?>? lastStockUpdate,
     Value<int>? rowid,
   }) {
     return IngredientsCompanion(
@@ -1699,6 +2648,13 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       dateTimeModified: dateTimeModified ?? this.dateTimeModified,
       isDeleted: isDeleted ?? this.isDeleted,
       deletedAt: deletedAt ?? this.deletedAt,
+      groupId: groupId ?? this.groupId,
+      category: category ?? this.category,
+      currentStock: currentStock ?? this.currentStock,
+      minimumStock: minimumStock ?? this.minimumStock,
+      stockUnit: stockUnit ?? this.stockUnit,
+      costPerStockUnit: costPerStockUnit ?? this.costPerStockUnit,
+      lastStockUpdate: lastStockUpdate ?? this.lastStockUpdate,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1733,6 +2689,27 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     if (deletedAt.present) {
       map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (currentStock.present) {
+      map['current_stock'] = Variable<double>(currentStock.value);
+    }
+    if (minimumStock.present) {
+      map['minimum_stock'] = Variable<double>(minimumStock.value);
+    }
+    if (stockUnit.present) {
+      map['stock_unit'] = Variable<String>(stockUnit.value);
+    }
+    if (costPerStockUnit.present) {
+      map['cost_per_stock_unit'] = Variable<double>(costPerStockUnit.value);
+    }
+    if (lastStockUpdate.present) {
+      map['last_stock_update'] = Variable<DateTime>(lastStockUpdate.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1751,6 +2728,13 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
           ..write('dateTimeModified: $dateTimeModified, ')
           ..write('isDeleted: $isDeleted, ')
           ..write('deletedAt: $deletedAt, ')
+          ..write('groupId: $groupId, ')
+          ..write('category: $category, ')
+          ..write('currentStock: $currentStock, ')
+          ..write('minimumStock: $minimumStock, ')
+          ..write('stockUnit: $stockUnit, ')
+          ..write('costPerStockUnit: $costPerStockUnit, ')
+          ..write('lastStockUpdate: $lastStockUpdate, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2552,28 +3536,740 @@ class RecipeStepsCompanion extends UpdateCompanion<RecipeStep> {
   }
 }
 
+class $CategoriesTable extends Categories
+    with TableInfo<$CategoriesTable, Category> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CategoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 50),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _iconNameMeta = const VerificationMeta(
+    'iconName',
+  );
+  @override
+  late final GeneratedColumn<String> iconName = GeneratedColumn<String>(
+    'icon_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, iconName];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'categories';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Category> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('icon_name')) {
+      context.handle(
+        _iconNameMeta,
+        iconName.isAcceptableOrUnknown(data['icon_name']!, _iconNameMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Category map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Category(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      iconName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}icon_name'],
+      ),
+    );
+  }
+
+  @override
+  $CategoriesTable createAlias(String alias) {
+    return $CategoriesTable(attachedDatabase, alias);
+  }
+}
+
+class Category extends DataClass implements Insertable<Category> {
+  final String id;
+  final String name;
+  final String? iconName;
+  const Category({required this.id, required this.name, this.iconName});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || iconName != null) {
+      map['icon_name'] = Variable<String>(iconName);
+    }
+    return map;
+  }
+
+  CategoriesCompanion toCompanion(bool nullToAbsent) {
+    return CategoriesCompanion(
+      id: Value(id),
+      name: Value(name),
+      iconName: iconName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(iconName),
+    );
+  }
+
+  factory Category.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Category(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      iconName: serializer.fromJson<String?>(json['iconName']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'iconName': serializer.toJson<String?>(iconName),
+    };
+  }
+
+  Category copyWith({
+    String? id,
+    String? name,
+    Value<String?> iconName = const Value.absent(),
+  }) => Category(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    iconName: iconName.present ? iconName.value : this.iconName,
+  );
+  Category copyWithCompanion(CategoriesCompanion data) {
+    return Category(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      iconName: data.iconName.present ? data.iconName.value : this.iconName,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Category(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('iconName: $iconName')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, iconName);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Category &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.iconName == this.iconName);
+}
+
+class CategoriesCompanion extends UpdateCompanion<Category> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String?> iconName;
+  final Value<int> rowid;
+  const CategoriesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.iconName = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CategoriesCompanion.insert({
+    required String id,
+    required String name,
+    this.iconName = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name);
+  static Insertable<Category> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? iconName,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (iconName != null) 'icon_name': iconName,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CategoriesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String?>? iconName,
+    Value<int>? rowid,
+  }) {
+    return CategoriesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      iconName: iconName ?? this.iconName,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (iconName.present) {
+      map['icon_name'] = Variable<String>(iconName.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CategoriesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('iconName: $iconName, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $GroupsTable groups = $GroupsTable(this);
   late final $RecipesTable recipes = $RecipesTable(this);
   late final $UnitsTable units = $UnitsTable(this);
   late final $IngredientsTable ingredients = $IngredientsTable(this);
   late final $RecipeIngredientsTable recipeIngredients =
       $RecipeIngredientsTable(this);
   late final $RecipeStepsTable recipeSteps = $RecipeStepsTable(this);
+  late final $CategoriesTable categories = $CategoriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
+    groups,
     recipes,
     units,
     ingredients,
     recipeIngredients,
     recipeSteps,
+    categories,
   ];
 }
 
+typedef $$GroupsTableCreateCompanionBuilder =
+    GroupsCompanion Function({
+      Value<String> id,
+      required String name,
+      Value<String?> iconName,
+      Value<String?> colorHex,
+      Value<bool> isActive,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+typedef $$GroupsTableUpdateCompanionBuilder =
+    GroupsCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String?> iconName,
+      Value<String?> colorHex,
+      Value<bool> isActive,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+
+final class $$GroupsTableReferences
+    extends BaseReferences<_$AppDatabase, $GroupsTable, Group> {
+  $$GroupsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$RecipesTable, List<Recipe>> _recipesRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.recipes,
+    aliasName: $_aliasNameGenerator(db.groups.id, db.recipes.groupId),
+  );
+
+  $$RecipesTableProcessedTableManager get recipesRefs {
+    final manager = $$RecipesTableTableManager(
+      $_db,
+      $_db.recipes,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_recipesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$IngredientsTable, List<Ingredient>>
+  _ingredientsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.ingredients,
+    aliasName: $_aliasNameGenerator(db.groups.id, db.ingredients.groupId),
+  );
+
+  $$IngredientsTableProcessedTableManager get ingredientsRefs {
+    final manager = $$IngredientsTableTableManager(
+      $_db,
+      $_db.ingredients,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_ingredientsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$GroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get iconName => $composableBuilder(
+    column: $table.iconName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get colorHex => $composableBuilder(
+    column: $table.colorHex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> recipesRefs(
+    Expression<bool> Function($$RecipesTableFilterComposer f) f,
+  ) {
+    final $$RecipesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recipes,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipesTableFilterComposer(
+            $db: $db,
+            $table: $db.recipes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> ingredientsRefs(
+    Expression<bool> Function($$IngredientsTableFilterComposer f) f,
+  ) {
+    final $$IngredientsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ingredients,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$IngredientsTableFilterComposer(
+            $db: $db,
+            $table: $db.ingredients,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$GroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get iconName => $composableBuilder(
+    column: $table.iconName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get colorHex => $composableBuilder(
+    column: $table.colorHex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get iconName =>
+      $composableBuilder(column: $table.iconName, builder: (column) => column);
+
+  GeneratedColumn<String> get colorHex =>
+      $composableBuilder(column: $table.colorHex, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+
+  Expression<T> recipesRefs<T extends Object>(
+    Expression<T> Function($$RecipesTableAnnotationComposer a) f,
+  ) {
+    final $$RecipesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recipes,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.recipes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> ingredientsRefs<T extends Object>(
+    Expression<T> Function($$IngredientsTableAnnotationComposer a) f,
+  ) {
+    final $$IngredientsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ingredients,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$IngredientsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.ingredients,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$GroupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GroupsTable,
+          Group,
+          $$GroupsTableFilterComposer,
+          $$GroupsTableOrderingComposer,
+          $$GroupsTableAnnotationComposer,
+          $$GroupsTableCreateCompanionBuilder,
+          $$GroupsTableUpdateCompanionBuilder,
+          (Group, $$GroupsTableReferences),
+          Group,
+          PrefetchHooks Function({bool recipesRefs, bool ingredientsRefs})
+        > {
+  $$GroupsTableTableManager(_$AppDatabase db, $GroupsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> iconName = const Value.absent(),
+                Value<String?> colorHex = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => GroupsCompanion(
+                id: id,
+                name: name,
+                iconName: iconName,
+                colorHex: colorHex,
+                isActive: isActive,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                required String name,
+                Value<String?> iconName = const Value.absent(),
+                Value<String?> colorHex = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => GroupsCompanion.insert(
+                id: id,
+                name: name,
+                iconName: iconName,
+                colorHex: colorHex,
+                isActive: isActive,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) =>
+                    (e.readTable(table), $$GroupsTableReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({recipesRefs = false, ingredientsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (recipesRefs) db.recipes,
+                    if (ingredientsRefs) db.ingredients,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (recipesRefs)
+                        await $_getPrefetchedData<Group, $GroupsTable, Recipe>(
+                          currentTable: table,
+                          referencedTable: $$GroupsTableReferences
+                              ._recipesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$GroupsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).recipesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.groupId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (ingredientsRefs)
+                        await $_getPrefetchedData<
+                          Group,
+                          $GroupsTable,
+                          Ingredient
+                        >(
+                          currentTable: table,
+                          referencedTable: $$GroupsTableReferences
+                              ._ingredientsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$GroupsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).ingredientsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.groupId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$GroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GroupsTable,
+      Group,
+      $$GroupsTableFilterComposer,
+      $$GroupsTableOrderingComposer,
+      $$GroupsTableAnnotationComposer,
+      $$GroupsTableCreateCompanionBuilder,
+      $$GroupsTableUpdateCompanionBuilder,
+      (Group, $$GroupsTableReferences),
+      Group,
+      PrefetchHooks Function({bool recipesRefs, bool ingredientsRefs})
+    >;
 typedef $$RecipesTableCreateCompanionBuilder =
     RecipesCompanion Function({
       Value<String> recipePk,
@@ -2588,6 +4284,8 @@ typedef $$RecipesTableCreateCompanionBuilder =
       Value<DateTime> dateCreated,
       Value<DateTime?> dateTimeModified,
       Value<bool> archived,
+      Value<String?> groupId,
+      Value<String?> category,
       Value<int> rowid,
     });
 typedef $$RecipesTableUpdateCompanionBuilder =
@@ -2604,12 +4302,32 @@ typedef $$RecipesTableUpdateCompanionBuilder =
       Value<DateTime> dateCreated,
       Value<DateTime?> dateTimeModified,
       Value<bool> archived,
+      Value<String?> groupId,
+      Value<String?> category,
       Value<int> rowid,
     });
 
 final class $$RecipesTableReferences
     extends BaseReferences<_$AppDatabase, $RecipesTable, Recipe> {
   $$RecipesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $GroupsTable _groupIdTable(_$AppDatabase db) => db.groups.createAlias(
+    $_aliasNameGenerator(db.recipes.groupId, db.groups.id),
+  );
+
+  $$GroupsTableProcessedTableManager? get groupId {
+    final $_column = $_itemColumn<String>('group_id');
+    if ($_column == null) return null;
+    final manager = $$GroupsTableTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 
   static MultiTypedResultKey<$RecipeIngredientsTable, List<RecipeIngredient>>
   _recipeIngredientsRefsTable(_$AppDatabase db) =>
@@ -2731,6 +4449,34 @@ class $$RecipesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$GroupsTableFilterComposer get groupId {
+    final $$GroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
   Expression<bool> recipeIngredientsRefs(
     Expression<bool> Function($$RecipeIngredientsTableFilterComposer f) f,
   ) {
@@ -2850,6 +4596,34 @@ class $$RecipesTableOrderingComposer
     column: $table.archived,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$GroupsTableOrderingComposer get groupId {
+    final $$GroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$RecipesTableAnnotationComposer
@@ -2910,6 +4684,32 @@ class $$RecipesTableAnnotationComposer
 
   GeneratedColumn<bool> get archived =>
       $composableBuilder(column: $table.archived, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  $$GroupsTableAnnotationComposer get groupId {
+    final $$GroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<T> recipeIngredientsRefs<T extends Object>(
     Expression<T> Function($$RecipeIngredientsTableAnnotationComposer a) f,
@@ -2977,6 +4777,7 @@ class $$RecipesTableTableManager
           (Recipe, $$RecipesTableReferences),
           Recipe,
           PrefetchHooks Function({
+            bool groupId,
             bool recipeIngredientsRefs,
             bool recipeStepsRefs,
           })
@@ -3006,6 +4807,8 @@ class $$RecipesTableTableManager
                 Value<DateTime> dateCreated = const Value.absent(),
                 Value<DateTime?> dateTimeModified = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String?> category = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RecipesCompanion(
                 recipePk: recipePk,
@@ -3020,6 +4823,8 @@ class $$RecipesTableTableManager
                 dateCreated: dateCreated,
                 dateTimeModified: dateTimeModified,
                 archived: archived,
+                groupId: groupId,
+                category: category,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3036,6 +4841,8 @@ class $$RecipesTableTableManager
                 Value<DateTime> dateCreated = const Value.absent(),
                 Value<DateTime?> dateTimeModified = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String?> category = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RecipesCompanion.insert(
                 recipePk: recipePk,
@@ -3050,6 +4857,8 @@ class $$RecipesTableTableManager
                 dateCreated: dateCreated,
                 dateTimeModified: dateTimeModified,
                 archived: archived,
+                groupId: groupId,
+                category: category,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -3061,14 +4870,49 @@ class $$RecipesTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({recipeIngredientsRefs = false, recipeStepsRefs = false}) {
+              ({
+                groupId = false,
+                recipeIngredientsRefs = false,
+                recipeStepsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (recipeIngredientsRefs) db.recipeIngredients,
                     if (recipeStepsRefs) db.recipeSteps,
                   ],
-                  addJoins: null,
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (groupId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.groupId,
+                                    referencedTable: $$RecipesTableReferences
+                                        ._groupIdTable(db),
+                                    referencedColumn: $$RecipesTableReferences
+                                        ._groupIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (recipeIngredientsRefs)
@@ -3133,7 +4977,11 @@ typedef $$RecipesTableProcessedTableManager =
       $$RecipesTableUpdateCompanionBuilder,
       (Recipe, $$RecipesTableReferences),
       Recipe,
-      PrefetchHooks Function({bool recipeIngredientsRefs, bool recipeStepsRefs})
+      PrefetchHooks Function({
+        bool groupId,
+        bool recipeIngredientsRefs,
+        bool recipeStepsRefs,
+      })
     >;
 typedef $$UnitsTableCreateCompanionBuilder =
     UnitsCompanion Function({
@@ -3457,6 +5305,13 @@ typedef $$IngredientsTableCreateCompanionBuilder =
       Value<DateTime?> dateTimeModified,
       Value<bool> isDeleted,
       Value<DateTime?> deletedAt,
+      Value<String?> groupId,
+      Value<String?> category,
+      Value<double?> currentStock,
+      Value<double?> minimumStock,
+      Value<String?> stockUnit,
+      Value<double?> costPerStockUnit,
+      Value<DateTime?> lastStockUpdate,
       Value<int> rowid,
     });
 typedef $$IngredientsTableUpdateCompanionBuilder =
@@ -3470,6 +5325,13 @@ typedef $$IngredientsTableUpdateCompanionBuilder =
       Value<DateTime?> dateTimeModified,
       Value<bool> isDeleted,
       Value<DateTime?> deletedAt,
+      Value<String?> groupId,
+      Value<String?> category,
+      Value<double?> currentStock,
+      Value<double?> minimumStock,
+      Value<String?> stockUnit,
+      Value<double?> costPerStockUnit,
+      Value<DateTime?> lastStockUpdate,
       Value<int> rowid,
     });
 
@@ -3489,6 +5351,24 @@ final class $$IngredientsTableReferences
       $_db.units,
     ).filter((f) => f.unitPk.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_unitFkTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $GroupsTable _groupIdTable(_$AppDatabase db) => db.groups.createAlias(
+    $_aliasNameGenerator(db.ingredients.groupId, db.groups.id),
+  );
+
+  $$GroupsTableProcessedTableManager? get groupId {
+    final $_column = $_itemColumn<String>('group_id');
+    if ($_column == null) return null;
+    final manager = $$GroupsTableTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -3574,6 +5454,36 @@ class $$IngredientsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get currentStock => $composableBuilder(
+    column: $table.currentStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get minimumStock => $composableBuilder(
+    column: $table.minimumStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stockUnit => $composableBuilder(
+    column: $table.stockUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get costPerStockUnit => $composableBuilder(
+    column: $table.costPerStockUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastStockUpdate => $composableBuilder(
+    column: $table.lastStockUpdate,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$UnitsTableFilterComposer get unitFk {
     final $$UnitsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -3588,6 +5498,29 @@ class $$IngredientsTableFilterComposer
           }) => $$UnitsTableFilterComposer(
             $db: $db,
             $table: $db.units,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$GroupsTableFilterComposer get groupId {
+    final $$GroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.groups,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3672,6 +5605,36 @@ class $$IngredientsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get currentStock => $composableBuilder(
+    column: $table.currentStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get minimumStock => $composableBuilder(
+    column: $table.minimumStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stockUnit => $composableBuilder(
+    column: $table.stockUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get costPerStockUnit => $composableBuilder(
+    column: $table.costPerStockUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastStockUpdate => $composableBuilder(
+    column: $table.lastStockUpdate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$UnitsTableOrderingComposer get unitFk {
     final $$UnitsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3686,6 +5649,29 @@ class $$IngredientsTableOrderingComposer
           }) => $$UnitsTableOrderingComposer(
             $db: $db,
             $table: $db.units,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$GroupsTableOrderingComposer get groupId {
+    final $$GroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3737,6 +5723,32 @@ class $$IngredientsTableAnnotationComposer
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<double> get currentStock => $composableBuilder(
+    column: $table.currentStock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get minimumStock => $composableBuilder(
+    column: $table.minimumStock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get stockUnit =>
+      $composableBuilder(column: $table.stockUnit, builder: (column) => column);
+
+  GeneratedColumn<double> get costPerStockUnit => $composableBuilder(
+    column: $table.costPerStockUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastStockUpdate => $composableBuilder(
+    column: $table.lastStockUpdate,
+    builder: (column) => column,
+  );
+
   $$UnitsTableAnnotationComposer get unitFk {
     final $$UnitsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -3751,6 +5763,29 @@ class $$IngredientsTableAnnotationComposer
           }) => $$UnitsTableAnnotationComposer(
             $db: $db,
             $table: $db.units,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$GroupsTableAnnotationComposer get groupId {
+    final $$GroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3800,7 +5835,11 @@ class $$IngredientsTableTableManager
           $$IngredientsTableUpdateCompanionBuilder,
           (Ingredient, $$IngredientsTableReferences),
           Ingredient,
-          PrefetchHooks Function({bool unitFk, bool recipeIngredientsRefs})
+          PrefetchHooks Function({
+            bool unitFk,
+            bool groupId,
+            bool recipeIngredientsRefs,
+          })
         > {
   $$IngredientsTableTableManager(_$AppDatabase db, $IngredientsTable table)
     : super(
@@ -3824,6 +5863,13 @@ class $$IngredientsTableTableManager
                 Value<DateTime?> dateTimeModified = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String?> category = const Value.absent(),
+                Value<double?> currentStock = const Value.absent(),
+                Value<double?> minimumStock = const Value.absent(),
+                Value<String?> stockUnit = const Value.absent(),
+                Value<double?> costPerStockUnit = const Value.absent(),
+                Value<DateTime?> lastStockUpdate = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => IngredientsCompanion(
                 ingredientPk: ingredientPk,
@@ -3835,6 +5881,13 @@ class $$IngredientsTableTableManager
                 dateTimeModified: dateTimeModified,
                 isDeleted: isDeleted,
                 deletedAt: deletedAt,
+                groupId: groupId,
+                category: category,
+                currentStock: currentStock,
+                minimumStock: minimumStock,
+                stockUnit: stockUnit,
+                costPerStockUnit: costPerStockUnit,
+                lastStockUpdate: lastStockUpdate,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3848,6 +5901,13 @@ class $$IngredientsTableTableManager
                 Value<DateTime?> dateTimeModified = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String?> category = const Value.absent(),
+                Value<double?> currentStock = const Value.absent(),
+                Value<double?> minimumStock = const Value.absent(),
+                Value<String?> stockUnit = const Value.absent(),
+                Value<double?> costPerStockUnit = const Value.absent(),
+                Value<DateTime?> lastStockUpdate = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => IngredientsCompanion.insert(
                 ingredientPk: ingredientPk,
@@ -3859,6 +5919,13 @@ class $$IngredientsTableTableManager
                 dateTimeModified: dateTimeModified,
                 isDeleted: isDeleted,
                 deletedAt: deletedAt,
+                groupId: groupId,
+                category: category,
+                currentStock: currentStock,
+                minimumStock: minimumStock,
+                stockUnit: stockUnit,
+                costPerStockUnit: costPerStockUnit,
+                lastStockUpdate: lastStockUpdate,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -3870,7 +5937,11 @@ class $$IngredientsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({unitFk = false, recipeIngredientsRefs = false}) {
+              ({
+                unitFk = false,
+                groupId = false,
+                recipeIngredientsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
@@ -3904,6 +5975,21 @@ class $$IngredientsTableTableManager
                                         $$IngredientsTableReferences
                                             ._unitFkTable(db)
                                             .unitPk,
+                                  )
+                                  as T;
+                        }
+                        if (groupId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.groupId,
+                                    referencedTable:
+                                        $$IngredientsTableReferences
+                                            ._groupIdTable(db),
+                                    referencedColumn:
+                                        $$IngredientsTableReferences
+                                            ._groupIdTable(db)
+                                            .id,
                                   )
                                   as T;
                         }
@@ -3953,7 +6039,11 @@ typedef $$IngredientsTableProcessedTableManager =
       $$IngredientsTableUpdateCompanionBuilder,
       (Ingredient, $$IngredientsTableReferences),
       Ingredient,
-      PrefetchHooks Function({bool unitFk, bool recipeIngredientsRefs})
+      PrefetchHooks Function({
+        bool unitFk,
+        bool groupId,
+        bool recipeIngredientsRefs,
+      })
     >;
 typedef $$RecipeIngredientsTableCreateCompanionBuilder =
     RecipeIngredientsCompanion Function({
@@ -4717,10 +6807,168 @@ typedef $$RecipeStepsTableProcessedTableManager =
       RecipeStep,
       PrefetchHooks Function({bool recipeFk})
     >;
+typedef $$CategoriesTableCreateCompanionBuilder =
+    CategoriesCompanion Function({
+      required String id,
+      required String name,
+      Value<String?> iconName,
+      Value<int> rowid,
+    });
+typedef $$CategoriesTableUpdateCompanionBuilder =
+    CategoriesCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String?> iconName,
+      Value<int> rowid,
+    });
+
+class $$CategoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get iconName => $composableBuilder(
+    column: $table.iconName,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CategoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get iconName => $composableBuilder(
+    column: $table.iconName,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CategoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get iconName =>
+      $composableBuilder(column: $table.iconName, builder: (column) => column);
+}
+
+class $$CategoriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CategoriesTable,
+          Category,
+          $$CategoriesTableFilterComposer,
+          $$CategoriesTableOrderingComposer,
+          $$CategoriesTableAnnotationComposer,
+          $$CategoriesTableCreateCompanionBuilder,
+          $$CategoriesTableUpdateCompanionBuilder,
+          (Category, BaseReferences<_$AppDatabase, $CategoriesTable, Category>),
+          Category,
+          PrefetchHooks Function()
+        > {
+  $$CategoriesTableTableManager(_$AppDatabase db, $CategoriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CategoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CategoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CategoriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> iconName = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CategoriesCompanion(
+                id: id,
+                name: name,
+                iconName: iconName,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                Value<String?> iconName = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CategoriesCompanion.insert(
+                id: id,
+                name: name,
+                iconName: iconName,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CategoriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CategoriesTable,
+      Category,
+      $$CategoriesTableFilterComposer,
+      $$CategoriesTableOrderingComposer,
+      $$CategoriesTableAnnotationComposer,
+      $$CategoriesTableCreateCompanionBuilder,
+      $$CategoriesTableUpdateCompanionBuilder,
+      (Category, BaseReferences<_$AppDatabase, $CategoriesTable, Category>),
+      Category,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
+  $$GroupsTableTableManager get groups =>
+      $$GroupsTableTableManager(_db, _db.groups);
   $$RecipesTableTableManager get recipes =>
       $$RecipesTableTableManager(_db, _db.recipes);
   $$UnitsTableTableManager get units =>
@@ -4731,4 +6979,6 @@ class $AppDatabaseManager {
       $$RecipeIngredientsTableTableManager(_db, _db.recipeIngredients);
   $$RecipeStepsTableTableManager get recipeSteps =>
       $$RecipeStepsTableTableManager(_db, _db.recipeSteps);
+  $$CategoriesTableTableManager get categories =>
+      $$CategoriesTableTableManager(_db, _db.categories);
 }

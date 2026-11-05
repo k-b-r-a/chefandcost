@@ -9,7 +9,7 @@ import '../utils/recipe_utils.dart' hide uuid;
 part 'database.g.dart';
 
 @DriftDatabase(
-  tables: [Recipes, Ingredients, RecipeIngredients, RecipeSteps, Units],
+  tables: [Recipes, Ingredients, RecipeIngredients, RecipeSteps, Units, Groups, Categories],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -25,6 +25,19 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 2;
 
+  Future<bool> _tableExists(String tableName) async {
+    final result = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name=?;",
+      variables: [Variable.withString(tableName)],
+    ).get();
+    return result.isNotEmpty;
+  }
+
+  Future<bool> _columnExists(String tableName, String columnName) async {
+    final result = await customSelect("PRAGMA table_info('$tableName');").get();
+    return result.any((row) => row.data['name'] == columnName);
+  }
+
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
@@ -33,8 +46,45 @@ class AppDatabase extends _$AppDatabase {
       },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
-          await m.addColumn(ingredients, ingredients.isDeleted);
-          await m.addColumn(ingredients, ingredients.deletedAt);
+          if (!await _columnExists('ingredients', 'is_deleted')) {
+            await m.addColumn(ingredients, ingredients.isDeleted);
+          }
+          if (!await _columnExists('ingredients', 'deleted_at')) {
+            await m.addColumn(ingredients, ingredients.deletedAt);
+          }
+          if (!await _tableExists('groups')) {
+            await m.createTable(groups);
+          }
+          if (!await _tableExists('categories')) {
+            await m.createTable(categories);
+          }
+          if (!await _columnExists('recipes', 'group_id')) {
+            await m.addColumn(recipes, recipes.groupId);
+          }
+          if (!await _columnExists('recipes', 'category')) {
+            await m.addColumn(recipes, recipes.category);
+          }
+          if (!await _columnExists('ingredients', 'group_id')) {
+            await m.addColumn(ingredients, ingredients.groupId);
+          }
+          if (!await _columnExists('ingredients', 'category')) {
+            await m.addColumn(ingredients, ingredients.category);
+          }
+          if (!await _columnExists('ingredients', 'current_stock')) {
+            await m.addColumn(ingredients, ingredients.currentStock);
+          }
+          if (!await _columnExists('ingredients', 'minimum_stock')) {
+            await m.addColumn(ingredients, ingredients.minimumStock);
+          }
+          if (!await _columnExists('ingredients', 'stock_unit')) {
+            await m.addColumn(ingredients, ingredients.stockUnit);
+          }
+          if (!await _columnExists('ingredients', 'cost_per_stock_unit')) {
+            await m.addColumn(ingredients, ingredients.costPerStockUnit);
+          }
+          if (!await _columnExists('ingredients', 'last_stock_update')) {
+            await m.addColumn(ingredients, ingredients.lastStockUpdate);
+          }
         }
       },
       beforeOpen: (details) async {
@@ -43,6 +93,50 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  // --- Group Queries ---
+  Future<List<Group>> getAllGroups({bool includeDeleted = false}) {
+    final query = select(groups);
+    if (!includeDeleted) {
+      query.where((t) => t.isDeleted.equals(false));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
+  }
+
+  Stream<List<Group>> watchAllGroups({bool includeDeleted = false}) {
+    final query = select(groups);
+    if (!includeDeleted) {
+      query.where((t) => t.isDeleted.equals(false));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+  }
+
+  Future<Group?> getGroupById(String id) =>
+      (select(groups)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  Future<int> insertGroup(GroupsCompanion group) => into(groups).insert(group);
+
+  Future<bool> updateGroup(Group group) => update(groups).replace(group);
+
+  Future<int> softDeleteGroup(String id) {
+    return (update(groups)..where((t) => t.id.equals(id))).write(
+      GroupsCompanion(
+        isDeleted: const Value(true),
+        isActive: const Value(false),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  // --- Category Queries ---
+  Future<List<Category>> getAllCategories() =>
+      (select(categories)..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
+
+  Stream<List<Category>> watchAllCategories() =>
+      (select(categories)..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+
+  Future<int> insertCategory(CategoriesCompanion category) =>
+      into(categories).insert(category);
+
   // --- Unit Queries ---
   Future<List<Unit>> getAllUnits() => select(units).get();
   Stream<List<Unit>> watchAllUnits() => select(units).watch();
@@ -50,13 +144,45 @@ class AppDatabase extends _$AppDatabase {
   Future<bool> updateUnit(Unit unit) => update(units).replace(unit);
 
   // --- Recipe Queries ---
-  Future<List<Recipe>> getAllRecipes() =>
-      (select(recipes)..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
-  Stream<List<Recipe>> watchAllRecipes() =>
-      (select(recipes)..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+  Future<List<Recipe>> getAllRecipes({String? groupId, String? category}) =>
+      getRecipes(groupId: groupId, category: category);
 
-  Stream<List<RecipeWithFinancials>> watchAllRecipesWithFinancials() {
-    final recipeStream = watchAllRecipes();
+  Stream<List<Recipe>> watchAllRecipes({String? groupId, String? category}) =>
+      watchRecipes(groupId: groupId, category: category);
+
+  Future<List<Recipe>> getRecipes({String? groupId, String? category}) {
+    final query = select(recipes);
+    if (groupId != null && groupId.isNotEmpty) {
+      query.where((t) => t.groupId.equals(groupId));
+    }
+    if (category != null && category.isNotEmpty) {
+      query.where((t) => t.category.equals(category));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
+  }
+
+  Stream<List<Recipe>> watchRecipes({String? groupId, String? category}) {
+    final query = select(recipes);
+    if (groupId != null && groupId.isNotEmpty) {
+      query.where((t) => t.groupId.equals(groupId));
+    }
+    if (category != null && category.isNotEmpty) {
+      query.where((t) => t.category.equals(category));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+  }
+
+  Stream<List<RecipeWithFinancials>> watchAllRecipesWithFinancials({
+    String? groupId,
+    String? category,
+  }) =>
+      watchRecipesWithFinancials(groupId: groupId, category: category);
+
+  Stream<List<RecipeWithFinancials>> watchRecipesWithFinancials({
+    String? groupId,
+    String? category,
+  }) {
+    final recipeStream = watchRecipes(groupId: groupId, category: category);
     
     return recipeStream.asyncMap((recipeList) async {
       final List<RecipeWithFinancials> results = [];
@@ -93,6 +219,8 @@ class AppDatabase extends _$AppDatabase {
         targetProfitMargin: Value(detail.recipe.targetProfitMargin),
         targetPricePerPortion: Value(detail.recipe.targetPricePerPortion),
         colour: Value(detail.recipe.colour),
+        groupId: Value(detail.recipe.groupId),
+        category: Value(detail.recipe.category),
         dateTimeModified: Value(DateTime.now()),
       ));
       for (final ing in detail.ingredients) {
@@ -113,10 +241,16 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // --- Ingredient Queries ---
-  Future<List<Ingredient>> getAllIngredients({bool includeDeleted = false}) {
+  Future<List<Ingredient>> getAllIngredients({
+    bool includeDeleted = false,
+    String? groupId,
+  }) {
     final query = select(ingredients);
     if (!includeDeleted) {
       query.where((t) => t.isDeleted.equals(false));
+    }
+    if (groupId != null && groupId.isNotEmpty) {
+      query.where((t) => t.groupId.equals(groupId));
     }
     return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
   }
@@ -129,10 +263,16 @@ class AppDatabase extends _$AppDatabase {
     return (await (query..limit(1)).get()).firstOrNull;
   }
 
-  Stream<List<Ingredient>> watchAllIngredients({bool includeDeleted = false}) {
+  Stream<List<Ingredient>> watchAllIngredients({
+    bool includeDeleted = false,
+    String? groupId,
+  }) {
     final query = select(ingredients);
     if (!includeDeleted) {
       query.where((t) => t.isDeleted.equals(false));
+    }
+    if (groupId != null && groupId.isNotEmpty) {
+      query.where((t) => t.groupId.equals(groupId));
     }
     return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
   }
@@ -478,6 +618,13 @@ class AppDatabase extends _$AppDatabase {
                   dateTimeModified: nested.dateTimeModified,
                   isDeleted: false,
                   deletedAt: null,
+                  groupId: nested.groupId,
+                  category: nested.category,
+                  currentStock: nested.currentStock,
+                  minimumStock: nested.minimumStock,
+                  stockUnit: nested.stockUnit,
+                  costPerStockUnit: nested.costPerStockUnit,
+                  lastStockUpdate: nested.lastStockUpdate,
                 ));
                 resolvedIngredients.add(ri);
               }
@@ -497,6 +644,7 @@ class AppDatabase extends _$AppDatabase {
                   dateCreated: Value(DateTime.now()),
                   isDeleted: const Value(false),
                   deletedAt: const Value(null),
+                  currentStock: const Value(0.0),
                 ),
                 mode: InsertMode.insertOrIgnore,
               );
@@ -529,6 +677,8 @@ class AppDatabase extends _$AppDatabase {
             dateCreated: Value(remoteRecipe.dateCreated),
             dateTimeModified: Value(remoteRecipe.dateTimeModified),
             archived: Value(remoteRecipe.archived),
+            groupId: Value(remoteRecipe.groupId),
+            category: Value(remoteRecipe.category),
           ),
         );
 
@@ -575,6 +725,8 @@ class AppDatabase extends _$AppDatabase {
               colour: Value(remoteRecipe.colour),
               dateTimeModified: Value(remoteRecipe.dateTimeModified),
               archived: Value(remoteRecipe.archived),
+              groupId: Value(remoteRecipe.groupId),
+              category: Value(remoteRecipe.category),
             ),
           );
 
@@ -657,6 +809,13 @@ class AppDatabase extends _$AppDatabase {
           dateTimeModified: Value(remoteIngredient.dateTimeModified),
           isDeleted: Value(remoteIngredient.isDeleted),
           deletedAt: Value(remoteIngredient.deletedAt),
+          groupId: Value(remoteIngredient.groupId),
+          category: Value(remoteIngredient.category),
+          currentStock: Value(remoteIngredient.currentStock),
+          minimumStock: Value(remoteIngredient.minimumStock),
+          stockUnit: Value(remoteIngredient.stockUnit),
+          costPerStockUnit: Value(remoteIngredient.costPerStockUnit),
+          lastStockUpdate: Value(remoteIngredient.lastStockUpdate),
         ),
         mode: InsertMode.insertOrReplace,
       );
@@ -695,6 +854,13 @@ class AppDatabase extends _$AppDatabase {
               isDeleted: const Value(false),
               deletedAt: const Value(null),
               dateTimeModified: Value(remoteTime),
+              groupId: Value(remoteIngredient.groupId),
+              category: Value(remoteIngredient.category),
+              currentStock: Value(remoteIngredient.currentStock),
+              minimumStock: Value(remoteIngredient.minimumStock),
+              stockUnit: Value(remoteIngredient.stockUnit),
+              costPerStockUnit: Value(remoteIngredient.costPerStockUnit),
+              lastStockUpdate: Value(remoteIngredient.lastStockUpdate),
             ),
           );
           return 2;
@@ -724,6 +890,13 @@ class AppDatabase extends _$AppDatabase {
               quantityForCost: Value(remoteIngredient.quantityForCost),
               unitFk: Value(targetUnitFk),
               dateTimeModified: Value(remoteIngredient.dateTimeModified ?? remoteIngredient.dateCreated),
+              groupId: Value(remoteIngredient.groupId),
+              category: Value(remoteIngredient.category),
+              currentStock: Value(remoteIngredient.currentStock),
+              minimumStock: Value(remoteIngredient.minimumStock),
+              stockUnit: Value(remoteIngredient.stockUnit),
+              costPerStockUnit: Value(remoteIngredient.costPerStockUnit),
+              lastStockUpdate: Value(remoteIngredient.lastStockUpdate),
             ),
           );
           return 2;

@@ -1807,4 +1807,79 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get import_recipe_open_now_action => 'Abrir';
+
+  @override
+  String get category_all => 'Todos';
+
+  @override
+  String get category_cocina => 'Cocina';
+
+  @override
+  String get category_pasteleria => 'Pastelería';
+
+  @override
+  String get category_cocteleria => 'Coctelería';
+
+  @override
+  String get category_label => 'Categoría';
+
+  @override
+  String get category_filter_tooltip => 'Filtrar por categoría';
+
+  @override
+  String get groups_title => 'Espacios de trabajo';
+
+  @override
+  String get group_default_name => 'Principal';
+
+  @override
+  String get group_switcher_tooltip => 'Cambiar espacio de trabajo';
+
+  @override
+  String get group_active_label => 'Espacio activo';
+
+  @override
+  String get group_add_new => 'Nuevo espacio';
+
+  @override
+  String get group_edit => 'Editar espacio';
+
+  @override
+  String get group_name_label => 'Nombre del espacio';
+
+  @override
+  String get group_name_hint => 'ej. Cocina Principal, Barú...';
+
+  @override
+  String get group_color_label => 'Color';
+
+  @override
+  String get group_icon_label => 'Ícono';
+
+  @override
+  String get group_delete => 'Eliminar espacio';
+
+  @override
+  String get group_delete_confirm =>
+      '¿Estás seguro de que deseas eliminar este espacio de trabajo?';
+
+  @override
+  String get group_delete_cannot_last =>
+      'No puedes eliminar el único espacio restante.';
+
+  @override
+  String group_switch_success(String name) {
+    return 'Cambiado a $name';
+  }
+
+  @override
+  String get group_all_workspaces => 'Todos los espacios';
+
+  @override
+  String get group_select_prompt =>
+      'Selecciona un espacio para gestionar sus recetas';
+
+  @override
+  String get group_management_subtitle =>
+      'Administra sucursales, cocinas y áreas de trabajo';
 }

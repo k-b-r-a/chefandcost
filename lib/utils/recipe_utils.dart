@@ -610,6 +610,8 @@ class RecipeUtils {
     required String priceText,
     required List<RecipeIngredientData> ingredients,
     required List<RecipeStepData> steps,
+    String? category,
+    String? groupId,
   }) async {
     final parsedYield = parseFormattedNumber(yieldText);
     final parsedPrice = parseFormattedNumber(priceText);
@@ -628,6 +630,8 @@ class RecipeUtils {
       targetProfitMargin: drift.Value(decimalMargin),
       targetPricePerPortion: drift.Value(parsedPrice),
       dateTimeModified: drift.Value(now),
+      category: category != null ? drift.Value(category) : const drift.Value('cocina'),
+      groupId: groupId != null ? drift.Value(groupId) : const drift.Value.absent(),
     );
 
     await db.transaction(() async {
@@ -652,6 +656,13 @@ class RecipeUtils {
             dateTimeModified: drift.Value(now),
             isDeleted: const drift.Value(false),
             deletedAt: const drift.Value(null),
+            groupId: drift.Value(ingData.ingredient.groupId),
+            category: drift.Value(ingData.ingredient.category),
+            currentStock: drift.Value(ingData.ingredient.currentStock),
+            minimumStock: drift.Value(ingData.ingredient.minimumStock),
+            stockUnit: drift.Value(ingData.ingredient.stockUnit),
+            costPerStockUnit: drift.Value(ingData.ingredient.costPerStockUnit),
+            lastStockUpdate: drift.Value(ingData.ingredient.lastStockUpdate),
           ),
         );
 

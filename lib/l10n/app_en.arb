@@ -774,5 +774,35 @@
     }
   },
   "import_recipe_confirm_btn": "Import",
-  "import_recipe_open_now_action": "Open"
+  "import_recipe_open_now_action": "Open",
+  "category_all": "All",
+  "category_cocina": "Kitchen",
+  "category_pasteleria": "Pastry",
+  "category_cocteleria": "Cocktails",
+  "category_label": "Category",
+  "category_filter_tooltip": "Filter by category",
+  "groups_title": "Workspaces & Groups",
+  "group_default_name": "Main",
+  "group_switcher_tooltip": "Switch workspace",
+  "group_active_label": "Active Workspace",
+  "group_add_new": "New Workspace",
+  "group_edit": "Edit Workspace",
+  "group_name_label": "Workspace Name",
+  "group_name_hint": "e.g., Main Kitchen, Barú...",
+  "group_color_label": "Color",
+  "group_icon_label": "Icon",
+  "group_delete": "Delete Workspace",
+  "group_delete_confirm": "Are you sure you want to delete this workspace?",
+  "group_delete_cannot_last": "You cannot delete the only remaining workspace.",
+  "group_switch_success": "Switched to {name}",
+  "@group_switch_success": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "group_all_workspaces": "All Workspaces",
+  "group_select_prompt": "Select a workspace to manage its recipes",
+  "group_management_subtitle": "Manage venues, kitchens and operational workspaces"
 }

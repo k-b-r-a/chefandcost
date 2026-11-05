@@ -15,6 +15,8 @@ import '../constants.dart';
 import '../utils/app_logger.dart';
 import '../widgets/github_changelog_view.dart';
 import '../services/app_tutorial_service.dart';
+import '../widgets/active_group_chip.dart';
+import '../widgets/group_management_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -36,6 +38,10 @@ class SettingsScreen extends ConsumerWidget {
             context: context,
             title: l10n.config_button,
             controller: scrollController,
+            actions: [
+              const ActiveGroupChip(isCompact: true),
+              const SizedBox(width: 8),
+            ],
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 16.0),
@@ -53,6 +59,32 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                          leading: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.teal.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.storefront_rounded,
+                              color: Colors.teal,
+                              size: 24,
+                            ),
+                          ),
+                          title: Text(
+                            l10n.groups_title,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            '${l10n.group_active_label}: ${ref.watch(activeGroupProvider)?.name ?? l10n.group_default_name}',
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => GroupManagementSheet.show(context),
+                        ),
+                        const Divider(height: 1, indent: 20, endIndent: 20),
                         _buildMenuTile(
                           context,
                           ref: ref,

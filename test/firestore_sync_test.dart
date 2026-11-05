@@ -1212,7 +1212,7 @@ void main() {
   });
 
   group('Drift Schema Migration v1 to v2 Tests', () {
-    test('Database schema version is 2 and table schema includes is_deleted and deleted_at', () async {
+    test('Database schema version is 3 and table schema includes is_deleted and deleted_at', () async {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       expect(db.schemaVersion, 2);
 

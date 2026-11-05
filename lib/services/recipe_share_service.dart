@@ -118,6 +118,8 @@ class RecipeShareService {
         'targetPricePerPortion': detail.recipe.targetPricePerPortion,
         'fixedOverheadCost': detail.recipe.fixedOverheadCost,
         'colour': detail.recipe.colour,
+        'category': detail.recipe.category,
+        'groupId': detail.recipe.groupId,
       },
       'ingredients': ingredientsList,
       'steps': stepsList,
@@ -795,6 +797,8 @@ class RecipeShareService {
     final fixedOverheadCost =
         (recipeMap['fixedOverheadCost'] as num?)?.toDouble() ?? 0.0;
     final colour = recipeMap['colour'] as String?;
+    final category = (recipeMap['category'] as String?) ?? 'cocina';
+    final groupId = recipeMap['groupId'] as String?;
 
     final ingredientsList = (data['ingredients'] as List?) ?? [];
     final stepsList = (data['steps'] as List?) ?? [];
@@ -916,6 +920,8 @@ class RecipeShareService {
               targetPricePerPortion: drift.Value(targetPricePerPortion),
               fixedOverheadCost: drift.Value(fixedOverheadCost),
               colour: drift.Value(colour),
+              category: drift.Value(category),
+              groupId: drift.Value(groupId),
               dateCreated: drift.Value(now),
               dateTimeModified: drift.Value(now),
               archived: const drift.Value(false),
@@ -935,6 +941,8 @@ class RecipeShareService {
         dateCreated: now,
         dateTimeModified: now,
         archived: false,
+        category: category,
+        groupId: groupId,
       );
 
       // 3. Insert Recipe Ingredients

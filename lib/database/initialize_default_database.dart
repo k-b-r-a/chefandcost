@@ -148,4 +148,61 @@ Future<void> initializeDefaultDatabase(AppDatabase db) async {
       );
     }
   }
+
+  // 3. Seed Preset Categories if not present ('cocina', 'pasteleria', 'cocteleria')
+  final existingCats = await db.getAllCategories();
+  final catIds = existingCats.map((c) => c.id).toSet();
+  if (!catIds.contains('cocina')) {
+    await db.insertCategory(const CategoriesCompanion(
+      id: Value('cocina'),
+      name: Value('Cocina'),
+      iconName: Value('restaurant'),
+    ));
+  }
+  if (!catIds.contains('pasteleria')) {
+    await db.insertCategory(const CategoriesCompanion(
+      id: Value('pasteleria'),
+      name: Value('Pastelería'),
+      iconName: Value('cake'),
+    ));
+  }
+  if (!catIds.contains('cocteleria')) {
+    await db.insertCategory(const CategoriesCompanion(
+      id: Value('cocteleria'),
+      name: Value('Coctelería'),
+      iconName: Value('local_bar'),
+    ));
+  }
+
+  // 4. Ensure default fallback group ("Principal" / "Default") exists
+  final existingGroups = await db.getAllGroups(includeDeleted: true);
+  String defaultGroupId;
+  if (existingGroups.isEmpty) {
+    defaultGroupId = 'group_default_principal';
+    await db.insertGroup(GroupsCompanion(
+      id: Value(defaultGroupId),
+      name: const Value('Principal'),
+      iconName: const Value('storefront'),
+      colorHex: const Value('FF4CAF50'),
+      isActive: const Value(true),
+      createdAt: Value(DateTime.now()),
+      updatedAt: Value(DateTime.now()),
+      isDeleted: const Value(false),
+    ));
+  } else {
+    final activeGroup = existingGroups.firstWhere((g) => !g.isDeleted, orElse: () => existingGroups.first);
+    defaultGroupId = activeGroup.id;
+  }
+
+  // 5. Populate defaults for existing recipe & ingredient records
+  await (db.update(db.recipes)..where((t) => t.groupId.isNull()))
+      .write(RecipesCompanion(groupId: Value(defaultGroupId)));
+  await (db.update(db.ingredients)..where((t) => t.groupId.isNull()))
+      .write(IngredientsCompanion(groupId: Value(defaultGroupId)));
+
+  await (db.update(db.recipes)..where((t) => t.category.isNull()))
+      .write(const RecipesCompanion(category: Value('cocina')));
+
+  await (db.update(db.ingredients)..where((t) => t.currentStock.isNull()))
+      .write(const IngredientsCompanion(currentStock: Value(0.0)));
 }

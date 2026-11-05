@@ -229,6 +229,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
           ],
           child: const RecipetoolsApp(),
@@ -262,6 +263,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
           ],
           child: const RecipetoolsApp(),
@@ -299,6 +301,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
             unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
           ],
@@ -389,6 +392,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
             unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
           ],
@@ -408,7 +412,7 @@ void main() {
       // Right pane displays RecipeEditorScreen with financial summary initially
       expect(find.text('Resumen Financiero'), findsOneWidget);
 
-      // Tap "Añadir ingrediente" button in recipe editor form
+      // Tap "AÃ±adir ingrediente" button in recipe editor form
       final addIngredientBtn = find.widgetWithIcon(FilledButton, Icons.add_rounded);
       expect(addIngredientBtn, findsWidgets);
       await tester.tap(addIngredientBtn.first);
@@ -447,6 +451,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
             unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
           ],
@@ -512,6 +517,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([sugar])),
             unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
             unitsStreamProvider.overrideWith((ref) => Stream.value(<Unit>[])),
@@ -563,6 +569,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([sugar])),
             unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
             unitsStreamProvider.overrideWith((ref) => Stream.value(<Unit>[])),
@@ -624,6 +631,7 @@ void main() {
           overrides: [
             sharedPreferencesProvider.overrideWithValue(sharedPrefs),
             recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
             ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
             unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
             unitsStreamProvider.overrideWith((ref) => Stream.value(<Unit>[])),

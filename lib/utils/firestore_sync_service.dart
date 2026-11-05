@@ -235,6 +235,8 @@ class FirestoreSyncService {
       'targetPricePerPortion': r.targetPricePerPortion,
       'fixedOverheadCost': r.fixedOverheadCost,
       'colour': r.colour,
+      'groupId': r.groupId,
+      'category': r.category,
       'dateCreated': r.dateCreated.toIso8601String(),
       'dateTimeModified': r.dateTimeModified?.toIso8601String(),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -253,6 +255,13 @@ class FirestoreSyncService {
         'ingredientDateTimeModified': ri.ingredient.dateTimeModified?.toIso8601String(),
         'is_deleted': ri.ingredient.isDeleted,
         'deleted_at': ri.ingredient.deletedAt?.toIso8601String(),
+        'group_id': ri.ingredient.groupId,
+        'category': ri.ingredient.category,
+        'current_stock': ri.ingredient.currentStock,
+        'minimum_stock': ri.ingredient.minimumStock,
+        'stock_unit': ri.ingredient.stockUnit,
+        'cost_per_stock_unit': ri.ingredient.costPerStockUnit,
+        'last_stock_update': ri.ingredient.lastStockUpdate?.toIso8601String(),
       }).toList(),
       'steps': detail.steps.map((st) => {
         'stepPk': st.stepPk,
@@ -286,6 +295,8 @@ class FirestoreSyncService {
       dateCreated: _parseDate(d['dateCreated']),
       dateTimeModified: _parseNullableDate(d['dateTimeModified']),
       archived: d['archived'] as bool? ?? false,
+      groupId: (d['group_id'] ?? d['groupId']) as String?,
+      category: (d['category'] ?? d['category_id'] as String?) ?? 'cocina',
     );
 
     final rawIngredients = (d['ingredients'] as List<dynamic>?) ?? [];
@@ -327,6 +338,13 @@ class FirestoreSyncService {
               ),
               isDeleted: isDeleted,
               deletedAt: deletedAt,
+              groupId: (ingMap['group_id'] ?? ingMap['groupId']) as String?,
+              category: ingMap['category'] as String?,
+              currentStock: (ingMap['current_stock'] ?? ingMap['currentStock'] as num?)?.toDouble() ?? 0.0,
+              minimumStock: (ingMap['minimum_stock'] ?? ingMap['minimumStock'] as num?)?.toDouble(),
+              stockUnit: (ingMap['stock_unit'] ?? ingMap['stockUnit']) as String?,
+              costPerStockUnit: (ingMap['cost_per_stock_unit'] ?? ingMap['costPerStockUnit'] as num?)?.toDouble(),
+              lastStockUpdate: _parseNullableDate(ingMap['last_stock_update'] ?? ingMap['lastStockUpdate']),
             ),
           );
         }
@@ -376,6 +394,13 @@ class FirestoreSyncService {
       'updatedAt': Timestamp.fromDate(updatedAt),
       'is_deleted': ing.isDeleted,
       'deleted_at': ing.deletedAt?.toIso8601String(),
+      'group_id': ing.groupId,
+      'category': ing.category,
+      'current_stock': ing.currentStock,
+      'minimum_stock': ing.minimumStock,
+      'stock_unit': ing.stockUnit,
+      'cost_per_stock_unit': ing.costPerStockUnit,
+      'last_stock_update': ing.lastStockUpdate?.toIso8601String(),
     };
   }
 
@@ -394,6 +419,43 @@ class FirestoreSyncService {
       dateTimeModified: _parseNullableDate(d['dateTimeModified']),
       isDeleted: isDeleted,
       deletedAt: deletedAt,
+      groupId: (d['group_id'] ?? d['groupId']) as String?,
+      category: d['category'] as String?,
+      currentStock: (d['current_stock'] ?? d['currentStock'] as num?)?.toDouble() ?? 0.0,
+      minimumStock: (d['minimum_stock'] ?? d['minimumStock'] as num?)?.toDouble(),
+      stockUnit: (d['stock_unit'] ?? d['stockUnit']) as String?,
+      costPerStockUnit: (d['cost_per_stock_unit'] ?? d['costPerStockUnit'] as num?)?.toDouble(),
+      lastStockUpdate: _parseNullableDate(d['last_stock_update'] ?? d['lastStockUpdate']),
+    );
+  }
+
+  /// Serializes a [Group] into Firestore format.
+  static Map<String, dynamic> groupToFirestore(Group g) {
+    return {
+      'id': g.id,
+      'name': g.name,
+      'icon_name': g.iconName,
+      'color_hex': g.colorHex,
+      'is_active': g.isActive,
+      'created_at': g.createdAt.toIso8601String(),
+      'updated_at': g.updatedAt.toIso8601String(),
+      'is_deleted': g.isDeleted,
+      'updatedAt': Timestamp.fromDate(g.updatedAt),
+    };
+  }
+
+  /// Parses a [Group] from Firestore format.
+  static Group groupFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
+    final id = (d['id'] as String?) ?? fallbackId;
+    return Group(
+      id: id.isNotEmpty ? id : 'group_${DateTime.now().millisecondsSinceEpoch}',
+      name: (d['name'] as String?) ?? 'Grupo',
+      iconName: (d['icon_name'] ?? d['iconName']) as String?,
+      colorHex: (d['color_hex'] ?? d['colorHex']) as String?,
+      isActive: (d['is_active'] ?? d['isActive']) as bool? ?? true,
+      createdAt: _parseDate(d['created_at'] ?? d['createdAt']),
+      updatedAt: _parseDate(d['updated_at'] ?? d['updatedAt']),
+      isDeleted: (d['is_deleted'] ?? d['isDeleted']) as bool? ?? false,
     );
   }
 

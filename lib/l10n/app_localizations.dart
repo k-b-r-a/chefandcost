@@ -3407,6 +3407,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get import_recipe_open_now_action;
+
+  /// No description provided for @category_all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get category_all;
+
+  /// No description provided for @category_cocina.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen'**
+  String get category_cocina;
+
+  /// No description provided for @category_pasteleria.
+  ///
+  /// In en, this message translates to:
+  /// **'Pastry'**
+  String get category_pasteleria;
+
+  /// No description provided for @category_cocteleria.
+  ///
+  /// In en, this message translates to:
+  /// **'Cocktails'**
+  String get category_cocteleria;
+
+  /// No description provided for @category_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category_label;
+
+  /// No description provided for @category_filter_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by category'**
+  String get category_filter_tooltip;
+
+  /// No description provided for @groups_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspaces & Groups'**
+  String get groups_title;
+
+  /// No description provided for @group_default_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Main'**
+  String get group_default_name;
+
+  /// No description provided for @group_switcher_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch workspace'**
+  String get group_switcher_tooltip;
+
+  /// No description provided for @group_active_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Workspace'**
+  String get group_active_label;
+
+  /// No description provided for @group_add_new.
+  ///
+  /// In en, this message translates to:
+  /// **'New Workspace'**
+  String get group_add_new;
+
+  /// No description provided for @group_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Workspace'**
+  String get group_edit;
+
+  /// No description provided for @group_name_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace Name'**
+  String get group_name_label;
+
+  /// No description provided for @group_name_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Main Kitchen, Barú...'**
+  String get group_name_hint;
+
+  /// No description provided for @group_color_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get group_color_label;
+
+  /// No description provided for @group_icon_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get group_icon_label;
+
+  /// No description provided for @group_delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Workspace'**
+  String get group_delete;
+
+  /// No description provided for @group_delete_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this workspace?'**
+  String get group_delete_confirm;
+
+  /// No description provided for @group_delete_cannot_last.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot delete the only remaining workspace.'**
+  String get group_delete_cannot_last;
+
+  /// No description provided for @group_switch_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched to {name}'**
+  String group_switch_success(String name);
+
+  /// No description provided for @group_all_workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'All Workspaces'**
+  String get group_all_workspaces;
+
+  /// No description provided for @group_select_prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a workspace to manage its recipes'**
+  String get group_select_prompt;
+
+  /// No description provided for @group_management_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage venues, kitchens and operational workspaces'**
+  String get group_management_subtitle;
 }
 
 class _AppLocalizationsDelegate
