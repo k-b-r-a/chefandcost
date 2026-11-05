@@ -1,1 +1,1 @@
-const String kAppVersion = '0.1.2+7';
+const String kAppVersion = '0.1.2';
