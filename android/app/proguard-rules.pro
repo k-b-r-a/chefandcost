@@ -32,3 +32,8 @@
 
 # Desugaring & Java Time
 -dontwarn java.time.**
+
+# Play Core Split Install (Flutter Deferred Components)
+-dontwarn com.google.android.play.core.splitcompat.**
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**

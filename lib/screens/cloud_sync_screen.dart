@@ -1642,7 +1642,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               controller: _passwordController,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _handleEmailAuth(notifier, l10n),
+              onSubmitted: (_) => _handleEmailAuth(notifier, theme, l10n),
               decoration: InputDecoration(
                 labelText: l10n.cloud_sync_password_label,
                 hintText: l10n.cloud_sync_password_hint,

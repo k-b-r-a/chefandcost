@@ -20,8 +20,8 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.chefandcost.app"
     // Google Play requires targeting modern Android SDK (API 35+ for 2024/2025/2026 releases)
-    compileSdk = 35
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
