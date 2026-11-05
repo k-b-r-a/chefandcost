@@ -44,6 +44,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
+recipetools/
 .env
 .aider.tags.cache.v4
 .agents
@@ -53,3 +55,5 @@ app.*.map.json
 *.jks
 android/key.properties
 key.properties
+repomix.xml
+

@@ -1858,4 +1858,148 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get group_management_subtitle =>
       'Manage venues, kitchens and operational workspaces';
+
+  @override
+  String get settings_about_privacy_view_online => 'View Online Privacy Policy';
+
+  @override
+  String get settings_about_privacy_delete_portal =>
+      'Web Account & Data Deletion Portal';
+
+  @override
+  String get cloud_sync_delete_account_btn => 'Delete account & cloud data';
+
+  @override
+  String get cloud_sync_delete_account_title => 'Delete account & data';
+
+  @override
+  String get cloud_sync_delete_account_confirm_desc =>
+      'Are you sure you want to permanently delete your account and all data synced to the cloud? This action will remove your recipes, ingredients, and backups from Firestore and cannot be undone. Recipes stored locally on this device will not be deleted.';
+
+  @override
+  String get cloud_sync_delete_account_password_prompt =>
+      'Enter your password to confirm deletion:';
+
+  @override
+  String get cloud_sync_delete_account_confirm_btn => 'Permanently delete';
+
+  @override
+  String get cloud_sync_delete_account_deleting =>
+      'Deleting account and cloud data...';
+
+  @override
+  String get cloud_sync_delete_account_success =>
+      'Account and cloud data successfully deleted.';
+
+  @override
+  String get cloud_sync_delete_account_reauth_required =>
+      'Recent authentication required. Please sign in again and retry.';
+
+  @override
+  String get cloud_sync_sign_in_canceled => 'Sign-in was canceled.';
+
+  @override
+  String get cloud_sync_error_network =>
+      'No internet connection. Please check your network and try again.';
+
+  @override
+  String get cloud_sync_error_drive_permission_denied =>
+      'Google Drive permission was denied. Please grant permission to back up your data.';
+
+  @override
+  String get cloud_sync_revoke_google_btn =>
+      'Disconnect & Revoke Google Access';
+
+  @override
+  String get cloud_sync_delete_cloud_data_btn => 'Delete Cloud Data';
+
+  @override
+  String get cloud_sync_delete_cloud_data_confirm_title =>
+      'Delete All Cloud Data?';
+
+  @override
+  String get cloud_sync_delete_cloud_data_confirm_desc =>
+      'This will permanently delete all recipes, ingredients, and units stored in Firestore. Local data on this device will not be deleted.';
+
+  @override
+  String get cloud_sync_delete_cloud_data_success =>
+      'Cloud data deleted successfully.';
+
+  @override
+  String get cloud_sync_delete_all_backups_btn => 'Delete All Backups';
+
+  @override
+  String get cloud_sync_delete_all_backups_confirm_title =>
+      'Delete All Cloud Backups?';
+
+  @override
+  String get cloud_sync_delete_all_backups_confirm_desc =>
+      'Are you sure you want to delete all backups from Google Drive? This action cannot be undone.';
+
+  @override
+  String get cloud_sync_delete_all_backups_success =>
+      'All cloud backups have been deleted.';
+
+  @override
+  String get cloud_sync_account_management_title => 'Account & Data Management';
+
+  @override
+  String get cloud_sync_terms_dialog_title => 'Cloud Sync Terms & Privacy';
+
+  @override
+  String get cloud_sync_terms_dialog_subtitle =>
+      'Please review and accept how Chef&Cost syncs your data with Firebase and Google Drive before proceeding.';
+
+  @override
+  String get cloud_sync_terms_firestore_title => 'Google Firebase Firestore';
+
+  @override
+  String get cloud_sync_terms_firestore_desc =>
+      'Synchronizes your recipes, ingredient costs, and settings in real-time across your authorized devices.';
+
+  @override
+  String get cloud_sync_terms_drive_title => 'Google Drive (AppData)';
+
+  @override
+  String get cloud_sync_terms_drive_desc =>
+      'Uploads database backups strictly to Chef&Cost\'s hidden application folder. We cannot access or see any of your personal Google Drive files.';
+
+  @override
+  String get cloud_sync_terms_privacy_title => '100% Data Ownership & Privacy';
+
+  @override
+  String get cloud_sync_terms_privacy_desc =>
+      'Your recipes, yields, and business financial figures belong exclusively to you. Your data is never sold, shared, or mined for third parties.';
+
+  @override
+  String get cloud_sync_terms_control_title =>
+      'Full Revocation & Deletion Rights';
+
+  @override
+  String get cloud_sync_terms_control_desc =>
+      'You can disconnect your account, revoke Google authorization, or delete all cloud-stored data permanently at any time.';
+
+  @override
+  String get cloud_sync_terms_view_privacy => 'Read Full Privacy Policy online';
+
+  @override
+  String get cloud_sync_terms_accept_btn => 'Accept & Continue';
+
+  @override
+  String get cloud_sync_terms_decline_btn => 'Not Now';
+
+  @override
+  String get cloud_sync_terms_banner_unaccepted =>
+      'Cloud Terms & Privacy must be accepted before syncing with Firebase or Google Drive.';
+
+  @override
+  String get cloud_sync_terms_accepted_badge =>
+      'Cloud Terms & Privacy Policy Accepted';
+
+  @override
+  String get cloud_sync_terms_review_btn => 'Review Terms';
+
+  @override
+  String get cloud_sync_terms_required_warning =>
+      'You must accept the terms of service and privacy policy to connect to cloud services.';
 }

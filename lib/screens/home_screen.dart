@@ -20,6 +20,8 @@ import 'kitchen_timers_screen.dart';
 import 'rule_of_three_screen.dart';
 import 'unit_converter_screen.dart';
 import '../services/app_tutorial_service.dart';
+import '../provider/cloud_sync_provider.dart';
+import '../utils/cloud_sync_service.dart';
 import '../utils/recipe_import_helper.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -71,6 +73,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
     final recipesAsync = ref.watch(recipesWithFinancialsStreamProvider);
+    final syncState = ref.watch(cloudSyncProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -82,6 +85,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             controller: _scrollController,
             actions: [
               const ActiveGroupChip(isCompact: true),
+              IconButton(
+                key: const ValueKey('home_sync_button'),
+                icon: syncState.loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.sync),
+                tooltip: syncState.storageType == CloudSyncStorageType.firestore
+                    ? l10n.cloud_sync_sync_now
+                    : l10n.cloud_sync_sync_btn,
+                onPressed: syncState.loading
+                    ? null
+                    : () {
+                        ref.read(cloudSyncProvider.notifier).syncTwoWay();
+                      },
+              ),
               const SizedBox(width: 8),
             ],
           ),
@@ -104,7 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       // 3. Quick Actions
                       KeyedSubtree(
                         key: widget.tutorialKeys?.quickActionsKey,
-                        child: _buildQuickActionsSection(context, theme, l10n),
+                        child: _buildQuickActionsSection(context, theme, l10n, syncState),
                       ),
                       const SizedBox(height: 20),
 
@@ -229,6 +250,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BuildContext context,
     ThemeData theme,
     AppLocalizations l10n,
+    CloudSyncState syncState,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,6 +268,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
+              _buildQuickActionButton(
+                context: context,
+                theme: theme,
+                label: syncState.storageType == CloudSyncStorageType.firestore
+                    ? l10n.cloud_sync_sync_now
+                    : l10n.cloud_sync_sync_btn,
+                icon: Icons.sync,
+                isPrimary: false,
+                onTap: () {
+                  if (syncState.loading) return;
+                  ref.read(cloudSyncProvider.notifier).syncTwoWay();
+                },
+              ),
+              const SizedBox(width: 10),
               _buildQuickActionButton(
                 context: context,
                 theme: theme,

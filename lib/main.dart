@@ -18,11 +18,16 @@ import 'screens/rule_of_three_screen.dart';
 import 'screens/unit_converter_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/cloud_sync_screen.dart';
+import 'screens/privacy_policy_screen.dart';
+import 'screens/delete_account_screen.dart';
 import 'provider/settings_provider.dart';
 import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
+import 'utils/cloud_sync_service.dart';
 import 'widgets/app_logo.dart';
 import 'services/app_tutorial_service.dart';
+import 'services/recipe_file_intent_service.dart';
+import 'utils/recipe_import_helper.dart';
 import 'database/sample_manufacturing_recipe.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -99,6 +104,9 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 typedef RecipetoolsApp = ChefAndCostApp;
 
 class ChefAndCostApp extends ConsumerWidget {
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   const ChefAndCostApp({super.key});
 
   @override
@@ -177,6 +185,7 @@ class ChefAndCostApp extends ConsumerWidget {
     }
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Chef&Cost',
       onGenerateTitle: (context) => 'Chef&Cost',
       locale: settings.locale,
@@ -195,6 +204,26 @@ class ChefAndCostApp extends ConsumerWidget {
         );
       },
       home: const MainNavigationScreen(),
+      onGenerateRoute: (routeSettings) {
+        final uri = Uri.tryParse(routeSettings.name ?? '') ?? Uri();
+        final path = uri.path.toLowerCase();
+        if (path == '/privacy' || path == '/privacy.html') {
+          return MaterialPageRoute(
+            settings: routeSettings,
+            builder: (_) => const PrivacyPolicyScreen(),
+          );
+        }
+        if (path == '/delete-account' || path == '/delete-account.html') {
+          return MaterialPageRoute(
+            settings: routeSettings,
+            builder: (_) => const DeleteAccountScreen(),
+          );
+        }
+        return MaterialPageRoute(
+          settings: routeSettings,
+          builder: (_) => const MainNavigationScreen(),
+        );
+      },
     );
   }
 }
@@ -222,6 +251,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   VoidCallback? _replayListener;
   Timer? _initTutorialTimer;
   Timer? _replayTutorialTimer;
+  StreamSubscription<Map<String, String>>? _fileIntentSubscription;
 
   late final List<Widget> _screens;
 
@@ -287,19 +317,54 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     final isTesting = !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';
     if (!isTesting) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      RecipeFileIntentService.initialize();
+      _fileIntentSubscription =
+          RecipeFileIntentService.fileStream.listen((fileData) {
+        if (mounted) {
+          _handleIncomingRecipeFile(fileData);
+        }
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         _initTutorialTimer?.cancel();
         _initTutorialTimer = Timer(const Duration(milliseconds: 600), () {
           if (mounted) {
             AppTutorialService.checkAndShowTutorial(context, keys: _tutorialKeys);
           }
         });
+
+        final initialFile = await RecipeFileIntentService.getInitialFile();
+        if (initialFile != null && mounted) {
+          _handleIncomingRecipeFile(initialFile);
+        }
       });
     }
   }
 
+  Future<void> _handleIncomingRecipeFile(Map<String, String> fileData) async {
+    final content = fileData['content'];
+    final fileName = fileData['fileName'];
+    if (content == null || content.isEmpty) return;
+
+    if (RecipeImportHelper.isImportInProgress) {
+      return;
+    }
+
+    final targetContext =
+        ChefAndCostApp.navigatorKey.currentContext ?? context;
+    if (!targetContext.mounted) return;
+
+    await RecipeImportHelper.importRecipeFromString(
+      targetContext,
+      ref,
+      jsonContent: content,
+      sourceFileName: fileName,
+    );
+  }
+
   @override
   void dispose() {
+    _fileIntentSubscription?.cancel();
     _initTutorialTimer?.cancel();
     _replayTutorialTimer?.cancel();
     if (_replayListener != null) {
@@ -321,6 +386,34 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final double middleWidth = screenWidth < 900
         ? 300.0
         : (screenWidth < 1200 ? 340.0 : 380.0);
+
+    ref.listen<CloudSyncState>(cloudSyncProvider, (previous, next) {
+      final isRouteCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+      if (!isRouteCurrent) return;
+      if (isWide && ref.read(webLayoutProvider).rightPaneView == WebRightPaneView.settingsCloudSync) {
+        return;
+      }
+      if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage!),
+            backgroundColor: theme.colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      if (next.successMessage != null && next.successMessage != previous?.successMessage) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.successMessage!),
+            backgroundColor: theme.colorScheme.secondary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
 
     final pageView = PageView(
       controller: _pageController,
@@ -502,19 +595,42 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         child: Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: isCloudSyncActive
-                        ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
-                        : null,
-                    shape: BoxShape.circle,
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    key: const ValueKey('web_nav_sync_button'),
+                    visualDensity: VisualDensity.compact,
+                    icon: syncState.loading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.sync),
+                    tooltip: syncState.storageType == CloudSyncStorageType.firestore
+                        ? l10n.cloud_sync_sync_now
+                        : l10n.cloud_sync_sync_btn,
+                    onPressed: syncState.loading
+                        ? null
+                        : () {
+                            ref.read(cloudSyncProvider.notifier).syncTwoWay();
+                          },
                   ),
-                  child: IconButton(
-                    icon: syncState.signedIn
+                  const SizedBox(height: 4),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isCloudSyncActive
+                          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                          : null,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: syncState.signedIn
                         ? CircleAvatar(
                             radius: 13,
                             backgroundColor: theme.colorScheme.primary,
@@ -546,8 +662,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 IconButton(
+                  visualDensity: VisualDensity.compact,
                   icon: Icon(
                     settings.themeMode == ThemeMode.dark
                         ? Icons.dark_mode_outlined
@@ -568,6 +685,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ),
         ),
       ),
+    ),
       destinations: [
         NavigationRailDestination(
           icon: Icon(getNavBarIcon(0, false, settings.iconStyle), size: railIconSize),

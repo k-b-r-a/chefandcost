@@ -14,6 +14,7 @@ import 'package:drift/drift.dart' as drift;
 import '../database/database.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/recipe_utils.dart';
+import 'file_share_helper.dart';
 import 'web_file_download.dart';
 
 class RecipeImportPreview {
@@ -67,12 +68,18 @@ class RecipeShareService {
   static const int currentFormatVersion = 1;
   static const Uuid _uuid = Uuid();
 
-  /// Cleans strings to be safe for filenames across OSes
+  /// Cleans strings to be safe for filenames across OSes.
+  /// Removes emojis, symbols, and punctuation while preserving letters in any script,
+  /// numbers, spaces, hyphens, and underscores.
   static String sanitizeFileName(String name) {
-    final clean = name
-        .trim()
-        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
-        .replaceAll(RegExp(r'\s+'), '_');
+    final filtered = name
+        .replaceAll(RegExp(r'[^\p{L}\p{N}\s_-]', unicode: true), ' ')
+        .trim();
+
+    final clean = filtered
+        .replaceAll(RegExp(r'[\s_]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+
     return clean.isEmpty ? 'recipe' : clean;
   }
 
@@ -659,11 +666,18 @@ class RecipeShareService {
     String? subject,
     Rect? sharePositionOrigin,
   }) async {
+    final String resolvedMimeType;
+    if (filename.toLowerCase().endsWith('.chefy')) {
+      resolvedMimeType = 'application/octet-stream';
+    } else {
+      resolvedMimeType = mimeType;
+    }
+
     if (kIsWeb) {
       final handled = await webShareOrDownloadFile(
         bytes: bytes,
         filename: filename,
-        mimeType: mimeType,
+        mimeType: resolvedMimeType,
         subject: subject,
       );
       if (handled) {
@@ -671,16 +685,17 @@ class RecipeShareService {
       }
     }
 
-    final xFile = XFile.fromData(
-      bytes,
-      name: filename,
-      mimeType: mimeType,
+    final xFile = await prepareFileForShare(
+      bytes: bytes,
+      filename: filename,
+      mimeType: resolvedMimeType,
     );
 
     try {
       return await SharePlus.instance.share(
         ShareParams(
           files: [xFile],
+          fileNameOverrides: [filename],
           subject: subject,
           sharePositionOrigin: sharePositionOrigin,
           downloadFallbackEnabled: true,
@@ -691,7 +706,7 @@ class RecipeShareService {
         await webShareOrDownloadFile(
           bytes: bytes,
           filename: filename,
-          mimeType: mimeType,
+          mimeType: resolvedMimeType,
           subject: subject,
         );
         return const ShareResult('', ShareResultStatus.success);

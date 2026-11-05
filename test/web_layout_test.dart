@@ -11,6 +11,26 @@ import 'package:recipetools/screens/add_ingredient_screen.dart';
 import 'package:recipetools/screens/recipe_editor_screen.dart';
 import 'package:recipetools/widgets/global_ingredient_picker_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:recipetools/provider/cloud_sync_provider.dart';
+import 'package:recipetools/utils/cloud_sync_service.dart';
+
+class MockWebCloudSyncNotifier extends CloudSyncNotifier {
+  @override
+  CloudSyncState build() {
+    return CloudSyncState(
+      signedIn: false,
+      loading: false,
+      storageType: CloudSyncStorageType.firestore,
+    );
+  }
+
+  bool syncCalled = false;
+  @override
+  Future<SyncMergeResult?> syncTwoWay({String? targetBackupId}) async {
+    syncCalled = true;
+    return const SyncMergeResult();
+  }
+}
 
 void main() {
   group('WebLayoutProvider tests', () {
@@ -666,6 +686,78 @@ void main() {
       // In the body, there is NO redundant recipe name card with Icons.restaurant_menu_rounded
       expect(find.byIcon(Icons.restaurant_menu_rounded), findsNothing);
     });
+
+    testWidgets('Web navigation rail renders sync button above sign in button and triggers sync',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      SharedPreferences.setMockInitialValues({});
+      final sharedPrefs = await SharedPreferences.getInstance();
+      final mockSyncNotifier = MockWebCloudSyncNotifier();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(sharedPrefs),
+            recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
+            cloudSyncProvider.overrideWith(() => mockSyncNotifier),
+          ],
+          child: const RecipetoolsApp(),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump();
+
+      final syncNavButton = find.byKey(const ValueKey('web_nav_sync_button'));
+      expect(syncNavButton, findsOneWidget);
+
+      final signInButton = find.byIcon(Icons.account_circle_outlined);
+      expect(signInButton, findsOneWidget);
+
+      final syncPos = tester.getCenter(syncNavButton);
+      final signInPos = tester.getCenter(signInButton);
+      expect(syncPos.dy, lessThan(signInPos.dy));
+
+      await tester.tap(syncNavButton);
+      await tester.pump();
+      expect(mockSyncNotifier.syncCalled, isTrue);
+    });
+
+    testWidgets('HomeScreen renders sync button in AppBar and QuickActions and triggers sync',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      SharedPreferences.setMockInitialValues({});
+      final sharedPrefs = await SharedPreferences.getInstance();
+      final mockSyncNotifier = MockWebCloudSyncNotifier();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(sharedPrefs),
+            recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
+            ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
+            cloudSyncProvider.overrideWith(() => mockSyncNotifier),
+          ],
+          child: const RecipetoolsApp(),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump();
+
+      final homeSyncButton = find.byKey(const ValueKey('home_sync_button'));
+      expect(homeSyncButton, findsOneWidget);
+
+      await tester.tap(homeSyncButton);
+      await tester.pump();
+      expect(mockSyncNotifier.syncCalled, isTrue);
+    });
   });
 }
-
