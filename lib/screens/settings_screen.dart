@@ -15,6 +15,9 @@ import '../constants.dart';
 import '../utils/app_logger.dart';
 import '../widgets/github_changelog_view.dart';
 import '../services/app_tutorial_service.dart';
+import '../services/url_launcher_service.dart';
+import '../widgets/active_group_chip.dart';
+import '../widgets/group_management_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -36,6 +39,10 @@ class SettingsScreen extends ConsumerWidget {
             context: context,
             title: l10n.config_button,
             controller: scrollController,
+            actions: [
+              const ActiveGroupChip(isCompact: true),
+              const SizedBox(width: 8),
+            ],
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 16.0),
@@ -53,6 +60,32 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                          leading: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.teal.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.storefront_rounded,
+                              color: Colors.teal,
+                              size: 24,
+                            ),
+                          ),
+                          title: Text(
+                            l10n.groups_title,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            '${l10n.group_active_label}: ${ref.watch(activeGroupProvider)?.name ?? l10n.group_default_name}',
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => GroupManagementSheet.show(context),
+                        ),
+                        const Divider(height: 1, indent: 20, endIndent: 20),
                         _buildMenuTile(
                           context,
                           ref: ref,
@@ -1632,49 +1665,114 @@ class SettingsAboutScreen extends ConsumerWidget {
         content: SizedBox(
           width: double.maxFinite,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 460),
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: terms.length,
-              separatorBuilder: (_, index) => const Divider(height: 20),
-              itemBuilder: (context, idx) {
-                final item = terms[idx];
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-                      child: Icon(item.$1, size: 18, color: theme.colorScheme.primary),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.$2,
-                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                            softWrap: true,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.$3,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            softWrap: true,
-                          ),
-                        ],
+            constraints: const BoxConstraints(maxHeight: 520),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    UrlLauncherService.openPrivacyPolicy();
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       ),
                     ),
-                  ],
-                );
-              },
+                    child: Row(
+                      children: [
+                        Icon(Icons.language_outlined, size: 20, color: theme.colorScheme.primary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.settings_about_privacy_view_online,
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'https://chefycostalpha.web.app/privacy',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(Icons.open_in_new, size: 16, color: theme.colorScheme.primary),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: terms.length,
+                    separatorBuilder: (_, index) => const Divider(height: 20),
+                    itemBuilder: (context, idx) {
+                      final item = terms[idx];
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                            child: Icon(item.$1, size: 18, color: theme.colorScheme.primary),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.$2,
+                                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                                  softWrap: true,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.$3,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: Text(l10n.settings_about_privacy_view_online),
+            onPressed: () {
+              UrlLauncherService.openPrivacyPolicy();
+            },
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.close_button),
@@ -2099,9 +2197,56 @@ class SettingsAboutScreen extends ConsumerWidget {
                           l10n.settings_about_privacy_terms,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: Text(l10n.settings_about_privacy_terms_desc),
-                        trailing: const Icon(Icons.chevron_right),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(l10n.settings_about_privacy_terms_desc),
+                            const SizedBox(height: 3),
+                            InkWell(
+                              onTap: () => UrlLauncherService.openPrivacyPolicy(),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.open_in_new, size: 13, color: theme.colorScheme.primary),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      'https://chefycostalpha.web.app/privacy',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.open_in_new, size: 20),
+                          tooltip: l10n.settings_about_privacy_view_online,
+                          onPressed: () => UrlLauncherService.openPrivacyPolicy(),
+                        ),
                         onTap: () => _showPrivacyTermsDialog(context, theme, l10n),
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.indigo.withValues(alpha: 0.15),
+                          child: const Icon(Icons.language_outlined, color: Colors.indigo),
+                        ),
+                        title: Text(
+                          l10n.settings_about_privacy_view_online,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text('https://chefycostalpha.web.app/privacy'),
+                        trailing: const Icon(Icons.open_in_new, size: 20),
+                        onTap: () => UrlLauncherService.openPrivacyPolicy(),
                       ),
                       const Divider(height: 1, indent: 16, endIndent: 16),
                       ListTile(

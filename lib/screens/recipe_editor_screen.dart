@@ -20,6 +20,7 @@ import 'kitchen_timers_screen.dart';
 import 'compare_ingredients_screen.dart';
 import '../services/app_tutorial_service.dart';
 import '../database/sample_manufacturing_recipe.dart';
+import '../database/recipe_category.dart';
 import '../widgets/share_recipe_sheet.dart';
 
 enum WebRecipeRightPanelMode {
@@ -109,6 +110,7 @@ class _RecipeSnapshot {
   final String yieldName;
   final String margin;
   final String price;
+  final String category;
   final List<({String pk, double amount, String? targetUnitPk})> ingredients;
   final List<String> steps;
   final List<({String name, int seconds})> timers;
@@ -120,6 +122,7 @@ class _RecipeSnapshot {
     required this.yieldName,
     required this.margin,
     required this.price,
+    required this.category,
     required this.ingredients,
     required this.steps,
     required this.timers,
@@ -132,10 +135,12 @@ class _RecipeSnapshot {
     required String currentYieldName,
     required String currentMargin,
     required String currentPrice,
+    required String currentCategory,
     required List<RecipeIngredientData> currentIngredients,
     required List<RecipeStepData> currentSteps,
     required List<RecipeTimerData> currentTimers,
   }) {
+    if (category != currentCategory) return true;
     if (name.trim() != currentName.trim()) return true;
     if (description.trim() != currentDescription.trim()) return true;
     if (RecipeUtils.parseFormattedNumber(yieldVal) !=
@@ -256,6 +261,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   String? _unscaledYieldText;
   final ScrollController _scaleBarScrollController = ScrollController();
   String? _currentTutorialStepId;
+  RecipeCategory _selectedCategory = RecipeCategory.cocina;
+  String? _selectedGroupId;
 
   _RecipeSnapshot _createSnapshot() {
     return _RecipeSnapshot(
@@ -265,6 +272,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       yieldName: _yieldNameController.text,
       margin: _profitMarginController.text,
       price: _priceController.text,
+      category: _selectedCategory.name,
       ingredients: _ingredients
           .map(
             (e) => (
@@ -292,7 +300,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           _descriptionController.text.trim().isNotEmpty ||
           _ingredients.isNotEmpty ||
           _steps.any((s) => s.instructionController.text.trim().isNotEmpty) ||
-          _recipeTimers.isNotEmpty;
+          _recipeTimers.isNotEmpty ||
+          _selectedCategory != RecipeCategory.cocina;
     }
     if (_initialSnapshot == null) return false;
     return _initialSnapshot!.hasChanged(
@@ -302,6 +311,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       currentYieldName: _yieldNameController.text,
       currentMargin: _profitMarginController.text,
       currentPrice: _priceController.text,
+      currentCategory: _selectedCategory.name,
       currentIngredients: _ingredients,
       currentSteps: _steps,
       currentTimers: _recipeTimers,
@@ -1592,6 +1602,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       priceText: _priceController.text.trim(),
       ingredients: _ingredients,
       steps: _steps,
+      category: _selectedCategory.name,
+      groupId: _selectedGroupId ?? ref.read(activeGroupIdProvider),
     );
 
     if (mounted) {
@@ -1732,6 +1744,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         detail.recipe.targetPricePerPortion,
         decimalDigits: 2,
       );
+      _selectedCategory = RecipeCategory.fromString(detail.recipe.category);
+      _selectedGroupId = detail.recipe.groupId;
 
       for (var ingWithData in detail.ingredients) {
         Ingredient effectiveIng = ingWithData.ingredient;
@@ -2263,6 +2277,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         priceText: price,
         ingredients: _ingredients,
         steps: stepsToSave,
+        category: _selectedCategory.name,
+        groupId: _selectedGroupId ?? ref.read(activeGroupIdProvider),
       );
 
       _currentRecipePk = savedDetail.recipe.recipePk;
@@ -3975,6 +3991,43 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     );
   }
 
+  Widget _buildCategorySelectorCard(ThemeData theme, AppLocalizations l10n) {
+    return SizedBox(
+      width: double.infinity,
+      child: SegmentedButton<RecipeCategory>(
+        style: const ButtonStyle(
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        segments: [
+          ButtonSegment<RecipeCategory>(
+            value: RecipeCategory.cocina,
+            label: Text(l10n.category_cocina),
+            icon: Icon(RecipeCategory.cocina.icon, size: 16),
+          ),
+          ButtonSegment<RecipeCategory>(
+            value: RecipeCategory.pasteleria,
+            label: Text(l10n.category_pasteleria),
+            icon: Icon(RecipeCategory.pasteleria.icon, size: 16),
+          ),
+          ButtonSegment<RecipeCategory>(
+            value: RecipeCategory.cocteleria,
+            label: Text(l10n.category_cocteleria),
+            icon: Icon(RecipeCategory.cocteleria.icon, size: 16),
+          ),
+        ],
+        selected: {_selectedCategory},
+        onSelectionChanged: (newSelection) {
+          if (newSelection.isNotEmpty) {
+            setState(() {
+              _selectedCategory = newSelection.first;
+            });
+          }
+        },
+      ),
+    );
+  }
+
   Widget _buildWebRecipeForm(
     BuildContext context,
     ThemeData theme,
@@ -3982,6 +4035,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     AsyncValue<List<Unit>> unitsAsync,
   ) {
     return ListView(
+      cacheExtent: 1000,
       padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 20.0),
       children: [
         if (_isScaledTemporarily)
@@ -4038,6 +4092,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 14),
+
+        // Category Selector Card
+        _buildCategorySelectorCard(theme, l10n),
         const SizedBox(height: 28),
 
         // Ingredients Section Header
@@ -4338,6 +4396,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             children: [
               Expanded(
                 child: ListView(
+                  cacheExtent: 1000,
                   padding: const EdgeInsets.symmetric(horizontal: 22.0),
                   children: [
                     if (_isScaledTemporarily) ...[
@@ -4394,6 +4453,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       const SizedBox(height: 8),
                     ],
 
+                    const SizedBox(height: 12),
+                    _buildCategorySelectorCard(theme, l10n),
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

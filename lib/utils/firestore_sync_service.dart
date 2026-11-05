@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -149,24 +150,53 @@ class FirestoreSyncService {
     if (!isConfigured) {
       throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
     }
-    UserCredential cred;
+    UserCredential? cred;
     if (kIsWeb) {
       final googleProvider = GoogleAuthProvider();
       googleProvider.addScope('email');
       googleProvider.setCustomParameters({'prompt': 'select_account'});
-      cred = await _auth.signInWithPopup(googleProvider);
+      try {
+        cred = await _auth.signInWithPopup(googleProvider);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          return null;
+        }
+        rethrow;
+      }
     } else {
       await GoogleSignIn.instance.initialize(
         serverClientId: defaultFirebaseWebClientId,
       );
-      final googleUser = await GoogleSignIn.instance.authenticate();
+      GoogleSignInAccount? googleUser;
+      try {
+        googleUser = await GoogleSignIn.instance.authenticate();
+      } on GoogleSignInException catch (e) {
+        if (e.code == GoogleSignInExceptionCode.canceled) {
+          return null;
+        }
+        rethrow;
+      } on PlatformException catch (e) {
+        if (e.code == 'sign_in_canceled' || e.code == '12501') {
+          return null;
+        }
+        rethrow;
+      } catch (e) {
+        final str = e.toString().toLowerCase();
+        if (str.contains('canceled') || str.contains('cancelled') || str.contains('12501')) {
+          return null;
+        }
+        rethrow;
+      }
+
+      if (googleUser == null) return null;
+
       final auth = googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         idToken: auth.idToken,
       );
       cred = await _auth.signInWithCredential(credential);
     }
-    final uid = cred.user?.uid;
+    final uid = cred?.user?.uid;
     if (uid != null) {
       await setCustomUserId(uid);
     }
@@ -179,6 +209,145 @@ class FirestoreSyncService {
       await _auth.signOut();
     } catch (_) {}
     await clearCustomUserId();
+  }
+
+  /// Permanently deletes all remote recipes, ingredients, custom units, and sync metadata
+  /// from Firestore for the given user, without deleting local database records.
+  Future<void> deleteFirestoreCloudData({String? userId}) async {
+    if (!isConfigured) return;
+    final activeUid = userId ?? await getActiveUserId();
+    if (activeUid == null || activeUid.isEmpty) return;
+
+    final userDoc = _firestore.collection('users').doc(activeUid);
+    final subcollections = ['recipes', 'ingredients', 'units', 'sync_meta'];
+
+    for (final subcol in subcollections) {
+      try {
+        final snapshot = await userDoc.collection(subcol).get();
+        if (snapshot.docs.isNotEmpty) {
+          for (var i = 0; i < snapshot.docs.length; i += 400) {
+            final batch = _firestore.batch();
+            final chunk = snapshot.docs.sublist(
+              i,
+              (i + 400 > snapshot.docs.length) ? snapshot.docs.length : i + 400,
+            );
+            for (final doc in chunk) {
+              batch.delete(doc.reference);
+            }
+            await batch.commit();
+          }
+        }
+      } catch (e) {
+        debugPrint('Error deleting subcollection: $e');
+      }
+    }
+
+    try {
+      await userDoc.delete();
+    } catch (_) {}
+
+    await clearLastSyncedAt(activeUid);
+  }
+
+  /// Permanently deletes all user data from Cloud Firestore (recipes, ingredients, units, sync_meta, and user doc)
+  /// and deletes the Firebase Auth account.
+  /// Handles `requires-recent-login` re-authentication when [reauthPassword] is provided or Google credentials are used.
+  Future<void> deleteAccountAndCloudData({String? reauthPassword}) async {
+    if (!isConfigured) {
+      throw StateError('Firebase is not initialized.');
+    }
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('No authenticated user found to delete.');
+    }
+    final uid = user.uid;
+
+    // 1. Delete all Firestore collections belonging to this user
+    try {
+      final userDoc = _firestore.collection('users').doc(uid);
+      final subcollections = ['recipes', 'ingredients', 'units', 'sync_meta'];
+
+      for (final subcol in subcollections) {
+        final snapshot = await userDoc.collection(subcol).get();
+        if (snapshot.docs.isNotEmpty) {
+          // Delete in batches of 400 to respect Firestore batch limit (500)
+          for (var i = 0; i < snapshot.docs.length; i += 400) {
+            final batch = _firestore.batch();
+            final chunk = snapshot.docs.sublist(
+              i,
+              (i + 400 > snapshot.docs.length) ? snapshot.docs.length : i + 400,
+            );
+            for (final doc in chunk) {
+              batch.delete(doc.reference);
+            }
+            await batch.commit();
+          }
+        }
+      }
+
+      // Delete the root user doc
+      await userDoc.delete();
+    } catch (e) {
+      debugPrint('Warning deleting Firestore data during account deletion: $e');
+    }
+
+    // 2. Re-authenticate if password is provided
+    if (reauthPassword != null && reauthPassword.isNotEmpty && user.email != null) {
+      try {
+        final credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: reauthPassword,
+        );
+        await user.reauthenticateWithCredential(credential);
+      } catch (e) {
+        debugPrint('Error during re-authentication: $e');
+        rethrow;
+      }
+    }
+
+    // 3. Delete Firebase Auth User
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        // Attempt reauthentication via Google if user signed in with Google
+        final isGoogleUser = user.providerData.any((p) => p.providerId == 'google.com');
+        if (isGoogleUser) {
+          if (kIsWeb) {
+            final googleProvider = GoogleAuthProvider();
+            googleProvider.addScope('email');
+            googleProvider.setCustomParameters({'prompt': 'select_account'});
+            await user.reauthenticateWithPopup(googleProvider);
+            await user.delete();
+          } else {
+            await GoogleSignIn.instance.initialize(
+              serverClientId: defaultFirebaseWebClientId,
+            );
+            final googleUser = await GoogleSignIn.instance.authenticate();
+            final auth = googleUser.authentication;
+            final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
+            await user.reauthenticateWithCredential(credential);
+            await user.delete();
+          }
+        } else {
+          rethrow;
+        }
+      } else {
+        rethrow;
+      }
+    }
+
+    // 4. Sign out and disconnect from GoogleSignIn if active
+    try {
+      await GoogleSignIn.instance.disconnect();
+    } catch (_) {}
+    try {
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {}
+
+    // 5. Clean up local Sync ID and last synced timestamps
+    await clearCustomUserId();
+    await clearLastSyncedAt(uid);
   }
 
   /// Connects with Google account using existing GoogleSignInAccount credential.
@@ -235,6 +404,8 @@ class FirestoreSyncService {
       'targetPricePerPortion': r.targetPricePerPortion,
       'fixedOverheadCost': r.fixedOverheadCost,
       'colour': r.colour,
+      'groupId': r.groupId,
+      'category': r.category,
       'dateCreated': r.dateCreated.toIso8601String(),
       'dateTimeModified': r.dateTimeModified?.toIso8601String(),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -251,6 +422,15 @@ class FirestoreSyncService {
         'unitFk': ri.ingredient.unitFk,
         'dateCreated': ri.ingredient.dateCreated.toIso8601String(),
         'ingredientDateTimeModified': ri.ingredient.dateTimeModified?.toIso8601String(),
+        'is_deleted': ri.ingredient.isDeleted,
+        'deleted_at': ri.ingredient.deletedAt?.toIso8601String(),
+        'group_id': ri.ingredient.groupId,
+        'category': ri.ingredient.category,
+        'current_stock': ri.ingredient.currentStock,
+        'minimum_stock': ri.ingredient.minimumStock,
+        'stock_unit': ri.ingredient.stockUnit,
+        'cost_per_stock_unit': ri.ingredient.costPerStockUnit,
+        'last_stock_update': ri.ingredient.lastStockUpdate?.toIso8601String(),
       }).toList(),
       'steps': detail.steps.map((st) => {
         'stepPk': st.stepPk,
@@ -284,6 +464,8 @@ class FirestoreSyncService {
       dateCreated: _parseDate(d['dateCreated']),
       dateTimeModified: _parseNullableDate(d['dateTimeModified']),
       archived: d['archived'] as bool? ?? false,
+      groupId: (d['group_id'] ?? d['groupId']) as String?,
+      category: (d['category'] ?? d['category_id'] as String?) ?? 'cocina',
     );
 
     final rawIngredients = (d['ingredients'] as List<dynamic>?) ?? [];
@@ -310,6 +492,8 @@ class FirestoreSyncService {
       if (ingMap.containsKey('name') && ingMap['name'] != null) {
         final ingPk = (ingMap['ingredientPk'] ?? ingredientFk) as String;
         if (ingPk.isNotEmpty) {
+          final isDeleted = (ingMap['is_deleted'] ?? ingMap['isDeleted']) as bool? ?? false;
+          final deletedAt = _parseNullableDate(ingMap['deleted_at'] ?? ingMap['deletedAt']);
           nestedIngredients.add(
             Ingredient(
               ingredientPk: ingPk,
@@ -321,6 +505,15 @@ class FirestoreSyncService {
               dateTimeModified: _parseNullableDate(
                 ingMap['dateTimeModified'] ?? ingMap['ingredientDateTimeModified'],
               ),
+              isDeleted: isDeleted,
+              deletedAt: deletedAt,
+              groupId: (ingMap['group_id'] ?? ingMap['groupId']) as String?,
+              category: ingMap['category'] as String?,
+              currentStock: (ingMap['current_stock'] ?? ingMap['currentStock'] as num?)?.toDouble() ?? 0.0,
+              minimumStock: (ingMap['minimum_stock'] ?? ingMap['minimumStock'] as num?)?.toDouble(),
+              stockUnit: (ingMap['stock_unit'] ?? ingMap['stockUnit']) as String?,
+              costPerStockUnit: (ingMap['cost_per_stock_unit'] ?? ingMap['costPerStockUnit'] as num?)?.toDouble(),
+              lastStockUpdate: _parseNullableDate(ingMap['last_stock_update'] ?? ingMap['lastStockUpdate']),
             ),
           );
         }
@@ -356,7 +549,9 @@ class FirestoreSyncService {
 
   /// Serializes an [Ingredient] into Firestore format.
   static Map<String, dynamic> ingredientToFirestore(Ingredient ing) {
-    final updatedAt = ing.dateTimeModified ?? ing.dateCreated;
+    final updatedAt = ing.isDeleted
+        ? (ing.deletedAt ?? ing.dateTimeModified ?? ing.dateCreated)
+        : (ing.dateTimeModified ?? ing.dateCreated);
     return {
       'ingredientPk': ing.ingredientPk,
       'name': ing.name,
@@ -366,12 +561,23 @@ class FirestoreSyncService {
       'dateCreated': ing.dateCreated.toIso8601String(),
       'dateTimeModified': ing.dateTimeModified?.toIso8601String(),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'is_deleted': ing.isDeleted,
+      'deleted_at': ing.deletedAt?.toIso8601String(),
+      'group_id': ing.groupId,
+      'category': ing.category,
+      'current_stock': ing.currentStock,
+      'minimum_stock': ing.minimumStock,
+      'stock_unit': ing.stockUnit,
+      'cost_per_stock_unit': ing.costPerStockUnit,
+      'last_stock_update': ing.lastStockUpdate?.toIso8601String(),
     };
   }
 
   /// Parses an [Ingredient] from Firestore format.
   static Ingredient ingredientFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
     final pk = (d['ingredientPk'] as String?) ?? fallbackId;
+    final isDeleted = (d['is_deleted'] ?? d['isDeleted']) as bool? ?? false;
+    final deletedAt = _parseNullableDate(d['deleted_at'] ?? d['deletedAt']);
     return Ingredient(
       ingredientPk: pk.isNotEmpty ? pk : 'ing_${DateTime.now().millisecondsSinceEpoch}',
       name: (d['name'] as String?) ?? 'Ingrediente',
@@ -380,6 +586,45 @@ class FirestoreSyncService {
       unitFk: (d['unitFk'] as String?) ?? 'unit-g',
       dateCreated: _parseDate(d['dateCreated']),
       dateTimeModified: _parseNullableDate(d['dateTimeModified']),
+      isDeleted: isDeleted,
+      deletedAt: deletedAt,
+      groupId: (d['group_id'] ?? d['groupId']) as String?,
+      category: d['category'] as String?,
+      currentStock: (d['current_stock'] ?? d['currentStock'] as num?)?.toDouble() ?? 0.0,
+      minimumStock: (d['minimum_stock'] ?? d['minimumStock'] as num?)?.toDouble(),
+      stockUnit: (d['stock_unit'] ?? d['stockUnit']) as String?,
+      costPerStockUnit: (d['cost_per_stock_unit'] ?? d['costPerStockUnit'] as num?)?.toDouble(),
+      lastStockUpdate: _parseNullableDate(d['last_stock_update'] ?? d['lastStockUpdate']),
+    );
+  }
+
+  /// Serializes a [Group] into Firestore format.
+  static Map<String, dynamic> groupToFirestore(Group g) {
+    return {
+      'id': g.id,
+      'name': g.name,
+      'icon_name': g.iconName,
+      'color_hex': g.colorHex,
+      'is_active': g.isActive,
+      'created_at': g.createdAt.toIso8601String(),
+      'updated_at': g.updatedAt.toIso8601String(),
+      'is_deleted': g.isDeleted,
+      'updatedAt': Timestamp.fromDate(g.updatedAt),
+    };
+  }
+
+  /// Parses a [Group] from Firestore format.
+  static Group groupFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
+    final id = (d['id'] as String?) ?? fallbackId;
+    return Group(
+      id: id.isNotEmpty ? id : 'group_${DateTime.now().millisecondsSinceEpoch}',
+      name: (d['name'] as String?) ?? 'Grupo',
+      iconName: (d['icon_name'] ?? d['iconName']) as String?,
+      colorHex: (d['color_hex'] ?? d['colorHex']) as String?,
+      isActive: (d['is_active'] ?? d['isActive']) as bool? ?? true,
+      createdAt: _parseDate(d['created_at'] ?? d['createdAt']),
+      updatedAt: _parseDate(d['updated_at'] ?? d['updatedAt']),
+      isDeleted: (d['is_deleted'] ?? d['isDeleted']) as bool? ?? false,
     );
   }
 
@@ -670,7 +915,7 @@ class FirestoreSyncService {
     // PHASE 2: PUSH LOCAL UPDATES
     // -------------------------------------------------------------
     final localUnits = await db.getAllUnits();
-    final localIngredients = await db.getAllIngredients();
+    final localIngredients = await db.getAllIngredients(includeDeleted: true);
     final localRecipes = (await db.getAllRecipeDetails())
         .where((r) => !isSampleManufacturingRecipe(r.recipe.recipePk))
         .toList();
@@ -695,7 +940,9 @@ class FirestoreSyncService {
     // Push Ingredients
     final pushedIngIds = <String>{};
     for (final ing in localIngredients) {
-      final localTime = ing.dateTimeModified ?? ing.dateCreated;
+      final localTime = ing.isDeleted
+          ? (ing.deletedAt ?? ing.dateTimeModified ?? ing.dateCreated)
+          : (ing.dateTimeModified ?? ing.dateCreated);
       final remoteTime = remoteIngUpdatedTimes[ing.ingredientPk];
       // If remote was strictly newer, remote already won locally; don't push older local edit
       if (remoteTime != null && remoteTime.isAfter(localTime)) {

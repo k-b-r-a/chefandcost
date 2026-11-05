@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'tables.dart';
 import 'initialize_default_database.dart';
@@ -8,7 +9,7 @@ import '../utils/recipe_utils.dart' hide uuid;
 part 'database.g.dart';
 
 @DriftDatabase(
-  tables: [Recipes, Ingredients, RecipeIngredients, RecipeSteps, Units],
+  tables: [Recipes, Ingredients, RecipeIngredients, RecipeSteps, Units, Groups, Categories],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -22,7 +23,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  Future<bool> _tableExists(String tableName) async {
+    final result = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name=?;",
+      variables: [Variable.withString(tableName)],
+    ).get();
+    return result.isNotEmpty;
+  }
+
+  Future<bool> _columnExists(String tableName, String columnName) async {
+    final result = await customSelect("PRAGMA table_info('$tableName');").get();
+    return result.any((row) => row.data['name'] == columnName);
+  }
 
   @override
   MigrationStrategy get migration {
@@ -30,11 +44,98 @@ class AppDatabase extends _$AppDatabase {
       onCreate: (m) async {
         await m.createAll();
       },
+      onUpgrade: (m, from, to) async {
+        if (from < 2) {
+          if (!await _columnExists('ingredients', 'is_deleted')) {
+            await m.addColumn(ingredients, ingredients.isDeleted);
+          }
+          if (!await _columnExists('ingredients', 'deleted_at')) {
+            await m.addColumn(ingredients, ingredients.deletedAt);
+          }
+          if (!await _tableExists('groups')) {
+            await m.createTable(groups);
+          }
+          if (!await _tableExists('categories')) {
+            await m.createTable(categories);
+          }
+          if (!await _columnExists('recipes', 'group_id')) {
+            await m.addColumn(recipes, recipes.groupId);
+          }
+          if (!await _columnExists('recipes', 'category')) {
+            await m.addColumn(recipes, recipes.category);
+          }
+          if (!await _columnExists('ingredients', 'group_id')) {
+            await m.addColumn(ingredients, ingredients.groupId);
+          }
+          if (!await _columnExists('ingredients', 'category')) {
+            await m.addColumn(ingredients, ingredients.category);
+          }
+          if (!await _columnExists('ingredients', 'current_stock')) {
+            await m.addColumn(ingredients, ingredients.currentStock);
+          }
+          if (!await _columnExists('ingredients', 'minimum_stock')) {
+            await m.addColumn(ingredients, ingredients.minimumStock);
+          }
+          if (!await _columnExists('ingredients', 'stock_unit')) {
+            await m.addColumn(ingredients, ingredients.stockUnit);
+          }
+          if (!await _columnExists('ingredients', 'cost_per_stock_unit')) {
+            await m.addColumn(ingredients, ingredients.costPerStockUnit);
+          }
+          if (!await _columnExists('ingredients', 'last_stock_update')) {
+            await m.addColumn(ingredients, ingredients.lastStockUpdate);
+          }
+        }
+      },
       beforeOpen: (details) async {
         await initializeDefaultDatabase(this);
       },
     );
   }
+
+  // --- Group Queries ---
+  Future<List<Group>> getAllGroups({bool includeDeleted = false}) {
+    final query = select(groups);
+    if (!includeDeleted) {
+      query.where((t) => t.isDeleted.equals(false));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
+  }
+
+  Stream<List<Group>> watchAllGroups({bool includeDeleted = false}) {
+    final query = select(groups);
+    if (!includeDeleted) {
+      query.where((t) => t.isDeleted.equals(false));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+  }
+
+  Future<Group?> getGroupById(String id) =>
+      (select(groups)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  Future<int> insertGroup(GroupsCompanion group) => into(groups).insert(group);
+
+  Future<bool> updateGroup(Group group) => update(groups).replace(group);
+
+  Future<int> softDeleteGroup(String id) {
+    return (update(groups)..where((t) => t.id.equals(id))).write(
+      GroupsCompanion(
+        isDeleted: const Value(true),
+        isActive: const Value(false),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  // --- Category Queries ---
+  Future<List<Category>> getAllCategories() =>
+      (select(categories)..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
+
+  Stream<List<Category>> watchAllCategories() =>
+      (select(categories)..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+
+  Future<int> insertCategory(CategoriesCompanion category) =>
+      into(categories).insert(category);
 
   // --- Unit Queries ---
   Future<List<Unit>> getAllUnits() => select(units).get();
@@ -43,13 +144,45 @@ class AppDatabase extends _$AppDatabase {
   Future<bool> updateUnit(Unit unit) => update(units).replace(unit);
 
   // --- Recipe Queries ---
-  Future<List<Recipe>> getAllRecipes() =>
-      (select(recipes)..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
-  Stream<List<Recipe>> watchAllRecipes() =>
-      (select(recipes)..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+  Future<List<Recipe>> getAllRecipes({String? groupId, String? category}) =>
+      getRecipes(groupId: groupId, category: category);
 
-  Stream<List<RecipeWithFinancials>> watchAllRecipesWithFinancials() {
-    final recipeStream = watchAllRecipes();
+  Stream<List<Recipe>> watchAllRecipes({String? groupId, String? category}) =>
+      watchRecipes(groupId: groupId, category: category);
+
+  Future<List<Recipe>> getRecipes({String? groupId, String? category}) {
+    final query = select(recipes);
+    if (groupId != null && groupId.isNotEmpty) {
+      query.where((t) => t.groupId.equals(groupId));
+    }
+    if (category != null && category.isNotEmpty) {
+      query.where((t) => t.category.equals(category));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
+  }
+
+  Stream<List<Recipe>> watchRecipes({String? groupId, String? category}) {
+    final query = select(recipes);
+    if (groupId != null && groupId.isNotEmpty) {
+      query.where((t) => t.groupId.equals(groupId));
+    }
+    if (category != null && category.isNotEmpty) {
+      query.where((t) => t.category.equals(category));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+  }
+
+  Stream<List<RecipeWithFinancials>> watchAllRecipesWithFinancials({
+    String? groupId,
+    String? category,
+  }) =>
+      watchRecipesWithFinancials(groupId: groupId, category: category);
+
+  Stream<List<RecipeWithFinancials>> watchRecipesWithFinancials({
+    String? groupId,
+    String? category,
+  }) {
+    final recipeStream = watchRecipes(groupId: groupId, category: category);
     
     return recipeStream.asyncMap((recipeList) async {
       final List<RecipeWithFinancials> results = [];
@@ -86,6 +219,8 @@ class AppDatabase extends _$AppDatabase {
         targetProfitMargin: Value(detail.recipe.targetProfitMargin),
         targetPricePerPortion: Value(detail.recipe.targetPricePerPortion),
         colour: Value(detail.recipe.colour),
+        groupId: Value(detail.recipe.groupId),
+        category: Value(detail.recipe.category),
         dateTimeModified: Value(DateTime.now()),
       ));
       for (final ing in detail.ingredients) {
@@ -106,17 +241,48 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // --- Ingredient Queries ---
-  Future<List<Ingredient>> getAllIngredients() =>
-      (select(ingredients)..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
-  Future<Ingredient?> getIngredientById(String pk) async =>
-      (await (select(ingredients)..where((t) => t.ingredientPk.equals(pk))..limit(1)).get()).firstOrNull;
-  Stream<List<Ingredient>> watchAllIngredients() =>
-      (select(ingredients)..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+  Future<List<Ingredient>> getAllIngredients({
+    bool includeDeleted = false,
+    String? groupId,
+  }) {
+    final query = select(ingredients);
+    if (!includeDeleted) {
+      query.where((t) => t.isDeleted.equals(false));
+    }
+    if (groupId != null && groupId.isNotEmpty) {
+      query.where((t) => t.groupId.equals(groupId));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
+  }
+
+  Future<Ingredient?> getIngredientById(String pk, {bool includeDeleted = false}) async {
+    final query = select(ingredients)..where((t) => t.ingredientPk.equals(pk));
+    if (!includeDeleted) {
+      query.where((t) => t.isDeleted.equals(false));
+    }
+    return (await (query..limit(1)).get()).firstOrNull;
+  }
+
+  Stream<List<Ingredient>> watchAllIngredients({
+    bool includeDeleted = false,
+    String? groupId,
+  }) {
+    final query = select(ingredients);
+    if (!includeDeleted) {
+      query.where((t) => t.isDeleted.equals(false));
+    }
+    if (groupId != null && groupId.isNotEmpty) {
+      query.where((t) => t.groupId.equals(groupId));
+    }
+    return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
+  }
+
   Future<int> insertIngredient(IngredientsCompanion ingredient) =>
       into(ingredients).insert(ingredient);
+
   Future<bool> updateIngredient(Ingredient ingredient) async {
     return transaction(() async {
-      final old = await getIngredientById(ingredient.ingredientPk);
+      final old = await getIngredientById(ingredient.ingredientPk, includeDeleted: true);
       if (old != null && old.unitFk != ingredient.unitFk) {
         final allUnits = await getAllUnits();
         final oldUnit = allUnits.where((u) => u.unitPk == old.unitFk).firstOrNull;
@@ -143,8 +309,28 @@ class AppDatabase extends _$AppDatabase {
       return update(ingredients).replace(ingredient);
     });
   }
-  Future<int> deleteIngredient(Ingredient ingredient) =>
-      delete(ingredients).delete(ingredient);
+
+  Future<int> deleteIngredient(Ingredient ingredient) {
+    final now = DateTime.now();
+    return (update(ingredients)..where((t) => t.ingredientPk.equals(ingredient.ingredientPk))).write(
+      IngredientsCompanion(
+        isDeleted: const Value(true),
+        deletedAt: Value(now),
+        dateTimeModified: Value(now),
+      ),
+    );
+  }
+
+  Future<int> restoreIngredient(String ingredientPk) {
+    final now = DateTime.now();
+    return (update(ingredients)..where((t) => t.ingredientPk.equals(ingredientPk))).write(
+      IngredientsCompanion(
+        isDeleted: const Value(false),
+        deletedAt: const Value(null),
+        dateTimeModified: Value(now),
+      ),
+    );
+  }
 
   Stream<List<Ingredient>> searchIngredients(String query) {
     if (query.isEmpty) return Stream.value([]);
@@ -158,7 +344,7 @@ class AppDatabase extends _$AppDatabase {
     if (terms.isEmpty) {
       // fallback to simple contains
       return (select(ingredients)
-            ..where((t) => t.name.contains(trimmedQuery))
+            ..where((t) => t.isDeleted.equals(false) & t.name.contains(trimmedQuery))
             ..limit(5))
           .watch();
     }
@@ -166,7 +352,7 @@ class AppDatabase extends _$AppDatabase {
     return (select(ingredients)
           ..where((t) {
             final expressions = terms.map((term) => t.name.contains(term)).toList();
-            return expressions.reduce((a, b) => a | b);
+            return t.isDeleted.equals(false) & expressions.reduce((a, b) => a | b);
           }))
         .watch()
         .map((list) {
@@ -298,24 +484,32 @@ class AppDatabase extends _$AppDatabase {
               ..orderBy([(t) => OrderingTerm(expression: t.stepNumber)]))
             .get();
 
+    final validIngredients = <RecipeIngredientWithData>[];
+    for (final row in ingredientList) {
+      final entry = row.readTable(recipeIngredients);
+      final ing = row.readTableOrNull(ingredients);
+      if (ing != null && ing.isDeleted) {
+        continue;
+      }
+      final effectiveIng = ing ??
+          Ingredient(
+            ingredientPk: entry.ingredientFk,
+            name: 'Unknown Ingredient',
+            cost: 0.0,
+            quantityForCost: 1.0,
+            unitFk: 'unit-g',
+            dateCreated: DateTime.now(),
+            isDeleted: false,
+          );
+      validIngredients.add(RecipeIngredientWithData(
+        entry: entry,
+        ingredient: effectiveIng,
+      ));
+    }
+
     return RecipeDetail(
       recipe: recipe,
-      ingredients: ingredientList.map((row) {
-        final entry = row.readTable(recipeIngredients);
-        final ing = row.readTableOrNull(ingredients) ??
-            Ingredient(
-              ingredientPk: entry.ingredientFk,
-              name: 'Unknown Ingredient',
-              cost: 0.0,
-              quantityForCost: 1.0,
-              unitFk: 'unit-g',
-              dateCreated: DateTime.now(),
-            );
-        return RecipeIngredientWithData(
-          entry: entry,
-          ingredient: ing,
-        );
-      }).toList(),
+      ingredients: validIngredients,
       steps: stepList,
     );
   }
@@ -335,12 +529,16 @@ class AppDatabase extends _$AppDatabase {
     return details;
   }
 
-  Future<List<Ingredient>> getIngredientsModifiedSince(DateTime? modifiedSince) async {
+  Future<List<Ingredient>> getIngredientsModifiedSince(DateTime? modifiedSince, {bool includeDeleted = false}) async {
     final query = select(ingredients);
+    if (!includeDeleted) {
+      query.where((t) => t.isDeleted.equals(false));
+    }
     if (modifiedSince != null) {
       query.where((t) =>
           t.dateTimeModified.isBiggerOrEqualValue(modifiedSince) |
-          t.dateCreated.isBiggerOrEqualValue(modifiedSince));
+          t.dateCreated.isBiggerOrEqualValue(modifiedSince) |
+          t.deletedAt.isBiggerOrEqualValue(modifiedSince));
     }
     return query.get();
   }
@@ -351,7 +549,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Merges a single recipe and its embedded ingredients and steps from remote using LWW based on updated_at.
-  /// Also upserts any nested ingredients provided.
+  /// Also upserts any nested ingredients provided, with Recipe Dependency Conflict Resolution.
   /// Returns: 1 if inserted, 2 if updated, 0 if kept local.
   Future<int> mergeRecipeFromRemote({
     required Recipe remoteRecipe,
@@ -360,34 +558,105 @@ class AppDatabase extends _$AppDatabase {
     List<Ingredient> nestedIngredients = const [],
   }) async {
     return transaction(() async {
+      final recipeUpdatedAt = remoteRecipe.dateTimeModified ?? remoteRecipe.dateCreated;
+
+      // 1. Merge nested ingredients
       for (final ing in nestedIngredients) {
         await mergeIngredientFromRemote(ing);
       }
 
-      // Ensure all ingredients referenced by remoteIngredients exist in DB to prevent FK failures
+      // 2. Recipe Dependency Conflict Resolver pass
+      final resolvedIngredients = <RecipeIngredient>[];
+
       for (final ri in remoteIngredients) {
-        final ingExists = (await (select(ingredients)
-              ..where((t) => t.ingredientPk.equals(ri.ingredientFk))
-              ..limit(1))
-            .get()).firstOrNull;
-        if (ingExists == null) {
-          final fallbackUnit = (await (select(units)..limit(1)).get()).firstOrNull;
-          if (fallbackUnit != null) {
-            await into(ingredients).insert(
+        final localIng = await getIngredientById(ri.ingredientFk, includeDeleted: true);
+
+        if (localIng != null && localIng.isDeleted) {
+          final ingredientDeletedAt = localIng.deletedAt ?? localIng.dateTimeModified ?? localIng.dateCreated;
+
+          if (recipeUpdatedAt.isAfter(ingredientDeletedAt)) {
+            // Case 1 (Recipe Updated AFTER Deletion: recipe.updated_at > ingredient.deleted_at):
+            // Action (Resurrection / Restoration): Reactivate the ingredient (is_deleted = false, clear deleted_at)
+            // and log a sync notice, preserving recipe integrity.
+            await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
               IngredientsCompanion(
-                ingredientPk: Value(ri.ingredientFk),
-                name: const Value('Ingrediente'),
-                cost: const Value(0.0),
-                quantityForCost: const Value(1.0),
-                unitFk: Value(fallbackUnit.unitPk),
-                dateCreated: Value(DateTime.now()),
+                isDeleted: const Value(false),
+                deletedAt: const Value(null),
+                dateTimeModified: Value(DateTime.now()),
               ),
-              mode: InsertMode.insertOrIgnore,
+            );
+            debugPrint(
+              'Sync Notice: Resurrected ingredient "${localIng.name}" (${localIng.ingredientPk}) '
+              'because recipe "${remoteRecipe.name}" was modified after ingredient deletion '
+              '($recipeUpdatedAt > $ingredientDeletedAt).',
+            );
+            resolvedIngredients.add(ri);
+          } else {
+            // Case 2 (Deletion NEWER Than Recipe: ingredient.deleted_at >= recipe.updated_at):
+            // Action (Cascade / Detach): Retain the deletion of the ingredient.
+            // Remove the dead ingredient reference from the local recipe instance to prevent FK errors and crashes.
+            debugPrint(
+              'Sync Notice: Detached deleted ingredient "${localIng.name}" (${localIng.ingredientPk}) '
+              'from recipe "${remoteRecipe.name}" because ingredient was deleted after recipe modification '
+              '($ingredientDeletedAt >= $recipeUpdatedAt).',
             );
           }
+        } else if (localIng == null) {
+          // Case 3 (Missing / Ambiguous): Prefer data safety
+          final nested = nestedIngredients.where((n) => n.ingredientPk == ri.ingredientFk).firstOrNull;
+          if (nested != null) {
+            if (nested.isDeleted) {
+              final nestedDeletedAt = nested.deletedAt ?? nested.dateTimeModified ?? nested.dateCreated;
+              if (recipeUpdatedAt.isAfter(nestedDeletedAt)) {
+                await mergeIngredientFromRemote(Ingredient(
+                  ingredientPk: nested.ingredientPk,
+                  name: nested.name,
+                  cost: nested.cost,
+                  quantityForCost: nested.quantityForCost,
+                  unitFk: nested.unitFk,
+                  dateCreated: nested.dateCreated,
+                  dateTimeModified: nested.dateTimeModified,
+                  isDeleted: false,
+                  deletedAt: null,
+                  groupId: nested.groupId,
+                  category: nested.category,
+                  currentStock: nested.currentStock,
+                  minimumStock: nested.minimumStock,
+                  stockUnit: nested.stockUnit,
+                  costPerStockUnit: nested.costPerStockUnit,
+                  lastStockUpdate: nested.lastStockUpdate,
+                ));
+                resolvedIngredients.add(ri);
+              }
+            } else {
+              resolvedIngredients.add(ri);
+            }
+          } else {
+            final fallbackUnit = (await (select(units)..limit(1)).get()).firstOrNull;
+            if (fallbackUnit != null) {
+              await into(ingredients).insert(
+                IngredientsCompanion(
+                  ingredientPk: Value(ri.ingredientFk),
+                  name: const Value('Ingrediente'),
+                  cost: const Value(0.0),
+                  quantityForCost: const Value(1.0),
+                  unitFk: Value(fallbackUnit.unitPk),
+                  dateCreated: Value(DateTime.now()),
+                  isDeleted: const Value(false),
+                  deletedAt: const Value(null),
+                  currentStock: const Value(0.0),
+                ),
+                mode: InsertMode.insertOrIgnore,
+              );
+              resolvedIngredients.add(ri);
+            }
+          }
+        } else {
+          resolvedIngredients.add(ri);
         }
       }
 
+      // 3. Persist recipe using LWW
       final localRecipe = (await (select(recipes)
             ..where((t) => t.recipePk.equals(remoteRecipe.recipePk))
             ..limit(1))
@@ -408,10 +677,12 @@ class AppDatabase extends _$AppDatabase {
             dateCreated: Value(remoteRecipe.dateCreated),
             dateTimeModified: Value(remoteRecipe.dateTimeModified),
             archived: Value(remoteRecipe.archived),
+            groupId: Value(remoteRecipe.groupId),
+            category: Value(remoteRecipe.category),
           ),
         );
 
-        for (final ri in remoteIngredients) {
+        for (final ri in resolvedIngredients) {
           await into(recipeIngredients).insert(
             RecipeIngredientsCompanion(
               recipeIngredientPk: Value(ri.recipeIngredientPk),
@@ -440,9 +711,8 @@ class AppDatabase extends _$AppDatabase {
         return 1;
       } else {
         final localUpdatedAt = localRecipe.dateTimeModified ?? localRecipe.dateCreated;
-        final remoteUpdatedAt = remoteRecipe.dateTimeModified ?? remoteRecipe.dateCreated;
 
-        if (remoteUpdatedAt.isAfter(localUpdatedAt)) {
+        if (recipeUpdatedAt.isAfter(localUpdatedAt)) {
           await (update(recipes)..where((t) => t.recipePk.equals(localRecipe.recipePk))).write(
             RecipesCompanion(
               name: Value(remoteRecipe.name),
@@ -455,11 +725,13 @@ class AppDatabase extends _$AppDatabase {
               colour: Value(remoteRecipe.colour),
               dateTimeModified: Value(remoteRecipe.dateTimeModified),
               archived: Value(remoteRecipe.archived),
+              groupId: Value(remoteRecipe.groupId),
+              category: Value(remoteRecipe.category),
             ),
           );
 
           await (delete(recipeIngredients)..where((t) => t.recipeFk.equals(localRecipe.recipePk))).go();
-          for (final ri in remoteIngredients) {
+          for (final ri in resolvedIngredients) {
             await into(recipeIngredients).insert(
               RecipeIngredientsCompanion(
                 recipeIngredientPk: Value(ri.recipeIngredientPk),
@@ -494,7 +766,7 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  /// Merges an ingredient from remote using LWW.
+  /// Merges an ingredient from remote using LWW and deletion tracking.
   /// Returns: 1 if inserted, 2 if updated, 0 if kept local.
   Future<int> mergeIngredientFromRemote(Ingredient remoteIngredient) async {
     // Ensure the unit exists before inserting ingredient to satisfy FK constraint
@@ -522,7 +794,9 @@ class AppDatabase extends _$AppDatabase {
       );
     }
 
-    final localIng = await getIngredientById(remoteIngredient.ingredientPk);
+    final localIng = await getIngredientById(remoteIngredient.ingredientPk, includeDeleted: true);
+    final remoteTime = remoteIngredient.dateTimeModified ?? remoteIngredient.dateCreated;
+
     if (localIng == null) {
       await into(ingredients).insert(
         IngredientsCompanion(
@@ -533,26 +807,102 @@ class AppDatabase extends _$AppDatabase {
           unitFk: Value(targetUnitFk),
           dateCreated: Value(remoteIngredient.dateCreated),
           dateTimeModified: Value(remoteIngredient.dateTimeModified),
+          isDeleted: Value(remoteIngredient.isDeleted),
+          deletedAt: Value(remoteIngredient.deletedAt),
+          groupId: Value(remoteIngredient.groupId),
+          category: Value(remoteIngredient.category),
+          currentStock: Value(remoteIngredient.currentStock),
+          minimumStock: Value(remoteIngredient.minimumStock),
+          stockUnit: Value(remoteIngredient.stockUnit),
+          costPerStockUnit: Value(remoteIngredient.costPerStockUnit),
+          lastStockUpdate: Value(remoteIngredient.lastStockUpdate),
         ),
         mode: InsertMode.insertOrReplace,
       );
-      return 1;
-    } else {
-      final localTime = localIng.dateTimeModified ?? localIng.dateCreated;
-      final remoteTime = remoteIngredient.dateTimeModified ?? remoteIngredient.dateCreated;
-      if (remoteTime.isAfter(localTime)) {
-        await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
-          IngredientsCompanion(
-            name: Value(remoteIngredient.name),
-            cost: Value(remoteIngredient.cost),
-            quantityForCost: Value(remoteIngredient.quantityForCost),
-            unitFk: Value(targetUnitFk),
-            dateTimeModified: Value(remoteIngredient.dateTimeModified ?? remoteIngredient.dateCreated),
-          ),
-        );
-        return 2;
+      return remoteIngredient.isDeleted ? 0 : 1;
+    }
+
+    final localTime = localIng.dateTimeModified ?? localIng.dateCreated;
+
+    if (localIng.isDeleted) {
+      final localDeletedAt = localIng.deletedAt ?? localTime;
+
+      if (remoteIngredient.isDeleted) {
+        final remoteDeletedAt = remoteIngredient.deletedAt ?? remoteTime;
+        if (remoteDeletedAt.isAfter(localDeletedAt)) {
+          await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+            IngredientsCompanion(
+              deletedAt: Value(remoteDeletedAt),
+              dateTimeModified: Value(remoteTime),
+            ),
+          );
+          return 2;
+        }
+        return 0;
+      } else {
+        // Local is deleted, remote is active!
+        // Inbound sync filtering: Do NOT re-download or recreate any ingredient whose ID is marked as deleted locally with deleted_at >= remote_updated_at
+        if (!remoteTime.isAfter(localDeletedAt)) {
+          return 0;
+        } else {
+          await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+            IngredientsCompanion(
+              name: Value(remoteIngredient.name),
+              cost: Value(remoteIngredient.cost),
+              quantityForCost: Value(remoteIngredient.quantityForCost),
+              unitFk: Value(targetUnitFk),
+              isDeleted: const Value(false),
+              deletedAt: const Value(null),
+              dateTimeModified: Value(remoteTime),
+              groupId: Value(remoteIngredient.groupId),
+              category: Value(remoteIngredient.category),
+              currentStock: Value(remoteIngredient.currentStock),
+              minimumStock: Value(remoteIngredient.minimumStock),
+              stockUnit: Value(remoteIngredient.stockUnit),
+              costPerStockUnit: Value(remoteIngredient.costPerStockUnit),
+              lastStockUpdate: Value(remoteIngredient.lastStockUpdate),
+            ),
+          );
+          return 2;
+        }
       }
-      return 0;
+    } else {
+      if (remoteIngredient.isDeleted) {
+        // Firestore sends is_deleted: true, apply to Drift
+        final remoteDeletedAt = remoteIngredient.deletedAt ?? remoteTime;
+        if (remoteDeletedAt.isAfter(localTime) || remoteDeletedAt.isAtSameMomentAs(localTime)) {
+          await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+            IngredientsCompanion(
+              isDeleted: const Value(true),
+              deletedAt: Value(remoteDeletedAt),
+              dateTimeModified: Value(remoteTime),
+            ),
+          );
+          return 2;
+        }
+        return 0;
+      } else {
+        if (remoteTime.isAfter(localTime)) {
+          await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+            IngredientsCompanion(
+              name: Value(remoteIngredient.name),
+              cost: Value(remoteIngredient.cost),
+              quantityForCost: Value(remoteIngredient.quantityForCost),
+              unitFk: Value(targetUnitFk),
+              dateTimeModified: Value(remoteIngredient.dateTimeModified ?? remoteIngredient.dateCreated),
+              groupId: Value(remoteIngredient.groupId),
+              category: Value(remoteIngredient.category),
+              currentStock: Value(remoteIngredient.currentStock),
+              minimumStock: Value(remoteIngredient.minimumStock),
+              stockUnit: Value(remoteIngredient.stockUnit),
+              costPerStockUnit: Value(remoteIngredient.costPerStockUnit),
+              lastStockUpdate: Value(remoteIngredient.lastStockUpdate),
+            ),
+          );
+          return 2;
+        }
+        return 0;
+      }
     }
   }
 
@@ -594,7 +944,7 @@ class AppDatabase extends _$AppDatabase {
   /// Local records and newer local edits are never wiped or overwritten.
   Future<SyncMergeResult> mergeWithDatabase(AppDatabase remoteDb) async {
     final remoteUnits = await remoteDb.getAllUnits();
-    final remoteIngredients = await remoteDb.getAllIngredients();
+    final remoteIngredients = await remoteDb.getAllIngredients(includeDeleted: true);
     final remoteRecipes = await remoteDb.getAllRecipes();
     final allRemoteRecipeIngredients =
         await (remoteDb.select(remoteDb.recipeIngredients)).get();
@@ -644,12 +994,14 @@ class AppDatabase extends _$AppDatabase {
         );
       }
 
-      // 2. Merge Ingredients (non-destructive, LWW based on updated_at)
-      final localIngredients = await getAllIngredients();
+      // 2. Merge Ingredients (non-destructive, LWW based on updated_at, with deletion tracking)
+      final localIngredients = await getAllIngredients(includeDeleted: true);
       final localIngMap = {for (final i in localIngredients) i.ingredientPk: i};
       for (final ri in remoteIngredients) {
         final effectiveUnitFk = unitRemap[ri.unitFk] ?? ri.unitFk;
         final localIng = localIngMap[ri.ingredientPk];
+        final remoteTime = ri.dateTimeModified ?? ri.dateCreated;
+
         if (localIng == null) {
           await into(ingredients).insert(
             IngredientsCompanion(
@@ -660,34 +1012,131 @@ class AppDatabase extends _$AppDatabase {
               unitFk: Value(effectiveUnitFk),
               dateCreated: Value(ri.dateCreated),
               dateTimeModified: Value(ri.dateTimeModified),
+              isDeleted: Value(ri.isDeleted),
+              deletedAt: Value(ri.deletedAt),
             ),
             mode: InsertMode.insertOrReplace,
           );
-          ingredientsAdded++;
+          if (!ri.isDeleted) {
+            ingredientsAdded++;
+          }
         } else {
           final localTime = localIng.dateTimeModified ?? localIng.dateCreated;
-          final remoteTime = ri.dateTimeModified ?? ri.dateCreated;
-          if (remoteTime.isAfter(localTime)) {
-            await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
-              IngredientsCompanion(
-                name: Value(ri.name),
-                cost: Value(ri.cost),
-                quantityForCost: Value(ri.quantityForCost),
-                unitFk: Value(effectiveUnitFk),
-                dateTimeModified: Value(ri.dateTimeModified ?? ri.dateCreated),
-              ),
-            );
-            ingredientsUpdated++;
+
+          if (localIng.isDeleted) {
+            final localDeletedAt = localIng.deletedAt ?? localTime;
+            if (ri.isDeleted) {
+              final remoteDeletedAt = ri.deletedAt ?? remoteTime;
+              if (remoteDeletedAt.isAfter(localDeletedAt)) {
+                await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+                  IngredientsCompanion(
+                    deletedAt: Value(remoteDeletedAt),
+                    dateTimeModified: Value(remoteTime),
+                  ),
+                );
+                ingredientsUpdated++;
+              }
+            } else {
+              // Remote is active, local is deleted:
+              // Do NOT re-download or recreate if local deletion is newer or equal
+              if (remoteTime.isAfter(localDeletedAt)) {
+                await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+                  IngredientsCompanion(
+                    name: Value(ri.name),
+                    cost: Value(ri.cost),
+                    quantityForCost: Value(ri.quantityForCost),
+                    unitFk: Value(effectiveUnitFk),
+                    isDeleted: const Value(false),
+                    deletedAt: const Value(null),
+                    dateTimeModified: Value(remoteTime),
+                  ),
+                );
+                ingredientsUpdated++;
+              }
+            }
+          } else {
+            // Local is active
+            if (ri.isDeleted) {
+              final remoteDeletedAt = ri.deletedAt ?? remoteTime;
+              if (remoteDeletedAt.isAfter(localTime) || remoteDeletedAt.isAtSameMomentAs(localTime)) {
+                await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+                  IngredientsCompanion(
+                    isDeleted: const Value(true),
+                    deletedAt: Value(remoteDeletedAt),
+                    dateTimeModified: Value(remoteTime),
+                  ),
+                );
+                ingredientsUpdated++;
+              }
+            } else {
+              if (remoteTime.isAfter(localTime)) {
+                await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+                  IngredientsCompanion(
+                    name: Value(ri.name),
+                    cost: Value(ri.cost),
+                    quantityForCost: Value(ri.quantityForCost),
+                    unitFk: Value(effectiveUnitFk),
+                    dateTimeModified: Value(ri.dateTimeModified ?? ri.dateCreated),
+                  ),
+                );
+                ingredientsUpdated++;
+              }
+            }
           }
         }
       }
 
-      // 3. Merge Recipes (non-destructive, LWW based on updated_at)
+      // 3. Merge Recipes (non-destructive, LWW based on updated_at, with dependency conflict resolution)
       final localRecipes = await getAllRecipes();
       final localRecipeMap = {for (final r in localRecipes) r.recipePk: r};
 
       for (final remoteRecipe in remoteRecipes) {
         final localRecipe = localRecipeMap[remoteRecipe.recipePk];
+        final recipeUpdatedAt = remoteRecipe.dateTimeModified ?? remoteRecipe.dateCreated;
+
+        // Resolve recipe ingredients against deleted ingredients
+        final rawIngs = remoteIngsByRecipe[remoteRecipe.recipePk] ?? [];
+        final resolvedIngs = <RecipeIngredient>[];
+
+        for (final ri in rawIngs) {
+          final localIng = await getIngredientById(ri.ingredientFk, includeDeleted: true);
+          if (localIng != null && localIng.isDeleted) {
+            final ingDeletedAt = localIng.deletedAt ?? localIng.dateTimeModified ?? localIng.dateCreated;
+            if (recipeUpdatedAt.isAfter(ingDeletedAt)) {
+              // Case 1: Resurrect ingredient
+              await (update(ingredients)..where((t) => t.ingredientPk.equals(localIng.ingredientPk))).write(
+                IngredientsCompanion(
+                  isDeleted: const Value(false),
+                  deletedAt: const Value(null),
+                  dateTimeModified: Value(DateTime.now()),
+                ),
+              );
+              resolvedIngs.add(ri);
+            } else {
+              // Case 2: Detach dead ingredient reference
+            }
+          } else if (localIng == null) {
+            final fallbackUnit = (await (select(units)..limit(1)).get()).firstOrNull;
+            if (fallbackUnit != null) {
+              await into(ingredients).insert(
+                IngredientsCompanion(
+                  ingredientPk: Value(ri.ingredientFk),
+                  name: const Value('Ingrediente'),
+                  cost: const Value(0.0),
+                  quantityForCost: const Value(1.0),
+                  unitFk: Value(fallbackUnit.unitPk),
+                  dateCreated: Value(DateTime.now()),
+                  isDeleted: const Value(false),
+                  deletedAt: const Value(null),
+                ),
+                mode: InsertMode.insertOrIgnore,
+              );
+              resolvedIngs.add(ri);
+            }
+          } else {
+            resolvedIngs.add(ri);
+          }
+        }
 
         if (localRecipe == null) {
           // New recipe from remote: insert into local database
@@ -708,8 +1157,7 @@ class AppDatabase extends _$AppDatabase {
             ),
           );
 
-          final ings = remoteIngsByRecipe[remoteRecipe.recipePk] ?? [];
-          for (final ri in ings) {
+          for (final ri in resolvedIngs) {
             await into(recipeIngredients).insert(
               RecipeIngredientsCompanion(
                 recipeIngredientPk: Value(ri.recipeIngredientPk),
@@ -737,14 +1185,10 @@ class AppDatabase extends _$AppDatabase {
           recipesAdded++;
         } else {
           // Conflict: recipe exists locally and remotely.
-          // Resolve recipe conflicts using "last-write-wins" based on timestamps (updated_at).
-          // Do not wipe local records or overwrite newer local edits.
           final localUpdatedAt =
               localRecipe.dateTimeModified ?? localRecipe.dateCreated;
-          final remoteUpdatedAt =
-              remoteRecipe.dateTimeModified ?? remoteRecipe.dateCreated;
 
-          if (remoteUpdatedAt.isAfter(localUpdatedAt)) {
+          if (recipeUpdatedAt.isAfter(localUpdatedAt)) {
             // Remote is newer -> overwrite local recipe with remote version
             await (update(recipes)
                   ..where((t) => t.recipePk.equals(localRecipe.recipePk)))
@@ -767,8 +1211,7 @@ class AppDatabase extends _$AppDatabase {
             await (delete(recipeIngredients)
                   ..where((t) => t.recipeFk.equals(localRecipe.recipePk)))
                 .go();
-            final ings = remoteIngsByRecipe[remoteRecipe.recipePk] ?? [];
-            for (final ri in ings) {
+            for (final ri in resolvedIngs) {
               await into(recipeIngredients).insert(
                 RecipeIngredientsCompanion(
                   recipeIngredientPk: Value(ri.recipeIngredientPk),

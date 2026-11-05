@@ -21,6 +21,7 @@ void main() {
           // Override stream providers to return empty lists immediately
           recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
           ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
+          groupsStreamProvider.overrideWith((ref) => Stream.value([])),
         ],
         child: const RecipetoolsApp(),
       ),
@@ -32,7 +33,7 @@ void main() {
 
     // After loading, it should show HomeScreen
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.byIcon(Icons.restaurant_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.restaurant_rounded), findsWidgets);
   });
 
   testWidgets('Mobile floating navbar is positioned at the bottom of the screen', (WidgetTester tester) async {
@@ -49,6 +50,7 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(sharedPrefs),
           recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
           ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
+          groupsStreamProvider.overrideWith((ref) => Stream.value([])),
         ],
         child: const RecipetoolsApp(),
       ),

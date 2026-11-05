@@ -54,6 +54,7 @@ void main() {
     quantityForCost: 1000,
     unitFk: 'u_g',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
   final ingMilk = Ingredient(
     ingredientPk: 'ing_milk',
@@ -62,6 +63,7 @@ void main() {
     quantityForCost: 1000,
     unitFk: 'u_ml',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
   final ingEggs = Ingredient(
     ingredientPk: 'ing_eggs',
@@ -70,6 +72,7 @@ void main() {
     quantityForCost: 12,
     unitFk: 'u_pcs',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
   final ingSugar = Ingredient(
     ingredientPk: 'ing_sugar',
@@ -78,6 +81,7 @@ void main() {
     quantityForCost: 1000,
     unitFk: 'u_g',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
   final ingWater = Ingredient(
     ingredientPk: 'ing_water',
@@ -86,6 +90,7 @@ void main() {
     quantityForCost: 1000,
     unitFk: 'u_ml',
     dateCreated: DateTime.now(),
+        isDeleted: false,
   );
 
   group('RecipeIngredientSort unit tests', () {
@@ -101,6 +106,7 @@ void main() {
           quantityForCost: 1,
           unitFk: 'u_custom',
           dateCreated: DateTime.now(),
+        isDeleted: false,
         ),
         sourceUnit: unitCustom,
       );

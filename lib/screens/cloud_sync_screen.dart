@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../provider/cloud_sync_provider.dart';
+import '../services/url_launcher_service.dart';
 import '../utils/cloud_sync_service.dart';
 import '../widgets/floating_pill_app_bar.dart';
 
@@ -23,6 +25,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isRegisterMode = false;
   bool _obscurePassword = true;
+  bool _hasCheckedTermsOnOpen = false;
   String? _localError;
   String? _localSuccess;
 
@@ -51,6 +54,29 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     }
   }
 
+  String _resolveMessage(String msg, AppLocalizations l10n) {
+    switch (msg) {
+      case 'error_sign_in_canceled':
+        return l10n.cloud_sync_sign_in_canceled;
+      case 'error_drive_permission_denied':
+        return l10n.cloud_sync_error_drive_permission_denied;
+      case 'error_network':
+        return l10n.cloud_sync_error_network;
+      case 'error_requires_recent_login':
+        return l10n.cloud_sync_delete_account_reauth_required;
+      case 'cloud_sync_delete_account_success':
+        return l10n.cloud_sync_delete_account_success;
+      case 'cloud_sync_delete_cloud_data_success':
+        return l10n.cloud_sync_delete_cloud_data_success;
+      case 'cloud_sync_delete_all_backups_success':
+        return l10n.cloud_sync_delete_all_backups_success;
+      case 'cloud_sync_terms_required_warning':
+        return l10n.cloud_sync_terms_required_warning;
+      default:
+        return msg;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -58,21 +84,45 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     final syncState = ref.watch(cloudSyncProvider);
     final syncNotifier = ref.read(cloudSyncProvider.notifier);
 
+    // On first open, prompt acceptance if terms not accepted and user not signed in
+    if (!_hasCheckedTermsOnOpen && !syncState.loading) {
+      _hasCheckedTermsOnOpen = true;
+      if (!syncState.hasAcceptedTerms && !syncState.signedIn) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showTermsDialog(context, syncNotifier, theme, l10n);
+          }
+        });
+      }
+    }
+
     // Listen to changes in success/error messages to show SnackBar notifications
     ref.listen<CloudSyncState>(cloudSyncProvider, (previous, next) {
+      if (!_hasCheckedTermsOnOpen && !next.loading) {
+        _hasCheckedTermsOnOpen = true;
+        if (!next.hasAcceptedTerms && !next.signedIn) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showTermsDialog(context, syncNotifier, theme, l10n);
+            }
+          });
+        }
+      }
       if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
+        final resolved = _resolveMessage(next.errorMessage!, l10n);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.errorMessage!),
+            content: Text(resolved, softWrap: true),
             backgroundColor: theme.colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
       if (next.successMessage != null && next.successMessage != previous?.successMessage) {
+        final resolved = _resolveMessage(next.successMessage!, l10n);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.successMessage!),
+            content: Text(resolved, softWrap: true),
             backgroundColor: theme.colorScheme.secondary,
             behavior: SnackBarBehavior.floating,
           ),
@@ -108,6 +158,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildSettingsCard(syncState, syncNotifier, theme, l10n),
+                          const SizedBox(height: 16),
+                          _buildTermsStatusCard(syncState, syncNotifier, theme, l10n),
                           const SizedBox(height: 24),
                           if (syncState.storageType == CloudSyncStorageType.firestore) ...[
                             if (syncState.signedIn) ...[
@@ -123,7 +175,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                             if (syncState.signedIn) ...[
                               _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
                               const SizedBox(height: 24),
-                              _buildBackupsListHeader(theme, l10n),
+                              _buildBackupsListHeader(syncState, syncNotifier, theme, l10n),
                               const SizedBox(height: 12),
                               if (syncState.backups.isEmpty)
                                 _buildEmptyBackupsPlaceholder(theme, l10n)
@@ -133,7 +185,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                           ] else ...[
                             _buildBackupActionsCard(syncState, syncNotifier, theme, l10n),
                             const SizedBox(height: 24),
-                            _buildBackupsListHeader(theme, l10n),
+                            _buildBackupsListHeader(syncState, syncNotifier, theme, l10n),
                             const SizedBox(height: 12),
                             if (syncState.backups.isEmpty)
                               _buildEmptyBackupsPlaceholder(theme, l10n)
@@ -329,6 +381,326 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     );
   }
 
+  Widget _buildTermsStatusCard(
+    CloudSyncState state,
+    CloudSyncNotifier notifier,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    if (state.storageType == CloudSyncStorageType.localDirectory) {
+      return const SizedBox.shrink();
+    }
+
+    final accepted = state.hasAcceptedTerms;
+
+    if (accepted) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.green.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.green.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.verified_user_outlined, size: 18, color: Colors.green),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.cloud_sync_terms_accepted_badge,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.green.shade800,
+                  fontWeight: FontWeight.w600,
+                ),
+                softWrap: true,
+              ),
+            ),
+            InkWell(
+              onTap: () => _showTermsDialog(context, notifier, theme, l10n, viewOnly: true),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  l10n.cloud_sync_terms_review_btn,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                  softWrap: true,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.error.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.privacy_tip_outlined, size: 20, color: theme.colorScheme.error),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.cloud_sync_terms_banner_unaccepted,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onErrorContainer,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                  softWrap: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: () => _showTermsDialog(context, notifier, theme, l10n),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.rule, size: 16),
+              label: Text(
+                l10n.cloud_sync_terms_review_btn,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                softWrap: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _showTermsDialog(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    ThemeData theme,
+    AppLocalizations l10n, {
+    bool viewOnly = false,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: viewOnly,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+          contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          title: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+                child: Icon(Icons.privacy_tip_outlined, color: theme.colorScheme.primary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.cloud_sync_terms_dialog_title,
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  softWrap: true,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 460),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.cloud_sync_terms_dialog_subtitle,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                      softWrap: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTermsBullet(
+                      theme,
+                      Icons.cloud_sync_outlined,
+                      l10n.cloud_sync_terms_firestore_title,
+                      l10n.cloud_sync_terms_firestore_desc,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTermsBullet(
+                      theme,
+                      Icons.cloud_outlined,
+                      l10n.cloud_sync_terms_drive_title,
+                      l10n.cloud_sync_terms_drive_desc,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTermsBullet(
+                      theme,
+                      Icons.lock_outline,
+                      l10n.cloud_sync_terms_privacy_title,
+                      l10n.cloud_sync_terms_privacy_desc,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTermsBullet(
+                      theme,
+                      Icons.delete_outline,
+                      l10n.cloud_sync_terms_control_title,
+                      l10n.cloud_sync_terms_control_desc,
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () => UrlLauncherService.openPrivacyPolicy(),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.language_outlined, size: 18, color: theme.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l10n.cloud_sync_terms_view_privacy,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                softWrap: true,
+                              ),
+                            ),
+                            Icon(Icons.open_in_new, size: 16, color: theme.colorScheme.primary),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            if (viewOnly) ...[
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(l10n.close_button, softWrap: true),
+              ),
+            ] else ...[
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(
+                  l10n.cloud_sync_terms_decline_btn,
+                  softWrap: true,
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await notifier.acceptTerms();
+                  if (ctx.mounted) {
+                    Navigator.of(ctx).pop(true);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: Text(
+                  l10n.cloud_sync_terms_accept_btn,
+                  softWrap: true,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTermsBullet(
+    ThemeData theme,
+    IconData icon,
+    String title,
+    String description,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 14,
+          backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+          child: Icon(icon, size: 16, color: theme.colorScheme.primary),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                softWrap: true,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+                softWrap: true,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<bool> _ensureTermsAccepted(
+    CloudSyncNotifier notifier,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) async {
+    final accepted = await _showTermsDialog(context, notifier, theme, l10n);
+    return accepted == true;
+  }
+
   Widget _buildConnectionHeader(
     CloudSyncState state,
     CloudSyncNotifier notifier,
@@ -411,7 +783,13 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             const SizedBox(height: 20),
             if (!state.signedIn)
               ElevatedButton.icon(
-                onPressed: () => notifier.signIn(),
+                onPressed: () async {
+                  if (!state.hasAcceptedTerms) {
+                    final accepted = await _ensureTermsAccepted(notifier, theme, l10n);
+                    if (!accepted) return;
+                  }
+                  notifier.signIn();
+                },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   backgroundColor: theme.colorScheme.primary,
@@ -435,7 +813,13 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                 alignment: WrapAlignment.center,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: () => notifier.signIn(),
+                    onPressed: () async {
+                      if (!state.hasAcceptedTerms) {
+                        final accepted = await _ensureTermsAccepted(notifier, theme, l10n);
+                        if (!accepted) return;
+                      }
+                      notifier.signIn();
+                    },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
@@ -463,6 +847,22 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
+                  OutlinedButton.icon(
+                    onPressed: () => _confirmDisconnectGoogle(context, notifier, l10n, theme),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      foregroundColor: theme.colorScheme.error,
+                      side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    icon: const Icon(Icons.link_off),
+                    label: Text(
+                      l10n.cloud_sync_revoke_google_btn,
+                      softWrap: true,
+                    ),
+                  ),
                 ],
               ),
           ],
@@ -483,7 +883,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ElevatedButton.icon(
-          onPressed: () => _confirmSync(context, notifier, l10n),
+          onPressed: state.loading ? null : () => notifier.syncTwoWay(),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
             backgroundColor: theme.colorScheme.primary,
@@ -544,20 +944,38 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     );
   }
 
-  Widget _buildBackupsListHeader(ThemeData theme, AppLocalizations l10n) {
+  Widget _buildBackupsListHeader(
+    CloudSyncState state,
+    CloudSyncNotifier notifier,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           l10n.cloud_sync_backups_header,
+          softWrap: true,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.refresh, size: 20),
-          onPressed: () => ref.read(cloudSyncProvider.notifier).refreshBackups(),
-          visualDensity: VisualDensity.compact,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 20),
+              onPressed: () => notifier.refreshBackups(),
+              visualDensity: VisualDensity.compact,
+            ),
+            if (state.backups.isNotEmpty)
+              IconButton(
+                icon: Icon(Icons.delete_sweep_outlined, size: 20, color: theme.colorScheme.error),
+                onPressed: () => _confirmDeleteAllBackups(context, notifier, l10n, theme),
+                tooltip: l10n.cloud_sync_delete_all_backups_btn,
+                visualDensity: VisualDensity.compact,
+              ),
+          ],
         ),
       ],
     );
@@ -712,34 +1130,6 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     );
   }
 
-  void _confirmSync(BuildContext context, CloudSyncNotifier notifier, AppLocalizations l10n) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.sync),
-            const SizedBox(width: 8),
-            Expanded(child: Text(l10n.cloud_sync_sync_confirm_title)),
-          ],
-        ),
-        content: Text(l10n.cloud_sync_sync_confirm_desc),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.discard_button),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              notifier.syncTwoWay();
-            },
-            child: Text(l10n.cloud_sync_sync_btn),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showForceOverwriteDialog(
     BuildContext context,
@@ -1087,7 +1477,11 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               child: OutlinedButton(
                 onPressed: state.loading
                     ? null
-                    : () {
+                    : () async {
+                        if (!state.hasAcceptedTerms) {
+                          final accepted = await _ensureTermsAccepted(notifier, theme, l10n);
+                          if (!accepted) return;
+                        }
                         setState(() {
                           _localError = null;
                           _localSuccess = null;
@@ -1220,7 +1614,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               controller: _passwordController,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _handleEmailAuth(notifier, l10n),
+              onSubmitted: (_) => _handleEmailAuth(notifier, theme, l10n),
               decoration: InputDecoration(
                 labelText: l10n.cloud_sync_password_label,
                 hintText: l10n.cloud_sync_password_hint,
@@ -1293,7 +1687,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        errorText,
+                        _resolveMessage(errorText, l10n),
                         softWrap: true,
                         style: TextStyle(
                           color: theme.colorScheme.error,
@@ -1350,7 +1744,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             SizedBox(
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: state.loading ? null : () => _handleEmailAuth(notifier, l10n),
+                onPressed: state.loading ? null : () => _handleEmailAuth(notifier, theme, l10n),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
@@ -1410,75 +1804,393 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CircleAvatar(
-              radius: 26,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Text(
-                initial,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onPrimaryContainer,
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Text(
+                    initial,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            l10n.cloud_sync_connected_to_firestore,
+                            softWrap: true,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        l10n.cloud_sync_connected_to_firestore,
+                        email,
                         softWrap: true,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: Colors.green.shade700,
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    email,
-                    softWrap: true,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                ),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.onSurfaceVariant,
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
-                ],
+                  icon: const Icon(Icons.logout, size: 18),
+                  label: Text(
+                    l10n.cloud_sync_disconnect_btn,
+                    softWrap: true,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  onPressed: () => _showSignOutConfirmDialog(context, notifier, l10n),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                  icon: const Icon(Icons.cloud_off_outlined, size: 18),
+                  label: Text(
+                    l10n.cloud_sync_delete_cloud_data_btn,
+                    softWrap: true,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                  onPressed: () => _showDeleteCloudDataConfirmDialog(context, notifier, l10n, theme),
+                ),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                  icon: const Icon(Icons.delete_forever_outlined, size: 18),
+                  label: Text(
+                    l10n.cloud_sync_delete_account_btn,
+                    softWrap: true,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                  onPressed: () => _showDeleteAccountConfirmDialog(context, notifier, l10n, theme),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDisconnectGoogle(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.cloud_sync_revoke_google_btn, softWrap: true),
+        content: Text(
+          l10n.cloud_sync_sign_out_confirm_message,
+          softWrap: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.discard_button, softWrap: true),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              notifier.disconnectGoogleAccount();
+            },
+            child: Text(l10n.cloud_sync_revoke_google_btn, softWrap: true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteAllBackups(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.cloud_sync_delete_all_backups_confirm_title, softWrap: true),
+        content: Text(l10n.cloud_sync_delete_all_backups_confirm_desc, softWrap: true),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.discard_button, softWrap: true),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              notifier.deleteAllBackups();
+            },
+            child: Text(l10n.delete_button, softWrap: true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteCloudDataConfirmDialog(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error, size: 28),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.cloud_sync_delete_cloud_data_confirm_title,
+                softWrap: true,
+                style: TextStyle(
+                  color: theme.colorScheme.error,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.error,
-                side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          ],
+        ),
+        content: Text(
+          l10n.cloud_sync_delete_cloud_data_confirm_desc,
+          softWrap: true,
+          style: theme.textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(l10n.discard_button, softWrap: true),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              final success = await notifier.deleteFirestoreCloudData();
+              if (context.mounted && success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      l10n.cloud_sync_delete_cloud_data_success,
+                      softWrap: true,
+                    ),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: Text(l10n.delete_button, softWrap: true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountConfirmDialog(
+    BuildContext context,
+    CloudSyncNotifier notifier,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
+    final passwordConfirmController = TextEditingController();
+    bool obscureConfirmPassword = true;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final isPasswordProvider = currentUser?.providerData.any((p) => p.providerId == 'password') ?? false;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.cloud_sync_delete_account_title,
+                  softWrap: true,
+                  style: TextStyle(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
-              icon: const Icon(Icons.logout, size: 18),
-              label: Text(
-                l10n.cloud_sync_disconnect_btn,
-                softWrap: true,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.cloud_sync_delete_account_confirm_desc,
+                  softWrap: true,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                if (isPasswordProvider) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.cloud_sync_delete_account_password_prompt,
+                    softWrap: true,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: passwordConfirmController,
+                    obscureText: obscureConfirmPassword,
+                    decoration: InputDecoration(
+                      hintText: l10n.cloud_sync_password_hint,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setDialogState(() {
+                            obscureConfirmPassword = !obscureConfirmPassword;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () => UrlLauncherService.openDeleteAccount(),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.open_in_new, size: 16, color: theme.colorScheme.primary),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            l10n.settings_about_privacy_delete_portal,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text(l10n.discard_button, softWrap: true),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
               ),
-              onPressed: () => _showSignOutConfirmDialog(context, notifier, l10n),
+              onPressed: () async {
+                final password = isPasswordProvider ? passwordConfirmController.text.trim() : null;
+                Navigator.of(dialogCtx).pop();
+                final success = await notifier.deleteAccountAndCloudData(
+                  password: (password != null && password.isNotEmpty) ? password : null,
+                );
+                if (context.mounted && success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        l10n.cloud_sync_delete_account_success,
+                        softWrap: true,
+                      ),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
+              child: Text(l10n.cloud_sync_delete_account_confirm_btn, softWrap: true),
             ),
           ],
         ),
@@ -1520,7 +2232,17 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     );
   }
 
-  void _handleEmailAuth(CloudSyncNotifier notifier, AppLocalizations l10n) {
+  Future<void> _handleEmailAuth(
+    CloudSyncNotifier notifier,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) async {
+    final syncState = ref.read(cloudSyncProvider);
+    if (!syncState.hasAcceptedTerms) {
+      final accepted = await _ensureTermsAccepted(notifier, theme, l10n);
+      if (!accepted) return;
+    }
+
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 

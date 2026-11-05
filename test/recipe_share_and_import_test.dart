@@ -66,6 +66,7 @@ void main() {
     quantityForCost: 1000.0,
     unitFk: 'u_g',
     dateCreated: DateTime(2026, 1, 1),
+    isDeleted: false,
   );
 
   final ingFlour = Ingredient(
@@ -75,6 +76,7 @@ void main() {
     quantityForCost: 1000.0,
     unitFk: 'u_g',
     dateCreated: DateTime(2026, 1, 1),
+    isDeleted: false,
   );
 
   final recipeIngredients = [

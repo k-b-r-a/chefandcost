@@ -19,8 +19,9 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.chefandcost.app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Google Play requires targeting modern Android SDK (API 35+ for 2024/2025/2026 releases)
+    compileSdk = 36
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -35,7 +36,7 @@ android {
     defaultConfig {
         applicationId = "com.chefandcost.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -59,11 +60,41 @@ android {
     buildTypes {
         release {
             val releaseSigning = signingConfigs.getByName("release")
-            signingConfig = if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
-                releaseSigning
+            val hasValidReleaseKeystore = releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()
+
+            if (hasValidReleaseKeystore) {
+                signingConfig = releaseSigning
             } else {
-                signingConfigs.getByName("debug")
+                val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
+                    it.contains("Release", ignoreCase = true) || it.contains("bundle", ignoreCase = true)
+                }
+                if (isReleaseBuildRequested) {
+                    logger.warn("=======================================================================")
+                    logger.warn("[SECURITY ALERT] Release build requested, but valid android/key.properties")
+                    logger.warn("or storeFile was not found! Falling back to DEBUG signing.")
+                    logger.warn("DO NOT publish debug-signed bundles to Google Play Store.")
+                    logger.warn("=======================================================================")
+                }
+                signingConfig = signingConfigs.getByName("debug")
             }
+
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/DEPENDENCIES"
+            )
+        }
+        jniLibs {
+            // AGP 8.5+ 16 KB page size alignment requirement: keep uncompressed native libs
+            useLegacyPackaging = false
         }
     }
 }

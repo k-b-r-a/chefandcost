@@ -14,6 +14,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val ALARM_CHANNEL = "com.chefandcost.app/alarm"
     private val FILE_INTENT_CHANNEL = "com.chefandcost.app/file_intent"
+    private val URL_CHANNEL = "com.chefandcost.app/url"
     private var ringtone: Ringtone? = null
 
     private var fileChannel: MethodChannel? = null
@@ -83,6 +84,27 @@ class MainActivity : FlutterActivity() {
                     }
                     else -> result.notImplemented()
                 }
+            }
+        }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, URL_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "openUrl" -> {
+                    val url = call.argument<String>("url")
+                    if (!url.isNullOrBlank()) {
+                        try {
+                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(browserIntent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("URL_ERROR", e.localizedMessage, null)
+                        }
+                    } else {
+                        result.error("BAD_ARGS", "URL cannot be null or empty", null)
+                    }
+                }
+                else -> result.notImplemented()
             }
         }
     }

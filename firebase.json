@@ -26,6 +26,7 @@
     {
       "site": "chefycost",
       "public": "build/web",
+      "cleanUrls": true,
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -106,6 +107,14 @@
         }
       ],
       "rewrites": [
+        {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/delete-account",
+          "destination": "/delete-account.html"
+        },
         {
           "source": "**",
           "destination": "/index.html"
@@ -115,6 +124,7 @@
     {
       "site": "chefycostbeta",
       "public": "build/web",
+      "cleanUrls": true,
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -195,6 +205,14 @@
         }
       ],
       "rewrites": [
+        {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/delete-account",
+          "destination": "/delete-account.html"
+        },
         {
           "source": "**",
           "destination": "/index.html"
@@ -204,6 +222,7 @@
     {
       "site": "chefycostalpha",
       "public": "build/web",
+      "cleanUrls": true,
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -284,6 +303,14 @@
         }
       ],
       "rewrites": [
+        {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/delete-account",
+          "destination": "/delete-account.html"
+        },
         {
           "source": "**",
           "destination": "/index.html"

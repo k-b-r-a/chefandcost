@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Account &amp; Cloud Data - Chef&amp;Cost</title>
+  <meta name="description" content="Step-by-step instructions and request portal for deleting your Chef&amp;Cost account and associated cloud data in compliance with Google Play Store policies.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/Icon-192.png">
+  <style>
+    :root {
+      --primary: #d97706;
+      --primary-dark: #b45309;
+      --primary-light: #fef3c7;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --danger-dark: #b91c1c;
+      --success: #10b981;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      background-color: var(--bg);
+      padding: 0;
+    }
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s ease;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--primary);
+    }
+    main {
+      max-width: 900px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    h1 {
+      font-size: 2.1rem;
+      color: var(--danger-dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .effective-date {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+      color: var(--text);
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.4rem;
+    }
+    p {
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    ol, ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    li {
+      margin-bottom: 0.5rem;
+    }
+    .badge-danger {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: var(--danger-light);
+      color: var(--danger-dark);
+      margin-bottom: 0.5rem;
+    }
+    .alert-box {
+      background: var(--danger-light);
+      border-left: 4px solid var(--danger);
+      padding: 1.25rem;
+      border-radius: 0 12px 12px 0;
+      margin: 1.5rem 0;
+      color: #7f1d1d;
+    }
+    .step-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.25rem 0;
+    }
+    .step-box h3 {
+      font-size: 1.1rem;
+      color: var(--primary-dark);
+      margin-bottom: 0.5rem;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.8rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: #ffffff;
+      margin-top: 0.5rem;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    .deletion-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+    .deletion-table th, .deletion-table td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+    .deletion-table th {
+      background: #f1f5f9;
+      font-weight: 600;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <a href="/" class="brand">
+        <img src="favicon.svg" alt="Chef&Cost Logo">
+        <span>Chef&amp;Cost</span>
+      </a>
+      <nav class="nav-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="delete-account.html" class="active">Delete Account &amp; Data</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <span class="badge-danger">Account &amp; Data Removal</span>
+      <h1>Delete Account &amp; Cloud Data</h1>
+      <p class="effective-date">Google Play Store Compliance &bull; Package: <code>com.chefandcost.app</code></p>
+
+      <p>
+        In accordance with Google Play's User Data &amp; Account Deletion Policy, users of <strong>Chef&amp;Cost</strong> have the absolute right to request the permanent and irreversible deletion of their account and all associated cloud data.
+      </p>
+
+      <div class="alert-box">
+        <strong>Important:</strong> Deleting your account will immediately and permanently erase all cloud-synchronized recipes, ingredients, custom units, and authentication credentials from Google Cloud Firestore. This action cannot be reversed.
+      </div>
+
+      <h2>Summary of Data Subject to Deletion</h2>
+      <table class="deletion-table">
+        <thead>
+          <tr>
+            <th>Data Category</th>
+            <th>Storage Location</th>
+            <th>Action Upon Deletion Request</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Authentication Account</strong><br>Email, password credentials, and User ID (UID)</td>
+            <td>Firebase Authentication</td>
+            <td>Permanently deleted immediately.</td>
+          </tr>
+          <tr>
+            <td><strong>Cloud Recipe Records</strong><br>Recipe names, instructions, costs, batch sizes</td>
+            <td>Google Cloud Firestore (<code>/users/{UID}/recipes</code>)</td>
+            <td>All documents permanently deleted.</td>
+          </tr>
+          <tr>
+            <td><strong>Cloud Ingredients &amp; Units</strong><br>Pantry ingredients, prices, packaging, units</td>
+            <td>Google Cloud Firestore (<code>/users/{UID}/ingredients</code>)</td>
+            <td>All documents permanently deleted.</td>
+          </tr>
+          <tr>
+            <td><strong>Sync Metadata &amp; Timestamps</strong></td>
+            <td>Google Cloud Firestore (<code>/users/{UID}/sync_meta</code>)</td>
+            <td>Permanently deleted.</td>
+          </tr>
+          <tr>
+            <td><strong>On-Device Local Database</strong><br>SQLite database on your mobile device</td>
+            <td>Local Device Sandbox</td>
+            <td>
+              Remains on your local device for offline access. To remove local records, uninstall Chef&amp;Cost or clear app storage in your Android settings.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Method 1: Instant In-App Deletion (Recommended)</h2>
+      <p>
+        You can perform an instant, automatic deletion of your account and cloud data directly inside the application:
+      </p>
+      <div class="step-box">
+        <h3>Step-by-step instructions:</h3>
+        <ol>
+          <li>Open the <strong>Chef&amp;Cost</strong> app on your Android device or Web browser.</li>
+          <li>Tap on <strong>Settings</strong> (or the Cloud Sync icon on the home screen).</li>
+          <li>Select <strong>Cloud Sync</strong>.</li>
+          <li>Ensure you are connected with the account you want to delete.</li>
+          <li>At the bottom of the connected account card, tap <strong style="color: var(--danger);">"Eliminar cuenta y datos de la nube"</strong> (or <em>"Delete account &amp; cloud data"</em>).</li>
+          <li>Enter your current account password in the confirmation dialog (if registered via email/password) to verify ownership.</li>
+          <li>Tap <strong style="color: var(--danger);">"Eliminar definitivamente"</strong> (<em>"Permanently delete"</em>).</li>
+        </ol>
+        <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--success); font-weight: 600;">
+          &check; All Firestore data and authentication records are deleted immediately in real time.
+        </p>
+      </div>
+
+      <h2>Method 2: Web Deletion Request (Developer Contact)</h2>
+      <p>
+        If you have uninstalled the application or cannot access your device, you can submit an account and data deletion request directly to our engineering team:
+      </p>
+      <div class="step-box">
+        <h3>Email Request Details:</h3>
+        <p>Send an email to our support mailbox from the email address associated with your Chef&amp;Cost account:</p>
+        <ul>
+          <li><strong>Recipient:</strong> <a href="mailto:kbradevp@gmail.com?subject=Chef%26Cost%20Account%20Deletion%20Request">kbradevp@gmail.com</a></li>
+          <li><strong>Subject Line:</strong> <code>Chef&amp;Cost Account Deletion Request</code></li>
+          <li><strong>Required Information:</strong>
+            <ul>
+              <li>The registered email address of your Chef&amp;Cost account.</li>
+              <li>A simple statement requesting the permanent removal of your account and Cloud Firestore records.</li>
+            </ul>
+          </li>
+        </ul>
+        <p><strong>Processing SLA:</strong> Web requests are acknowledged within 48 hours and completely processed within <strong>30 calendar days</strong>. You will receive a final confirmation email once all records are purged from Google Cloud servers.</p>
+        <a href="mailto:kbradevp@gmail.com?subject=Chef%26Cost%20Account%20Deletion%20Request" class="btn btn-danger">
+          Send Deletion Request Email
+        </a>
+      </div>
+
+      <h2>Data Retention Policy</h2>
+      <p>
+        Chef&amp;Cost does not retain residual backups of deleted accounts. Once deletion is completed, all database documents associated with your User ID in Google Cloud Firestore are completely and permanently destroyed. No personal data is retained for analytics or marketing purposes.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Chef&amp;Cost. All rights reserved. &bull; <a href="privacy.html" style="color: var(--primary);">Privacy Policy</a></p>
+  </footer>
+</body>
+</html>
