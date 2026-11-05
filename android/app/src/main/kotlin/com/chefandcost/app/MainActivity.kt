@@ -107,6 +107,9 @@ class MainActivity : FlutterActivity() {
 
         try {
             val fileName = getFileName(uri)
+            if (!fileName.endsWith(".chefy", ignoreCase = true)) {
+                return
+            }
             val content = readFileContent(uri)
 
             if (!content.isNullOrBlank()) {

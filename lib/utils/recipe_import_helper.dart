@@ -41,6 +41,19 @@ class RecipeImportHelper {
       if (result == null || result.files.isEmpty) return null;
 
       final pickedFile = result.files.first;
+      if (!pickedFile.name.toLowerCase().endsWith(".chefy")) {
+        if (!context.mounted) return null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n.import_recipe_invalid_file,
+              softWrap: true,
+              overflow: TextOverflow.clip,
+            ),
+          ),
+        );
+        return null;
+      }
       Uint8List? bytes = pickedFile.bytes;
       if ((bytes == null || bytes.isEmpty) && !kIsWeb && pickedFile.path != null) {
         final file = File(pickedFile.path!);

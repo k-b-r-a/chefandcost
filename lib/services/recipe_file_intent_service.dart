@@ -41,6 +41,7 @@ class RecipeFileIntentService {
         if (call.arguments is Map) {
           final map = Map<String, dynamic>.from(call.arguments as Map);
           final fileName = map['fileName']?.toString() ?? 'recipe.chefy';
+          if (!fileName.toLowerCase().endsWith('.chefy')) return null;
           final content = map['content']?.toString() ?? '';
           if (content.isNotEmpty && _shouldHandle(content)) {
             _fileStreamController.add({
@@ -61,6 +62,7 @@ class RecipeFileIntentService {
       if (result != null) {
         final map = Map<String, dynamic>.from(result);
         final fileName = map['fileName']?.toString() ?? 'recipe.chefy';
+          if (!fileName.toLowerCase().endsWith('.chefy')) return null;
         final content = map['content']?.toString() ?? '';
         if (content.isNotEmpty && _shouldHandle(content)) {
           return {
