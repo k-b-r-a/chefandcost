@@ -9,6 +9,12 @@ class AppLocalizationsLt extends AppLocalizations {
   AppLocalizationsLt([String locale = 'lt']) : super(locale);
 
   @override
+  String get unit_fluid_ounces => 'Fluid ounces (US)';
+
+  @override
+  String get ingredient_deleted_label => 'Deleted';
+
+  @override
   String get home_title => 'Home';
 
   @override
@@ -277,6 +283,10 @@ class AppLocalizationsLt extends AppLocalizations {
 
   @override
   String get no_recipes_found => 'No recipes found.';
+
+  @override
+  String get no_recipes_in_space =>
+      'No recipes assigned to this space yet. Tap + to create one, or edit an existing recipe to add it here.';
 
   @override
   String get related_ingredients => 'Related';

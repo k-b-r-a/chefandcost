@@ -4,6 +4,8 @@ import '../database/recipe_category.dart';
 import '../database/sample_manufacturing_recipe.dart';
 import 'settings_provider.dart';
 
+const String kAllGroupsId = '__all_groups__';
+
 class DatabaseNotifier extends Notifier<AppDatabase> {
   @override
   AppDatabase build() {
@@ -25,20 +27,26 @@ class DatabaseNotifier extends Notifier<AppDatabase> {
 }
 
 /// Provider that exposes the AppDatabase instance to the entire app.
-final databaseProvider = NotifierProvider<DatabaseNotifier, AppDatabase>(DatabaseNotifier.new);
+final databaseProvider = NotifierProvider<DatabaseNotifier, AppDatabase>(
+  DatabaseNotifier.new,
+);
 
 /// Any change in the 'recipes' table will trigger an automatic UI update.
 final recipesStreamProvider = StreamProvider<List<Recipe>>((ref) {
   final db = ref.watch(databaseProvider);
-  return db.watchAllRecipes();
+  final active = ref.watch(activeGroupProvider);
+  return db.watchAllRecipes(spaceId: active?.id);
 });
 
 /// Stream of recipes including their calculated financial summaries.
-final recipesWithFinancialsStreamProvider = StreamProvider<List<RecipeWithFinancials>>((ref) {
-  final db = ref.watch(databaseProvider);
-  ref.watch(ingredientsStreamProvider);
-  return db.watchAllRecipesWithFinancials();
-});
+final recipesWithFinancialsStreamProvider =
+    StreamProvider<List<RecipeWithFinancials>>((ref) {
+      final db = ref.watch(databaseProvider);
+      final spaceId = ref.watch(
+        activeGroupProvider.select((group) => group?.id),
+      );
+      return db.watchAllRecipesWithFinancials(spaceId: spaceId);
+    });
 
 /// Any change in the 'ingredients' table will trigger an automatic UI update.
 final ingredientsStreamProvider = StreamProvider<List<Ingredient>>((ref) {
@@ -47,8 +55,10 @@ final ingredientsStreamProvider = StreamProvider<List<Ingredient>>((ref) {
 });
 
 /// Fetches the full details of a single recipe, including its ingredients and steps.
-final recipeDetailProvider =
-    FutureProvider.family<RecipeDetail, String>((ref, recipePk) {
+final recipeDetailProvider = FutureProvider.family<RecipeDetail, String>((
+  ref,
+  recipePk,
+) {
   final db = ref.watch(databaseProvider);
   ref.watch(ingredientsStreamProvider);
   return db.getRecipeDetail(recipePk);
@@ -67,12 +77,7 @@ final unitsStreamProvider = StreamProvider<List<Unit>>((ref) {
 });
 
 /// Filter type for ingredients (all, solids, liquids, pieces).
-enum IngredientFilterType {
-  all,
-  solids,
-  liquids,
-  pieces,
-}
+enum IngredientFilterType { all, solids, liquids, pieces }
 
 /// Notifier for the ingredient filter type.
 class IngredientFilterNotifier extends Notifier<IngredientFilterType> {
@@ -85,15 +90,15 @@ class IngredientFilterNotifier extends Notifier<IngredientFilterType> {
 /// State provider for filtering ingredients.
 final ingredientFilterProvider =
     NotifierProvider<IngredientFilterNotifier, IngredientFilterType>(
-  IngredientFilterNotifier.new,
-);
+      IngredientFilterNotifier.new,
+    );
 
 /// Provides a stream of ingredients that match a search query.
 final relatedIngredientsProvider =
     StreamProvider.family<List<Ingredient>, String>((ref, query) {
-  final db = ref.watch(databaseProvider);
-  return db.searchIngredients(query);
-});
+      final db = ref.watch(databaseProvider);
+      return db.searchIngredients(query);
+    });
 
 /// Notifier for the recipe search query.
 class RecipeSearchQueryNotifier extends Notifier<String> {
@@ -106,8 +111,8 @@ class RecipeSearchQueryNotifier extends Notifier<String> {
 /// State provider for the recipe search query using Notifier.
 final recipeSearchQueryProvider =
     NotifierProvider<RecipeSearchQueryNotifier, String>(
-  RecipeSearchQueryNotifier.new,
-);
+      RecipeSearchQueryNotifier.new,
+    );
 
 /// Notifier for the ingredient search query.
 class IngredientSearchQueryNotifier extends Notifier<String> {
@@ -120,8 +125,8 @@ class IngredientSearchQueryNotifier extends Notifier<String> {
 /// State provider for the ingredient search query using Notifier.
 final ingredientSearchQueryProvider =
     NotifierProvider<IngredientSearchQueryNotifier, String>(
-  IngredientSearchQueryNotifier.new,
-);
+      IngredientSearchQueryNotifier.new,
+    );
 
 /// Backward compatibility aliases for the legacy search query provider.
 typedef SearchQueryNotifier = RecipeSearchQueryNotifier;
@@ -161,16 +166,20 @@ class ActiveGroupIdNotifier extends Notifier<String?> {
 }
 
 /// State provider for the active group ID.
-final activeGroupIdProvider =
-    NotifierProvider<ActiveGroupIdNotifier, String?>(ActiveGroupIdNotifier.new);
+final activeGroupIdProvider = NotifierProvider<ActiveGroupIdNotifier, String?>(
+  ActiveGroupIdNotifier.new,
+);
 
 /// Provider that resolves the active [Group] object or falls back to the first available group.
 final activeGroupProvider = Provider<Group?>((ref) {
   final activeId = ref.watch(activeGroupIdProvider);
   final groups = ref.watch(groupsStreamProvider).asData?.value ?? [];
   if (groups.isEmpty) return null;
+  if (activeId == kAllGroupsId) return null;
   if (activeId != null) {
-    final found = groups.where((g) => g.id == activeId && !g.isDeleted).firstOrNull;
+    final found = groups
+        .where((g) => g.id == activeId && !g.isDeleted)
+        .firstOrNull;
     if (found != null) return found;
   }
   return groups.firstWhere((g) => !g.isDeleted, orElse: () => groups.first);
@@ -187,7 +196,5 @@ class RecipeCategoryFilterNotifier extends Notifier<RecipeCategory?> {
 /// State provider for filtering recipes by category.
 final recipeCategoryFilterProvider =
     NotifierProvider<RecipeCategoryFilterNotifier, RecipeCategory?>(
-  RecipeCategoryFilterNotifier.new,
-);
-
-
+      RecipeCategoryFilterNotifier.new,
+    );

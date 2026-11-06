@@ -10,10 +10,7 @@ import 'group_management_sheet.dart';
 class ActiveGroupChip extends ConsumerWidget {
   final bool isCompact;
 
-  const ActiveGroupChip({
-    super.key,
-    this.isCompact = false,
-  });
+  const ActiveGroupChip({super.key, this.isCompact = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,9 +18,14 @@ class ActiveGroupChip extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    final groupName = activeGroup?.name ?? l10n.group_default_name;
+    final allSpaces = ref.watch(activeGroupIdProvider) == kAllGroupsId;
+    final groupName =
+        activeGroup?.name ??
+        (allSpaces ? l10n.group_all_workspaces : l10n.group_default_name);
     final groupColor = parseGroupColor(activeGroup?.colorHex);
-    final groupIcon = getGroupIconData(activeGroup?.iconName);
+    final groupIcon = allSpaces
+        ? Icons.all_inclusive_rounded
+        : getGroupIconData(activeGroup?.iconName);
 
     return Material(
       color: Colors.transparent,
@@ -38,7 +40,9 @@ class ActiveGroupChip extends ConsumerWidget {
               vertical: isCompact ? 4 : 6,
             ),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.6,
+              ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),

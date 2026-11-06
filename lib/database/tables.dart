@@ -62,11 +62,30 @@ class Recipes extends Table {
 
   TextColumn get groupId =>
       text().named('group_id').nullable().references(Groups, #id)();
-  TextColumn get category =>
-      text().withLength(max: 50).withDefault(const Constant('cocina')).nullable()();
+  TextColumn get category => text()
+      .withLength(max: 50)
+      .withDefault(const Constant('cocina'))
+      .nullable()();
 
   @override
   Set<Column> get primaryKey => {recipePk};
+}
+
+@DataClassName('RecipeSpace')
+class RecipeSpaces extends Table {
+  TextColumn get recipeId => text()
+      .named('recipe_id')
+      .references(Recipes, #recipePk, onDelete: KeyAction.cascade)();
+  TextColumn get spaceId => text()
+      .named('space_id')
+      .references(Groups, #id, onDelete: KeyAction.cascade)();
+  DateTimeColumn get createdAt =>
+      dateTime().named('created_at').withDefault(currentDateAndTime)();
+  BoolColumn get isDeleted =>
+      boolean().named('is_deleted').withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {recipeId, spaceId};
 }
 
 @DataClassName('Unit')
@@ -100,16 +119,17 @@ class Ingredients extends Table {
   DateTimeColumn get dateTimeModified =>
       dateTime().withDefault(Constant(DateTime.now())).nullable()();
 
-  BoolColumn get isDeleted =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
   DateTimeColumn get deletedAt => dateTime().nullable()();
 
   TextColumn get groupId =>
       text().named('group_id').nullable().references(Groups, #id)();
   TextColumn get category => text().withLength(max: 50).nullable()();
 
-  RealColumn get currentStock =>
-      real().named('current_stock').withDefault(const Constant(0.0)).nullable()();
+  RealColumn get currentStock => real()
+      .named('current_stock')
+      .withDefault(const Constant(0.0))
+      .nullable()();
   RealColumn get minimumStock => real().named('minimum_stock').nullable()();
   TextColumn get stockUnit => text().named('stock_unit').nullable()();
   RealColumn get costPerStockUnit =>

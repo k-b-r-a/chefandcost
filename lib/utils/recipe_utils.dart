@@ -21,20 +21,29 @@ class RecipeIngredientData {
     this.targetUnit,
     String? initialTargetAmount,
     TextEditingController? customController,
-  }) : amountController = customController ??
-            TextEditingController(
-              text: initialTargetAmount != null
-                  ? (initialTargetAmount.isEmpty
-                      ? ''
-                      : RecipeUtils.cleanTrailingZeros(initialTargetAmount))
-                  : _getInitialAmountText(initialAmount, sourceUnit, targetUnit),
-            );
+  }) : amountController =
+           customController ??
+           TextEditingController(
+             text: initialTargetAmount != null
+                 ? (initialTargetAmount.isEmpty
+                       ? ''
+                       : RecipeUtils.cleanTrailingZeros(initialTargetAmount))
+                 : _getInitialAmountText(initialAmount, sourceUnit, targetUnit),
+           );
 
-  static String _getInitialAmountText(String initialAmount, Unit? source, Unit? target) {
+  static String _getInitialAmountText(
+    String initialAmount,
+    Unit? source,
+    Unit? target,
+  ) {
     final parsed = RecipeUtils.parseFormattedNumber(initialAmount);
     if (parsed == 0.0) return RecipeUtils.cleanTrailingZeros(initialAmount);
-    if (source != null && target != null && source.category == target.category && source.category != null) {
-      if (source.unitPk != target.unitPk && source.factorToBase != target.factorToBase) {
+    if (source != null &&
+        target != null &&
+        source.category == target.category &&
+        source.category != null) {
+      if (source.unitPk != target.unitPk &&
+          source.factorToBase != target.factorToBase) {
         final valueInBase = parsed * source.factorToBase;
         final valueInTarget = valueInBase / target.factorToBase;
         return RecipeUtils.formatQuantity(valueInTarget);
@@ -45,8 +54,12 @@ class RecipeIngredientData {
 
   double get amount {
     final parsed = RecipeUtils.parseFormattedNumber(amountController.text);
-    if (sourceUnit != null && targetUnit != null && sourceUnit!.category == targetUnit!.category && sourceUnit!.category != null) {
-      if (sourceUnit!.unitPk != targetUnit!.unitPk && sourceUnit!.factorToBase != targetUnit!.factorToBase) {
+    if (sourceUnit != null &&
+        targetUnit != null &&
+        sourceUnit!.category == targetUnit!.category &&
+        sourceUnit!.category != null) {
+      if (sourceUnit!.unitPk != targetUnit!.unitPk &&
+          sourceUnit!.factorToBase != targetUnit!.factorToBase) {
         // convert back to source unit
         final valueInBase = parsed * targetUnit!.factorToBase;
         final result = valueInBase / sourceUnit!.factorToBase;
@@ -56,7 +69,8 @@ class RecipeIngredientData {
     return parsed;
   }
 
-  double get unitCost => ingredient.cost / ingredient.quantityForCost;
+  double get unitCost =>
+      ingredient.isDeleted ? 0 : ingredient.cost / ingredient.quantityForCost;
   double get totalCost => unitCost * amount;
 }
 
@@ -67,8 +81,9 @@ class RecipeStepData {
   RecipeStepData({
     String initialInstruction = '',
     TextEditingController? customController,
-  })  : instructionController = customController ?? TextEditingController(text: initialInstruction),
-        focusNode = FocusNode();
+  }) : instructionController =
+           customController ?? TextEditingController(text: initialInstruction),
+       focusNode = FocusNode();
 
   void dispose() {
     instructionController.dispose();
@@ -95,11 +110,7 @@ class RecipeFinancialSummary {
 }
 
 /// Sorting criteria for recipe ingredients in the recipe screen.
-enum RecipeIngredientSort {
-  defaultOrder,
-  type,
-  alphabetical,
-}
+enum RecipeIngredientSort { defaultOrder, type, alphabetical }
 
 class RecipeUtils {
   static int defaultDecimalDigits = 2;
@@ -109,10 +120,17 @@ class RecipeUtils {
   /// 1 for Liquid (volume)
   /// 2 for Pieces (count)
   /// 3 for Other (unspecified/unknown)
-  static int getIngredientTypeRank(RecipeIngredientData data, List<Unit> units) {
-    final category = data.targetUnit?.category ??
+  static int getIngredientTypeRank(
+    RecipeIngredientData data,
+    List<Unit> units,
+  ) {
+    final category =
+        data.targetUnit?.category ??
         data.sourceUnit?.category ??
-        units.where((u) => u.unitPk == data.ingredient.unitFk).firstOrNull?.category;
+        units
+            .where((u) => u.unitPk == data.ingredient.unitFk)
+            .firstOrNull
+            ?.category;
     if (UnitUtils.isMass(category)) return 0;
     if (UnitUtils.isVolume(category)) return 1;
     if (UnitUtils.isCount(category)) return 2;
@@ -138,7 +156,9 @@ class RecipeUtils {
           final rankB = getIngredientTypeRank(b, units);
           final cmp = rankA.compareTo(rankB);
           if (cmp != 0) return cmp;
-          final nameCmp = a.ingredient.name.toLowerCase().compareTo(b.ingredient.name.toLowerCase());
+          final nameCmp = a.ingredient.name.toLowerCase().compareTo(
+            b.ingredient.name.toLowerCase(),
+          );
           if (nameCmp != 0) return nameCmp;
           return i.compareTo(j);
         });
@@ -147,7 +167,9 @@ class RecipeUtils {
         indices.sort((i, j) {
           final a = ingredients[i];
           final b = ingredients[j];
-          final nameCmp = a.ingredient.name.toLowerCase().compareTo(b.ingredient.name.toLowerCase());
+          final nameCmp = a.ingredient.name.toLowerCase().compareTo(
+            b.ingredient.name.toLowerCase(),
+          );
           if (nameCmp != 0) return nameCmp;
           return i.compareTo(j);
         });
@@ -156,7 +178,8 @@ class RecipeUtils {
   }
 
   /// Calculates total weight (grams) and total volume (milliliters) from recipe ingredients.
-  static ({double totalWeightGrams, double totalVolumeMl}) calculateTotalWeightAndVolume({
+  static ({double totalWeightGrams, double totalVolumeMl})
+  calculateTotalWeightAndVolume({
     required List<RecipeIngredientData> ingredients,
     required List<Unit> units,
   }) {
@@ -164,7 +187,8 @@ class RecipeUtils {
     double volumeMl = 0.0;
 
     for (var data in ingredients) {
-      final unit = data.targetUnit ??
+      final unit =
+          data.targetUnit ??
           data.sourceUnit ??
           units.where((u) => u.unitPk == data.ingredient.unitFk).firstOrNull;
       if (unit == null || unit.category == null) continue;
@@ -241,7 +265,10 @@ class RecipeUtils {
   }
 
   /// Formats a quantity value cleanly into fractions (e.g. "1/4", "1/2", "1 1/2") or clean decimals.
-  static String formatFractionOrDecimal(num value, {bool preferFraction = false}) {
+  static String formatFractionOrDecimal(
+    num value, {
+    bool preferFraction = false,
+  }) {
     final rounded = value.roundToDouble();
     if ((value - rounded).abs() < 1e-9) {
       return rounded.toInt().toString();
@@ -340,7 +367,9 @@ class RecipeUtils {
     final minDigits = trimTrailingZeros
         ? 0
         : (minDecimalDigits ?? decimalDigits ?? defaultDecimalDigits);
-    final formatter = NumberFormat.decimalPattern('es_ES'); // uses dot for thousands
+    final formatter = NumberFormat.decimalPattern(
+      'es_ES',
+    ); // uses dot for thousands
     formatter.minimumFractionDigits = minDigits;
     formatter.maximumFractionDigits = maxDigits;
     return formatter.format(maxDigits == 0 ? value.round() : value);
@@ -352,7 +381,9 @@ class RecipeUtils {
     final trimmed = text.trim();
 
     // Check for mixed fractions: e.g. "1 1/2"
-    final mixedMatch = RegExp(r'^(\d+)\s+(\d+)\s*/\s*(\d+)$').firstMatch(trimmed);
+    final mixedMatch = RegExp(
+      r'^(\d+)\s+(\d+)\s*/\s*(\d+)$',
+    ).firstMatch(trimmed);
     if (mixedMatch != null) {
       final whole = double.tryParse(mixedMatch.group(1)!) ?? 0.0;
       final num = double.tryParse(mixedMatch.group(2)!) ?? 0.0;
@@ -368,7 +399,9 @@ class RecipeUtils {
       if (den != 0) return num / den;
     }
 
-    final match = RegExp(r'[-+]?(?:[0-9]+(?:[.,][0-9]+)*|[.,][0-9]+)').firstMatch(trimmed);
+    final match = RegExp(
+      r'[-+]?(?:[0-9]+(?:[.,][0-9]+)*|[.,][0-9]+)',
+    ).firstMatch(trimmed);
     if (match == null) return 0.0;
     final numStr = match.group(0)!;
     final hasDot = numStr.contains('.');
@@ -409,7 +442,10 @@ class RecipeUtils {
   }
 
   /// Safely parses a hex color string (e.g. "#FF5722" or "FF5722") with fallback.
-  static Color parseColor(String? hexString, {Color fallback = const Color(0xFF6750A4)}) {
+  static Color parseColor(
+    String? hexString, {
+    Color fallback = const Color(0xFF6750A4),
+  }) {
     if (hexString == null || hexString.isEmpty) return fallback;
     try {
       final formatted = hexString.replaceFirst('#', '').padLeft(8, 'f');
@@ -459,7 +495,7 @@ class RecipeUtils {
   static Color getIngredientColor(String name, ColorScheme colorScheme) {
     final int hash = name.hashCode;
     final isDark = colorScheme.brightness == Brightness.dark;
-    
+
     final List<Color> palette = [
       colorScheme.primary,
       colorScheme.secondary,
@@ -470,21 +506,19 @@ class RecipeUtils {
       Colors.purple,
       Colors.teal,
     ];
-    
+
     Color baseColor = palette[hash.abs() % palette.length];
-    
+
     if (isDark) {
       // make it lighter/pastel for dark mode
-      return HSLColor.fromColor(baseColor)
-          .withLightness(0.7)
-          .withSaturation(0.6)
-          .toColor();
+      return HSLColor.fromColor(
+        baseColor,
+      ).withLightness(0.7).withSaturation(0.6).toColor();
     } else {
       // make it darker for light mode
-      return HSLColor.fromColor(baseColor)
-          .withLightness(0.3)
-          .withSaturation(0.8)
-          .toColor();
+      return HSLColor.fromColor(
+        baseColor,
+      ).withLightness(0.3).withSaturation(0.8).toColor();
     }
   }
 
@@ -496,13 +530,13 @@ class RecipeUtils {
   }) {
     final totalRevenue = pricePerPortion * yieldVal;
     final totalProfit = totalRevenue - totalIngredientsCost;
-    
+
     final costPortion = yieldVal > 0 ? totalIngredientsCost / yieldVal : 0.0;
     final profitPortion = yieldVal > 0 ? totalProfit / yieldVal : 0.0;
-    
+
     // Markup logic: (Profit / Cost) * 100
-    final markup = (totalIngredientsCost > 0 && pricePerPortion > 0) 
-        ? (totalProfit / totalIngredientsCost) * 100 
+    final markup = (totalIngredientsCost > 0 && pricePerPortion > 0)
+        ? (totalProfit / totalIngredientsCost) * 100
         : 0.0;
 
     return RecipeFinancialSummary(
@@ -522,7 +556,8 @@ class RecipeUtils {
     required double targetMarkupPercent,
   }) {
     if (yieldVal <= 0) return 0.0;
-    final targetRevenue = totalIngredientsCost * (1 + (targetMarkupPercent / 100));
+    final targetRevenue =
+        totalIngredientsCost * (1 + (targetMarkupPercent / 100));
     return targetRevenue / yieldVal;
   }
 
@@ -563,6 +598,8 @@ class RecipeUtils {
         return l10n.unit_cups;
       case 'unit_ounces':
         return l10n.unit_ounces;
+      case 'unit_fluid_ounces':
+        return l10n.unit_fluid_ounces;
       default:
         return unitKey;
     }
@@ -586,10 +623,14 @@ class RecipeUtils {
   }
 
   /// calculates financials from database objects (view)
-  static RecipeFinancialSummary calculateSummaryFromDetail(RecipeDetail detail) {
+  static RecipeFinancialSummary calculateSummaryFromDetail(
+    RecipeDetail detail,
+  ) {
     double totalCost = 0.0;
     for (var ingWithData in detail.ingredients) {
-      final unitCost = ingWithData.ingredient.cost / ingWithData.ingredient.quantityForCost;
+      if (ingWithData.ingredient.isDeleted) continue;
+      final unitCost =
+          ingWithData.ingredient.cost / ingWithData.ingredient.quantityForCost;
       totalCost += unitCost * ingWithData.entry.amountNeeded;
     }
     return calculateFinancials(
@@ -612,6 +653,7 @@ class RecipeUtils {
     required List<RecipeStepData> steps,
     String? category,
     String? groupId,
+    List<String>? spaceIds,
   }) async {
     final parsedYield = parseFormattedNumber(yieldText);
     final parsedPrice = parseFormattedNumber(priceText);
@@ -626,47 +668,71 @@ class RecipeUtils {
       name: drift.Value(name.trim()),
       description: drift.Value(description.trim()),
       defaultYield: drift.Value(parsedYield <= 0 ? 1.0 : parsedYield),
-      yieldName: drift.Value(yieldName.trim().isEmpty ? 'portions' : yieldName.trim()),
+      yieldName: drift.Value(
+        yieldName.trim().isEmpty ? 'portions' : yieldName.trim(),
+      ),
       targetProfitMargin: drift.Value(decimalMargin),
       targetPricePerPortion: drift.Value(parsedPrice),
       dateTimeModified: drift.Value(now),
-      category: category != null ? drift.Value(category) : const drift.Value('cocina'),
-      groupId: groupId != null ? drift.Value(groupId) : const drift.Value.absent(),
+      category: category != null
+          ? drift.Value(category)
+          : const drift.Value('cocina'),
+      groupId: const drift.Value(null),
     );
 
     await db.transaction(() async {
       if (recipePk != null) {
-        await (db.update(db.recipes)..where((t) => t.recipePk.equals(actualRecipePk))).write(recipeCompanion);
+        await (db.update(db.recipes)
+              ..where((t) => t.recipePk.equals(actualRecipePk)))
+            .write(recipeCompanion);
       } else {
         await db.insertRecipe(recipeCompanion);
       }
 
-      await (db.delete(db.recipeIngredients)..where((t) => t.recipeFk.equals(actualRecipePk))).go();
+      await (db.delete(
+        db.recipeIngredients,
+      )..where((t) => t.recipeFk.equals(actualRecipePk))).go();
 
       for (var ingData in ingredients) {
-        // Ensure ingredient entity exists and mark modified so differential sync picks it up
-        await db.into(db.ingredients).insertOnConflictUpdate(
-          IngredientsCompanion(
-            ingredientPk: drift.Value(ingData.ingredient.ingredientPk),
-            name: drift.Value(ingData.ingredient.name),
-            cost: drift.Value(ingData.ingredient.cost),
-            quantityForCost: drift.Value(ingData.ingredient.quantityForCost),
-            unitFk: drift.Value(ingData.ingredient.unitFk),
-            dateCreated: drift.Value(ingData.ingredient.dateCreated),
-            dateTimeModified: drift.Value(now),
-            isDeleted: const drift.Value(false),
-            deletedAt: const drift.Value(null),
-            groupId: drift.Value(ingData.ingredient.groupId),
-            category: drift.Value(ingData.ingredient.category),
-            currentStock: drift.Value(ingData.ingredient.currentStock),
-            minimumStock: drift.Value(ingData.ingredient.minimumStock),
-            stockUnit: drift.Value(ingData.ingredient.stockUnit),
-            costPerStockUnit: drift.Value(ingData.ingredient.costPerStockUnit),
-            lastStockUpdate: drift.Value(ingData.ingredient.lastStockUpdate),
-          ),
+        final stored = await db.getIngredientById(
+          ingData.ingredient.ingredientPk,
+          includeDeleted: true,
         );
+        if (!ingData.ingredient.isDeleted && stored?.isDeleted != true) {
+          // Ensure ingredient entity exists and mark modified so differential sync picks it up
+          await db
+              .into(db.ingredients)
+              .insertOnConflictUpdate(
+                IngredientsCompanion(
+                  ingredientPk: drift.Value(ingData.ingredient.ingredientPk),
+                  name: drift.Value(ingData.ingredient.name),
+                  cost: drift.Value(ingData.ingredient.cost),
+                  quantityForCost: drift.Value(
+                    ingData.ingredient.quantityForCost,
+                  ),
+                  unitFk: drift.Value(ingData.ingredient.unitFk),
+                  dateCreated: drift.Value(ingData.ingredient.dateCreated),
+                  dateTimeModified: drift.Value(now),
+                  isDeleted: const drift.Value(false),
+                  deletedAt: const drift.Value(null),
+                  groupId: drift.Value(ingData.ingredient.groupId),
+                  category: drift.Value(ingData.ingredient.category),
+                  currentStock: drift.Value(ingData.ingredient.currentStock),
+                  minimumStock: drift.Value(ingData.ingredient.minimumStock),
+                  stockUnit: drift.Value(ingData.ingredient.stockUnit),
+                  costPerStockUnit: drift.Value(
+                    ingData.ingredient.costPerStockUnit,
+                  ),
+                  lastStockUpdate: drift.Value(
+                    ingData.ingredient.lastStockUpdate,
+                  ),
+                ),
+              );
+        }
 
-        await db.into(db.recipeIngredients).insert(
+        await db
+            .into(db.recipeIngredients)
+            .insert(
               RecipeIngredientsCompanion.insert(
                 recipeFk: actualRecipePk,
                 ingredientFk: ingData.ingredient.ingredientPk,
@@ -676,18 +742,28 @@ class RecipeUtils {
             );
       }
 
-      await (db.delete(db.recipeSteps)..where((t) => t.recipeFk.equals(actualRecipePk))).go();
+      await (db.delete(
+        db.recipeSteps,
+      )..where((t) => t.recipeFk.equals(actualRecipePk))).go();
 
       for (int i = 0; i < steps.length; i++) {
         final step = _mapToCompanion(actualRecipePk, i, steps[i]);
         await db.into(db.recipeSteps).insert(step);
       }
+      await db.setRecipeSpaces(
+        actualRecipePk,
+        spaceIds ?? (groupId == null ? const [] : [groupId]),
+      );
     });
 
     return await db.getRecipeDetail(actualRecipePk);
   }
 
-  static RecipeStepsCompanion _mapToCompanion(String recipePk, int index, RecipeStepData step) {
+  static RecipeStepsCompanion _mapToCompanion(
+    String recipePk,
+    int index,
+    RecipeStepData step,
+  ) {
     return RecipeStepsCompanion.insert(
       recipeFk: recipePk,
       stepNumber: index + 1,

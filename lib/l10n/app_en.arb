@@ -1,4 +1,6 @@
 {
+  "unit_fluid_ounces": "Fluid ounces (US)",
+  "ingredient_deleted_label": "Deleted",
   "@@locale": "en",
   "home_title": "Home",
   "home_greeting_morning": "Good morning, Chef",
@@ -106,6 +108,7 @@
   "search_ingredients_hint": "Search ingredients...",
   "no_ingredients_found": "No ingredients found.",
   "no_recipes_found": "No recipes found.",
+  "no_recipes_in_space": "No recipes assigned to this space yet. Tap + to create one, or edit an existing recipe to add it here.",
   "related_ingredients": "Related",
   "no_similar_ingredients": "No similar ingredients",
   "merge_button": "Merge",

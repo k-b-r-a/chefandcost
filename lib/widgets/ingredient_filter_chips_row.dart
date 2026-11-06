@@ -21,91 +21,97 @@ class IngredientFilterChipsRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     final filters = [
-      (
-        IngredientFilterType.all,
-        l10n.filter_all,
-        Icons.all_inclusive_rounded,
-      ),
-      (
-        IngredientFilterType.solids,
-        l10n.filter_solids,
-        Icons.grain_rounded,
-      ),
+      (IngredientFilterType.all, l10n.filter_all, Icons.all_inclusive_rounded),
+      (IngredientFilterType.solids, l10n.filter_solids, Icons.grain_rounded),
       (
         IngredientFilterType.liquids,
         l10n.filter_liquids,
         Icons.water_drop_outlined,
       ),
-      (
-        IngredientFilterType.pieces,
-        l10n.filter_pieces,
-        Icons.widgets_outlined,
-      ),
+      (IngredientFilterType.pieces, l10n.filter_pieces, Icons.widgets_outlined),
     ];
 
     if (isCompact) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: filters.map((entry) {
-          final isSelected = currentFilter == entry.$1;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3.0),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => onFilterSelected(entry.$1),
-                borderRadius: BorderRadius.circular(12),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 3.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? theme.colorScheme.primaryContainer
-                        : theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                          ? theme.colorScheme.primary.withValues(alpha: 0.6)
-                          : theme.colorScheme.outlineVariant
-                              .withValues(alpha: 0.25),
-                      width: 1,
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: filters.map((entry) {
+            final isSelected = currentFilter == entry.$1;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => onFilterSelected(entry.$1),
+                  borderRadius: BorderRadius.circular(16),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        entry.$3,
-                        size: 13,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? theme.colorScheme.primaryContainer
+                          : theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
                         color: isSelected
-                            ? theme.colorScheme.onPrimaryContainer
-                            : theme.colorScheme.onSurfaceVariant,
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outlineVariant.withValues(
+                                alpha: 0.25,
+                              ),
+                        width: isSelected ? 1.5 : 1,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        entry.$2,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.w500,
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.15,
+                                ),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          entry.$3,
+                          size: 18,
                           color: isSelected
                               ? theme.colorScheme.onPrimaryContainer
                               : theme.colorScheme.onSurfaceVariant,
                         ),
-                        softWrap: true,
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          entry.$2,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? theme.colorScheme.onPrimaryContainer
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                          softWrap: false,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       );
     }
 

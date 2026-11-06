@@ -206,6 +206,18 @@ abstract class AppLocalizations {
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ];
 
+  /// No description provided for @unit_fluid_ounces.
+  ///
+  /// In en, this message translates to:
+  /// **'Fluid ounces (US)'**
+  String get unit_fluid_ounces;
+
+  /// No description provided for @ingredient_deleted_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get ingredient_deleted_label;
+
   /// No description provided for @home_title.
   ///
   /// In en, this message translates to:
@@ -725,6 +737,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No recipes found.'**
   String get no_recipes_found;
+
+  /// No description provided for @no_recipes_in_space.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipes assigned to this space yet. Tap + to create one, or edit an existing recipe to add it here.'**
+  String get no_recipes_in_space;
 
   /// No description provided for @related_ingredients.
   ///

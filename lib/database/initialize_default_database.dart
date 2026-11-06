@@ -15,26 +15,39 @@ Future<void> initializeDefaultDatabase(AppDatabase db) async {
     final list = entry.value;
     if (list.length > 1) {
       // Pick canonical: prefer immutable unit
-      final canonical = list.firstWhere((u) => !u.isMutable, orElse: () => list.first);
+      final canonical = list.firstWhere(
+        (u) => !u.isMutable,
+        orElse: () => list.first,
+      );
       for (final dup in list) {
         if (dup.unitPk == canonical.unitPk) continue;
         // Re-point any ingredients using duplicate unit to canonical unit
-        await (db.update(db.ingredients)..where((t) => t.unitFk.equals(dup.unitPk)))
+        await (db.update(db.ingredients)
+              ..where((t) => t.unitFk.equals(dup.unitPk)))
             .write(IngredientsCompanion(unitFk: Value(canonical.unitPk)));
         // Delete the duplicate unit
-        await (db.delete(db.units)..where((t) => t.unitPk.equals(dup.unitPk))).go();
+        await (db.delete(
+          db.units,
+        )..where((t) => t.unitPk.equals(dup.unitPk))).go();
       }
     }
   }
 
   // 2. Merge legacy unit_spoonfuls (cuch, 15ml) into standard unit_tablespoons (tbsp, 15ml)
   final cleanUnits = await db.getAllUnits();
-  final tbspUnit = cleanUnits.where((u) => u.name == 'unit_tablespoons').firstOrNull;
-  final spoonfulsUnit = cleanUnits.where((u) => u.name == 'unit_spoonfuls').firstOrNull;
+  final tbspUnit = cleanUnits
+      .where((u) => u.name == 'unit_tablespoons')
+      .firstOrNull;
+  final spoonfulsUnit = cleanUnits
+      .where((u) => u.name == 'unit_spoonfuls')
+      .firstOrNull;
   if (tbspUnit != null && spoonfulsUnit != null) {
-    await (db.update(db.ingredients)..where((t) => t.unitFk.equals(spoonfulsUnit.unitPk)))
+    await (db.update(db.ingredients)
+          ..where((t) => t.unitFk.equals(spoonfulsUnit.unitPk)))
         .write(IngredientsCompanion(unitFk: Value(tbspUnit.unitPk)));
-    await (db.delete(db.units)..where((t) => t.unitPk.equals(spoonfulsUnit.unitPk))).go();
+    await (db.delete(
+      db.units,
+    )..where((t) => t.unitPk.equals(spoonfulsUnit.unitPk))).go();
   }
 
   final existingUnits = await db.getAllUnits();
@@ -81,6 +94,14 @@ Future<void> initializeDefaultDatabase(AppDatabase db) async {
     ),
 
     // --- VOLUME ---
+    UnitsCompanion(
+      unitPk: const Value('unit_def_fluid_ounces'),
+      name: const Value('unit_fluid_ounces'),
+      symbol: const Value('oz'),
+      category: const Value('volume'),
+      factorToBase: const Value(29.5735295625),
+      isMutable: const Value(false),
+    ),
     UnitsCompanion(
       unitPk: const Value('unit_def_milliliters'),
       name: const Value('unit_milliliters'),
@@ -153,25 +174,31 @@ Future<void> initializeDefaultDatabase(AppDatabase db) async {
   final existingCats = await db.getAllCategories();
   final catIds = existingCats.map((c) => c.id).toSet();
   if (!catIds.contains('cocina')) {
-    await db.insertCategory(const CategoriesCompanion(
-      id: Value('cocina'),
-      name: Value('Cocina'),
-      iconName: Value('restaurant'),
-    ));
+    await db.insertCategory(
+      const CategoriesCompanion(
+        id: Value('cocina'),
+        name: Value('Cocina'),
+        iconName: Value('restaurant'),
+      ),
+    );
   }
   if (!catIds.contains('pasteleria')) {
-    await db.insertCategory(const CategoriesCompanion(
-      id: Value('pasteleria'),
-      name: Value('Pastelería'),
-      iconName: Value('cake'),
-    ));
+    await db.insertCategory(
+      const CategoriesCompanion(
+        id: Value('pasteleria'),
+        name: Value('Pastelería'),
+        iconName: Value('cake'),
+      ),
+    );
   }
   if (!catIds.contains('cocteleria')) {
-    await db.insertCategory(const CategoriesCompanion(
-      id: Value('cocteleria'),
-      name: Value('Coctelería'),
-      iconName: Value('local_bar'),
-    ));
+    await db.insertCategory(
+      const CategoriesCompanion(
+        id: Value('cocteleria'),
+        name: Value('Coctelería'),
+        iconName: Value('local_bar'),
+      ),
+    );
   }
 
   // 4. Ensure default fallback group ("Principal" / "Default") exists
@@ -179,29 +206,34 @@ Future<void> initializeDefaultDatabase(AppDatabase db) async {
   String defaultGroupId;
   if (existingGroups.isEmpty) {
     defaultGroupId = 'group_default_principal';
-    await db.insertGroup(GroupsCompanion(
-      id: Value(defaultGroupId),
-      name: const Value('Principal'),
-      iconName: const Value('storefront'),
-      colorHex: const Value('FF4CAF50'),
-      isActive: const Value(true),
-      createdAt: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
-      isDeleted: const Value(false),
-    ));
+    await db.insertGroup(
+      GroupsCompanion(
+        id: Value(defaultGroupId),
+        name: const Value('Principal'),
+        iconName: const Value('storefront'),
+        colorHex: const Value('FF4CAF50'),
+        isActive: const Value(true),
+        createdAt: Value(DateTime.now()),
+        updatedAt: Value(DateTime.now()),
+        isDeleted: const Value(false),
+      ),
+    );
   } else {
-    final activeGroup = existingGroups.firstWhere((g) => !g.isDeleted, orElse: () => existingGroups.first);
+    final activeGroup = existingGroups.firstWhere(
+      (g) => !g.isDeleted,
+      orElse: () => existingGroups.first,
+    );
     defaultGroupId = activeGroup.id;
   }
 
   // 5. Populate defaults for existing recipe & ingredient records
-  await (db.update(db.recipes)..where((t) => t.groupId.isNull()))
-      .write(RecipesCompanion(groupId: Value(defaultGroupId)));
-  await (db.update(db.ingredients)..where((t) => t.groupId.isNull()))
-      .write(IngredientsCompanion(groupId: Value(defaultGroupId)));
+  await (db.update(db.ingredients)..where((t) => t.groupId.isNull())).write(
+    IngredientsCompanion(groupId: Value(defaultGroupId)),
+  );
 
-  await (db.update(db.recipes)..where((t) => t.category.isNull()))
-      .write(const RecipesCompanion(category: Value('cocina')));
+  await (db.update(db.recipes)..where((t) => t.category.isNull())).write(
+    const RecipesCompanion(category: Value('cocina')),
+  );
 
   await (db.update(db.ingredients)..where((t) => t.currentStock.isNull()))
       .write(const IngredientsCompanion(currentStock: Value(0.0)));

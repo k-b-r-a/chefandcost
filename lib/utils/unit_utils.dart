@@ -39,14 +39,25 @@ class UnitUtils {
   static Unit? getTargetUnit(
     Unit source,
     List<Unit> units,
-    SettingsState settings,
-  ) {
+    SettingsState settings, {
+    bool cocktail = false,
+  }) {
     if (source.category == null) return source;
+    if (cocktail && isVolume(source.category)) {
+      return units
+              .where(
+                (unit) =>
+                    unit.name == 'unit_fluid_ounces' &&
+                    unit.category == 'volume',
+              )
+              .firstOrNull ??
+          source;
+    }
     final targetSymbol = isMass(source.category)
         ? settings.defaultMassUnit
         : isVolume(source.category)
-            ? settings.defaultVolumeUnit
-            : null;
+        ? settings.defaultVolumeUnit
+        : null;
     if (targetSymbol == null) return source;
     return units
             .where(
@@ -65,8 +76,7 @@ class UnitUtils {
   }) {
     final query = searchQuery.trim().toLowerCase();
     return ingredients.where((ingredient) {
-      if (query.isNotEmpty &&
-          !ingredient.name.toLowerCase().contains(query)) {
+      if (query.isNotEmpty && !ingredient.name.toLowerCase().contains(query)) {
         return false;
       }
 

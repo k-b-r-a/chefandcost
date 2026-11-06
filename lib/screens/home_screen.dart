@@ -10,7 +10,6 @@ import '../provider/timers_provider.dart';
 import '../utils/recipe_utils.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../widgets/tool_card.dart';
-import '../widgets/active_group_chip.dart';
 import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
 
@@ -28,11 +27,7 @@ class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int index)? onNavigateToTab;
   final AppTutorialKeys? tutorialKeys;
 
-  const HomeScreen({
-    super.key,
-    this.onNavigateToTab,
-    this.tutorialKeys,
-  });
+  const HomeScreen({super.key, this.onNavigateToTab, this.tutorialKeys});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -83,8 +78,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             context: context,
             title: l10n.home_title,
             controller: _scrollController,
+            showCollapsedTitlePill: false,
             actions: [
-              const ActiveGroupChip(isCompact: true),
               IconButton(
                 key: const ValueKey('home_sync_button'),
                 icon: syncState.loading
@@ -125,7 +120,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       // 3. Quick Actions
                       KeyedSubtree(
                         key: widget.tutorialKeys?.quickActionsKey,
-                        child: _buildQuickActionsSection(context, theme, l10n, syncState),
+                        child: _buildQuickActionsSection(
+                          context,
+                          theme,
+                          l10n,
+                          syncState,
+                        ),
                       ),
                       const SizedBox(height: 20),
 
@@ -198,7 +198,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Text(
                   capitalizedDate,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
+                    color: theme.colorScheme.onPrimaryContainer.withValues(
+                      alpha: 0.75,
+                    ),
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
                   ),
@@ -242,8 +244,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-
-
 
   // --- 4. Quick Actions Section ---
   Widget _buildQuickActionsSection(
@@ -427,7 +427,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -508,7 +511,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.35,
+                    ),
                   ),
                 ),
                 child: Column(
@@ -516,7 +521,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Icon(
                       Icons.menu_book_outlined,
                       size: 40,
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -534,11 +541,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         FilledButton.icon(
                           onPressed: () {
                             if (MediaQuery.sizeOf(context).width >= 640) {
-                              ref.read(webLayoutProvider.notifier).openNewRecipe();
+                              ref
+                                  .read(webLayoutProvider.notifier)
+                                  .openNewRecipe();
                             } else {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => const RecipeEditorScreen(),
+                                  builder: (context) =>
+                                      const RecipeEditorScreen(),
                                 ),
                               );
                             }
@@ -549,7 +559,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         OutlinedButton.icon(
                           onPressed: () async {
                             final db = ref.read(databaseProvider);
-                            final res = await loadSampleData(db, clearFirst: false);
+                            final res = await loadSampleData(
+                              db,
+                              clearFirst: false,
+                            );
                             ref.invalidate(recipesStreamProvider);
                             ref.invalidate(recipesWithFinancialsStreamProvider);
                             ref.invalidate(ingredientsStreamProvider);
@@ -559,7 +572,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    l10n.sample_data_loaded_snackbar(res.recipesAdded, res.ingredientsAdded),
+                                    l10n.sample_data_loaded_snackbar(
+                                      res.recipesAdded,
+                                      res.ingredientsAdded,
+                                    ),
                                     softWrap: true,
                                   ),
                                 ),
@@ -567,10 +583,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             }
                           },
                           icon: const Icon(Icons.science_outlined, size: 18),
-                          label: Text(
-                            l10n.load_sample_data,
-                            softWrap: true,
-                          ),
+                          label: Text(l10n.load_sample_data, softWrap: true),
                         ),
                       ],
                     ),
@@ -592,7 +605,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.3,
+                      ),
                       width: 1,
                     ),
                     boxShadow: [
@@ -644,9 +659,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 children: [
                                   Text(
                                     recipe.name,
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -687,7 +701,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Icon(
                               Icons.arrow_forward_ios_rounded,
                               size: 14,
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.5),
                             ),
                           ],
                         ),
@@ -704,7 +719,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (e, _) => Center(child: Text(l10n.error_prefix(e.toString()), softWrap: true)),
+          error: (e, _) => Center(
+            child: Text(l10n.error_prefix(e.toString()), softWrap: true),
+          ),
         ),
       ],
     );
@@ -818,7 +835,9 @@ class _LiveActiveTimersBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final timers = ref.watch(kitchenTimersProvider);
-    final runningTimers = timers.where((t) => t.isRunning && !t.isFinished).toList();
+    final runningTimers = timers
+        .where((t) => t.isRunning && !t.isFinished)
+        .toList();
     final finishedTimers = timers.where((t) => t.isFinished).toList();
 
     if (runningTimers.isEmpty && finishedTimers.isEmpty) {
@@ -857,13 +876,17 @@ class _LiveActiveTimersBanner extends ConsumerWidget {
                 children: [
                   Icon(
                     isDone ? Icons.alarm_on_rounded : Icons.timer_rounded,
-                    color: isDone ? theme.colorScheme.error : theme.colorScheme.primary,
+                    color: isDone
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.primary,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      isDone ? l10n.timer_finished_banner : l10n.home_active_timers,
+                      isDone
+                          ? l10n.timer_finished_banner
+                          : l10n.home_active_timers,
                       softWrap: true,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
@@ -916,7 +939,9 @@ class _LiveActiveTimersBanner extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           isDone
-                              ? l10n.timer_finished_at(topTimer.formattedFinishedTime)
+                              ? l10n.timer_finished_at(
+                                  topTimer.formattedFinishedTime,
+                                )
                               : topTimer.formattedTime,
                           softWrap: true,
                           style: theme.textTheme.headlineSmall?.copyWith(
@@ -932,16 +957,22 @@ class _LiveActiveTimersBanner extends ConsumerWidget {
                   ),
                   IconButton(
                     onPressed: () {
-                      ref.read(kitchenTimersProvider.notifier).toggleTimer(topTimer.id);
+                      ref
+                          .read(kitchenTimersProvider.notifier)
+                          .toggleTimer(topTimer.id);
                     },
                     icon: Icon(
-                      topTimer.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      topTimer.isRunning
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
                       color: theme.colorScheme.primary,
                     ),
                   ),
                   IconButton(
                     onPressed: () {
-                      ref.read(kitchenTimersProvider.notifier).resetTimer(topTimer.id);
+                      ref
+                          .read(kitchenTimersProvider.notifier)
+                          .resetTimer(topTimer.id);
                     },
                     icon: Icon(
                       Icons.replay_rounded,
@@ -958,7 +989,9 @@ class _LiveActiveTimersBanner extends ConsumerWidget {
                     value: topTimer.progress,
                     minHeight: 6,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
+                    valueColor: AlwaysStoppedAnimation(
+                      theme.colorScheme.primary,
+                    ),
                   ),
                 ),
               ],

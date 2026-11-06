@@ -49,12 +49,26 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
             context: context,
             title: l10n.ingredients_title,
             controller: _scrollController,
-            underTitle: IngredientFilterChipsRow(
-              currentFilter: currentFilter,
-              onFilterSelected: (filter) {
-                ref.read(ingredientFilterProvider.notifier).setFilter(filter);
-              },
-              isCompact: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child: SizedBox(
+                height: 52,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: IngredientFilterChipsRow(
+                    currentFilter: currentFilter,
+                    onFilterSelected: (filter) {
+                      ref
+                          .read(ingredientFilterProvider.notifier)
+                          .setFilter(filter);
+                    },
+                    isCompact: true,
+                  ),
+                ),
+              ),
             ),
           ),
           ingredientsAsync.when(
@@ -73,19 +87,25 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     final currentWeb = ref.watch(webLayoutProvider);
                     if (currentWeb.middleTab == WebMiddleTab.ingredients &&
                         currentWeb.selectedIngredient == null &&
-                        currentWeb.rightPaneView == WebRightPaneView.ingredient) {
+                        currentWeb.rightPaneView ==
+                            WebRightPaneView.ingredient) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted &&
-                            ref.read(webLayoutProvider).selectedIngredient == null &&
-                            ref.read(webLayoutProvider).rightPaneView == WebRightPaneView.ingredient) {
-                          ref.read(webLayoutProvider.notifier).openIngredient(filteredIngredients.first);
+                            ref.read(webLayoutProvider).selectedIngredient ==
+                                null &&
+                            ref.read(webLayoutProvider).rightPaneView ==
+                                WebRightPaneView.ingredient) {
+                          ref
+                              .read(webLayoutProvider.notifier)
+                              .openIngredient(filteredIngredients.first);
                         }
                       });
                     }
                   }
 
                   final trimmedQuery = searchQuery.trim();
-                  final bool hasExactMatch = trimmedQuery.isNotEmpty &&
+                  final bool hasExactMatch =
+                      trimmedQuery.isNotEmpty &&
                       filteredIngredients.any(
                         (ing) =>
                             ing.name.trim().toLowerCase() ==
@@ -105,10 +125,13 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                           delegate: SliverChildListDelegate([
                             Center(
                               child: ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 860),
+                                constraints: const BoxConstraints(
+                                  maxWidth: 860,
+                                ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _buildCreateNewCard(
@@ -133,17 +156,19 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                       );
                     }
 
-                    final emptyMsg = searchQuery.isEmpty &&
+                    final emptyMsg =
+                        searchQuery.isEmpty &&
                             currentFilter == IngredientFilterType.all
                         ? l10n.no_ingredients
                         : l10n.no_ingredients_found;
-                    final category = currentFilter == IngredientFilterType.liquids
+                    final category =
+                        currentFilter == IngredientFilterType.liquids
                         ? 'volume'
                         : currentFilter == IngredientFilterType.solids
-                            ? 'mass'
-                            : currentFilter == IngredientFilterType.pieces
-                                ? 'count'
-                                : null;
+                        ? 'mass'
+                        : currentFilter == IngredientFilterType.pieces
+                        ? 'count'
+                        : null;
                     return SliverFillRemaining(
                       hasScrollBody: false,
                       child: AppEmptyState(
@@ -153,8 +178,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     );
                   }
 
-                  final totalItemCount = filteredIngredients.length +
-                      (showCreateNewCard ? 1 : 0);
+                  final totalItemCount =
+                      filteredIngredients.length + (showCreateNewCard ? 1 : 0);
 
                   return SliverPadding(
                     padding: const EdgeInsets.only(bottom: 100, top: 4),
@@ -186,9 +211,12 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                         final unitSymbol = unit?.symbol ?? '';
                         final category = unit?.category;
 
-                        final isSelected = isWide &&
-                            webLayout?.rightPaneView == WebRightPaneView.ingredient &&
-                            webLayout?.selectedIngredient?.ingredientPk == ingredient.ingredientPk;
+                        final isSelected =
+                            isWide &&
+                            webLayout?.rightPaneView ==
+                                WebRightPaneView.ingredient &&
+                            webLayout?.selectedIngredient?.ingredientPk ==
+                                ingredient.ingredientPk;
 
                         return RepaintBoundary(
                           child: Center(
@@ -196,16 +224,24 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                               constraints: const BoxConstraints(maxWidth: 860),
                               child: ListTile(
                                 selected: isSelected,
-                                selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
+                                selectedTileColor: theme
+                                    .colorScheme
+                                    .primaryContainer
+                                    .withValues(alpha: 0.25),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   side: isSelected
-                                      ? BorderSide(color: theme.colorScheme.primary, width: 1.5)
+                                      ? BorderSide(
+                                          color: theme.colorScheme.primary,
+                                          width: 1.5,
+                                        )
                                       : BorderSide.none,
                                 ),
                                 title: Text(
                                   ingredient.name,
-                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                                 subtitle: CurrencyText(
                                   l10n.ingredient_price_per_quantity(
@@ -218,33 +254,49 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                                   currencySymbol: settings.currencySymbol,
                                 ),
                                 leading: CircleAvatar(
-                                  backgroundColor: UnitUtils.getCategoryContainerColor(category, theme),
+                                  backgroundColor:
+                                      UnitUtils.getCategoryContainerColor(
+                                        category,
+                                        theme,
+                                      ),
                                   child: Icon(
                                     UnitUtils.getCategoryIcon(category),
-                                    color: UnitUtils.getCategoryOnContainerColor(category, theme),
+                                    color:
+                                        UnitUtils.getCategoryOnContainerColor(
+                                          category,
+                                          theme,
+                                        ),
                                     size: 20,
                                   ),
                                 ),
                                 onTap: () {
                                   if (isWide) {
-                                    ref.read(webLayoutProvider.notifier).openIngredient(ingredient);
+                                    ref
+                                        .read(webLayoutProvider.notifier)
+                                        .openIngredient(ingredient);
                                   } else {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            AddIngredientScreen(ingredient: ingredient),
+                                            AddIngredientScreen(
+                                              ingredient: ingredient,
+                                            ),
                                       ),
                                     );
                                   }
                                 },
                                 onLongPress: () {
                                   if (isWide) {
-                                    ref.read(webLayoutProvider.notifier).openIngredient(ingredient);
+                                    ref
+                                        .read(webLayoutProvider.notifier)
+                                        .openIngredient(ingredient);
                                   } else {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            AddIngredientScreen(ingredient: ingredient),
+                                            AddIngredientScreen(
+                                              ingredient: ingredient,
+                                            ),
                                       ),
                                     );
                                   }
@@ -266,7 +318,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (error, stack) => SliverFillRemaining(
-                  child: Center(child: Text(l10n.error_prefix(error.toString()))),
+                  child: Center(
+                    child: Text(l10n.error_prefix(error.toString())),
+                  ),
                 ),
               );
             },
@@ -309,8 +363,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.2),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.2,
+                ),
                 child: Icon(
                   Icons.add_rounded,
                   color: theme.colorScheme.primary,
@@ -360,7 +415,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     bool isWide,
   ) {
     if (isWide) {
-      ref.read(webLayoutProvider.notifier).openNewIngredient(initialName: initialName);
+      ref
+          .read(webLayoutProvider.notifier)
+          .openNewIngredient(initialName: initialName);
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -386,7 +443,9 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
     if (confirmed) {
       await ref.read(databaseProvider).deleteIngredient(ingredient);
-      if (isWide && ref.read(webLayoutProvider).selectedIngredient?.ingredientPk == ingredient.ingredientPk) {
+      if (isWide &&
+          ref.read(webLayoutProvider).selectedIngredient?.ingredientPk ==
+              ingredient.ingredientPk) {
         ref.read(webLayoutProvider.notifier).closeDetail();
       }
     }

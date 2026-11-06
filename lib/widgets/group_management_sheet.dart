@@ -39,7 +39,10 @@ IconData getGroupIconData(String? iconName) {
   return Icons.storefront_rounded;
 }
 
-Color parseGroupColor(String? colorHex, {Color fallback = const Color(0xFF4CAF50)}) {
+Color parseGroupColor(
+  String? colorHex, {
+  Color fallback = const Color(0xFF4CAF50),
+}) {
   if (colorHex == null || colorHex.isEmpty) return fallback;
   try {
     String hex = colorHex.replaceAll('#', '');
@@ -100,7 +103,9 @@ class GroupManagementSheet extends ConsumerWidget {
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.3,
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -136,7 +141,10 @@ class GroupManagementSheet extends ConsumerWidget {
                     icon: const Icon(Icons.add_rounded, size: 18),
                     label: Text(l10n.group_add_new),
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -153,42 +161,63 @@ class GroupManagementSheet extends ConsumerWidget {
                 data: (groups) {
                   final activeList = groups.where((g) => !g.isDeleted).toList();
 
-                  if (activeList.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(
-                        child: Text(
-                          l10n.group_select_prompt,
-                          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-                        ),
-                      ),
-                    );
-                  }
-
                   return ListView.separated(
                     shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    itemCount: activeList.length,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    itemCount: activeList.length + 1,
                     separatorBuilder: (_, __) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
-                      final group = activeList[index];
+                      if (index == 0) {
+                        final isSelected =
+                            ref.watch(activeGroupIdProvider) == kAllGroupsId;
+                        return ListTile(
+                          selected: isSelected,
+                          leading: const CircleAvatar(
+                            child: Icon(Icons.all_inclusive_rounded),
+                          ),
+                          title: Text(l10n.group_all_workspaces),
+                          trailing: isSelected
+                              ? Icon(
+                                  Icons.check_rounded,
+                                  color: theme.colorScheme.primary,
+                                )
+                              : null,
+                          onTap: () async {
+                            await ref
+                                .read(activeGroupIdProvider.notifier)
+                                .setActiveGroupId(kAllGroupsId);
+                            if (context.mounted) Navigator.of(context).pop();
+                          },
+                        );
+                      }
+                      final group = activeList[index - 1];
                       final isSelected = activeGroup?.id == group.id;
                       final groupColor = parseGroupColor(group.colorHex);
                       final iconData = getGroupIconData(group.iconName);
 
                       return Material(
                         color: isSelected
-                            ? theme.colorScheme.primaryContainer.withValues(alpha: 0.35)
-                            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
+                            ? theme.colorScheme.primaryContainer.withValues(
+                                alpha: 0.35,
+                              )
+                            : theme.colorScheme.surfaceContainerHighest
+                                  .withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(16),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () async {
-                            await ref.read(activeGroupIdProvider.notifier).setActiveGroupId(group.id);
+                            await ref
+                                .read(activeGroupIdProvider.notifier)
+                                .setActiveGroupId(group.id);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(l10n.group_switch_success(group.name)),
+                                  content: Text(
+                                    l10n.group_switch_success(group.name),
+                                  ),
                                   duration: const Duration(seconds: 2),
                                   behavior: SnackBarBehavior.floating,
                                 ),
@@ -206,7 +235,8 @@ class GroupManagementSheet extends ConsumerWidget {
                               border: Border.all(
                                 color: isSelected
                                     ? theme.colorScheme.primary
-                                    : theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+                                    : theme.colorScheme.outlineVariant
+                                          .withValues(alpha: 0.25),
                                 width: isSelected ? 1.75 : 1.0,
                               ),
                             ),
@@ -235,14 +265,17 @@ class GroupManagementSheet extends ConsumerWidget {
                                 // Name & Active pill
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         group.name,
-                                        style: theme.textTheme.titleMedium?.copyWith(
-                                          fontWeight:
-                                              isSelected ? FontWeight.bold : FontWeight.w600,
-                                        ),
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                              fontWeight: isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.w600,
+                                            ),
                                       ),
                                       if (isSelected) ...[
                                         const SizedBox(height: 2),
@@ -261,7 +294,10 @@ class GroupManagementSheet extends ConsumerWidget {
 
                                 // Actions (Edit / Delete)
                                 IconButton(
-                                  icon: const Icon(Icons.edit_outlined, size: 20),
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 20,
+                                  ),
                                   tooltip: l10n.group_edit,
                                   onPressed: () => _showAddOrEditGroupDialog(
                                     context,
@@ -274,20 +310,30 @@ class GroupManagementSheet extends ConsumerWidget {
                                     Icons.delete_outline_rounded,
                                     size: 20,
                                     color: activeList.length <= 1
-                                        ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
+                                        ? theme.colorScheme.onSurfaceVariant
+                                              .withValues(alpha: 0.3)
                                         : theme.colorScheme.error,
                                   ),
                                   tooltip: l10n.group_delete,
                                   onPressed: activeList.length <= 1
                                       ? () {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
-                                              content: Text(l10n.group_delete_cannot_last),
-                                              behavior: SnackBarBehavior.floating,
+                                              content: Text(
+                                                l10n.group_delete_cannot_last,
+                                              ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                             ),
                                           );
                                         }
-                                      : () => _confirmDeleteGroup(context, ref, group),
+                                      : () => _confirmDeleteGroup(
+                                          context,
+                                          ref,
+                                          group,
+                                        ),
                                 ),
                               ],
                             ),
@@ -342,7 +388,9 @@ class GroupManagementSheet extends ConsumerWidget {
                 isDeleted: const drift.Value(false),
               ),
             );
-            await ref.read(activeGroupIdProvider.notifier).setActiveGroupId(newId);
+            await ref
+                .read(activeGroupIdProvider.notifier)
+                .setActiveGroupId(newId);
           } else {
             await db.updateGroup(
               existingGroup.copyWith(
@@ -402,12 +450,10 @@ class GroupManagementSheet extends ConsumerWidget {
 
 class _GroupEditorDialog extends StatefulWidget {
   final Group? existingGroup;
-  final Future<void> Function(String name, String colorHex, String iconName) onSave;
+  final Future<void> Function(String name, String colorHex, String iconName)
+  onSave;
 
-  const _GroupEditorDialog({
-    this.existingGroup,
-    required this.onSave,
-  });
+  const _GroupEditorDialog({this.existingGroup, required this.onSave});
 
   @override
   State<_GroupEditorDialog> createState() => _GroupEditorDialogState();
@@ -422,7 +468,9 @@ class _GroupEditorDialogState extends State<_GroupEditorDialog> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.existingGroup?.name ?? '');
+    _nameController = TextEditingController(
+      text: widget.existingGroup?.name ?? '',
+    );
     _selectedColorHex = widget.existingGroup?.colorHex ?? kGroupColors.first;
     _selectedIconName = widget.existingGroup?.iconName ?? kGroupIcons.first.id;
   }
@@ -462,7 +510,9 @@ class _GroupEditorDialogState extends State<_GroupEditorDialog> {
             // Icon Picker
             Text(
               l10n.group_icon_label,
-              style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -478,12 +528,15 @@ class _GroupEditorDialogState extends State<_GroupEditorDialog> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? theme.colorScheme.primaryContainer
-                          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                          : theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
                             ? theme.colorScheme.primary
-                            : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                            : theme.colorScheme.outlineVariant.withValues(
+                                alpha: 0.3,
+                              ),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -503,7 +556,9 @@ class _GroupEditorDialogState extends State<_GroupEditorDialog> {
             // Color Picker
             Text(
               l10n.group_color_label,
-              style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -522,7 +577,9 @@ class _GroupEditorDialogState extends State<_GroupEditorDialog> {
                       color: color,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? theme.colorScheme.onSurface : Colors.transparent,
+                        color: isSelected
+                            ? theme.colorScheme.onSurface
+                            : Colors.transparent,
                         width: isSelected ? 3 : 1,
                       ),
                       boxShadow: [
@@ -555,7 +612,11 @@ class _GroupEditorDialogState extends State<_GroupEditorDialog> {
                   final name = _nameController.text.trim();
                   if (name.isEmpty) return;
                   setState(() => _isSaving = true);
-                  await widget.onSave(name, _selectedColorHex, _selectedIconName);
+                  await widget.onSave(
+                    name,
+                    _selectedColorHex,
+                    _selectedIconName,
+                  );
                   if (context.mounted) {
                     Navigator.of(context).pop();
                   }

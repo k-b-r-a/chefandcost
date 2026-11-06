@@ -3796,6 +3796,331 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   }
 }
 
+class $RecipeSpacesTable extends RecipeSpaces
+    with TableInfo<$RecipeSpacesTable, RecipeSpace> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecipeSpacesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _recipeIdMeta = const VerificationMeta(
+    'recipeId',
+  );
+  @override
+  late final GeneratedColumn<String> recipeId = GeneratedColumn<String>(
+    'recipe_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES recipes (recipe_pk) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES "groups" (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    recipeId,
+    spaceId,
+    createdAt,
+    isDeleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recipe_spaces';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecipeSpace> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('recipe_id')) {
+      context.handle(
+        _recipeIdMeta,
+        recipeId.isAcceptableOrUnknown(data['recipe_id']!, _recipeIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recipeIdMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {recipeId, spaceId};
+  @override
+  RecipeSpace map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecipeSpace(
+      recipeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recipe_id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $RecipeSpacesTable createAlias(String alias) {
+    return $RecipeSpacesTable(attachedDatabase, alias);
+  }
+}
+
+class RecipeSpace extends DataClass implements Insertable<RecipeSpace> {
+  final String recipeId;
+  final String spaceId;
+  final DateTime createdAt;
+  final bool isDeleted;
+  const RecipeSpace({
+    required this.recipeId,
+    required this.spaceId,
+    required this.createdAt,
+    required this.isDeleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['recipe_id'] = Variable<String>(recipeId);
+    map['space_id'] = Variable<String>(spaceId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    return map;
+  }
+
+  RecipeSpacesCompanion toCompanion(bool nullToAbsent) {
+    return RecipeSpacesCompanion(
+      recipeId: Value(recipeId),
+      spaceId: Value(spaceId),
+      createdAt: Value(createdAt),
+      isDeleted: Value(isDeleted),
+    );
+  }
+
+  factory RecipeSpace.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecipeSpace(
+      recipeId: serializer.fromJson<String>(json['recipeId']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'recipeId': serializer.toJson<String>(recipeId),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+    };
+  }
+
+  RecipeSpace copyWith({
+    String? recipeId,
+    String? spaceId,
+    DateTime? createdAt,
+    bool? isDeleted,
+  }) => RecipeSpace(
+    recipeId: recipeId ?? this.recipeId,
+    spaceId: spaceId ?? this.spaceId,
+    createdAt: createdAt ?? this.createdAt,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
+  RecipeSpace copyWithCompanion(RecipeSpacesCompanion data) {
+    return RecipeSpace(
+      recipeId: data.recipeId.present ? data.recipeId.value : this.recipeId,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecipeSpace(')
+          ..write('recipeId: $recipeId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('isDeleted: $isDeleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(recipeId, spaceId, createdAt, isDeleted);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecipeSpace &&
+          other.recipeId == this.recipeId &&
+          other.spaceId == this.spaceId &&
+          other.createdAt == this.createdAt &&
+          other.isDeleted == this.isDeleted);
+}
+
+class RecipeSpacesCompanion extends UpdateCompanion<RecipeSpace> {
+  final Value<String> recipeId;
+  final Value<String> spaceId;
+  final Value<DateTime> createdAt;
+  final Value<bool> isDeleted;
+  final Value<int> rowid;
+  const RecipeSpacesCompanion({
+    this.recipeId = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecipeSpacesCompanion.insert({
+    required String recipeId,
+    required String spaceId,
+    this.createdAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : recipeId = Value(recipeId),
+       spaceId = Value(spaceId);
+  static Insertable<RecipeSpace> custom({
+    Expression<String>? recipeId,
+    Expression<String>? spaceId,
+    Expression<DateTime>? createdAt,
+    Expression<bool>? isDeleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (recipeId != null) 'recipe_id': recipeId,
+      if (spaceId != null) 'space_id': spaceId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecipeSpacesCompanion copyWith({
+    Value<String>? recipeId,
+    Value<String>? spaceId,
+    Value<DateTime>? createdAt,
+    Value<bool>? isDeleted,
+    Value<int>? rowid,
+  }) {
+    return RecipeSpacesCompanion(
+      recipeId: recipeId ?? this.recipeId,
+      spaceId: spaceId ?? this.spaceId,
+      createdAt: createdAt ?? this.createdAt,
+      isDeleted: isDeleted ?? this.isDeleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (recipeId.present) {
+      map['recipe_id'] = Variable<String>(recipeId.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecipeSpacesCompanion(')
+          ..write('recipeId: $recipeId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3807,6 +4132,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $RecipeIngredientsTable(this);
   late final $RecipeStepsTable recipeSteps = $RecipeStepsTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
+  late final $RecipeSpacesTable recipeSpaces = $RecipeSpacesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3819,7 +4145,25 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     recipeIngredients,
     recipeSteps,
     categories,
+    recipeSpaces,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'recipes',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('recipe_spaces', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('recipe_spaces', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$GroupsTableCreateCompanionBuilder =
@@ -3883,6 +4227,24 @@ final class $$GroupsTableReferences
     ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_ingredientsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RecipeSpacesTable, List<RecipeSpace>>
+  _recipeSpacesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.recipeSpaces,
+    aliasName: $_aliasNameGenerator(db.groups.id, db.recipeSpaces.spaceId),
+  );
+
+  $$RecipeSpacesTableProcessedTableManager get recipeSpacesRefs {
+    final manager = $$RecipeSpacesTableTableManager(
+      $_db,
+      $_db.recipeSpaces,
+    ).filter((f) => f.spaceId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_recipeSpacesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3979,6 +4341,31 @@ class $$GroupsTableFilterComposer
           }) => $$IngredientsTableFilterComposer(
             $db: $db,
             $table: $db.ingredients,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> recipeSpacesRefs(
+    Expression<bool> Function($$RecipeSpacesTableFilterComposer f) f,
+  ) {
+    final $$RecipeSpacesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recipeSpaces,
+      getReferencedColumn: (t) => t.spaceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipeSpacesTableFilterComposer(
+            $db: $db,
+            $table: $db.recipeSpaces,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4121,6 +4508,31 @@ class $$GroupsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> recipeSpacesRefs<T extends Object>(
+    Expression<T> Function($$RecipeSpacesTableAnnotationComposer a) f,
+  ) {
+    final $$RecipeSpacesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recipeSpaces,
+      getReferencedColumn: (t) => t.spaceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipeSpacesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.recipeSpaces,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$GroupsTableTableManager
@@ -4136,7 +4548,11 @@ class $$GroupsTableTableManager
           $$GroupsTableUpdateCompanionBuilder,
           (Group, $$GroupsTableReferences),
           Group,
-          PrefetchHooks Function({bool recipesRefs, bool ingredientsRefs})
+          PrefetchHooks Function({
+            bool recipesRefs,
+            bool ingredientsRefs,
+            bool recipeSpacesRefs,
+          })
         > {
   $$GroupsTableTableManager(_$AppDatabase db, $GroupsTable table)
     : super(
@@ -4200,12 +4616,17 @@ class $$GroupsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({recipesRefs = false, ingredientsRefs = false}) {
+              ({
+                recipesRefs = false,
+                ingredientsRefs = false,
+                recipeSpacesRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (recipesRefs) db.recipes,
                     if (ingredientsRefs) db.ingredients,
+                    if (recipeSpacesRefs) db.recipeSpaces,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4248,6 +4669,27 @@ class $$GroupsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (recipeSpacesRefs)
+                        await $_getPrefetchedData<
+                          Group,
+                          $GroupsTable,
+                          RecipeSpace
+                        >(
+                          currentTable: table,
+                          referencedTable: $$GroupsTableReferences
+                              ._recipeSpacesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$GroupsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).recipeSpacesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.spaceId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4268,7 +4710,11 @@ typedef $$GroupsTableProcessedTableManager =
       $$GroupsTableUpdateCompanionBuilder,
       (Group, $$GroupsTableReferences),
       Group,
-      PrefetchHooks Function({bool recipesRefs, bool ingredientsRefs})
+      PrefetchHooks Function({
+        bool recipesRefs,
+        bool ingredientsRefs,
+        bool recipeSpacesRefs,
+      })
     >;
 typedef $$RecipesTableCreateCompanionBuilder =
     RecipesCompanion Function({
@@ -4374,6 +4820,28 @@ final class $$RecipesTableReferences
         );
 
     final cache = $_typedResult.readTableOrNull(_recipeStepsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RecipeSpacesTable, List<RecipeSpace>>
+  _recipeSpacesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.recipeSpaces,
+    aliasName: $_aliasNameGenerator(
+      db.recipes.recipePk,
+      db.recipeSpaces.recipeId,
+    ),
+  );
+
+  $$RecipeSpacesTableProcessedTableManager get recipeSpacesRefs {
+    final manager = $$RecipeSpacesTableTableManager($_db, $_db.recipeSpaces)
+        .filter(
+          (f) =>
+              f.recipeId.recipePk.sqlEquals($_itemColumn<String>('recipe_pk')!),
+        );
+
+    final cache = $_typedResult.readTableOrNull(_recipeSpacesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4518,6 +4986,31 @@ class $$RecipesTableFilterComposer
           }) => $$RecipeStepsTableFilterComposer(
             $db: $db,
             $table: $db.recipeSteps,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> recipeSpacesRefs(
+    Expression<bool> Function($$RecipeSpacesTableFilterComposer f) f,
+  ) {
+    final $$RecipeSpacesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.recipePk,
+      referencedTable: $db.recipeSpaces,
+      getReferencedColumn: (t) => t.recipeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipeSpacesTableFilterComposer(
+            $db: $db,
+            $table: $db.recipeSpaces,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4761,6 +5254,31 @@ class $$RecipesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> recipeSpacesRefs<T extends Object>(
+    Expression<T> Function($$RecipeSpacesTableAnnotationComposer a) f,
+  ) {
+    final $$RecipeSpacesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.recipePk,
+      referencedTable: $db.recipeSpaces,
+      getReferencedColumn: (t) => t.recipeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipeSpacesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.recipeSpaces,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$RecipesTableTableManager
@@ -4780,6 +5298,7 @@ class $$RecipesTableTableManager
             bool groupId,
             bool recipeIngredientsRefs,
             bool recipeStepsRefs,
+            bool recipeSpacesRefs,
           })
         > {
   $$RecipesTableTableManager(_$AppDatabase db, $RecipesTable table)
@@ -4874,12 +5393,14 @@ class $$RecipesTableTableManager
                 groupId = false,
                 recipeIngredientsRefs = false,
                 recipeStepsRefs = false,
+                recipeSpacesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (recipeIngredientsRefs) db.recipeIngredients,
                     if (recipeStepsRefs) db.recipeSteps,
+                    if (recipeSpacesRefs) db.recipeSpaces,
                   ],
                   addJoins:
                       <
@@ -4957,6 +5478,27 @@ class $$RecipesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (recipeSpacesRefs)
+                        await $_getPrefetchedData<
+                          Recipe,
+                          $RecipesTable,
+                          RecipeSpace
+                        >(
+                          currentTable: table,
+                          referencedTable: $$RecipesTableReferences
+                              ._recipeSpacesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$RecipesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).recipeSpacesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.recipeId == item.recipePk,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4981,6 +5523,7 @@ typedef $$RecipesTableProcessedTableManager =
         bool groupId,
         bool recipeIngredientsRefs,
         bool recipeStepsRefs,
+        bool recipeSpacesRefs,
       })
     >;
 typedef $$UnitsTableCreateCompanionBuilder =
@@ -6963,6 +7506,393 @@ typedef $$CategoriesTableProcessedTableManager =
       Category,
       PrefetchHooks Function()
     >;
+typedef $$RecipeSpacesTableCreateCompanionBuilder =
+    RecipeSpacesCompanion Function({
+      required String recipeId,
+      required String spaceId,
+      Value<DateTime> createdAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+typedef $$RecipeSpacesTableUpdateCompanionBuilder =
+    RecipeSpacesCompanion Function({
+      Value<String> recipeId,
+      Value<String> spaceId,
+      Value<DateTime> createdAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+
+final class $$RecipeSpacesTableReferences
+    extends BaseReferences<_$AppDatabase, $RecipeSpacesTable, RecipeSpace> {
+  $$RecipeSpacesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $RecipesTable _recipeIdTable(_$AppDatabase db) =>
+      db.recipes.createAlias(
+        $_aliasNameGenerator(db.recipeSpaces.recipeId, db.recipes.recipePk),
+      );
+
+  $$RecipesTableProcessedTableManager get recipeId {
+    final $_column = $_itemColumn<String>('recipe_id')!;
+
+    final manager = $$RecipesTableTableManager(
+      $_db,
+      $_db.recipes,
+    ).filter((f) => f.recipePk.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_recipeIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $GroupsTable _spaceIdTable(_$AppDatabase db) => db.groups.createAlias(
+    $_aliasNameGenerator(db.recipeSpaces.spaceId, db.groups.id),
+  );
+
+  $$GroupsTableProcessedTableManager get spaceId {
+    final $_column = $_itemColumn<String>('space_id')!;
+
+    final manager = $$GroupsTableTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_spaceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RecipeSpacesTableFilterComposer
+    extends Composer<_$AppDatabase, $RecipeSpacesTable> {
+  $$RecipeSpacesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$RecipesTableFilterComposer get recipeId {
+    final $$RecipesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.recipeId,
+      referencedTable: $db.recipes,
+      getReferencedColumn: (t) => t.recipePk,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipesTableFilterComposer(
+            $db: $db,
+            $table: $db.recipes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$GroupsTableFilterComposer get spaceId {
+    final $$GroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.spaceId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RecipeSpacesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecipeSpacesTable> {
+  $$RecipeSpacesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$RecipesTableOrderingComposer get recipeId {
+    final $$RecipesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.recipeId,
+      referencedTable: $db.recipes,
+      getReferencedColumn: (t) => t.recipePk,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipesTableOrderingComposer(
+            $db: $db,
+            $table: $db.recipes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$GroupsTableOrderingComposer get spaceId {
+    final $$GroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.spaceId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RecipeSpacesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecipeSpacesTable> {
+  $$RecipeSpacesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+
+  $$RecipesTableAnnotationComposer get recipeId {
+    final $$RecipesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.recipeId,
+      referencedTable: $db.recipes,
+      getReferencedColumn: (t) => t.recipePk,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RecipesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.recipes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$GroupsTableAnnotationComposer get spaceId {
+    final $$GroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.spaceId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RecipeSpacesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RecipeSpacesTable,
+          RecipeSpace,
+          $$RecipeSpacesTableFilterComposer,
+          $$RecipeSpacesTableOrderingComposer,
+          $$RecipeSpacesTableAnnotationComposer,
+          $$RecipeSpacesTableCreateCompanionBuilder,
+          $$RecipeSpacesTableUpdateCompanionBuilder,
+          (RecipeSpace, $$RecipeSpacesTableReferences),
+          RecipeSpace,
+          PrefetchHooks Function({bool recipeId, bool spaceId})
+        > {
+  $$RecipeSpacesTableTableManager(_$AppDatabase db, $RecipeSpacesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecipeSpacesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecipeSpacesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecipeSpacesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> recipeId = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecipeSpacesCompanion(
+                recipeId: recipeId,
+                spaceId: spaceId,
+                createdAt: createdAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String recipeId,
+                required String spaceId,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecipeSpacesCompanion.insert(
+                recipeId: recipeId,
+                spaceId: spaceId,
+                createdAt: createdAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RecipeSpacesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({recipeId = false, spaceId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (recipeId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.recipeId,
+                                referencedTable: $$RecipeSpacesTableReferences
+                                    ._recipeIdTable(db),
+                                referencedColumn: $$RecipeSpacesTableReferences
+                                    ._recipeIdTable(db)
+                                    .recipePk,
+                              )
+                              as T;
+                    }
+                    if (spaceId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.spaceId,
+                                referencedTable: $$RecipeSpacesTableReferences
+                                    ._spaceIdTable(db),
+                                referencedColumn: $$RecipeSpacesTableReferences
+                                    ._spaceIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RecipeSpacesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RecipeSpacesTable,
+      RecipeSpace,
+      $$RecipeSpacesTableFilterComposer,
+      $$RecipeSpacesTableOrderingComposer,
+      $$RecipeSpacesTableAnnotationComposer,
+      $$RecipeSpacesTableCreateCompanionBuilder,
+      $$RecipeSpacesTableUpdateCompanionBuilder,
+      (RecipeSpace, $$RecipeSpacesTableReferences),
+      RecipeSpace,
+      PrefetchHooks Function({bool recipeId, bool spaceId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6981,4 +7911,6 @@ class $AppDatabaseManager {
       $$RecipeStepsTableTableManager(_db, _db.recipeSteps);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db, _db.categories);
+  $$RecipeSpacesTableTableManager get recipeSpaces =>
+      $$RecipeSpacesTableTableManager(_db, _db.recipeSpaces);
 }

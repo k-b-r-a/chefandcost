@@ -1,4 +1,6 @@
 {
+  "unit_fluid_ounces": "Onzas l?quidas (EE. UU.)",
+  "ingredient_deleted_label": "Eliminado",
   "@@locale": "es",
   "home_title": "Inicio",
   "home_greeting_morning": "Buenos días, Chef",
@@ -93,6 +95,7 @@
   "search_ingredients_hint": "Buscar ingredientes...",
   "no_ingredients_found": "Ingredientes no encontrados",
   "no_recipes_found": "No se encontraron recetas.",
+  "no_recipes_in_space": "Todavía no hay recetas asignadas a este espacio. Pulsa + para crear una o edita una receta existente para añadirla aquí.",
   "related_ingredients": "Relacionados",
   "no_similar_ingredients": "No hay ingredientes similares",
   "merge_button": "Combinar",

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -17,13 +18,12 @@ class FirestoreSyncService {
   final FirebaseFirestore? _firestoreOverride;
   final FirebaseAuth? _authOverride;
 
-  FirestoreSyncService({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestoreOverride = firestore,
-        _authOverride = auth;
+  FirestoreSyncService({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestoreOverride = firestore,
+      _authOverride = auth;
 
-  FirebaseFirestore get _firestore => _firestoreOverride ?? FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
   FirebaseAuth get _auth => _authOverride ?? FirebaseAuth.instance;
 
   static const String prefLastSyncKey = 'firestore_last_synced_at';
@@ -104,11 +104,12 @@ class FirestoreSyncService {
     }
   }
 
-
   /// Signs in with Email and Password.
   Future<UserCredential> signInWithEmail(String email, String password) async {
     if (!isConfigured) {
-      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+      throw StateError(
+        'Firebase is not initialized. Please configure firebase_options.dart.',
+      );
     }
     final cred = await _auth.signInWithEmailAndPassword(
       email: email.trim(),
@@ -122,9 +123,14 @@ class FirestoreSyncService {
   }
 
   /// Registers a new account with Email and Password.
-  Future<UserCredential> registerWithEmail(String email, String password) async {
+  Future<UserCredential> registerWithEmail(
+    String email,
+    String password,
+  ) async {
     if (!isConfigured) {
-      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+      throw StateError(
+        'Firebase is not initialized. Please configure firebase_options.dart.',
+      );
     }
     final cred = await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
@@ -140,7 +146,9 @@ class FirestoreSyncService {
   /// Sends a password reset email.
   Future<void> sendPasswordReset(String email) async {
     if (!isConfigured) {
-      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+      throw StateError(
+        'Firebase is not initialized. Please configure firebase_options.dart.',
+      );
     }
     await _auth.sendPasswordResetEmail(email: email.trim());
   }
@@ -148,7 +156,9 @@ class FirestoreSyncService {
   /// Signs in with Google account (native popup on web, GoogleSignIn on mobile).
   Future<UserCredential?> signInWithGoogle() async {
     if (!isConfigured) {
-      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+      throw StateError(
+        'Firebase is not initialized. Please configure firebase_options.dart.',
+      );
     }
     UserCredential? cred;
     if (kIsWeb) {
@@ -158,7 +168,8 @@ class FirestoreSyncService {
       try {
         cred = await _auth.signInWithPopup(googleProvider);
       } on FirebaseAuthException catch (e) {
-        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+        if (e.code == 'popup-closed-by-user' ||
+            e.code == 'cancelled-popup-request') {
           return null;
         }
         rethrow;
@@ -182,7 +193,9 @@ class FirestoreSyncService {
         rethrow;
       } catch (e) {
         final str = e.toString().toLowerCase();
-        if (str.contains('canceled') || str.contains('cancelled') || str.contains('12501')) {
+        if (str.contains('canceled') ||
+            str.contains('cancelled') ||
+            str.contains('12501')) {
           return null;
         }
         rethrow;
@@ -191,9 +204,7 @@ class FirestoreSyncService {
       if (googleUser == null) return null;
 
       final auth = googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        idToken: auth.idToken,
-      );
+      final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
       cred = await _auth.signInWithCredential(credential);
     }
     final uid = cred?.user?.uid;
@@ -265,7 +276,13 @@ class FirestoreSyncService {
     // 1. Delete all Firestore collections belonging to this user
     try {
       final userDoc = _firestore.collection('users').doc(uid);
-      final subcollections = ['recipes', 'ingredients', 'units', 'sync_meta'];
+      final subcollections = [
+        'recipes',
+        'ingredients',
+        'units',
+        'groups',
+        'sync_meta',
+      ];
 
       for (final subcol in subcollections) {
         final snapshot = await userDoc.collection(subcol).get();
@@ -292,7 +309,9 @@ class FirestoreSyncService {
     }
 
     // 2. Re-authenticate if password is provided
-    if (reauthPassword != null && reauthPassword.isNotEmpty && user.email != null) {
+    if (reauthPassword != null &&
+        reauthPassword.isNotEmpty &&
+        user.email != null) {
       try {
         final credential = EmailAuthProvider.credential(
           email: user.email!,
@@ -311,7 +330,9 @@ class FirestoreSyncService {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
         // Attempt reauthentication via Google if user signed in with Google
-        final isGoogleUser = user.providerData.any((p) => p.providerId == 'google.com');
+        final isGoogleUser = user.providerData.any(
+          (p) => p.providerId == 'google.com',
+        );
         if (isGoogleUser) {
           if (kIsWeb) {
             final googleProvider = GoogleAuthProvider();
@@ -325,7 +346,9 @@ class FirestoreSyncService {
             );
             final googleUser = await GoogleSignIn.instance.authenticate();
             final auth = googleUser.authentication;
-            final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
+            final credential = GoogleAuthProvider.credential(
+              idToken: auth.idToken,
+            );
             await user.reauthenticateWithCredential(credential);
             await user.delete();
           }
@@ -353,12 +376,12 @@ class FirestoreSyncService {
   /// Connects with Google account using existing GoogleSignInAccount credential.
   Future<String?> linkGoogleAccount(GoogleSignInAccount googleUser) async {
     if (!isConfigured) {
-      throw StateError('Firebase is not initialized. Please configure firebase_options.dart.');
+      throw StateError(
+        'Firebase is not initialized. Please configure firebase_options.dart.',
+      );
     }
     final auth = googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      idToken: auth.idToken,
-    );
+    final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
     final userCred = await _auth.signInWithCredential(credential);
     final uid = userCred.user?.uid;
     if (uid != null) {
@@ -405,40 +428,51 @@ class FirestoreSyncService {
       'fixedOverheadCost': r.fixedOverheadCost,
       'colour': r.colour,
       'groupId': r.groupId,
+      'space_ids': detail.spaceIds,
       'category': r.category,
       'dateCreated': r.dateCreated.toIso8601String(),
       'dateTimeModified': r.dateTimeModified?.toIso8601String(),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'archived': r.archived,
-      'ingredients': detail.ingredients.map((ri) => {
-        'recipeIngredientPk': ri.entry.recipeIngredientPk,
-        'recipeFk': ri.entry.recipeFk,
-        'ingredientFk': ri.entry.ingredientFk,
-        'amountNeeded': ri.entry.amountNeeded,
-        'dateTimeModified': ri.entry.dateTimeModified?.toIso8601String(),
-        'name': ri.ingredient.name,
-        'cost': ri.ingredient.cost,
-        'quantityForCost': ri.ingredient.quantityForCost,
-        'unitFk': ri.ingredient.unitFk,
-        'dateCreated': ri.ingredient.dateCreated.toIso8601String(),
-        'ingredientDateTimeModified': ri.ingredient.dateTimeModified?.toIso8601String(),
-        'is_deleted': ri.ingredient.isDeleted,
-        'deleted_at': ri.ingredient.deletedAt?.toIso8601String(),
-        'group_id': ri.ingredient.groupId,
-        'category': ri.ingredient.category,
-        'current_stock': ri.ingredient.currentStock,
-        'minimum_stock': ri.ingredient.minimumStock,
-        'stock_unit': ri.ingredient.stockUnit,
-        'cost_per_stock_unit': ri.ingredient.costPerStockUnit,
-        'last_stock_update': ri.ingredient.lastStockUpdate?.toIso8601String(),
-      }).toList(),
-      'steps': detail.steps.map((st) => {
-        'stepPk': st.stepPk,
-        'recipeFk': st.recipeFk,
-        'stepNumber': st.stepNumber,
-        'instruction': st.instruction,
-        'dateTimeModified': st.dateTimeModified?.toIso8601String(),
-      }).toList(),
+      'ingredients': detail.ingredients
+          .map(
+            (ri) => {
+              'recipeIngredientPk': ri.entry.recipeIngredientPk,
+              'recipeFk': ri.entry.recipeFk,
+              'ingredientFk': ri.entry.ingredientFk,
+              'amountNeeded': ri.entry.amountNeeded,
+              'dateTimeModified': ri.entry.dateTimeModified?.toIso8601String(),
+              'name': ri.ingredient.name,
+              'cost': ri.ingredient.cost,
+              'quantityForCost': ri.ingredient.quantityForCost,
+              'unitFk': ri.ingredient.unitFk,
+              'dateCreated': ri.ingredient.dateCreated.toIso8601String(),
+              'ingredientDateTimeModified': ri.ingredient.dateTimeModified
+                  ?.toIso8601String(),
+              'is_deleted': ri.ingredient.isDeleted,
+              'deleted_at': ri.ingredient.deletedAt?.toIso8601String(),
+              'group_id': ri.ingredient.groupId,
+              'category': ri.ingredient.category,
+              'current_stock': ri.ingredient.currentStock,
+              'minimum_stock': ri.ingredient.minimumStock,
+              'stock_unit': ri.ingredient.stockUnit,
+              'cost_per_stock_unit': ri.ingredient.costPerStockUnit,
+              'last_stock_update': ri.ingredient.lastStockUpdate
+                  ?.toIso8601String(),
+            },
+          )
+          .toList(),
+      'steps': detail.steps
+          .map(
+            (st) => {
+              'stepPk': st.stepPk,
+              'recipeFk': st.recipeFk,
+              'stepNumber': st.stepNumber,
+              'instruction': st.instruction,
+              'dateTimeModified': st.dateTimeModified?.toIso8601String(),
+            },
+          )
+          .toList(),
     };
   }
 
@@ -448,17 +482,21 @@ class FirestoreSyncService {
     List<RecipeIngredient> ingredients,
     List<RecipeStep> steps,
     List<Ingredient> nestedIngredients,
-  }) recipeFromFirestore(
-      Map<String, dynamic> d, {String fallbackId = ''}) {
+    List<String> spaceIds,
+  })
+  recipeFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
     final pk = (d['recipePk'] as String?) ?? fallbackId;
     final recipe = Recipe(
-      recipePk: pk.isNotEmpty ? pk : 'recipe_${DateTime.now().millisecondsSinceEpoch}',
+      recipePk: pk.isNotEmpty
+          ? pk
+          : 'recipe_${DateTime.now().millisecondsSinceEpoch}',
       name: (d['name'] as String?) ?? 'Sin título',
       description: d['description'] as String?,
       defaultYield: (d['defaultYield'] as num?)?.toDouble() ?? 1.0,
       yieldName: (d['yieldName'] as String?) ?? 'porciones',
       targetProfitMargin: (d['targetProfitMargin'] as num?)?.toDouble() ?? 0.0,
-      targetPricePerPortion: (d['targetPricePerPortion'] as num?)?.toDouble() ?? 0.0,
+      targetPricePerPortion:
+          (d['targetPricePerPortion'] as num?)?.toDouble() ?? 0.0,
       fixedOverheadCost: (d['fixedOverheadCost'] as num?)?.toDouble() ?? 0.0,
       colour: d['colour'] as String?,
       dateCreated: _parseDate(d['dateCreated']),
@@ -467,6 +505,14 @@ class FirestoreSyncService {
       groupId: (d['group_id'] ?? d['groupId']) as String?,
       category: (d['category'] ?? d['category_id'] as String?) ?? 'cocina',
     );
+    final rawSpaceIds = d.containsKey('space_ids')
+        ? d['space_ids']
+        : d['spaceIds'];
+    final spaceIds = d.containsKey('space_ids') || d.containsKey('spaceIds')
+        ? (rawSpaceIds is Iterable
+              ? rawSpaceIds.whereType<String>().toList()
+              : <String>[])
+        : (recipe.groupId == null ? <String>[] : <String>[recipe.groupId!]);
 
     final rawIngredients = (d['ingredients'] as List<dynamic>?) ?? [];
     final ingredients = <RecipeIngredient>[];
@@ -477,7 +523,8 @@ class FirestoreSyncService {
       final m = Map<String, dynamic>.from(raw);
       final recipeFk = (m['recipeFk'] as String?) ?? recipe.recipePk;
       final ingredientFk = (m['ingredientFk'] as String?) ?? '';
-      final riPk = (m['recipeIngredientPk'] as String?) ?? '${recipeFk}_$ingredientFk';
+      final riPk =
+          (m['recipeIngredientPk'] as String?) ?? '${recipeFk}_$ingredientFk';
 
       final ri = RecipeIngredient(
         recipeIngredientPk: riPk,
@@ -492,28 +539,44 @@ class FirestoreSyncService {
       if (ingMap.containsKey('name') && ingMap['name'] != null) {
         final ingPk = (ingMap['ingredientPk'] ?? ingredientFk) as String;
         if (ingPk.isNotEmpty) {
-          final isDeleted = (ingMap['is_deleted'] ?? ingMap['isDeleted']) as bool? ?? false;
-          final deletedAt = _parseNullableDate(ingMap['deleted_at'] ?? ingMap['deletedAt']);
+          final isDeleted =
+              (ingMap['is_deleted'] ?? ingMap['isDeleted']) as bool? ?? false;
+          final deletedAt = _parseNullableDate(
+            ingMap['deleted_at'] ?? ingMap['deletedAt'],
+          );
           nestedIngredients.add(
             Ingredient(
               ingredientPk: ingPk,
               name: (ingMap['name'] as String?) ?? 'Ingrediente',
               cost: (ingMap['cost'] as num?)?.toDouble() ?? 0.0,
-              quantityForCost: (ingMap['quantityForCost'] as num?)?.toDouble() ?? 1.0,
+              quantityForCost:
+                  (ingMap['quantityForCost'] as num?)?.toDouble() ?? 1.0,
               unitFk: (ingMap['unitFk'] as String?) ?? 'unit-g',
               dateCreated: _parseDate(ingMap['dateCreated']),
               dateTimeModified: _parseNullableDate(
-                ingMap['dateTimeModified'] ?? ingMap['ingredientDateTimeModified'],
+                ingMap['dateTimeModified'] ??
+                    ingMap['ingredientDateTimeModified'],
               ),
               isDeleted: isDeleted,
               deletedAt: deletedAt,
               groupId: (ingMap['group_id'] ?? ingMap['groupId']) as String?,
               category: ingMap['category'] as String?,
-              currentStock: (ingMap['current_stock'] ?? ingMap['currentStock'] as num?)?.toDouble() ?? 0.0,
-              minimumStock: (ingMap['minimum_stock'] ?? ingMap['minimumStock'] as num?)?.toDouble(),
-              stockUnit: (ingMap['stock_unit'] ?? ingMap['stockUnit']) as String?,
-              costPerStockUnit: (ingMap['cost_per_stock_unit'] ?? ingMap['costPerStockUnit'] as num?)?.toDouble(),
-              lastStockUpdate: _parseNullableDate(ingMap['last_stock_update'] ?? ingMap['lastStockUpdate']),
+              currentStock:
+                  (ingMap['current_stock'] ?? ingMap['currentStock'] as num?)
+                      ?.toDouble() ??
+                  0.0,
+              minimumStock:
+                  (ingMap['minimum_stock'] ?? ingMap['minimumStock'] as num?)
+                      ?.toDouble(),
+              stockUnit:
+                  (ingMap['stock_unit'] ?? ingMap['stockUnit']) as String?,
+              costPerStockUnit:
+                  (ingMap['cost_per_stock_unit'] ??
+                          ingMap['costPerStockUnit'] as num?)
+                      ?.toDouble(),
+              lastStockUpdate: _parseNullableDate(
+                ingMap['last_stock_update'] ?? ingMap['lastStockUpdate'],
+              ),
             ),
           );
         }
@@ -526,7 +589,9 @@ class FirestoreSyncService {
     for (final raw in rawSteps) {
       if (raw is! Map) continue;
       final m = Map<String, dynamic>.from(raw);
-      final stepPk = (m['stepPk'] as String?) ?? '${recipe.recipePk}_step_$defaultStepNumber';
+      final stepPk =
+          (m['stepPk'] as String?) ??
+          '${recipe.recipePk}_step_$defaultStepNumber';
       steps.add(
         RecipeStep(
           stepPk: stepPk,
@@ -544,6 +609,7 @@ class FirestoreSyncService {
       ingredients: ingredients,
       steps: steps,
       nestedIngredients: nestedIngredients,
+      spaceIds: spaceIds,
     );
   }
 
@@ -574,12 +640,17 @@ class FirestoreSyncService {
   }
 
   /// Parses an [Ingredient] from Firestore format.
-  static Ingredient ingredientFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
+  static Ingredient ingredientFromFirestore(
+    Map<String, dynamic> d, {
+    String fallbackId = '',
+  }) {
     final pk = (d['ingredientPk'] as String?) ?? fallbackId;
     final isDeleted = (d['is_deleted'] ?? d['isDeleted']) as bool? ?? false;
     final deletedAt = _parseNullableDate(d['deleted_at'] ?? d['deletedAt']);
     return Ingredient(
-      ingredientPk: pk.isNotEmpty ? pk : 'ing_${DateTime.now().millisecondsSinceEpoch}',
+      ingredientPk: pk.isNotEmpty
+          ? pk
+          : 'ing_${DateTime.now().millisecondsSinceEpoch}',
       name: (d['name'] as String?) ?? 'Ingrediente',
       cost: (d['cost'] as num?)?.toDouble() ?? 0.0,
       quantityForCost: (d['quantityForCost'] as num?)?.toDouble() ?? 1.0,
@@ -590,11 +661,17 @@ class FirestoreSyncService {
       deletedAt: deletedAt,
       groupId: (d['group_id'] ?? d['groupId']) as String?,
       category: d['category'] as String?,
-      currentStock: (d['current_stock'] ?? d['currentStock'] as num?)?.toDouble() ?? 0.0,
-      minimumStock: (d['minimum_stock'] ?? d['minimumStock'] as num?)?.toDouble(),
+      currentStock:
+          (d['current_stock'] ?? d['currentStock'] as num?)?.toDouble() ?? 0.0,
+      minimumStock: (d['minimum_stock'] ?? d['minimumStock'] as num?)
+          ?.toDouble(),
       stockUnit: (d['stock_unit'] ?? d['stockUnit']) as String?,
-      costPerStockUnit: (d['cost_per_stock_unit'] ?? d['costPerStockUnit'] as num?)?.toDouble(),
-      lastStockUpdate: _parseNullableDate(d['last_stock_update'] ?? d['lastStockUpdate']),
+      costPerStockUnit:
+          (d['cost_per_stock_unit'] ?? d['costPerStockUnit'] as num?)
+              ?.toDouble(),
+      lastStockUpdate: _parseNullableDate(
+        d['last_stock_update'] ?? d['lastStockUpdate'],
+      ),
     );
   }
 
@@ -614,7 +691,10 @@ class FirestoreSyncService {
   }
 
   /// Parses a [Group] from Firestore format.
-  static Group groupFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
+  static Group groupFromFirestore(
+    Map<String, dynamic> d, {
+    String fallbackId = '',
+  }) {
     final id = (d['id'] as String?) ?? fallbackId;
     return Group(
       id: id.isNotEmpty ? id : 'group_${DateTime.now().millisecondsSinceEpoch}',
@@ -641,10 +721,15 @@ class FirestoreSyncService {
   }
 
   /// Parses a [Unit] from Firestore format.
-  static Unit unitFromFirestore(Map<String, dynamic> d, {String fallbackId = ''}) {
+  static Unit unitFromFirestore(
+    Map<String, dynamic> d, {
+    String fallbackId = '',
+  }) {
     final pk = (d['unitPk'] as String?) ?? fallbackId;
     return Unit(
-      unitPk: pk.isNotEmpty ? pk : 'unit_${DateTime.now().millisecondsSinceEpoch}',
+      unitPk: pk.isNotEmpty
+          ? pk
+          : 'unit_${DateTime.now().millisecondsSinceEpoch}',
       name: (d['name'] as String?) ?? 'Unidad',
       symbol: (d['symbol'] as String?) ?? 'u',
       category: d['category'] as String?,
@@ -654,6 +739,23 @@ class FirestoreSyncService {
   }
 
   /// Saves/upserts a recipe and its nested ingredients directly to Firestore.
+  Future<void> _writeIfNewer(
+    DocumentReference<Map<String, dynamic>> reference,
+    Map<String, dynamic> data,
+    DateTime localTime,
+    String dateField,
+  ) async {
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(reference);
+      final remote = snapshot.data();
+      if (remote != null) {
+        final remoteTime = _parseDate(remote[dateField] ?? remote['updatedAt']);
+        if (!localTime.isAfter(remoteTime)) return;
+      }
+      transaction.set(reference, data, SetOptions(merge: true));
+    });
+  }
+
   Future<void> saveRecipe(RecipeDetail detail, {String? userId}) async {
     if (isSampleManufacturingRecipe(detail.recipe.recipePk)) return;
     if (!isConfigured) return;
@@ -667,15 +769,44 @@ class FirestoreSyncService {
     final data = recipeToFirestore(detail);
 
     final batch = _firestore.batch();
-    batch.set(recipeDoc, data, SetOptions(merge: true));
+    for (final space in detail.spaces) {
+      final spaceRef = userDoc.collection('groups').doc(space.id);
+      await _firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(spaceRef);
+        final remote = snapshot.data();
+        if (remote != null) {
+          final remoteTime = _parseDate(
+            remote['updated_at'] ?? remote['updatedAt'],
+          );
+          if (!space.updatedAt.isAfter(remoteTime)) return;
+        }
+        transaction.set(
+          spaceRef,
+          groupToFirestore(space),
+          SetOptions(merge: true),
+        );
+      });
+    }
 
     // Also update/upsert the nested ingredients in the cloud ingredients subcollection
     for (final ri in detail.ingredients) {
-      final ingDoc = userDoc.collection('ingredients').doc(ri.ingredient.ingredientPk);
-      batch.set(ingDoc, ingredientToFirestore(ri.ingredient), SetOptions(merge: true));
+      final ingDoc = userDoc
+          .collection('ingredients')
+          .doc(ri.ingredient.ingredientPk);
+      batch.set(
+        ingDoc,
+        ingredientToFirestore(ri.ingredient),
+        SetOptions(merge: true),
+      );
     }
 
     await batch.commit();
+    await _writeIfNewer(
+      recipeDoc,
+      data,
+      detail.recipe.dateTimeModified ?? detail.recipe.dateCreated,
+      'dateTimeModified',
+    );
   }
 
   /// Force overwrites the cloud data with the complete local SQLite dataset.
@@ -686,12 +817,16 @@ class FirestoreSyncService {
     String? userId,
   }) async {
     if (!isConfigured) {
-      throw StateError('Firebase is not configured. Please complete Firebase setup.');
+      throw StateError(
+        'Firebase is not configured. Please complete Firebase setup.',
+      );
     }
 
     final activeUid = userId ?? await getActiveUserId();
     if (activeUid == null || activeUid.isEmpty) {
-      throw StateError('No active user or sync ID found. Please sign in or set a Sync ID.');
+      throw StateError(
+        'No active user or sync ID found. Please sign in or set a Sync ID.',
+      );
     }
 
     await initPersistence();
@@ -703,11 +838,13 @@ class FirestoreSyncService {
     final recipesCol = userDoc.collection('recipes');
     final ingsCol = userDoc.collection('ingredients');
     final unitsCol = userDoc.collection('units');
+    final groupsCol = userDoc.collection('groups');
 
     // 1. Delete all existing remote units, ingredients, and recipes
     final remoteUnitsSnap = await unitsCol.get();
     final remoteIngsSnap = await ingsCol.get();
     final remoteRecipesSnap = await recipesCol.get();
+    final remoteGroupsSnap = await groupsCol.get();
 
     WriteBatch batch = _firestore.batch();
     int opCount = 0;
@@ -741,6 +878,15 @@ class FirestoreSyncService {
         opCount = 0;
       }
     }
+    for (final doc in remoteGroupsSnap.docs) {
+      batch.delete(doc.reference);
+      opCount++;
+      if (opCount >= 400) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
 
     if (opCount > 0) {
       await batch.commit();
@@ -750,10 +896,21 @@ class FirestoreSyncService {
 
     // 2. Fetch all local units, ingredients, and recipes
     final allUnits = await db.getAllUnits();
+    final allGroups = await db.getAllGroups(includeDeleted: true);
     final allIngs = await db.getAllIngredients();
     final allRecipeDetails = (await db.getAllRecipeDetails())
         .where((r) => !isSampleManufacturingRecipe(r.recipe.recipePk))
         .toList();
+
+    // 3. Upload all spaces before recipes that reference them.
+    for (final group in allGroups) {
+      batch.set(groupsCol.doc(group.id), groupToFirestore(group));
+      if (++opCount >= 400) {
+        await batch.commit();
+        batch = _firestore.batch();
+        opCount = 0;
+      }
+    }
 
     // 3. Upload all units
     for (final unit in allUnits) {
@@ -810,7 +967,10 @@ class FirestoreSyncService {
     }
 
     // 6. Record lastSyncedAt
-    await prefs.setString('${prefLastSyncKey}_$activeUid', syncStartTime.toIso8601String());
+    await prefs.setString(
+      '${prefLastSyncKey}_$activeUid',
+      syncStartTime.toIso8601String(),
+    );
 
     return SyncMergeResult(
       recipesAdded: allRecipeDetails.length,
@@ -836,12 +996,16 @@ class FirestoreSyncService {
     String? userId,
   }) async {
     if (!isConfigured) {
-      throw StateError('Firebase is not configured. Please complete Firebase setup.');
+      throw StateError(
+        'Firebase is not configured. Please complete Firebase setup.',
+      );
     }
 
     final activeUid = userId ?? await getActiveUserId();
     if (activeUid == null || activeUid.isEmpty) {
-      throw StateError('No active user or sync ID found. Please sign in or set a Sync ID.');
+      throw StateError(
+        'No active user or sync ID found. Please sign in or set a Sync ID.',
+      );
     }
 
     await initPersistence();
@@ -859,17 +1023,27 @@ class FirestoreSyncService {
     final recipesCol = userDoc.collection('recipes');
     final ingsCol = userDoc.collection('ingredients');
     final unitsCol = userDoc.collection('units');
+    final groupsCol = userDoc.collection('groups');
 
     // -------------------------------------------------------------
     // PHASE 1: PULL REMOTE UPDATES
     // -------------------------------------------------------------
 
     // 1. Remote Units (Pull all units so foreign keys never fail & purge remote duplicates)
+    final remoteGroupsSnap = await groupsCol.get();
+    for (final doc in remoteGroupsSnap.docs) {
+      await db.mergeGroupFromRemote(
+        groupFromFirestore(doc.data(), fallbackId: doc.id),
+      );
+    }
+
     final remoteUnitsSnap = await unitsCol.get();
     final seenRemoteUnitNames = <String>{};
     for (final doc in remoteUnitsSnap.docs) {
       final unit = unitFromFirestore(doc.data(), fallbackId: doc.id);
-      final normName = unit.name == 'unit_spoonfuls' ? 'unit_tablespoons' : unit.name;
+      final normName = unit.name == 'unit_spoonfuls'
+          ? 'unit_tablespoons'
+          : unit.name;
       if (!seenRemoteUnitNames.add(normName)) {
         // Redundant duplicate unit on Firestore - delete it from remote collection
         try {
@@ -897,7 +1071,25 @@ class FirestoreSyncService {
     final Map<String, DateTime> remoteRecipeUpdatedTimes = {};
     for (final doc in remoteRecipesSnap.docs) {
       final parsed = recipeFromFirestore(doc.data(), fallbackId: doc.id);
-      final remoteTime = parsed.recipe.dateTimeModified ?? parsed.recipe.dateCreated;
+      final legacySpaceId = parsed.recipe.groupId;
+      if (legacySpaceId != null &&
+          await db.getGroupById(legacySpaceId) == null) {
+        await db.insertGroup(
+          GroupsCompanion.insert(
+            id: drift.Value(legacySpaceId),
+            name: 'Workspace',
+          ),
+        );
+      }
+      for (final spaceId in parsed.spaceIds) {
+        if (await db.getGroupById(spaceId) == null) {
+          await db.insertGroup(
+            GroupsCompanion.insert(id: drift.Value(spaceId), name: 'Workspace'),
+          );
+        }
+      }
+      final remoteTime =
+          parsed.recipe.dateTimeModified ?? parsed.recipe.dateCreated;
       remoteRecipeUpdatedTimes[parsed.recipe.recipePk] = remoteTime;
 
       final res = await db.mergeRecipeFromRemote(
@@ -905,6 +1097,7 @@ class FirestoreSyncService {
         remoteIngredients: parsed.ingredients,
         remoteSteps: parsed.steps,
         nestedIngredients: parsed.nestedIngredients,
+        remoteSpaceIds: parsed.spaceIds,
       );
       if (res == 1) recipesAdded++;
       if (res == 2) recipesUpdated++;
@@ -915,6 +1108,7 @@ class FirestoreSyncService {
     // PHASE 2: PUSH LOCAL UPDATES
     // -------------------------------------------------------------
     final localUnits = await db.getAllUnits();
+    final localGroups = await db.getAllGroups(includeDeleted: true);
     final localIngredients = await db.getAllIngredients(includeDeleted: true);
     final localRecipes = (await db.getAllRecipeDetails())
         .where((r) => !isSampleManufacturingRecipe(r.recipe.recipePk))
@@ -922,6 +1116,16 @@ class FirestoreSyncService {
 
     WriteBatch batch = _firestore.batch();
     int opCount = 0;
+
+    // Push Units (Ensure all local units exist on remote)
+    for (final group in localGroups) {
+      await _writeIfNewer(
+        groupsCol.doc(group.id),
+        groupToFirestore(group),
+        group.updatedAt,
+        'updated_at',
+      );
+    }
 
     // Push Units (Ensure all local units exist on remote)
     for (final unit in localUnits) {
@@ -991,13 +1195,7 @@ class FirestoreSyncService {
 
       final docRef = recipesCol.doc(r.recipePk);
       final data = recipeToFirestore(rd);
-      batch.set(docRef, data, SetOptions(merge: true));
-      opCount++;
-      if (opCount >= 400) {
-        await batch.commit();
-        batch = _firestore.batch();
-        opCount = 0;
-      }
+      await _writeIfNewer(docRef, data, localTime, 'dateTimeModified');
     }
 
     // Push Sync Status / Metadata
@@ -1016,7 +1214,10 @@ class FirestoreSyncService {
     // -------------------------------------------------------------
     // PHASE 3: RECORD LAST SYNCED AT
     // -------------------------------------------------------------
-    await prefs.setString('${prefLastSyncKey}_$activeUid', syncStartTime.toIso8601String());
+    await prefs.setString(
+      '${prefLastSyncKey}_$activeUid',
+      syncStartTime.toIso8601String(),
+    );
 
     return SyncMergeResult(
       recipesAdded: recipesAdded,

@@ -9,6 +9,12 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get unit_fluid_ounces => 'Onzas l?quidas (EE. UU.)';
+
+  @override
+  String get ingredient_deleted_label => 'Eliminado';
+
+  @override
   String get home_title => 'Inicio';
 
   @override
@@ -278,6 +284,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get no_recipes_found => 'No se encontraron recetas.';
+
+  @override
+  String get no_recipes_in_space =>
+      'Todavía no hay recetas asignadas a este espacio. Pulsa + para crear una o edita una receta existente para añadirla aquí.';
 
   @override
   String get related_ingredients => 'Relacionados';

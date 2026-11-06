@@ -29,6 +29,7 @@ import 'services/app_tutorial_service.dart';
 import 'services/recipe_file_intent_service.dart';
 import 'utils/recipe_import_helper.dart';
 import 'database/sample_manufacturing_recipe.dart';
+import 'widgets/active_group_chip.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -139,8 +140,8 @@ class ChefAndCostApp extends ConsumerWidget {
         fontFamily: settings.fontFamily == 'sans'
             ? 'Metropolis'
             : settings.fontFamily == 'butler'
-                ? 'Butler'
-                : null,
+            ? 'Butler'
+            : null,
         pageTransitionsTheme: settings.animationsEnabled
             ? const PageTransitionsTheme()
             : const PageTransitionsTheme(
@@ -171,7 +172,9 @@ class ChefAndCostApp extends ConsumerWidget {
       }
 
       if (settings.highContrastText) {
-        final textColor = brightness == Brightness.dark ? Colors.white : Colors.black;
+        final textColor = brightness == Brightness.dark
+            ? Colors.white
+            : Colors.black;
         textTheme = textTheme.apply(
           bodyColor: textColor,
           displayColor: textColor,
@@ -179,9 +182,7 @@ class ChefAndCostApp extends ConsumerWidget {
         );
       }
 
-      return baseTheme.copyWith(
-        textTheme: textTheme,
-      );
+      return baseTheme.copyWith(textTheme: textTheme);
     }
 
     return MaterialApp(
@@ -240,7 +241,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _currentIndex = 0;
   late PageController _pageController;
   final TextEditingController _recipeSearchController = TextEditingController();
-  final TextEditingController _ingredientSearchController = TextEditingController();
+  final TextEditingController _ingredientSearchController =
+      TextEditingController();
   bool _isSearching = false;
   bool _showSearchContent = false;
   bool _isSearchHovered = false;
@@ -278,10 +280,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   void initState() {
     super.initState();
     _screens = [
-      HomeScreen(
-        onNavigateToTab: _navigateToTab,
-        tutorialKeys: _tutorialKeys,
-      ),
+      HomeScreen(onNavigateToTab: _navigateToTab, tutorialKeys: _tutorialKeys),
       const RecipeListScreen(),
       const IngredientsScreen(),
       const ToolsScreen(),
@@ -318,8 +317,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final isTesting = !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';
     if (!isTesting) {
       RecipeFileIntentService.initialize();
-      _fileIntentSubscription =
-          RecipeFileIntentService.fileStream.listen((fileData) {
+      _fileIntentSubscription = RecipeFileIntentService.fileStream.listen((
+        fileData,
+      ) {
         if (mounted) {
           _handleIncomingRecipeFile(fileData);
         }
@@ -329,7 +329,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         _initTutorialTimer?.cancel();
         _initTutorialTimer = Timer(const Duration(milliseconds: 600), () {
           if (mounted) {
-            AppTutorialService.checkAndShowTutorial(context, keys: _tutorialKeys);
+            AppTutorialService.checkAndShowTutorial(
+              context,
+              keys: _tutorialKeys,
+            );
           }
         });
 
@@ -350,8 +353,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       return;
     }
 
-    final targetContext =
-        ChefAndCostApp.navigatorKey.currentContext ?? context;
+    final targetContext = ChefAndCostApp.navigatorKey.currentContext ?? context;
     if (!targetContext.mounted) return;
 
     await RecipeImportHelper.importRecipeFromString(
@@ -390,10 +392,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     ref.listen<CloudSyncState>(cloudSyncProvider, (previous, next) {
       final isRouteCurrent = ModalRoute.of(context)?.isCurrent ?? true;
       if (!isRouteCurrent) return;
-      if (isWide && ref.read(webLayoutProvider).rightPaneView == WebRightPaneView.settingsCloudSync) {
+      if (isWide &&
+          ref.read(webLayoutProvider).rightPaneView ==
+              WebRightPaneView.settingsCloudSync) {
         return;
       }
-      if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -403,7 +408,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ),
         );
       }
-      if (next.successMessage != null && next.successMessage != previous?.successMessage) {
+      if (next.successMessage != null &&
+          next.successMessage != previous?.successMessage) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -493,7 +499,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     WebLayoutNotifier webNotifier,
   ) {
     final syncState = ref.watch(cloudSyncProvider);
-    final isCloudSyncActive = webLayout.rightPaneView == WebRightPaneView.settingsCloudSync;
+    final isCloudSyncActive =
+        webLayout.rightPaneView == WebRightPaneView.settingsCloudSync;
 
     int selectedIndex = 0;
     if (webLayout.isHomeActive) {
@@ -575,21 +582,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           child: Tooltip(
             message: l10n.brand_home_tooltip,
             child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: () async {
-              final guard = ref.read(recipeCanLeaveGuardProvider);
-              if (guard != null && !await guard()) return;
-              webNotifier.showHome();
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(2.0),
-              child: AppIcon(
-                size: logoSize,
+              borderRadius: BorderRadius.circular(14),
+              onTap: () async {
+                final guard = ref.read(recipeCanLeaveGuardProvider);
+                if (guard != null && !await guard()) return;
+                webNotifier.showHome();
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: AppIcon(size: logoSize),
               ),
             ),
           ),
         ),
-      ),
       ),
       trailing: Expanded(
         child: Align(
@@ -611,7 +616,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.sync),
-                    tooltip: syncState.storageType == CloudSyncStorageType.firestore
+                    tooltip:
+                        syncState.storageType == CloudSyncStorageType.firestore
                         ? l10n.cloud_sync_sync_now
                         : l10n.cloud_sync_sync_btn,
                     onPressed: syncState.loading
@@ -624,92 +630,129 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   Container(
                     decoration: BoxDecoration(
                       color: isCloudSyncActive
-                          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                          ? theme.colorScheme.primaryContainer.withValues(
+                              alpha: 0.5,
+                            )
                           : null,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
                       visualDensity: VisualDensity.compact,
                       icon: syncState.signedIn
-                        ? CircleAvatar(
-                            radius: 13,
-                            backgroundColor: theme.colorScheme.primary,
-                            child: Text(
-                              (syncState.email?.isNotEmpty == true
-                                      ? syncState.email![0]
-                                      : 'U')
-                                  .toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.onPrimary,
+                          ? CircleAvatar(
+                              radius: 13,
+                              backgroundColor: theme.colorScheme.primary,
+                              child: Text(
+                                (syncState.email?.isNotEmpty == true
+                                        ? syncState.email![0]
+                                        : 'U')
+                                    .toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onPrimary,
+                                ),
                               ),
+                            )
+                          : Icon(
+                              Icons.account_circle_outlined,
+                              color: isCloudSyncActive
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurfaceVariant,
                             ),
-                          )
-                        : Icon(
-                            Icons.account_circle_outlined,
-                            color: isCloudSyncActive
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurfaceVariant,
-                          ),
-                    tooltip: syncState.signedIn
-                        ? (syncState.email ?? l10n.cloud_sync_connected_account)
-                        : l10n.sign_in_button,
-                    onPressed: () async {
-                      final guard = ref.read(recipeCanLeaveGuardProvider);
-                      if (guard != null && !await guard()) return;
-                      webNotifier.openSettingsDetail(WebRightPaneView.settingsCloudSync);
+                      tooltip: syncState.signedIn
+                          ? (syncState.email ??
+                                l10n.cloud_sync_connected_account)
+                          : l10n.sign_in_button,
+                      onPressed: () async {
+                        final guard = ref.read(recipeCanLeaveGuardProvider);
+                        if (guard != null && !await guard()) return;
+                        webNotifier.openSettingsDetail(
+                          WebRightPaneView.settingsCloudSync,
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      settings.themeMode == ThemeMode.dark
+                          ? Icons.dark_mode_outlined
+                          : settings.themeMode == ThemeMode.light
+                          ? Icons.light_mode_outlined
+                          : Icons.brightness_auto_outlined,
+                    ),
+                    tooltip: l10n.toggle_theme_tooltip,
+                    onPressed: () {
+                      final nextMode = settings.themeMode == ThemeMode.dark
+                          ? ThemeMode.light
+                          : ThemeMode.dark;
+                      ref
+                          .read(settingsProvider.notifier)
+                          .setThemeMode(nextMode);
                     },
                   ),
-                ),
-                const SizedBox(height: 4),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(
-                    settings.themeMode == ThemeMode.dark
-                        ? Icons.dark_mode_outlined
-                        : settings.themeMode == ThemeMode.light
-                            ? Icons.light_mode_outlined
-                            : Icons.brightness_auto_outlined,
-                  ),
-                  tooltip: l10n.toggle_theme_tooltip,
-                  onPressed: () {
-                    final nextMode = settings.themeMode == ThemeMode.dark
-                        ? ThemeMode.light
-                        : ThemeMode.dark;
-                    ref.read(settingsProvider.notifier).setThemeMode(nextMode);
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
       destinations: [
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(0, false, settings.iconStyle), size: railIconSize),
-          selectedIcon: Icon(getNavBarIcon(0, true, settings.iconStyle), size: railIconSize),
+          icon: Icon(
+            getNavBarIcon(0, false, settings.iconStyle),
+            size: railIconSize,
+          ),
+          selectedIcon: Icon(
+            getNavBarIcon(0, true, settings.iconStyle),
+            size: railIconSize,
+          ),
           label: Text(l10n.home_title),
         ),
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(1, false, settings.iconStyle), size: railIconSize),
-          selectedIcon: Icon(getNavBarIcon(1, true, settings.iconStyle), size: railIconSize),
+          icon: Icon(
+            getNavBarIcon(1, false, settings.iconStyle),
+            size: railIconSize,
+          ),
+          selectedIcon: Icon(
+            getNavBarIcon(1, true, settings.iconStyle),
+            size: railIconSize,
+          ),
           label: Text(l10n.recipes_title),
         ),
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(2, false, settings.iconStyle), size: railIconSize),
-          selectedIcon: Icon(getNavBarIcon(2, true, settings.iconStyle), size: railIconSize),
+          icon: Icon(
+            getNavBarIcon(2, false, settings.iconStyle),
+            size: railIconSize,
+          ),
+          selectedIcon: Icon(
+            getNavBarIcon(2, true, settings.iconStyle),
+            size: railIconSize,
+          ),
           label: Text(l10n.ingredients_title),
         ),
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(3, false, settings.iconStyle), size: railIconSize),
-          selectedIcon: Icon(getNavBarIcon(3, true, settings.iconStyle), size: railIconSize),
+          icon: Icon(
+            getNavBarIcon(3, false, settings.iconStyle),
+            size: railIconSize,
+          ),
+          selectedIcon: Icon(
+            getNavBarIcon(3, true, settings.iconStyle),
+            size: railIconSize,
+          ),
           label: Text(l10n.tools_title),
         ),
         NavigationRailDestination(
-          icon: Icon(getNavBarIcon(4, false, settings.iconStyle), size: railIconSize),
-          selectedIcon: Icon(getNavBarIcon(4, true, settings.iconStyle), size: railIconSize),
+          icon: Icon(
+            getNavBarIcon(4, false, settings.iconStyle),
+            size: railIconSize,
+          ),
+          selectedIcon: Icon(
+            getNavBarIcon(4, true, settings.iconStyle),
+            size: railIconSize,
+          ),
           label: Text(l10n.config_button),
         ),
       ],
@@ -725,11 +768,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     WebLayoutNotifier webNotifier,
   ) {
     if (webLayout.middleTab == WebMiddleTab.ingredients &&
-        (webLayout.leftPaneIngredient != null || webLayout.isCreatingLeftPaneIngredient)) {
+        (webLayout.leftPaneIngredient != null ||
+            webLayout.isCreatingLeftPaneIngredient)) {
       return AddIngredientScreen(
         key: webLayout.leftPaneIngredient != null
-            ? ValueKey('left_pane_ing_${webLayout.leftPaneIngredient!.ingredientPk}')
-            : ValueKey('left_pane_ing_new_${webLayout.newIngredientInitialName ?? "empty"}'),
+            ? ValueKey(
+                'left_pane_ing_${webLayout.leftPaneIngredient!.ingredientPk}',
+              )
+            : ValueKey(
+                'left_pane_ing_new_${webLayout.newIngredientInitialName ?? "empty"}',
+              ),
         ingredient: webLayout.leftPaneIngredient,
         initialName: webLayout.newIngredientInitialName,
         onClose: () => webNotifier.closeIngredientDetail(),
@@ -739,10 +787,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     Widget listWidget;
     switch (webLayout.middleTab) {
       case WebMiddleTab.recipes:
-        listWidget = const RecipeListScreen(key: ValueKey('web_recipes_list'));
+        listWidget = const RecipeListScreen(
+          key: ValueKey('web_recipes_list'),
+          isWebWorkspace: true,
+        );
         break;
       case WebMiddleTab.ingredients:
-        listWidget = const IngredientsScreen(key: ValueKey('web_ingredients_list'));
+        listWidget = const IngredientsScreen(
+          key: ValueKey('web_ingredients_list'),
+        );
         break;
       case WebMiddleTab.tools:
         listWidget = const ToolsScreen(key: ValueKey('web_tools_list'));
@@ -821,8 +874,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           webLayout.middleTab == WebMiddleTab.recipes
                               ? Icons.menu_book_outlined
                               : (webLayout.middleTab == WebMiddleTab.ingredients
-                                  ? Icons.egg_outlined
-                                  : Icons.handyman_outlined),
+                                    ? Icons.egg_outlined
+                                    : Icons.handyman_outlined),
                           size: 18,
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
@@ -833,8 +886,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           webLayout.middleTab == WebMiddleTab.recipes
                               ? l10n.recipes_title
                               : (webLayout.middleTab == WebMiddleTab.ingredients
-                                  ? l10n.ingredients_title
-                                  : l10n.tools_title),
+                                    ? l10n.ingredients_title
+                                    : l10n.tools_title),
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -851,7 +904,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                             webNotifier.openNewRecipe();
                           },
                         ),
-                      ] else if (webLayout.middleTab == WebMiddleTab.ingredients) ...[
+                      ] else if (webLayout.middleTab ==
+                          WebMiddleTab.ingredients) ...[
                         IconButton.filledTonal(
                           icon: const Icon(Icons.add, size: 18),
                           tooltip: l10n.new_ingredient_button,
@@ -864,11 +918,20 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     ],
                   ),
                 ),
+                if (webLayout.middleTab == WebMiddleTab.recipes)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4, bottom: 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: ActiveGroupChip(isCompact: true),
+                    ),
+                  ),
                 if (webLayout.middleTab != WebMiddleTab.tools) ...[
                   const SizedBox(height: 8),
                   Builder(
                     builder: (context) {
-                      final isRecipes = webLayout.middleTab == WebMiddleTab.recipes;
+                      final isRecipes =
+                          webLayout.middleTab == WebMiddleTab.recipes;
                       final controller = isRecipes
                           ? _recipeSearchController
                           : _ingredientSearchController;
@@ -894,15 +957,21 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                             }
                             setState(() {});
                           },
-                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontSize: 13,
+                          ),
                           decoration: InputDecoration(
                             hintText: hintText,
                             hintStyle: TextStyle(
                               fontSize: 13,
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.6),
                             ),
                             prefixIcon: const Icon(Icons.search, size: 16),
-                            prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            prefixIconConstraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
                             suffixIcon: controller.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear, size: 14),
@@ -912,20 +981,30 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                       controller.clear();
                                       if (isRecipes) {
                                         ref
-                                            .read(recipeSearchQueryProvider.notifier)
+                                            .read(
+                                              recipeSearchQueryProvider
+                                                  .notifier,
+                                            )
                                             .setQuery('');
                                       } else {
                                         ref
-                                            .read(ingredientSearchQueryProvider.notifier)
+                                            .read(
+                                              ingredientSearchQueryProvider
+                                                  .notifier,
+                                            )
                                             .setQuery('');
                                       }
                                       setState(() {});
                                     },
                                   )
                                 : null,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 0,
+                            ),
                             filled: true,
-                            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                            fillColor: theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.3),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -936,13 +1015,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     },
                   ),
                 ],
+              ],
             ],
-          ],
+          ),
         ),
-        ),
-        Expanded(
-          child: listWidget,
-        ),
+        Expanded(child: listWidget),
       ],
     );
   }
@@ -958,7 +1035,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     if (webLayout.selectedRecipeId != null ||
         webLayout.rightPaneView == WebRightPaneView.newRecipe) {
       if (webLayout.selectedRecipeId != null) {
-        final isSample = isSampleManufacturingRecipe(webLayout.selectedRecipeId);
+        final isSample = isSampleManufacturingRecipe(
+          webLayout.selectedRecipeId,
+        );
         return RecipeEditorScreen(
           key: ValueKey('recipe_${webLayout.selectedRecipeId}'),
           recipeId: webLayout.selectedRecipeId,
@@ -977,8 +1056,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       return LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth >= 600) {
-            final double rightPanelWidth =
-                (constraints.maxWidth * 0.42).clamp(340.0, 420.0);
+            final double rightPanelWidth = (constraints.maxWidth * 0.42).clamp(
+              340.0,
+              420.0,
+            );
             return Row(
               children: [
                 Expanded(
@@ -991,7 +1072,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                       } else if (index == 3) {
                         webNotifier.setMiddleTab(WebMiddleTab.tools);
                       } else if (index == 4) {
-                        webNotifier.openSettingsDetail(WebRightPaneView.settingsGeneral);
+                        webNotifier.openSettingsDetail(
+                          WebRightPaneView.settingsGeneral,
+                        );
                       }
                     },
                   ),
@@ -999,13 +1082,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 VerticalDivider(
                   width: 1,
                   thickness: 1,
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.35,
+                  ),
                 ),
                 SizedBox(
                   width: rightPanelWidth,
                   child: AddIngredientScreen(
                     key: webLayout.selectedIngredient != null
-                        ? ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}')
+                        ? ValueKey(
+                            'ingredient_${webLayout.selectedIngredient!.ingredientPk}',
+                          )
                         : const ValueKey('ingredient_new'),
                     ingredient: webLayout.selectedIngredient,
                     onClose: () => webNotifier.closeIngredientDetail(),
@@ -1017,7 +1104,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
           return AddIngredientScreen(
             key: webLayout.selectedIngredient != null
-                ? ValueKey('ingredient_${webLayout.selectedIngredient!.ingredientPk}')
+                ? ValueKey(
+                    'ingredient_${webLayout.selectedIngredient!.ingredientPk}',
+                  )
                 : const ValueKey('ingredient_new'),
             ingredient: webLayout.selectedIngredient,
             onClose: () => webNotifier.closeIngredientDetail(),
@@ -1182,144 +1271,171 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 width: double.infinity,
                 height: pillHeight,
                 child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
                   ),
-                ],
-              ),
-              child: MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  textScaler: TextScaler.linear(
-                    settings.fontSizeScale.clamp(0.85, 1.05),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface.withValues(alpha: 0.94),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.35,
+                      ),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final itemWidth = constraints.maxWidth / items.length;
-                    return Stack(
-                      alignment: Alignment.centerLeft,
-                      children: [
-                        // Smooth sliding indicator pill
-                        AnimatedAlign(
-                          duration: animDuration,
-                          curve: Curves.easeOutCubic,
-                          alignment: Alignment(
-                            -1.0 + (_currentIndex * (2.0 / (items.length - 1))),
-                            0,
-                          ),
-                          child: Container(
-                            width: itemWidth - 6,
-                            height: indicatorHeight,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                        // Navigation item buttons
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: items.map((item) {
-                            final index = item.$1;
-                            final label = item.$2;
-                            final isSelected = _currentIndex == index;
-                            final icon = getNavBarIcon(index, isSelected, settings.iconStyle);
-
-                            return Expanded(
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    if (_currentIndex != index) {
-                                      setState(() {
-                                        _currentIndex = index;
-                                        _isSearching = false;
-                                        _showSearchContent = false;
-                                      });
-                                      if (settings.animationsEnabled) {
-                                        _pageController.animateToPage(
-                                          index,
-                                          duration: const Duration(milliseconds: 250),
-                                          curve: Curves.easeInOut,
-                                        );
-                                      } else {
-                                        _pageController.jumpToPage(index);
-                                      }
-                                    }
-                                  },
+                  child: MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      textScaler: TextScaler.linear(
+                        settings.fontSizeScale.clamp(0.85, 1.05),
+                      ),
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final itemWidth = constraints.maxWidth / items.length;
+                        return Stack(
+                          alignment: Alignment.centerLeft,
+                          children: [
+                            // Smooth sliding indicator pill
+                            AnimatedAlign(
+                              duration: animDuration,
+                              curve: Curves.easeOutCubic,
+                              alignment: Alignment(
+                                -1.0 +
+                                    (_currentIndex *
+                                        (2.0 / (items.length - 1))),
+                                0,
+                              ),
+                              child: Container(
+                                width: itemWidth - 6,
+                                height: indicatorHeight,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primaryContainer
+                                      .withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(12),
-                                  child: Padding(
-                                    padding: itemPadding,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        AnimatedScale(
-                                          scale: isSelected ? 1.08 : 1.0,
-                                          duration: animDuration,
-                                          curve: Curves.easeOut,
-                                          child: Icon(
-                                            icon,
-                                            size: iconSize,
-                                            color: isSelected
-                                                ? theme.colorScheme.onPrimaryContainer
-                                                : theme.colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                        if (settings.showNavBarLabels) ...[
-                                          const SizedBox(height: 2),
-                                          AnimatedDefaultTextStyle(
-                                            duration: animDuration,
-                                            style: TextStyle(
-                                              fontSize: fontSize,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.w700
-                                                  : FontWeight.w500,
-                                              letterSpacing: -0.3,
-                                              color: isSelected
-                                                  ? theme.colorScheme.onPrimaryContainer
-                                                  : theme.colorScheme.onSurfaceVariant,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            textAlign: TextAlign.center,
-                                            child: Text(label),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
                                 ),
                               ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    );
-                  },
+                            ),
+                            // Navigation item buttons
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: items.map((item) {
+                                final index = item.$1;
+                                final label = item.$2;
+                                final isSelected = _currentIndex == index;
+                                final icon = getNavBarIcon(
+                                  index,
+                                  isSelected,
+                                  settings.iconStyle,
+                                );
+
+                                return Expanded(
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        if (_currentIndex != index) {
+                                          setState(() {
+                                            _currentIndex = index;
+                                            _isSearching = false;
+                                            _showSearchContent = false;
+                                          });
+                                          if (settings.animationsEnabled) {
+                                            _pageController.animateToPage(
+                                              index,
+                                              duration: const Duration(
+                                                milliseconds: 250,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                            );
+                                          } else {
+                                            _pageController.jumpToPage(index);
+                                          }
+                                        }
+                                      },
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Padding(
+                                        padding: itemPadding,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            AnimatedScale(
+                                              scale: isSelected ? 1.08 : 1.0,
+                                              duration: animDuration,
+                                              curve: Curves.easeOut,
+                                              child: Icon(
+                                                icon,
+                                                size: iconSize,
+                                                color: isSelected
+                                                    ? theme
+                                                          .colorScheme
+                                                          .onPrimaryContainer
+                                                    : theme
+                                                          .colorScheme
+                                                          .onSurfaceVariant,
+                                              ),
+                                            ),
+                                            if (settings.showNavBarLabels) ...[
+                                              const SizedBox(height: 2),
+                                              AnimatedDefaultTextStyle(
+                                                duration: animDuration,
+                                                style: TextStyle(
+                                                  fontSize: fontSize,
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w500,
+                                                  letterSpacing: -0.3,
+                                                  color: isSelected
+                                                      ? theme
+                                                            .colorScheme
+                                                            .onPrimaryContainer
+                                                      : theme
+                                                            .colorScheme
+                                                            .onSurfaceVariant,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                                child: Text(label),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
-  Widget? _buildFab(BuildContext context, SettingsState settings, {bool isWide = false}) {
+  Widget? _buildFab(
+    BuildContext context,
+    SettingsState settings, {
+    bool isWide = false,
+  }) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.sizeOf(context).width;
@@ -1329,9 +1445,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final bool showFab = _currentIndex == 1 || _currentIndex == 2;
     if (!showFab && isWide) return null;
 
-    final anim400 = settings.animationsEnabled ? const Duration(milliseconds: 250) : Duration.zero;
-    final anim300 = settings.animationsEnabled ? const Duration(milliseconds: 200) : Duration.zero;
-    final anim200 = settings.animationsEnabled ? const Duration(milliseconds: 150) : Duration.zero;
+    final anim400 = settings.animationsEnabled
+        ? const Duration(milliseconds: 250)
+        : Duration.zero;
+    final anim300 = settings.animationsEnabled
+        ? const Duration(milliseconds: 200)
+        : Duration.zero;
+    final anim200 = settings.animationsEnabled
+        ? const Duration(milliseconds: 150)
+        : Duration.zero;
 
     final double searchWidth = isWide ? 320.0 : screenWidth - 48;
     final double containerWidth = isWide
@@ -1377,7 +1499,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                     theme.colorScheme.secondaryContainer,
                                   )
                                 : theme.colorScheme.secondaryContainer),
-                      borderRadius: BorderRadius.circular(_isSearching ? 20 : 12),
+                      borderRadius: BorderRadius.circular(
+                        _isSearching ? 20 : 12,
+                      ),
                       border: Border.all(
                         color: theme.colorScheme.outlineVariant.withValues(
                           alpha: _isSearching ? 0.4 : 0.1,
@@ -1386,7 +1510,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                       boxShadow: const [],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(_isSearching ? 20 : 12),
+                      borderRadius: BorderRadius.circular(
+                        _isSearching ? 20 : 12,
+                      ),
                       child: BackdropFilter(
                         filter: ImageFilter.blur(
                           sigmaX: _isSearching ? 8 : 0,
@@ -1396,222 +1522,264 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                           duration: anim200,
                           child: _isSearching
                               ? AnimatedOpacity(
-                              duration: anim200,
-                              opacity: _showSearchContent ? 1.0 : 0.0,
-                              child: Builder(
-                                builder: (context) {
-                                  final isRecipes = _currentIndex == 1;
-                                  final controller = isRecipes
-                                      ? _recipeSearchController
-                                      : _ingredientSearchController;
-                                  final hintText = isRecipes
-                                      ? l10n.search_recipes_hint
-                                      : l10n.search_ingredients_hint;
+                                  duration: anim200,
+                                  opacity: _showSearchContent ? 1.0 : 0.0,
+                                  child: Builder(
+                                    builder: (context) {
+                                      final isRecipes = _currentIndex == 1;
+                                      final controller = isRecipes
+                                          ? _recipeSearchController
+                                          : _ingredientSearchController;
+                                      final hintText = isRecipes
+                                          ? l10n.search_recipes_hint
+                                          : l10n.search_ingredients_hint;
 
-                                  return TextField(
-                                    key: ValueKey('search_field_$_currentIndex'),
-                                    controller: controller,
-                                    autofocus: true,
-                                    textCapitalization: TextCapitalization.sentences,
-                                    onChanged: (value) {
-                                      if (isRecipes) {
-                                        ref
-                                            .read(recipeSearchQueryProvider.notifier)
-                                            .setQuery(value);
-                                      } else {
-                                        ref
-                                            .read(ingredientSearchQueryProvider.notifier)
-                                            .setQuery(value);
-                                      }
-                                    },
-                                    style: theme.textTheme.bodyLarge,
-                                    textAlignVertical: TextAlignVertical.center,
-                                    decoration: InputDecoration(
-                                      hintText: hintText,
-                                      hintStyle: theme.textTheme.bodyLarge
-                                          ?.copyWith(
-                                            color: theme.colorScheme.onSurface
-                                                .withValues(alpha: 0.5),
-                                          ),
-                                      border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.only(
-                                        left: 16,
-                                        right: 8,
-                                        bottom: 4,
-                                      ),
-                                      prefixIconConstraints: const BoxConstraints(
-                                        minWidth: 40,
-                                      ),
-                                      prefixIcon: Icon(
-                                        Icons.search,
-                                        size: 18,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                      suffixIconConstraints: const BoxConstraints(
-                                        minWidth: 40,
-                                      ),
-                                      suffixIcon: IconButton(
-                                        padding: EdgeInsets.zero,
-                                        icon: const Icon(Icons.close, size: 18),
-                                        onPressed: () {
-                                          setState(() {
-                                            _isSearching = false;
-                                            _showSearchContent = false;
-                                            _isSearchHovered = false;
-                                            controller.clear();
-                                            if (isRecipes) {
-                                              ref
-                                                  .read(
-                                                    recipeSearchQueryProvider.notifier,
-                                                  )
-                                                  .setQuery('');
-                                            } else {
-                                              ref
-                                                  .read(
-                                                    ingredientSearchQueryProvider.notifier,
-                                                  )
-                                                  .setQuery('');
-                                            }
-                                          });
+                                      return TextField(
+                                        key: ValueKey(
+                                          'search_field_$_currentIndex',
+                                        ),
+                                        controller: controller,
+                                        autofocus: true,
+                                        textCapitalization:
+                                            TextCapitalization.sentences,
+                                        onChanged: (value) {
+                                          if (isRecipes) {
+                                            ref
+                                                .read(
+                                                  recipeSearchQueryProvider
+                                                      .notifier,
+                                                )
+                                                .setQuery(value);
+                                          } else {
+                                            ref
+                                                .read(
+                                                  ingredientSearchQueryProvider
+                                                      .notifier,
+                                                )
+                                                .setQuery(value);
+                                          }
                                         },
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              )
-                            : InkWell(
-                                key: const ValueKey('search_button'),
-                                onTap: () {
-                                  setState(() {
-                                    _isSearching = true;
-                                    _isSearchHovered = false;
-                                  });
-                                  Future.delayed(
-                                    const Duration(milliseconds: 360),
-                                    () {
-                                      if (mounted && _isSearching) {
-                                        setState(
-                                          () => _showSearchContent = true,
-                                        );
-                                      }
+                                        style: theme.textTheme.bodyLarge,
+                                        textAlignVertical:
+                                            TextAlignVertical.center,
+                                        decoration: InputDecoration(
+                                          hintText: hintText,
+                                          hintStyle: theme.textTheme.bodyLarge
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.5),
+                                              ),
+                                          border: InputBorder.none,
+                                          contentPadding: const EdgeInsets.only(
+                                            left: 16,
+                                            right: 8,
+                                            bottom: 4,
+                                          ),
+                                          prefixIconConstraints:
+                                              const BoxConstraints(
+                                                minWidth: 40,
+                                              ),
+                                          prefixIcon: Icon(
+                                            Icons.search,
+                                            size: 18,
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                          suffixIconConstraints:
+                                              const BoxConstraints(
+                                                minWidth: 40,
+                                              ),
+                                          suffixIcon: IconButton(
+                                            padding: EdgeInsets.zero,
+                                            icon: const Icon(
+                                              Icons.close,
+                                              size: 18,
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                _isSearching = false;
+                                                _showSearchContent = false;
+                                                _isSearchHovered = false;
+                                                controller.clear();
+                                                if (isRecipes) {
+                                                  ref
+                                                      .read(
+                                                        recipeSearchQueryProvider
+                                                            .notifier,
+                                                      )
+                                                      .setQuery('');
+                                                } else {
+                                                  ref
+                                                      .read(
+                                                        ingredientSearchQueryProvider
+                                                            .notifier,
+                                                      )
+                                                      .setQuery('');
+                                                }
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      );
                                     },
-                                  );
-                                },
-                                onHover: (hovering) =>
-                                    setState(() => _isSearchHovered = hovering),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.search,
-                                    size: 20,
-                                    color:
-                                        theme.colorScheme.onSecondaryContainer,
+                                  ),
+                                )
+                              : InkWell(
+                                  key: const ValueKey('search_button'),
+                                  onTap: () {
+                                    setState(() {
+                                      _isSearching = true;
+                                      _isSearchHovered = false;
+                                    });
+                                    Future.delayed(
+                                      const Duration(milliseconds: 360),
+                                      () {
+                                        if (mounted && _isSearching) {
+                                          setState(
+                                            () => _showSearchContent = true,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                  onHover: (hovering) => setState(
+                                    () => _isSearchHovered = hovering,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.search,
+                                      size: 20,
+                                      color: theme
+                                          .colorScheme
+                                          .onSecondaryContainer,
+                                    ),
                                   ),
                                 ),
-                              ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
 
-            // add button - jumps up when searching, stays at the right/left
-            AnimatedPositioned(
-              duration: anim400,
-              curve: Curves.fastOutSlowIn,
-              right: isLeft ? null : 0,
-              left: isLeft ? 0 : null,
-              bottom: _isSearching ? 44 + 12 : 0, // moves up above search bar
-              child: AnimatedScale(
-                scale: showFab ? 1.0 : 0.0,
-                duration: anim300,
-                curve: Curves.easeInOut,
-                child: MouseRegion(
-                  onEnter: (_) => setState(() => _isAddHovered = true),
-                  onExit: (_) => setState(() => _isAddHovered = false),
-                  child: FloatingActionButton(
-                    heroTag: _currentIndex == 2
-                        ? 'add_ingredient_fab'
-                        : 'add_recipe_fab',
-                    elevation: 0,
-                    hoverElevation: 0,
-                    focusElevation: 0,
-                    highlightElevation: 0,
-                    backgroundColor: _isAddHovered
-                        ? Color.alphaBlend(
-                            theme.colorScheme.onSurface.withValues(alpha: 0.08),
-                            theme.colorScheme.secondaryContainer,
-                          )
-                        : theme.colorScheme.secondaryContainer,
-                    onPressed: () {
-                      if (_currentIndex == 1) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const RecipeEditorScreen(),
-                          ),
-                        );
-                      } else if (_currentIndex == 2) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const AddIngredientScreen(),
-                          ),
-                        );
-                      }
-                    },
-                    child: Icon(
-                      Icons.add,
-                      color: theme.colorScheme.onSecondaryContainer,
+              // add button - jumps up when searching, stays at the right/left
+              AnimatedPositioned(
+                duration: anim400,
+                curve: Curves.fastOutSlowIn,
+                right: isLeft ? null : 0,
+                left: isLeft ? 0 : null,
+                bottom: _isSearching ? 44 + 12 : 0, // moves up above search bar
+                child: AnimatedScale(
+                  scale: showFab ? 1.0 : 0.0,
+                  duration: anim300,
+                  curve: Curves.easeInOut,
+                  child: MouseRegion(
+                    onEnter: (_) => setState(() => _isAddHovered = true),
+                    onExit: (_) => setState(() => _isAddHovered = false),
+                    child: FloatingActionButton(
+                      heroTag: _currentIndex == 2
+                          ? 'add_ingredient_fab'
+                          : 'add_recipe_fab',
+                      elevation: 0,
+                      hoverElevation: 0,
+                      focusElevation: 0,
+                      highlightElevation: 0,
+                      backgroundColor: _isAddHovered
+                          ? Color.alphaBlend(
+                              theme.colorScheme.onSurface.withValues(
+                                alpha: 0.08,
+                              ),
+                              theme.colorScheme.secondaryContainer,
+                            )
+                          : theme.colorScheme.secondaryContainer,
+                      onPressed: () {
+                        if (_currentIndex == 1) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const RecipeEditorScreen(),
+                            ),
+                          );
+                        } else if (_currentIndex == 2) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const AddIngredientScreen(),
+                            ),
+                          );
+                        }
+                      },
+                      child: Icon(
+                        Icons.add,
+                        color: theme.colorScheme.onSecondaryContainer,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
-}
-
 
 IconData getNavBarIcon(int index, bool isSelected, String iconStyle) {
   if (isSelected) {
     switch (index) {
-      case 0: return Icons.home;
-      case 1: return Icons.menu_book;
-      case 2: return Icons.inventory_2;
-      case 3: return Icons.handyman;
-      case 4: return Icons.settings;
+      case 0:
+        return Icons.home;
+      case 1:
+        return Icons.menu_book;
+      case 2:
+        return Icons.inventory_2;
+      case 3:
+        return Icons.handyman;
+      case 4:
+        return Icons.settings;
     }
   }
-  
+
   if (iconStyle == 'rounded') {
     switch (index) {
-      case 0: return Icons.home_rounded;
-      case 1: return Icons.menu_book_rounded;
-      case 2: return Icons.inventory_2_rounded;
-      case 3: return Icons.handyman_rounded;
-      case 4: return Icons.settings_rounded;
+      case 0:
+        return Icons.home_rounded;
+      case 1:
+        return Icons.menu_book_rounded;
+      case 2:
+        return Icons.inventory_2_rounded;
+      case 3:
+        return Icons.handyman_rounded;
+      case 4:
+        return Icons.settings_rounded;
     }
   } else if (iconStyle == 'sharp') {
     switch (index) {
-      case 0: return Icons.home_sharp;
-      case 1: return Icons.menu_book_sharp;
-      case 2: return Icons.inventory_2_sharp;
-      case 3: return Icons.handyman_sharp;
-      case 4: return Icons.settings_sharp;
+      case 0:
+        return Icons.home_sharp;
+      case 1:
+        return Icons.menu_book_sharp;
+      case 2:
+        return Icons.inventory_2_sharp;
+      case 3:
+        return Icons.handyman_sharp;
+      case 4:
+        return Icons.settings_sharp;
     }
   } else {
     // outlined
     switch (index) {
-      case 0: return Icons.home_outlined;
-      case 1: return Icons.menu_book_outlined;
-      case 2: return Icons.inventory_2_outlined;
-      case 3: return Icons.handyman_outlined;
-      case 4: return Icons.settings_outlined;
+      case 0:
+        return Icons.home_outlined;
+      case 1:
+        return Icons.menu_book_outlined;
+      case 2:
+        return Icons.inventory_2_outlined;
+      case 3:
+        return Icons.handyman_outlined;
+      case 4:
+        return Icons.settings_outlined;
     }
   }
   return Icons.home_outlined;
