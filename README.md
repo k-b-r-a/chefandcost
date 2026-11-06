@@ -1,4 +1,4 @@
-<h1 align="center" style="font-size:28px; line-height:1"><b>Recipetools</b></h1>
+<h1 align="center" style="font-size:28px; line-height:1"><b>Chef&Cost</b></h1>
 
 <div align="center">
   <a href="">

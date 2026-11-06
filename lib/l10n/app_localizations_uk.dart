@@ -1,0 +1,2015 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Ukrainian (`uk`).
+class AppLocalizationsUk extends AppLocalizations {
+  AppLocalizationsUk([String locale = 'uk']) : super(locale);
+
+  @override
+  String get unit_fluid_ounces => 'Fluid ounces (US)';
+
+  @override
+  String get ingredient_deleted_label => 'Deleted';
+
+  @override
+  String get home_title => 'Home';
+
+  @override
+  String get home_greeting_morning => 'Good morning, Chef';
+
+  @override
+  String get home_greeting_afternoon => 'Good afternoon, Chef';
+
+  @override
+  String get home_greeting_evening => 'Good evening, Chef';
+
+  @override
+  String get home_quick_actions => 'Quick Actions';
+
+  @override
+  String get home_recent_recipes => 'Recent Recipes';
+
+  @override
+  String get home_view_all => 'View all';
+
+  @override
+  String get home_active_timers => 'Active Timers';
+
+  @override
+  String get home_kitchen_tools => 'Kitchen Tools';
+
+  @override
+  String get home_stats_recipes => 'Recipes';
+
+  @override
+  String get home_stats_ingredients => 'Ingredients';
+
+  @override
+  String get home_stats_avg_margin => 'Avg. Margin';
+
+  @override
+  String get recipes_title => 'Recipes';
+
+  @override
+  String get new_recipe_title => 'New Recipe';
+
+  @override
+  String get recipe_title => 'Recipe';
+
+  @override
+  String get ingredients_title => 'Ingredients';
+
+  @override
+  String get units_title => 'Units';
+
+  @override
+  String get recipe_name => 'Recipe Name';
+
+  @override
+  String get recipe_description => 'Description';
+
+  @override
+  String get recipe_description_hint => 'Short description of the recipe...';
+
+  @override
+  String get recipe_yield => 'Default Yield';
+
+  @override
+  String get recipe_yield_name => 'Yield Unit (e.g. cookies)';
+
+  @override
+  String get target_profit_margin => 'Target Profit Margin';
+
+  @override
+  String get target_price_portion => 'Target Price per Portion';
+
+  @override
+  String get fixed_overhead => 'Fixed Overhead Cost';
+
+  @override
+  String get total_cost => 'Total Cost';
+
+  @override
+  String get profit_per_recipe => 'Profit per Recipe';
+
+  @override
+  String get ingredient_name => 'Ingredient Name';
+
+  @override
+  String get ingredient_cost => 'Cost';
+
+  @override
+  String get ingredient_quantity => 'Quantity';
+
+  @override
+  String get unit_grams => 'Grams';
+
+  @override
+  String get unit_kilograms => 'Kilograms';
+
+  @override
+  String get unit_milliliters => 'Milliliters';
+
+  @override
+  String get unit_liters => 'Liters';
+
+  @override
+  String get unit_pieces => 'Pieces';
+
+  @override
+  String get unit_spoonfuls => 'Spoonfuls';
+
+  @override
+  String get unit_tablespoons => 'Tablespoons';
+
+  @override
+  String get unit_teaspoons => 'Teaspoons';
+
+  @override
+  String get unit_cups => 'Cups';
+
+  @override
+  String get unit_ounces => 'Ounces';
+
+  @override
+  String get step_instruction => 'Instruction';
+
+  @override
+  String get step_instruction_hint => 'Describe the step...';
+
+  @override
+  String get save_button => 'Save';
+
+  @override
+  String get add_button => 'Add';
+
+  @override
+  String get edit_button => 'Edit';
+
+  @override
+  String get delete_button => 'Delete';
+
+  @override
+  String get duplicate_button => 'Duplicate';
+
+  @override
+  String get delete_recipe_title => 'Delete Recipe';
+
+  @override
+  String get delete_recipe_message =>
+      'Are you sure you want to delete this recipe? This cannot be undone.';
+
+  @override
+  String get discard_button => 'Discard';
+
+  @override
+  String get cancel_button => 'Cancel';
+
+  @override
+  String get unsaved_changes_title => 'Unsaved changes';
+
+  @override
+  String get unsaved_changes_body =>
+      'Do you want to save or discard this recipe?';
+
+  @override
+  String get new_ingredient_button => 'New Ingredient';
+
+  @override
+  String get config_button => 'Settings';
+
+  @override
+  String get recipe_steps => 'Steps';
+
+  @override
+  String get tools_title => 'Tools';
+
+  @override
+  String get no_steps => 'No steps added yet.';
+
+  @override
+  String get est_revenue => 'Est. Revenue';
+
+  @override
+  String get financial_targets => 'Financial Targets';
+
+  @override
+  String get financial_margin => 'Total Margin';
+
+  @override
+  String get financial_price => 'Price per Portion';
+
+  @override
+  String get no_ingredients => 'No ingredients added yet.';
+
+  @override
+  String get unit_portions => 'Portions';
+
+  @override
+  String get cost_per_portion => 'Cost per Portion';
+
+  @override
+  String get profit_per_portion => 'Profit per Portion';
+
+  @override
+  String get total_profit => 'Total Profit';
+
+  @override
+  String get total_sale => 'Total Sale';
+
+  @override
+  String get sale_per_portion => 'Sale per Portion';
+
+  @override
+  String get validation_required => 'Required';
+
+  @override
+  String get profit_margin_helper => 'Enter whole numbers (e.g., 35 for 35%)';
+
+  @override
+  String get assign_ingredients_tooltip => 'Assign ingredients to this step';
+
+  @override
+  String get select_ingredient_recipe_title => 'Select Ingredient';
+
+  @override
+  String assign_to_step_title(int number) {
+    return 'Assign to Step $number';
+  }
+
+  @override
+  String get mention_ingredient_title => 'Mention Ingredient';
+
+  @override
+  String get add_ingredients_first_error =>
+      'Add ingredients to the recipe first';
+
+  @override
+  String get assign_step_ingredients_first_error =>
+      'Assign ingredients to the step header (+)';
+
+  @override
+  String get done_button => 'Done';
+
+  @override
+  String get add_ingredient_title => 'Add Ingredient';
+
+  @override
+  String get edit_ingredient_title => 'Edit Ingredient';
+
+  @override
+  String get select_unit => 'Select Unit';
+
+  @override
+  String ingredient_price_per_quantity(
+    String price,
+    String quantity,
+    String unit,
+  ) {
+    return '$price per $quantity $unit';
+  }
+
+  @override
+  String get search_hint => 'Search...';
+
+  @override
+  String get search_ingredients_hint => 'Search ingredients...';
+
+  @override
+  String get no_ingredients_found => 'No ingredients found.';
+
+  @override
+  String get no_recipes_found => 'No recipes found.';
+
+  @override
+  String get no_recipes_in_space =>
+      'No recipes assigned to this space yet. Tap + to create one, or edit an existing recipe to add it here.';
+
+  @override
+  String get related_ingredients => 'Related';
+
+  @override
+  String get no_similar_ingredients => 'No similar ingredients';
+
+  @override
+  String get merge_button => 'Merge';
+
+  @override
+  String get compare_button => 'Compare';
+
+  @override
+  String get merge_confirm_title => 'Merge Ingredients?';
+
+  @override
+  String merge_confirm_message(String oldName, String newName) {
+    return 'This will replace all references to $oldName with $newName in your recipes. This action cannot be undone.';
+  }
+
+  @override
+  String get price_comparison => 'Price Comparison';
+
+  @override
+  String get error_select_unit => 'Please select a unit';
+
+  @override
+  String error_prefix(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get short_cost => 'COST';
+
+  @override
+  String get short_profit => 'PROFIT';
+
+  @override
+  String get short_price_portion => 'P/PORTION';
+
+  @override
+  String get per_unit => 'per';
+
+  @override
+  String get error_text => 'Error';
+
+  @override
+  String get scale_recipe_tooltip => 'Scale recipe (temporary view)';
+
+  @override
+  String get temporary_view_title => 'Temporary View';
+
+  @override
+  String temporary_view_banner(String multiplier) {
+    return 'This is a temporary view scaled by ${multiplier}x. Changes will not be saved.';
+  }
+
+  @override
+  String get scale_button => 'Scale';
+
+  @override
+  String get rule_of_three_title => 'Rule of Three';
+
+  @override
+  String get rule_of_three_desc =>
+      'Calculate proportions easily for ingredient quantities and recipe yields.';
+
+  @override
+  String get rule_of_three_if => 'If';
+
+  @override
+  String get rule_of_three_corresponds => 'corresponds to';
+
+  @override
+  String get rule_of_three_then => 'Then';
+
+  @override
+  String get rule_of_three_will_be => 'will be';
+
+  @override
+  String get rule_of_three_result => 'Result';
+
+  @override
+  String get rule_of_three_clear => 'Clear';
+
+  @override
+  String get rule_of_three_example =>
+      'Example: If 100g of flour makes 10 portions, then to make 25 portions you need 250g of flour.';
+
+  @override
+  String get unit_converter_title => 'Unit Converter';
+
+  @override
+  String get unit_converter_desc =>
+      'Convert cooking units for mass, volume, and quantities easily.';
+
+  @override
+  String get unit_converter_category => 'Category';
+
+  @override
+  String get unit_converter_from => 'From';
+
+  @override
+  String get unit_converter_to => 'To';
+
+  @override
+  String get unit_converter_value => 'Value';
+
+  @override
+  String get unit_converter_result => 'Result';
+
+  @override
+  String get unit_category_mass => 'Weight / Mass';
+
+  @override
+  String get unit_category_volume => 'Volume';
+
+  @override
+  String get unit_category_count => 'Count / Quantity';
+
+  @override
+  String get settings_general => 'General Settings';
+
+  @override
+  String get settings_reset_db => 'Reset Database';
+
+  @override
+  String get settings_reset_db_desc =>
+      'Delete all recipes and ingredients. This cannot be undone.';
+
+  @override
+  String get settings_reset_db_confirm => 'Reset Database?';
+
+  @override
+  String get settings_reset_db_warning =>
+      'Are you sure you want to delete all recipes, ingredients, and steps? This action is permanent.';
+
+  @override
+  String get settings_reset_db_success => 'Database reset successfully.';
+
+  @override
+  String get settings_theme_title => 'Theme & Style';
+
+  @override
+  String get settings_theme_mode => 'Theme Mode';
+
+  @override
+  String get settings_theme_color => 'Accent Color';
+
+  @override
+  String get settings_theme_system => 'System';
+
+  @override
+  String get settings_theme_light => 'Light';
+
+  @override
+  String get settings_theme_dark => 'Dark';
+
+  @override
+  String get settings_locale_title => 'Localization & Formatting';
+
+  @override
+  String get settings_locale_lang => 'Language';
+
+  @override
+  String get settings_locale_es => 'Spanish';
+
+  @override
+  String get settings_locale_en => 'English';
+
+  @override
+  String get settings_format_decimals => 'Decimal Places';
+
+  @override
+  String get settings_about => 'About';
+
+  @override
+  String get settings_version => 'Version';
+
+  @override
+  String get settings_font_size => 'Font Size';
+
+  @override
+  String get settings_font_size_small => 'Small';
+
+  @override
+  String get settings_font_size_medium => 'Medium';
+
+  @override
+  String get settings_font_size_large => 'Large';
+
+  @override
+  String get settings_font_size_xlarge => 'X-Large';
+
+  @override
+  String get settings_styles_title => 'Styles';
+
+  @override
+  String get settings_about_app_title => 'About App';
+
+  @override
+  String get settings_haptic_feedback => 'Haptic Feedback';
+
+  @override
+  String get settings_haptic_feedback_desc =>
+      'Enable system vibrations on buttons and interactions';
+
+  @override
+  String get settings_styles_m3 => 'Use Material 3';
+
+  @override
+  String get settings_styles_m3_desc =>
+      'Enable modern Material 3 styling and components';
+
+  @override
+  String get settings_styles_icon_style => 'Icon Style';
+
+  @override
+  String get settings_styles_icon_style_outlined => 'Outlined';
+
+  @override
+  String get settings_styles_icon_style_rounded => 'Rounded';
+
+  @override
+  String get settings_styles_icon_style_sharp => 'Sharp';
+
+  @override
+  String get settings_styles_number_colors => 'Colorize Numbers';
+
+  @override
+  String get settings_styles_number_colors_desc =>
+      'Use semantic colors for financial metrics';
+
+  @override
+  String get settings_styles_animations => 'Animations';
+
+  @override
+  String get settings_styles_animations_desc =>
+      'Enable screen transitions and micro-animations';
+
+  @override
+  String get settings_styles_scroll => 'Scroll Behavior';
+
+  @override
+  String get settings_styles_scroll_default => 'Default';
+
+  @override
+  String get settings_styles_scroll_simple => 'Simple (Clamp)';
+
+  @override
+  String get settings_styles_scroll_stretch => 'Stretch';
+
+  @override
+  String get settings_styles_scroll_bounce => 'Bounce';
+
+  @override
+  String get settings_styles_left_hand => 'Left-Handed Mode';
+
+  @override
+  String get settings_styles_left_hand_desc =>
+      'Mirror controls for easier left-hand use';
+
+  @override
+  String get settings_styles_high_contrast => 'High Contrast Text';
+
+  @override
+  String get settings_styles_high_contrast_desc =>
+      'Force pure black/white text for readability';
+
+  @override
+  String get settings_styles_font => 'Font Family';
+
+  @override
+  String get settings_styles_font_system => 'Default';
+
+  @override
+  String get settings_styles_font_sans => 'Metropolis';
+
+  @override
+  String get settings_styles_font_serif => 'Nunito';
+
+  @override
+  String get settings_styles_font_mono => 'Inconsolata Monospace';
+
+  @override
+  String get settings_styles_font_amatic => 'Amatic SC';
+
+  @override
+  String get settings_styles_font_butler => 'Butler';
+
+  @override
+  String get settings_styles_font_caveat => 'Caveat';
+
+  @override
+  String get settings_styles_show_nav_labels => 'Show Navigation Labels';
+
+  @override
+  String get settings_styles_show_nav_labels_desc =>
+      'Display text labels below the navigation bar icons';
+
+  @override
+  String get settings_styles_navbar_size => 'Navigation Bar Size';
+
+  @override
+  String get settings_styles_navbar_size_desc =>
+      'Adjust the height and icon scale of the navigation bar';
+
+  @override
+  String get settings_styles_navbar_size_compact => 'Compact';
+
+  @override
+  String get settings_styles_navbar_size_normal => 'Normal';
+
+  @override
+  String get settings_styles_navbar_size_large => 'Large';
+
+  @override
+  String get settings_format_mass_unit => 'Default Mass Unit';
+
+  @override
+  String get settings_format_volume_unit => 'Default Volume Unit';
+
+  @override
+  String get settings_format_decimals_1 => '1 Place';
+
+  @override
+  String get settings_format_decimals_2 => '2 Places';
+
+  @override
+  String get settings_format_decimals_3 => '3 Places';
+
+  @override
+  String get settings_format_decimals_4 => '4 Places';
+
+  @override
+  String get settings_format_mass_g => 'Grams (g)';
+
+  @override
+  String get settings_format_mass_kg => 'Kilograms (kg)';
+
+  @override
+  String get settings_format_volume_ml => 'Milliliters (ml)';
+
+  @override
+  String get settings_format_volume_l => 'Liters (l)';
+
+  @override
+  String get settings_format_currency => 'Currency Symbol';
+
+  @override
+  String get cloud_sync_title => 'Cloud Sync';
+
+  @override
+  String get cloud_sync_desc =>
+      'Back up and restore your recipes and ingredients securely using your Google Drive AppData folder.';
+
+  @override
+  String get cloud_sync_connected => 'Connected to Google Drive';
+
+  @override
+  String get cloud_sync_disconnected => 'Disconnected';
+
+  @override
+  String get cloud_sync_connect_btn => 'Sign in with Google';
+
+  @override
+  String get cloud_sync_disconnect_btn => 'Sign Out';
+
+  @override
+  String get cloud_sync_backup_btn => 'Back Up Now';
+
+  @override
+  String get cloud_sync_backups_header => 'Backups History';
+
+  @override
+  String get cloud_sync_no_backups => 'No backups found.';
+
+  @override
+  String get cloud_sync_backup_confirm_title => 'Create Backup';
+
+  @override
+  String get cloud_sync_backup_confirm_desc =>
+      'This will upload a copy of your current database to Google Drive.';
+
+  @override
+  String get cloud_sync_restore_confirm_title => 'Restore Backup';
+
+  @override
+  String get cloud_sync_restore_confirm_desc =>
+      'This will overwrite all current recipes, steps, and ingredients with the selected backup. This action cannot be undone.';
+
+  @override
+  String get cloud_sync_delete_confirm_title => 'Delete Backup';
+
+  @override
+  String get cloud_sync_delete_confirm_desc =>
+      'Are you sure you want to permanently delete this backup from Google Drive?';
+
+  @override
+  String get cloud_sync_sandbox_badge => 'Local Backup';
+
+  @override
+  String get cloud_sync_sandbox_desc =>
+      'Data is backed up to a local directory on your device.';
+
+  @override
+  String get cloud_sync_sync_btn => 'Two-Way Cloud Sync';
+
+  @override
+  String get cloud_sync_sync_confirm_title => 'Two-Way Cloud Sync';
+
+  @override
+  String get cloud_sync_sync_confirm_desc =>
+      'This will merge your local recipes and ingredients with your cloud backup. Conflicts are resolved using last-write-wins based on modification timestamps. Local records and newer edits will not be wiped.';
+
+  @override
+  String get cloud_sync_sync_with_backup_confirm_desc =>
+      'This will merge your local recipes and ingredients with this backup. Conflicts are resolved using last-write-wins based on modification timestamps. Local records and newer edits will not be wiped.';
+
+  @override
+  String get cloud_sync_merge_tooltip => 'Merge with local database';
+
+  @override
+  String get timers_title => 'Kitchen Timers';
+
+  @override
+  String get timers_desc =>
+      'Run multiple cooking and baking timers simultaneously in the background.';
+
+  @override
+  String get timers_add_title => 'New Timer';
+
+  @override
+  String get timers_timer_name => 'Timer Name';
+
+  @override
+  String get timers_duration => 'Duration';
+
+  @override
+  String get timers_no_timers => 'No active timers.';
+
+  @override
+  String get timers_no_timers_desc => 'Create a new timer to start cooking!';
+
+  @override
+  String get timers_finished => 'Timer Finished!';
+
+  @override
+  String get filter_all => 'All';
+
+  @override
+  String get filter_solids => 'Dry';
+
+  @override
+  String get filter_liquids => 'Liquids';
+
+  @override
+  String get filter_pieces => 'Pieces';
+
+  @override
+  String get filter_tooltip => 'Filter ingredients';
+
+  @override
+  String get sort_by => 'Sort:';
+
+  @override
+  String get sort_default => 'Default';
+
+  @override
+  String get sort_type => 'Type (Solid / Liquid / Pieces)';
+
+  @override
+  String get sort_alphabetical => 'Alphabetical';
+
+  @override
+  String get sort_solids => 'Solids';
+
+  @override
+  String get sort_liquids => 'Liquids';
+
+  @override
+  String get sort_pieces => 'Pieces';
+
+  @override
+  String get staged_ingredients_title => 'Save selected ingredients?';
+
+  @override
+  String get staged_ingredients_body =>
+      'You have staged ingredients. Do you want to add them to the recipe or discard changes?';
+
+  @override
+  String add_custom_ingredient(String name) {
+    return 'Add \'$name\'';
+  }
+
+  @override
+  String get total_weight => 'Total Weight';
+
+  @override
+  String get total_volume => 'Total Volume';
+
+  @override
+  String get scale_by_ingredient => 'Scale by Ingredient';
+
+  @override
+  String get scale_by_ingredient_desc =>
+      'Adjust recipe quantities based on target amount of an ingredient';
+
+  @override
+  String get target_quantity => 'Target Quantity';
+
+  @override
+  String get current_quantity => 'Current Quantity';
+
+  @override
+  String scale_factor_label(String factor) {
+    return 'Scale Factor: ${factor}x';
+  }
+
+  @override
+  String get scale_preview_button => 'Preview Scaling';
+
+  @override
+  String get select_ingredient => 'Select Ingredient';
+
+  @override
+  String scale_temporary_title(String multiplier) {
+    return 'Temporary Scaled View (${multiplier}x)';
+  }
+
+  @override
+  String get scale_temporary_notice =>
+      'This scaling is temporary and does not change your real recipe in the database.';
+
+  @override
+  String get scale_revert_button => 'Revert to Original';
+
+  @override
+  String get scale_save_as_real_button => 'Save as Real Recipe';
+
+  @override
+  String get scale_reverted_toast => 'Recipe reverted to original quantities';
+
+  @override
+  String get scale_saved_toast => 'Scaled quantities saved to the real recipe';
+
+  @override
+  String get brand_home_tooltip => 'Chef&Cost - Home';
+
+  @override
+  String get back_to_home_tooltip => 'Back to Home';
+
+  @override
+  String get back_button => 'Back';
+
+  @override
+  String get close_button => 'Close';
+
+  @override
+  String get apply_button => 'Apply';
+
+  @override
+  String get save_changes_button => 'Save Changes';
+
+  @override
+  String get view_button => 'View';
+
+  @override
+  String get sign_in_button => 'Sign In';
+
+  @override
+  String get toggle_theme_tooltip => 'Toggle Theme';
+
+  @override
+  String get search_recipes_hint => 'Search recipes...';
+
+  @override
+  String sample_data_loaded_snackbar(int recipes, int ingredients) {
+    return 'Sample data loaded: $recipes recipes and $ingredients ingredients';
+  }
+
+  @override
+  String get load_sample_data => 'Load sample data';
+
+  @override
+  String get timer_finished_banner => 'Timer Finished!';
+
+  @override
+  String timer_finished_at(String time) {
+    return 'Finished at $time';
+  }
+
+  @override
+  String get delete_ingredient_title => 'Delete Ingredient?';
+
+  @override
+  String delete_ingredient_confirm(String name) {
+    return 'Are you sure you want to delete \"$name\" from the database?';
+  }
+
+  @override
+  String get unsaved_changes_ingredient_body =>
+      'Do you want to save or discard changes to this ingredient?';
+
+  @override
+  String get recipe_editor_add_ingredients_to_scale =>
+      'Add ingredients to recipe before scaling';
+
+  @override
+  String get recipe_editor_please_enter_name => 'Please enter a recipe name';
+
+  @override
+  String get recipe_duplicated_success => 'Recipe duplicated successfully';
+
+  @override
+  String get apply_to_recipe_button => 'Apply to Recipe';
+
+  @override
+  String recipe_duplicate_name(String name, String copyLabel) {
+    return '$name ($copyLabel)';
+  }
+
+  @override
+  String get financial_summary_title => 'Financial Summary';
+
+  @override
+  String get financial_costs_section => 'Costs';
+
+  @override
+  String get financial_margin_pricing_section => 'Margin & Pricing';
+
+  @override
+  String get financial_results_section => 'Results';
+
+  @override
+  String get financial_total_revenue => 'Total Gross Revenue';
+
+  @override
+  String get recipe_stats_section => 'Recipe Stats';
+
+  @override
+  String get hide_financial_summary => 'Hide Financial Summary';
+
+  @override
+  String get show_financial_summary => 'Show Financial Summary';
+
+  @override
+  String get recipe_editor_live => 'Live';
+
+  @override
+  String get recipe_editor_other_category => 'Other';
+
+  @override
+  String get recipe_timers_section => 'Recipe Timers';
+
+  @override
+  String get recipe_timer_single => 'Timer';
+
+  @override
+  String get recipe_timers_title => 'Timers';
+
+  @override
+  String get recipe_timer_add_badge => '+ Timer';
+
+  @override
+  String get start_timer_tooltip => 'Start timer';
+
+  @override
+  String timer_started_snackbar(String name, String duration) {
+    return 'Timer started: $name ($duration)';
+  }
+
+  @override
+  String get recipe_timer_edit_title => 'Edit Recipe Timer';
+
+  @override
+  String get recipe_timer_add_title => 'Add Recipe Timer';
+
+  @override
+  String get recipe_timer_name_label => 'Timer label';
+
+  @override
+  String get recipe_timer_name_hint => 'e.g. Boil Noodles, Bake';
+
+  @override
+  String get add_timer_preset_button => 'Add Timer Preset';
+
+  @override
+  String get edit_ingredient_action => 'Edit ingredient';
+
+  @override
+  String get edit_ingredient_action_desc =>
+      'Modify name, cost, quantity or unit in the database';
+
+  @override
+  String get merge_ingredient_action => 'Merge ingredient';
+
+  @override
+  String get merge_ingredient_action_desc =>
+      'Add amount into another ingredient in this recipe';
+
+  @override
+  String get delete_ingredient_action => 'Delete ingredient';
+
+  @override
+  String get delete_ingredient_action_desc =>
+      'Remove ingredient from this recipe';
+
+  @override
+  String get merge_ingredient_title => 'Merge Ingredient';
+
+  @override
+  String merge_ingredient_into_prompt(String name) {
+    return 'Merge \"$name\" into:';
+  }
+
+  @override
+  String get compare_merged_success => 'Merged successfully';
+
+  @override
+  String get compare_no_units_error =>
+      'DATABASE ERROR: No units loaded. Please restart the app.';
+
+  @override
+  String compare_more_costly(String amount) {
+    return '+$amount MORE';
+  }
+
+  @override
+  String compare_less_costly(String amount) {
+    return '-$amount LESS';
+  }
+
+  @override
+  String get compare_loading => 'Loading comparison data...';
+
+  @override
+  String get timers_running => 'Running';
+
+  @override
+  String get timers_paused => 'Paused';
+
+  @override
+  String get timers_stop_alarm => 'STOP ALARM';
+
+  @override
+  String get timers_reset => 'Reset';
+
+  @override
+  String get timers_pause => 'Pause';
+
+  @override
+  String get timers_start => 'Start';
+
+  @override
+  String get timers_start_timer => 'Start Timer';
+
+  @override
+  String get timers_edit_title => 'Edit Timer';
+
+  @override
+  String get timers_hint => 'e.g. Boil Potatoes';
+
+  @override
+  String get timers_min => 'Min';
+
+  @override
+  String get timers_sec => 'Sec';
+
+  @override
+  String timers_add_minutes(int minutes) {
+    return '+${minutes}m';
+  }
+
+  @override
+  String get rule_of_three_error_zero => 'Initial value cannot be zero';
+
+  @override
+  String rule_of_three_explanation(
+    String a,
+    String b,
+    String c,
+    String result,
+  ) {
+    return 'If $a corresponds to $b, then $c will correspond to $result.';
+  }
+
+  @override
+  String get cloud_sync_sync_target => 'Sync Target';
+
+  @override
+  String get cloud_sync_target_firestore => 'Firestore';
+
+  @override
+  String get cloud_sync_target_drive => 'Google Drive';
+
+  @override
+  String get cloud_sync_target_local => 'Local Directory';
+
+  @override
+  String get cloud_sync_desc_web =>
+      'On Web, sync is powered by Cloud Firestore to synchronize data in real-time between your browser and mobile app. Google Drive file backups are available on mobile and desktop devices.';
+
+  @override
+  String get cloud_sync_desc_firestore =>
+      'Real-time cross-platform sync between Web and Mobile via Cloud Firestore.';
+
+  @override
+  String get cloud_sync_desc_local =>
+      'Local Directory mode stores your backups in the device\'s local storage. It does not require internet connection or a Google Account.';
+
+  @override
+  String get cloud_sync_switch_account => 'Switch account';
+
+  @override
+  String get cloud_sync_sync_now => 'Sync Now';
+
+  @override
+  String get cloud_sync_save_copy_dialog_title =>
+      'Select folder to save backup';
+
+  @override
+  String get cloud_sync_save_copy_tooltip => 'Save backup to...';
+
+  @override
+  String get cloud_sync_restore_tooltip => 'Restore';
+
+  @override
+  String get cloud_sync_delete_tooltip => 'Delete';
+
+  @override
+  String get cloud_sync_connect_account_title => 'Connect Your Account';
+
+  @override
+  String get cloud_sync_connect_account_subtitle =>
+      'Sync your recipes in real-time across Web and Mobile';
+
+  @override
+  String get cloud_sync_continue_google => 'Continue with Google';
+
+  @override
+  String get cloud_sync_or_email => 'or with email';
+
+  @override
+  String get cloud_sync_create_account => 'Create Account';
+
+  @override
+  String get cloud_sync_email_label => 'Email address';
+
+  @override
+  String get cloud_sync_email_hint => 'example@mail.com';
+
+  @override
+  String get cloud_sync_password_label => 'Password';
+
+  @override
+  String get cloud_sync_password_hint => 'At least 6 characters';
+
+  @override
+  String get cloud_sync_forgot_password => 'Forgot password?';
+
+  @override
+  String get cloud_sync_connected_to_firestore => 'Connected to Firestore';
+
+  @override
+  String get cloud_sync_authenticated_user => 'Authenticated user';
+
+  @override
+  String get cloud_sync_sign_out_confirm_title => 'Sign Out';
+
+  @override
+  String get cloud_sync_sign_out_confirm_message =>
+      'Are you sure you want to sign out from Firestore sync?';
+
+  @override
+  String get cloud_sync_error_invalid_email =>
+      'Please enter a valid email address.';
+
+  @override
+  String get cloud_sync_error_short_password =>
+      'Password must be at least 6 characters.';
+
+  @override
+  String get cloud_sync_reset_email_sent =>
+      'Password reset email sent! Check your inbox.';
+
+  @override
+  String get cloud_sync_connected_account => 'Connected account';
+
+  @override
+  String get settings_category_data_subtitle => 'App data management';
+
+  @override
+  String get settings_category_backup_subtitle =>
+      'Back up and restore on Google Drive';
+
+  @override
+  String get settings_category_themes_subtitle =>
+      'Themes, colors and font size';
+
+  @override
+  String get settings_category_locale_subtitle =>
+      'Language and number formatting';
+
+  @override
+  String get settings_category_info_subtitle => 'Version and information';
+
+  @override
+  String get settings_sample_data_dialog_message =>
+      'Do you want to add the sample recipes to your existing list, or replace all current database contents?';
+
+  @override
+  String get settings_sample_data_add_button => 'Add to current';
+
+  @override
+  String get settings_sample_data_replace_button => 'Replace all';
+
+  @override
+  String settings_sample_data_replaced_snackbar(int recipes, int ingredients) {
+    return 'Database replaced with sample data ($recipes recipes, $ingredients ingredients)';
+  }
+
+  @override
+  String get settings_sample_data_subtitle =>
+      'Load test ingredients and recipes to evaluate the app';
+
+  @override
+  String get settings_brand_theme_adapt_notice =>
+      'The icon and branding adapt to your selected theme';
+
+  @override
+  String scale_multiplier_button(String multiplier) {
+    return 'x$multiplier';
+  }
+
+  @override
+  String get scale_custom_multiplier_hint => 'e.g. 1.5';
+
+  @override
+  String scaled_recipe_name(String name, String multiplier) {
+    return '$name (x$multiplier)';
+  }
+
+  @override
+  String get merge_no_other_ingredients =>
+      'No other ingredients in this recipe to merge into.';
+
+  @override
+  String get merge_no_other_database_ingredients =>
+      'No other ingredients in the database to merge into.';
+
+  @override
+  String get merge_ingredient_action_db_desc =>
+      'Merge into another ingredient in the database';
+
+  @override
+  String get delete_ingredient_permanent_desc =>
+      'Permanently delete from database';
+
+  @override
+  String ingredient_deleted_snackbar(String name) {
+    return 'Ingredient \"$name\" deleted.';
+  }
+
+  @override
+  String get no_timers_in_recipe => 'No timer presets added to this recipe.';
+
+  @override
+  String get recipe_timer_min => 'Min';
+
+  @override
+  String get recipe_timer_sec => 'Sec';
+
+  @override
+  String get gain_per_portion => 'Gain/Portion';
+
+  @override
+  String get price_per_portion => 'Price/Portion';
+
+  @override
+  String get force_overwrite_danger_zone => 'Danger Zone';
+
+  @override
+  String get force_overwrite_cloud_btn => 'Force Overwrite Cloud';
+
+  @override
+  String get force_overwrite_first_confirm_title => 'Force Overwrite Cloud';
+
+  @override
+  String get force_overwrite_first_confirm_desc =>
+      'This will permanently OVERWRITE all cloud data with your local copy. This action is irreversible.';
+
+  @override
+  String get force_overwrite_understand_risk => 'Yes, I understand the risk';
+
+  @override
+  String get force_overwrite_challenge_title => 'Type OVERWRITE to Confirm';
+
+  @override
+  String get force_overwrite_challenge_desc =>
+      'To prevent accidental loss, please type OVERWRITE below to proceed.';
+
+  @override
+  String get force_overwrite_challenge_placeholder => 'OVERWRITE';
+
+  @override
+  String get force_overwrite_confirm_final_btn => 'Confirm Overwrite';
+
+  @override
+  String get force_overwrite_success_toast =>
+      'Cloud data successfully overwritten with local copy.';
+
+  @override
+  String get force_overwrite_failure_toast => 'Failed to overwrite cloud data.';
+
+  @override
+  String get settings_about_developer => 'Developer';
+
+  @override
+  String get settings_about_developer_name => 'Esteban Z.';
+
+  @override
+  String get settings_about_developer_role => 'Lead Creator & Developer';
+
+  @override
+  String get settings_about_developer_email => 'kbradevp@gmail.com';
+
+  @override
+  String get settings_about_email_copied => 'Email copied to clipboard';
+
+  @override
+  String get settings_about_copy_email => 'Copy Email';
+
+  @override
+  String get settings_about_db_schema => 'DB Schema';
+
+  @override
+  String get settings_about_channel_beta => 'Beta Channel';
+
+  @override
+  String get settings_about_channel_stable => 'Stable Channel';
+
+  @override
+  String get settings_about_changelog => 'Changelog';
+
+  @override
+  String get settings_about_changelog_desc =>
+      'View release notes and version history';
+
+  @override
+  String get settings_about_privacy_terms => 'Terms & Privacy Policy';
+
+  @override
+  String get settings_about_privacy_terms_desc =>
+      'Read data ownership and privacy commitments';
+
+  @override
+  String get settings_about_licenses => 'Open Source Licenses';
+
+  @override
+  String get settings_about_licenses_desc =>
+      'View software licenses and third-party libraries';
+
+  @override
+  String get settings_about_debug_logs => 'Debug Diagnostics (Beta)';
+
+  @override
+  String get settings_about_debug_logs_desc =>
+      'Inspect system logs, memory buffer and events';
+
+  @override
+  String get settings_about_logs_copied => 'Diagnostics copied to clipboard';
+
+  @override
+  String get settings_about_logs_clear => 'Clear Logs';
+
+  @override
+  String get settings_about_logs_copy => 'Copy All';
+
+  @override
+  String get settings_about_logs_empty => 'No logs recorded yet';
+
+  @override
+  String get settings_about_version_current => 'Current';
+
+  @override
+  String get settings_about_logs_test => 'Test Log';
+
+  @override
+  String get settings_about_badge_beta => 'BETA';
+
+  @override
+  String get settings_about_privacy_storage_title =>
+      'Offline-First Local Storage';
+
+  @override
+  String get settings_about_privacy_storage_desc =>
+      'Your ingredients, recipes, and cost data are stored securely on your device using SQLite (Drift). Your data stays strictly under your control.';
+
+  @override
+  String get settings_about_privacy_sync_title =>
+      'Opt-in Cloud Synchronization';
+
+  @override
+  String get settings_about_privacy_sync_desc =>
+      'Synchronization with Firebase Firestore and Google Drive is 100% optional and only occurs if you explicitly log in.';
+
+  @override
+  String get settings_about_privacy_ownership_title => 'Full Data Ownership';
+
+  @override
+  String get settings_about_privacy_ownership_desc =>
+      'Your recipes and calculations belong exclusively to you. Chef&Cost does not claim ownership or distribute your culinary creations.';
+
+  @override
+  String get settings_about_privacy_ads_title => 'Zero Advertising Trackers';
+
+  @override
+  String get settings_about_privacy_ads_desc =>
+      'We do not embed third-party advertising SDKs or monetize your personal culinary metrics.';
+
+  @override
+  String get settings_about_privacy_permissions_title => 'System Permissions';
+
+  @override
+  String get settings_about_privacy_permissions_desc =>
+      'The application only requests notification and audio permissions to alert you when recipe cooking timers complete.';
+
+  @override
+  String get cloud_sync_load_local_backup_btn => 'Load Local Backup';
+
+  @override
+  String get cloud_sync_load_local_backup_desc =>
+      'Select a .sqlite backup file from your device to restore recipes and costs.';
+
+  @override
+  String get cloud_sync_load_local_backup_confirm_title => 'Load Local Backup?';
+
+  @override
+  String cloud_sync_load_local_backup_confirm_desc(String fileName) {
+    return 'All current recipes and ingredients will be replaced with the selected file ($fileName). This action cannot be undone. Do you wish to continue?';
+  }
+
+  @override
+  String get cloud_sync_load_local_backup_success =>
+      'Local backup loaded successfully.';
+
+  @override
+  String get cloud_sync_load_local_backup_invalid =>
+      'The selected file is not a valid SQLite database.';
+
+  @override
+  String get cloud_sync_local_backup_title => 'Local Backup & Restore';
+
+  @override
+  String get cloud_sync_local_backup_desc =>
+      'Manage offline backups directly on your device storage without requiring cloud services.';
+
+  @override
+  String get cloud_sync_export_local_backup_btn => 'Export Backup to Device';
+
+  @override
+  String get cloud_sync_export_local_backup_success =>
+      'Backup saved successfully to device.';
+
+  @override
+  String get settings_about_changelog_loading => 'Loading release notes...';
+
+  @override
+  String get settings_about_changelog_empty => 'No release notes found.';
+
+  @override
+  String get settings_about_changelog_error => 'Could not load release notes.';
+
+  @override
+  String get settings_about_changelog_retry => 'Retry';
+
+  @override
+  String get settings_about_changelog_refresh => 'Refresh';
+
+  @override
+  String get tutorial_replay_title => 'App Walkthrough Tutorial';
+
+  @override
+  String get tutorial_replay_subtitle =>
+      'Replay step-by-step guide of gestures, shortcuts, and key features';
+
+  @override
+  String get tutorial_replay_button => 'Repeat Walkthrough';
+
+  @override
+  String get tutorial_replay_reset_toast =>
+      'Tutorial reset. Launching walkthrough...';
+
+  @override
+  String tutorial_step_counter(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get tutorial_action_next => 'Next';
+
+  @override
+  String get tutorial_action_prev => 'Previous';
+
+  @override
+  String get tutorial_action_skip => 'Skip Tutorial';
+
+  @override
+  String get tutorial_action_finish => 'Get Started';
+
+  @override
+  String get tutorial_target_nav_title => 'Adaptive Navigation & Gestures';
+
+  @override
+  String get tutorial_target_nav_desc =>
+      'Switch smoothly between Recipes, Ingredients, Tools, and Settings.';
+
+  @override
+  String get tutorial_target_nav_hint =>
+      'Gesture tip: Swipe horizontally anywhere to switch between tabs instantly!';
+
+  @override
+  String get tutorial_target_quick_actions_title => 'Quick Action Shortcuts';
+
+  @override
+  String get tutorial_target_quick_actions_desc =>
+      'Create new recipes, calculate costs, or add ingredients on the fly.';
+
+  @override
+  String get tutorial_target_quick_actions_hint =>
+      'Tip: Tap \'New Recipe\' or \'New Ingredient\' to jump directly into editing.';
+
+  @override
+  String get tutorial_target_recipes_title => 'Recipes & Long-Press Preview';
+
+  @override
+  String get tutorial_target_recipes_desc =>
+      'Browse and manage your recipe catalog with live cost metrics.';
+
+  @override
+  String get tutorial_target_recipes_hint =>
+      'Hidden gesture: Long-press any recipe card to expand quick financial breakdown without leaving!';
+
+  @override
+  String get tutorial_target_tools_title => 'Kitchen Utilities & Multi-Timers';
+
+  @override
+  String get tutorial_target_tools_desc =>
+      'Use Unit Converters, Rule of Three, and multi-alarm Kitchen Timers.';
+
+  @override
+  String get tutorial_target_tools_hint =>
+      'Feature tip: Timers keep running in the background with audio alarms and auto-dismiss.';
+
+  @override
+  String get tutorial_target_settings_title => 'Cloud Sync & Preferences';
+
+  @override
+  String get tutorial_target_settings_desc =>
+      'Customize styles, connect Firebase sync, and manage database backups.';
+
+  @override
+  String get tutorial_target_settings_hint =>
+      'You can replay this interactive walkthrough anytime from Settings.';
+
+  @override
+  String get tutorial_help_tooltip => 'View guided walkthrough';
+
+  @override
+  String get tutorial_recipe_list_hold_title => 'Recipe Quick Actions';
+
+  @override
+  String get tutorial_recipe_list_hold_desc =>
+      'Tap any recipe to open and edit it. But there is a powerful shortcut hidden here!';
+
+  @override
+  String get tutorial_recipe_list_hold_hint =>
+      'Hold / Long-press this recipe card to reveal more options: Scale portions, Duplicate, Edit, or Delete directly from the list.';
+
+  @override
+  String get tutorial_recipe_list_finance_title => 'Recipe Financial Breakdown';
+
+  @override
+  String get tutorial_recipe_list_finance_desc =>
+      'Every recipe card displays its live Total Cost, Estimated Profit, and Target Sale Price per portion.';
+
+  @override
+  String get tutorial_recipe_list_finance_hint =>
+      'Tip: These numbers recalculate automatically when ingredient costs or portions change.';
+
+  @override
+  String get tutorial_editor_finance_title => 'Recipe Finance & Margins';
+
+  @override
+  String get tutorial_editor_finance_desc =>
+      'Calculate total cost, cost per portion, desired profit margin, overhead expenses, and target sale price.';
+
+  @override
+  String get tutorial_editor_finance_hint =>
+      'Key action: Tap the bottom finance bar to expand the full profit calculator and price simulator.';
+
+  @override
+  String get tutorial_editor_scale_bar_title => 'Portion Scaling & Multipliers';
+
+  @override
+  String get tutorial_editor_scale_bar_desc =>
+      'Quickly scale recipe quantities using custom portions or 1/4x, 1/2x, 1x, 2x, 3x presets without modifying base recipe data.';
+
+  @override
+  String get tutorial_editor_scale_bar_hint =>
+      'Tip: Scroll horizontally to view all scaling options. Tap any option to recalculate all ingredient amounts on the fly.';
+
+  @override
+  String get tutorial_editor_gestures_title => 'Counters & Step Organization';
+
+  @override
+  String get tutorial_editor_gestures_desc =>
+      'Track recipe scale with header counter badges and item index numbers for ingredients and steps.';
+
+  @override
+  String get tutorial_editor_gestures_hint =>
+      'Gestures: Drag to reorder steps or ingredients. Badges reflect dynamic item totals in real time.';
+
+  @override
+  String get tutorial_editor_ingredient_hold_title =>
+      'Ingredient Inline Actions';
+
+  @override
+  String get tutorial_editor_ingredient_hold_desc =>
+      'Tap the quantity to edit directly, or hold any ingredient to reveal its inline actions dropdown.';
+
+  @override
+  String get tutorial_editor_ingredient_hold_hint =>
+      'Inline dropdown: Scale by ingredient, Edit details, Merge/Swap, or Delete directly in the list.';
+
+  @override
+  String get sample_manufacturing_recipe_title =>
+      'Butter Cookies (Manufacturing Batch)';
+
+  @override
+  String get sample_manufacturing_recipe_desc =>
+      'Standard 3:2:1 manufacturing batch for production costing, yield tracking, and industrial margin calculation.';
+
+  @override
+  String get sample_manufacturing_yield_name => 'pieces';
+
+  @override
+  String get sample_manufacturing_flour_name => 'All-Purpose Wheat Flour';
+
+  @override
+  String get sample_manufacturing_butter_name => 'Unsalted Butter';
+
+  @override
+  String get sample_manufacturing_sugar_name => 'Refined White Sugar';
+
+  @override
+  String get sample_manufacturing_step1 =>
+      '[timer:Industrial Creaming|240] Beat butter at medium-high speed until creamy and pale.';
+
+  @override
+  String get sample_manufacturing_step2 =>
+      'Sift flour with sugar and incorporate at low speed in 2 parts until combined without overworking.';
+
+  @override
+  String get sample_manufacturing_step3 =>
+      '[timer:Batch Baking|900] Portion 24 pieces of dough, arrange on baking sheet lined with parchment paper, and bake at 180°C.';
+
+  @override
+  String get sample_manufacturing_badge => 'Temporary Sample';
+
+  @override
+  String get sample_manufacturing_banner_desc =>
+      'Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.';
+
+  @override
+  String get sample_manufacturing_save_btn => 'Save as Real Recipe';
+
+  @override
+  String get sample_manufacturing_dismiss_btn => 'Dismiss Sample';
+
+  @override
+  String get sample_manufacturing_auto_removed =>
+      'Tutorial completed. Temporary sample recipe removed.';
+
+  @override
+  String get share_recipe_menu_title => 'Share Recipe';
+
+  @override
+  String get share_recipe_bottom_sheet_title => 'Share Recipe';
+
+  @override
+  String get share_recipe_format_chefy_title => 'Chef&Cost Recipe (.chefy)';
+
+  @override
+  String get share_recipe_format_chefy_subtitle =>
+      'Exchange file to open and import in Chef&Cost on another device';
+
+  @override
+  String get share_recipe_format_pdf_title => 'PDF Recipe Sheet (.pdf)';
+
+  @override
+  String get share_recipe_format_pdf_subtitle =>
+      'Printable document with ingredients, costs and instructions';
+
+  @override
+  String get share_recipe_format_csv_title => 'CSV Spreadsheet (.csv)';
+
+  @override
+  String get share_recipe_format_csv_subtitle =>
+      'Spreadsheet for Excel or Google Sheets with ingredients and costs';
+
+  @override
+  String get share_recipe_generating => 'Generating file...';
+
+  @override
+  String get share_recipe_success => 'Recipe shared successfully';
+
+  @override
+  String get share_recipe_pdf_instructions_title => 'Preparation Steps';
+
+  @override
+  String get share_recipe_pdf_ingredients_title => 'Ingredients & Cost';
+
+  @override
+  String get share_recipe_pdf_summary_title => 'Financial Summary';
+
+  @override
+  String get share_recipe_pdf_cost_per_unit => 'Cost/Unit';
+
+  @override
+  String get share_recipe_pdf_amount => 'Amount';
+
+  @override
+  String get share_recipe_pdf_unit => 'Unit';
+
+  @override
+  String get share_recipe_pdf_subtotal => 'Subtotal';
+
+  @override
+  String get share_recipe_pdf_timers_title => 'Kitchen Timers';
+
+  @override
+  String get share_recipe_pdf_footer => 'Generated with Chef&Cost';
+
+  @override
+  String get share_recipe_with_cost => 'With costs';
+
+  @override
+  String get share_recipe_without_cost => 'Without costs (Kitchen)';
+
+  @override
+  String get share_recipe_cost_options_title => 'Cost Options';
+
+  @override
+  String get share_recipe_format_pdf_subtitle_no_cost =>
+      'Kitchen sheet with ingredients, quantities and steps (no prices)';
+
+  @override
+  String get share_recipe_format_csv_subtitle_no_cost =>
+      'Spreadsheet with ingredients, quantities and steps (no prices)';
+
+  @override
+  String get import_recipe_button => 'Import Recipe';
+
+  @override
+  String get import_recipe_dialog_title => 'Import Recipe';
+
+  @override
+  String get import_recipe_dialog_desc =>
+      'Do you want to import this recipe into your collection?';
+
+  @override
+  String import_recipe_name_conflict_warning(String name) {
+    return 'A recipe with this name already exists. It will be imported as \"$name\".';
+  }
+
+  @override
+  String import_recipe_success(String name) {
+    return 'Recipe \"$name\" imported successfully';
+  }
+
+  @override
+  String get import_recipe_invalid_file =>
+      'The selected file is not a valid Chef&Cost recipe file';
+
+  @override
+  String import_recipe_ingredients_count(int count) {
+    return '$count ingredients';
+  }
+
+  @override
+  String import_recipe_steps_count(int count) {
+    return '$count steps';
+  }
+
+  @override
+  String import_recipe_portions(String yield, String yieldName) {
+    return 'Yield: $yield $yieldName';
+  }
+
+  @override
+  String get import_recipe_confirm_btn => 'Import';
+
+  @override
+  String get import_recipe_open_now_action => 'Open';
+
+  @override
+  String get category_all => 'All';
+
+  @override
+  String get category_cocina => 'Kitchen';
+
+  @override
+  String get category_pasteleria => 'Pastry';
+
+  @override
+  String get category_cocteleria => 'Cocktails';
+
+  @override
+  String get category_label => 'Category';
+
+  @override
+  String get category_filter_tooltip => 'Filter by category';
+
+  @override
+  String get groups_title => 'Workspaces & Groups';
+
+  @override
+  String get group_default_name => 'Main';
+
+  @override
+  String get group_switcher_tooltip => 'Switch workspace';
+
+  @override
+  String get group_active_label => 'Active Workspace';
+
+  @override
+  String get group_add_new => 'New Workspace';
+
+  @override
+  String get group_edit => 'Edit Workspace';
+
+  @override
+  String get group_name_label => 'Workspace Name';
+
+  @override
+  String get group_name_hint => 'e.g., Main Kitchen, Barú...';
+
+  @override
+  String get group_color_label => 'Color';
+
+  @override
+  String get group_icon_label => 'Icon';
+
+  @override
+  String get group_delete => 'Delete Workspace';
+
+  @override
+  String get group_delete_confirm =>
+      'Are you sure you want to delete this workspace?';
+
+  @override
+  String get group_delete_cannot_last =>
+      'You cannot delete the only remaining workspace.';
+
+  @override
+  String group_switch_success(String name) {
+    return 'Switched to $name';
+  }
+
+  @override
+  String get group_all_workspaces => 'All Workspaces';
+
+  @override
+  String get group_select_prompt => 'Select a workspace to manage its recipes';
+
+  @override
+  String get group_management_subtitle =>
+      'Manage venues, kitchens and operational workspaces';
+
+  @override
+  String get settings_about_privacy_view_online => 'View Online Privacy Policy';
+
+  @override
+  String get settings_about_privacy_delete_portal =>
+      'Web Account & Data Deletion Portal';
+
+  @override
+  String get cloud_sync_delete_account_btn => 'Delete account & cloud data';
+
+  @override
+  String get cloud_sync_delete_account_title => 'Delete account & data';
+
+  @override
+  String get cloud_sync_delete_account_confirm_desc =>
+      'Are you sure you want to permanently delete your account and all data synced to the cloud? This action will remove your recipes, ingredients, and backups from Firestore and cannot be undone. Recipes stored locally on this device will not be deleted.';
+
+  @override
+  String get cloud_sync_delete_account_password_prompt =>
+      'Enter your password to confirm deletion:';
+
+  @override
+  String get cloud_sync_delete_account_confirm_btn => 'Permanently delete';
+
+  @override
+  String get cloud_sync_delete_account_deleting =>
+      'Deleting account and cloud data...';
+
+  @override
+  String get cloud_sync_delete_account_success =>
+      'Account and cloud data successfully deleted.';
+
+  @override
+  String get cloud_sync_delete_account_reauth_required =>
+      'Recent authentication required. Please sign in again and retry.';
+
+  @override
+  String get cloud_sync_sign_in_canceled => 'Sign-in was canceled.';
+
+  @override
+  String get cloud_sync_error_network =>
+      'No internet connection. Please check your network and try again.';
+
+  @override
+  String get cloud_sync_error_drive_permission_denied =>
+      'Google Drive permission was denied. Please grant permission to back up your data.';
+
+  @override
+  String get cloud_sync_revoke_google_btn =>
+      'Disconnect & Revoke Google Access';
+
+  @override
+  String get cloud_sync_delete_cloud_data_btn => 'Delete Cloud Data';
+
+  @override
+  String get cloud_sync_delete_cloud_data_confirm_title =>
+      'Delete All Cloud Data?';
+
+  @override
+  String get cloud_sync_delete_cloud_data_confirm_desc =>
+      'This will permanently delete all recipes, ingredients, and units stored in Firestore. Local data on this device will not be deleted.';
+
+  @override
+  String get cloud_sync_delete_cloud_data_success =>
+      'Cloud data deleted successfully.';
+
+  @override
+  String get cloud_sync_delete_all_backups_btn => 'Delete All Backups';
+
+  @override
+  String get cloud_sync_delete_all_backups_confirm_title =>
+      'Delete All Cloud Backups?';
+
+  @override
+  String get cloud_sync_delete_all_backups_confirm_desc =>
+      'Are you sure you want to delete all backups from Google Drive? This action cannot be undone.';
+
+  @override
+  String get cloud_sync_delete_all_backups_success =>
+      'All cloud backups have been deleted.';
+
+  @override
+  String get cloud_sync_account_management_title => 'Account & Data Management';
+
+  @override
+  String get cloud_sync_terms_dialog_title => 'Cloud Sync Terms & Privacy';
+
+  @override
+  String get cloud_sync_terms_dialog_subtitle =>
+      'Please review and accept how Chef&Cost syncs your data with Firebase and Google Drive before proceeding.';
+
+  @override
+  String get cloud_sync_terms_firestore_title => 'Google Firebase Firestore';
+
+  @override
+  String get cloud_sync_terms_firestore_desc =>
+      'Synchronizes your recipes, ingredient costs, and settings in real-time across your authorized devices.';
+
+  @override
+  String get cloud_sync_terms_drive_title => 'Google Drive (AppData)';
+
+  @override
+  String get cloud_sync_terms_drive_desc =>
+      'Uploads database backups strictly to Chef&Cost\'s hidden application folder. We cannot access or see any of your personal Google Drive files.';
+
+  @override
+  String get cloud_sync_terms_privacy_title => '100% Data Ownership & Privacy';
+
+  @override
+  String get cloud_sync_terms_privacy_desc =>
+      'Your recipes, yields, and business financial figures belong exclusively to you. Your data is never sold, shared, or mined for third parties.';
+
+  @override
+  String get cloud_sync_terms_control_title =>
+      'Full Revocation & Deletion Rights';
+
+  @override
+  String get cloud_sync_terms_control_desc =>
+      'You can disconnect your account, revoke Google authorization, or delete all cloud-stored data permanently at any time.';
+
+  @override
+  String get cloud_sync_terms_view_privacy => 'Read Full Privacy Policy online';
+
+  @override
+  String get cloud_sync_terms_accept_btn => 'Accept & Continue';
+
+  @override
+  String get cloud_sync_terms_decline_btn => 'Not Now';
+
+  @override
+  String get cloud_sync_terms_banner_unaccepted =>
+      'Cloud Terms & Privacy must be accepted before syncing with Firebase or Google Drive.';
+
+  @override
+  String get cloud_sync_terms_accepted_badge =>
+      'Cloud Terms & Privacy Policy Accepted';
+
+  @override
+  String get cloud_sync_terms_review_btn => 'Review Terms';
+
+  @override
+  String get cloud_sync_terms_required_warning =>
+      'You must accept the terms of service and privacy policy to connect to cloud services.';
+}

@@ -1,12 +1,12 @@
 {
-    "name": "recipetools",
-    "short_name": "recipetools",
+    "name": "Chef&Cost",
+    "short_name": "Chef&Cost",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
+    "background_color": "#121212",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "description": "Chef&Cost - recipes, ingredient costs, margins, and culinary tools.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

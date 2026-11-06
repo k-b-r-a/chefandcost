@@ -1,10 +1,26 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+    <!-- Google Play Advertising ID Policy: Chef&Cost does not serve ads; explicitly remove AD_ID -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
+
+    <!-- Google Play Policy: Prevent third-party plugins from injecting USE_EXACT_ALARM without justification -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove"/>
+
     <application
-        android:label="recipetools"
+        android:label="Chef&amp;Cost"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
         <activity
             android:name=".MainActivity"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:label="Chef&amp;Cost"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -23,6 +39,45 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <!-- Intent filters for opening and importing .chefy files (matching file extension) -->
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\.chefy" />
+                <data android:pathPattern=".*\..*\.chefy" />
+                <data android:pathSuffix=".chefy" />
+            </intent-filter>
+
+            <!-- Intent filters for opening and importing .chefy files (custom and specific MIME types) -->
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/x-chefy" />
+            </intent-filter>
+
+            <!-- Intent filter for sharing recipe files into Chef&Cost -->
+            <intent-filter
+                android:icon="@mipmap/ic_launcher"
+                android:roundIcon="@mipmap/ic_launcher_round"
+                android:label="Chef&amp;Cost Recipe">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/x-chefy" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

@@ -1,0 +1,610 @@
+import 'dart:convert';
+import 'dart:io' show Directory;
+import 'package:drift/native.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:recipetools/database/database.dart';
+import 'package:recipetools/l10n/app_localizations.dart';
+import 'package:recipetools/provider/database_provider.dart';
+import 'package:recipetools/services/file_share_helper.dart';
+import 'package:recipetools/services/recipe_file_intent_service.dart';
+import 'package:recipetools/services/recipe_share_service.dart';
+import 'package:recipetools/utils/recipe_import_helper.dart';
+import 'package:recipetools/widgets/share_recipe_sheet.dart';
+import 'package:recipetools/widgets/import_recipe_dialog.dart';
+
+class MockDatabaseNotifier extends DatabaseNotifier {
+  final AppDatabase _db;
+  MockDatabaseNotifier(this._db);
+
+  @override
+  AppDatabase build() => _db;
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  const unitG = Unit(
+    unitPk: 'u_g',
+    name: 'Gramos',
+    symbol: 'g',
+    category: 'mass',
+    factorToBase: 1.0,
+    isMutable: false,
+  );
+
+  const unitKg = Unit(
+    unitPk: 'u_kg',
+    name: 'Kilogramos',
+    symbol: 'kg',
+    category: 'mass',
+    factorToBase: 1000.0,
+    isMutable: false,
+  );
+
+  final testRecipe = Recipe(
+    recipePk: 'rec_apple_pie',
+    name: 'Apple Pie',
+    description: 'Classic cinnamon apple pie',
+    defaultYield: 8.0,
+    yieldName: 'portions',
+    targetProfitMargin: 40.0,
+    targetPricePerPortion: 6.5,
+    fixedOverheadCost: 1.0,
+    colour: '#FF5722',
+    dateCreated: DateTime(2026, 1, 1),
+    dateTimeModified: DateTime(2026, 1, 2),
+    archived: false,
+  );
+
+  final ingApple = Ingredient(
+    ingredientPk: 'ing_apple',
+    name: 'Apples',
+    cost: 5.0,
+    quantityForCost: 1000.0,
+    unitFk: 'u_g',
+    dateCreated: DateTime(2026, 1, 1),
+    isDeleted: false,
+  );
+
+  final ingFlour = Ingredient(
+    ingredientPk: 'ing_flour',
+    name: 'Flour',
+    cost: 2.0,
+    quantityForCost: 1000.0,
+    unitFk: 'u_g',
+    dateCreated: DateTime(2026, 1, 1),
+    isDeleted: false,
+  );
+
+  final recipeIngredients = [
+    RecipeIngredientWithData(
+      entry: RecipeIngredient(
+        recipeIngredientPk: 'ri_1',
+        recipeFk: 'rec_apple_pie',
+        ingredientFk: 'ing_apple',
+        amountNeeded: 600.0,
+      ),
+      ingredient: ingApple,
+    ),
+    RecipeIngredientWithData(
+      entry: RecipeIngredient(
+        recipeIngredientPk: 'ri_2',
+        recipeFk: 'rec_apple_pie',
+        ingredientFk: 'ing_flour',
+        amountNeeded: 300.0,
+      ),
+      ingredient: ingFlour,
+    ),
+  ];
+
+  final recipeSteps = [
+    RecipeStep(
+      stepPk: 'step_1',
+      recipeFk: 'rec_apple_pie',
+      stepNumber: 1,
+      instruction: 'Peel and slice [Apples].',
+    ),
+    RecipeStep(
+      stepPk: 'step_2',
+      recipeFk: 'rec_apple_pie',
+      stepNumber: 2,
+      instruction: '[timer:Bake Pie|2700] Bake pie in oven at 180°C.',
+    ),
+  ];
+
+  final sampleDetail = RecipeDetail(
+    recipe: testRecipe,
+    ingredients: recipeIngredients,
+    steps: recipeSteps,
+  );
+
+  group('RecipeShareService Unit Tests', () {
+    late AppDatabase db;
+
+    setUp(() async {
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+      await db.into(db.units).insert(unitG);
+      await db.into(db.units).insert(unitKg);
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('sanitizeFileName filters emojis, symbols, and punctuation properly', () {
+      expect(RecipeShareService.sanitizeFileName('🍕 Pizza Margherita! 😋'), equals('Pizza_Margherita'));
+      expect(RecipeShareService.sanitizeFileName('Apple Pie (Best #1!)'), equals('Apple_Pie_Best_1'));
+      expect(RecipeShareService.sanitizeFileName('🍫 ¡Tarta de Café con Nuez & Chocolate! ☕'), equals('Tarta_de_Café_con_Nuez_Chocolate'));
+      expect(RecipeShareService.sanitizeFileName('Ñoquis Caseros (100% Caseros!)'), equals('Ñoquis_Caseros_100_Caseros'));
+      expect(RecipeShareService.sanitizeFileName('Gluten-Free Cookies :)'), equals('Gluten-Free_Cookies'));
+      expect(RecipeShareService.sanitizeFileName('🎉✨🍕'), equals('recipe'));
+      expect(RecipeShareService.sanitizeFileName('***???///'), equals('recipe'));
+      expect(RecipeShareService.sanitizeFileName('   '), equals('recipe'));
+      expect(RecipeShareService.sanitizeFileName(''), equals('recipe'));
+      expect(RecipeShareService.sanitizeFileName('Matcha & Green Tea Ice Cream'), equals('Matcha_Green_Tea_Ice_Cream'));
+    });
+
+    test('exportAsChefy exports valid JSON matching schema', () {
+      final bytes = RecipeShareService.exportAsChefy(sampleDetail, [unitG, unitKg]);
+      final jsonStr = utf8.decode(bytes);
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+
+      expect(data['format'], equals('chefy_recipe'));
+      expect(data['version'], equals(1));
+      expect(data['recipe']['name'], equals('Apple Pie'));
+      expect(data['recipe']['defaultYield'], equals(8.0));
+      expect(data['recipe']['yieldName'], equals('portions'));
+      expect((data['ingredients'] as List).length, equals(2));
+      expect((data['steps'] as List).length, equals(2));
+
+      final firstIng = (data['ingredients'] as List).first as Map<String, dynamic>;
+      expect(firstIng['name'], equals('Apples'));
+      expect(firstIng['amountNeeded'], equals(600.0));
+      expect(firstIng['unit']['symbol'], equals('g'));
+    });
+
+    test('previewRecipeFromJson extracts preview and detects collision', () {
+      final bytes = RecipeShareService.exportAsChefy(sampleDetail, [unitG, unitKg]);
+      final jsonStr = utf8.decode(bytes);
+
+      // Without existing recipes
+      final preview1 = RecipeShareService.previewRecipeFromJson(jsonStr, []);
+      expect(preview1.name, equals('Apple Pie'));
+      expect(preview1.hasExistingRecipeWithSameName, isFalse);
+      expect(preview1.suggestedName, equals('Apple Pie'));
+      expect(preview1.ingredientsCount, equals(2));
+      expect(preview1.stepsCount, equals(2));
+      expect(preview1.timersCount, equals(1));
+
+      // With collision
+      final preview2 = RecipeShareService.previewRecipeFromJson(jsonStr, [testRecipe]);
+      expect(preview2.hasExistingRecipeWithSameName, isTrue);
+      expect(preview2.suggestedName, equals('Apple Pie (1)'));
+    });
+
+    test('importRecipeFromJson successfully creates recipe, ingredients, and steps in database', () async {
+      final bytes = RecipeShareService.exportAsChefy(sampleDetail, [unitG, unitKg]);
+      final jsonStr = utf8.decode(bytes);
+
+      final result = await RecipeShareService.importRecipeFromJson(
+        jsonContent: jsonStr,
+        db: db,
+      );
+
+      expect(result.recipe.name, equals('Apple Pie'));
+      expect(result.ingredientsCount, equals(2));
+      expect(result.stepsCount, equals(2));
+      expect(result.newIngredientsCreated, equals(2)); // Apples & Flour didn't exist in DB
+      expect(result.newUnitsCreated, equals(0)); // Unit 'g' already existed
+
+      // Verify DB contents
+      final savedRecipes = await db.getAllRecipes();
+      expect(savedRecipes.length, equals(1));
+      expect(savedRecipes.first.name, equals('Apple Pie'));
+
+      final detail = await db.getRecipeDetail(savedRecipes.first.recipePk);
+      expect(detail.ingredients.length, equals(2));
+      expect(detail.steps.length, equals(2));
+      expect(detail.steps.first.instruction, equals('Peel and slice [Apples].'));
+    });
+
+    test('importRecipeFromJson renames on collision when override name provided', () async {
+      final bytes = RecipeShareService.exportAsChefy(sampleDetail, [unitG, unitKg]);
+      final jsonStr = utf8.decode(bytes);
+
+      // Import once
+      await RecipeShareService.importRecipeFromJson(jsonContent: jsonStr, db: db);
+
+      // Import again with override name
+      final result2 = await RecipeShareService.importRecipeFromJson(
+        jsonContent: jsonStr,
+        db: db,
+        overrideRecipeName: 'Apple Pie (Imported)',
+      );
+
+      expect(result2.wasRenamed, isTrue);
+      expect(result2.recipe.name, equals('Apple Pie (Imported)'));
+      expect(result2.newIngredientsCreated, equals(0)); // Reused existing ingredients
+
+      final allRecipes = await db.getAllRecipes();
+      expect(allRecipes.length, equals(2));
+    });
+
+    test('exportAsCsv exports valid CSV with BOM header', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final bytes = RecipeShareService.exportAsCsv(
+        detail: sampleDetail,
+        allUnits: [unitG, unitKg],
+        currency: r'$',
+        l10n: l10n,
+      );
+
+      expect(bytes.isNotEmpty, isTrue);
+      // Verify BOM [0xEF, 0xBB, 0xBF]
+      expect(bytes[0], equals(0xEF));
+      expect(bytes[1], equals(0xBB));
+      expect(bytes[2], equals(0xBF));
+
+      final text = utf8.decode(bytes.sublist(3));
+      expect(text.contains('Apple Pie'), isTrue);
+      expect(text.contains('Apples'), isTrue);
+      expect(text.contains('Flour'), isTrue);
+      expect(text.contains('Cost/Unit'), isTrue);
+      expect(text.contains('Subtotal'), isTrue);
+      expect(text.contains('TOTAL'), isTrue);
+      expect(text.contains('Peel and slice [Apples].'), isTrue);
+    });
+
+    test('exportAsCsv without cost excludes pricing, totals, and profit margins', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final bytes = RecipeShareService.exportAsCsv(
+        detail: sampleDetail,
+        allUnits: [unitG, unitKg],
+        currency: r'$',
+        l10n: l10n,
+        includeCosts: false,
+      );
+
+      expect(bytes.isNotEmpty, isTrue);
+      final text = utf8.decode(bytes.sublist(3));
+      expect(text.contains('Apple Pie'), isTrue);
+      expect(text.contains('Apples'), isTrue);
+      expect(text.contains('Flour'), isTrue);
+      expect(text.contains('Peel and slice [Apples].'), isTrue);
+      // Ensure costs and financial columns are omitted
+      expect(text.contains('Cost/Unit'), isFalse);
+      expect(text.contains('Subtotal'), isFalse);
+      expect(text.contains('TOTAL'), isFalse);
+      expect(text.contains('Profit Margin'), isFalse);
+      expect(text.contains('Cost per Portion'), isFalse);
+    });
+
+    test('exportAsPdf generates non-empty PDF bytes with cost', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final bytes = await RecipeShareService.exportAsPdf(
+        detail: sampleDetail,
+        allUnits: [unitG, unitKg],
+        currency: r'$',
+        l10n: l10n,
+        includeCosts: true,
+      );
+
+      expect(bytes.isNotEmpty, isTrue);
+      expect(bytes.length, greaterThan(100));
+    });
+
+    test('exportAsPdf generates non-empty PDF bytes without cost', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final bytes = await RecipeShareService.exportAsPdf(
+        detail: sampleDetail,
+        allUnits: [unitG, unitKg],
+        currency: r'$',
+        l10n: l10n,
+        includeCosts: false,
+      );
+
+      expect(bytes.isNotEmpty, isTrue);
+      expect(bytes.length, greaterThan(100));
+    });
+  });
+
+  group('Share & Import UI Widget Tests', () {
+    testWidgets('ShareRecipeSheet renders options for Chefy, PDF, and CSV with cost choices', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: Scaffold(
+            body: ShareRecipeSheet(recipeDetail: sampleDetail),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Share Recipe'), findsOneWidget);
+      expect(find.text('Apple Pie'), findsOneWidget);
+      expect(find.text('Chef&Cost Recipe (.chefy)'), findsOneWidget);
+      expect(find.text('PDF Recipe Sheet (.pdf)'), findsOneWidget);
+      expect(find.text('CSV Spreadsheet (.csv)'), findsOneWidget);
+      expect(find.text('Chef&Cost'), findsOneWidget);
+      expect(find.text('PDF'), findsOneWidget);
+      expect(find.text('CSV'), findsOneWidget);
+
+      // Verify "With costs" and "Without costs (Kitchen)" buttons for PDF and CSV
+      expect(find.text('With costs'), findsNWidgets(2));
+      expect(find.text('Without costs (Kitchen)'), findsNWidgets(2));
+    });
+
+    testWidgets('ImportRecipeDialog renders recipe preview with metadata badges and confirm action', (tester) async {
+      final preview = RecipeImportPreview(
+        name: 'French Croissants',
+        description: 'Authentic bakery croissants',
+        defaultYield: 12.0,
+        yieldName: 'units',
+        targetProfitMargin: 35.0,
+        targetPricePerPortion: 3.5,
+        ingredientsCount: 5,
+        stepsCount: 4,
+        timersCount: 2,
+        hasExistingRecipeWithSameName: true,
+        suggestedName: 'French Croissants (1)',
+      );
+
+      bool? dialogResult;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                dialogResult = await ImportRecipeDialog.show(context, preview: preview);
+              },
+              child: const Text('Open Dialog'),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Dialog'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Import Recipe'), findsOneWidget);
+      expect(find.text('French Croissants'), findsOneWidget);
+      expect(find.text('Authentic bakery croissants'), findsOneWidget);
+      expect(find.text('Yield: 12 units'), findsOneWidget);
+      expect(find.text('5 ingredients'), findsOneWidget);
+      expect(find.text('4 steps'), findsOneWidget);
+
+      // Warning for existing recipe name conflict
+      expect(
+        find.text('A recipe with this name already exists. It will be imported as "French Croissants (1)".'),
+        findsOneWidget,
+      );
+
+      // Tap Confirm
+      await tester.tap(find.text('Import'));
+      await tester.pumpAndSettle();
+
+      expect(dialogResult, isTrue);
+    });
+
+    test('prepareFileForShare preserves .chefy file extension and filename', () async {
+      const pathChannel = MethodChannel('plugins.flutter.io/path_provider');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(pathChannel, (MethodCall call) async {
+        return Directory.systemTemp.path;
+      });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(pathChannel, null);
+      });
+
+      final sampleBytes = Uint8List.fromList([1, 2, 3, 4]);
+      final xFile = await prepareFileForShare(
+        bytes: sampleBytes,
+        filename: 'My_Delicious_Cake.chefy',
+        mimeType: 'application/octet-stream',
+      );
+
+      expect(xFile.name.endsWith('My_Delicious_Cake.chefy'), isTrue);
+      expect(xFile.mimeType, 'application/octet-stream');
+      expect(await xFile.readAsBytes(), sampleBytes);
+    });
+
+    test('RecipeFileIntentService gets initial file from method channel', () async {
+      const channel = MethodChannel('com.chefandcost.app/file_intent');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+        if (call.method == 'getInitialFile') {
+          return {
+            'fileName': 'shared_recipe.chefy',
+            'content': '{"format":"chefy_recipe","version":1}',
+          };
+        }
+        return null;
+      });
+
+      final initial = await RecipeFileIntentService.getInitialFile();
+      expect(initial, isNotNull);
+      expect(initial?['fileName'], 'shared_recipe.chefy');
+      expect(initial?['content'], '{"format":"chefy_recipe","version":1}');
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    test('RecipeFileIntentService receives stream event when onFileReceived is called', () async {
+      RecipeFileIntentService.initialize();
+
+      const channel = MethodChannel('com.chefandcost.app/file_intent');
+      final futureEvent = RecipeFileIntentService.fileStream.first;
+
+      // Simulate native calling onFileReceived
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+        channel.name,
+        channel.codec.encodeMethodCall(
+          const MethodCall('onFileReceived', {
+            'fileName': 'incoming.chefy',
+            'content': '{"format":"chefy_recipe"}',
+          }),
+        ),
+        (ByteData? data) {},
+      );
+
+      final event = await futureEvent;
+      expect(event['fileName'], 'incoming.chefy');
+      expect(event['content'], '{"format":"chefy_recipe"}');
+    });
+
+    testWidgets('RecipeImportHelper.importRecipeFromString displays preview and imports into database', (tester) async {
+      final inMemoryDb = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(() => inMemoryDb.close());
+
+      final chefyJson = utf8.decode(RecipeShareService.exportAsChefy(sampleDetail, [unitG, unitKg]));
+
+      RecipeImportResult? result;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            databaseProvider.overrideWith(() => MockDatabaseNotifier(inMemoryDb)),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) => ElevatedButton(
+                  onPressed: () async {
+                    result = await RecipeImportHelper.importRecipeFromString(
+                      context,
+                      ref,
+                      jsonContent: chefyJson,
+                      sourceFileName: 'Apple_Pie.chefy',
+                    );
+                  },
+                  child: const Text('Import From String'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Import From String'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Import Recipe'), findsOneWidget);
+      expect(find.text('Apple Pie'), findsOneWidget);
+
+      await tester.tap(find.text('Import'));
+      await tester.pumpAndSettle();
+
+      expect(result, isNotNull);
+      expect(result!.recipe.name, 'Apple Pie');
+      expect(result!.ingredientsCount, 2);
+      expect(result!.stepsCount, 2);
+
+      final dbRecipes = await inMemoryDb.getAllRecipes();
+      expect(dbRecipes.any((r) => r.name == 'Apple Pie'), isTrue);
+    });
+
+    test('RecipeFileIntentService drops duplicate events within 4 seconds', () async {
+      RecipeFileIntentService.initialize();
+
+      const channel = MethodChannel('com.chefandcost.app/file_intent');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+        if (call.method == 'getInitialFile') {
+          return {
+            'fileName': 'dup.chefy',
+            'content': '{"format":"chefy_recipe","name":"UniqueDuplicateTest"}',
+          };
+        }
+        return null;
+      });
+
+      final firstFetch = await RecipeFileIntentService.getInitialFile();
+      expect(firstFetch, isNotNull);
+
+      // Immediate second call should be ignored by debouncer
+      final secondFetch = await RecipeFileIntentService.getInitialFile();
+      expect(secondFetch, isNull);
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    testWidgets('RecipeImportHelper blocks concurrent import calls with isImportInProgress', (tester) async {
+      final inMemoryDb = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(() => inMemoryDb.close());
+
+      final chefyJson = utf8.decode(RecipeShareService.exportAsChefy(sampleDetail, [unitG, unitKg]));
+
+      int dialogOpenCount = 0;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            databaseProvider.overrideWith(() => MockDatabaseNotifier(inMemoryDb)),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) => ElevatedButton(
+                  onPressed: () async {
+                    dialogOpenCount++;
+                    // Try launching first import
+                    final future1 = RecipeImportHelper.importRecipeFromString(
+                      context,
+                      ref,
+                      jsonContent: chefyJson,
+                      sourceFileName: 'Apple_Pie_1.chefy',
+                    );
+
+                    // Try launching second import immediately while first is in progress
+                    final result2 = await RecipeImportHelper.importRecipeFromString(
+                      context,
+                      ref,
+                      jsonContent: chefyJson,
+                      sourceFileName: 'Apple_Pie_2.chefy',
+                    );
+
+                    // Second one MUST return null immediately because first is in progress
+                    expect(result2, isNull);
+
+                    await future1;
+                  },
+                  child: const Text('Concurrent Import Test'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Concurrent Import Test'));
+      await tester.pumpAndSettle();
+
+      // Only ONE dialog is showing on screen
+      expect(find.text('Import Recipe'), findsOneWidget);
+
+      await tester.tap(find.text('Import'));
+      await tester.pumpAndSettle();
+
+      expect(dialogOpenCount, equals(1));
+    });
+  });
+}

@@ -1,0 +1,1340 @@
+import 'dart:async' show FutureOr;
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+
+import '../l10n/app_localizations.dart';
+
+/// Container for the GlobalKeys used to highlight widgets during the walkthrough tutorial.
+class AppTutorialKeys {
+  final GlobalKey navBarKey;
+  final GlobalKey quickActionsKey;
+  final GlobalKey recentRecipesKey;
+  final GlobalKey toolsSectionKey;
+
+  AppTutorialKeys({
+    GlobalKey? navBarKey,
+    GlobalKey? quickActionsKey,
+    GlobalKey? recentRecipesKey,
+    GlobalKey? toolsSectionKey,
+  })  : navBarKey = navBarKey ?? GlobalKey(debugLabel: 'tutorial_navBarKey'),
+        quickActionsKey = quickActionsKey ?? GlobalKey(debugLabel: 'tutorial_quickActionsKey'),
+        recentRecipesKey = recentRecipesKey ?? GlobalKey(debugLabel: 'tutorial_recentRecipesKey'),
+        toolsSectionKey = toolsSectionKey ?? GlobalKey(debugLabel: 'tutorial_toolsSectionKey');
+}
+
+/// Container for the GlobalKeys used to highlight widgets during the Recipe List walkthrough tutorial.
+class RecipeListTutorialKeys {
+  final GlobalKey recipeCardKey;
+  final GlobalKey recipeFinanceGridKey;
+
+  RecipeListTutorialKeys({
+    GlobalKey? recipeCardKey,
+    GlobalKey? recipeFinanceGridKey,
+  })  : recipeCardKey = recipeCardKey ?? GlobalKey(debugLabel: 'tutorial_recipeCardKey'),
+        recipeFinanceGridKey = recipeFinanceGridKey ?? GlobalKey(debugLabel: 'tutorial_recipeFinanceGridKey');
+}
+
+/// Container for the GlobalKeys used to highlight widgets during the Recipe Editor walkthrough tutorial.
+class RecipeEditorTutorialKeys {
+  final GlobalKey recipeEditorFinanceKey;
+  final GlobalKey recipeEditorScaleBarKey;
+  final GlobalKey recipeEditorFirstIngredientKey;
+  final GlobalKey recipeEditorIngredientsKey;
+
+  RecipeEditorTutorialKeys({
+    GlobalKey? recipeEditorFinanceKey,
+    GlobalKey? recipeEditorScaleBarKey,
+    GlobalKey? recipeEditorFirstIngredientKey,
+    GlobalKey? recipeEditorIngredientsKey,
+  })  : recipeEditorFinanceKey = recipeEditorFinanceKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorFinanceKey'),
+        recipeEditorScaleBarKey = recipeEditorScaleBarKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorScaleBarKey'),
+        recipeEditorFirstIngredientKey = recipeEditorFirstIngredientKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorFirstIngredientKey'),
+        recipeEditorIngredientsKey = recipeEditorIngredientsKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorIngredientsKey');
+}
+
+/// Information model describing an individual step in the guided tour.
+class TutorialStepInfo {
+  final String id;
+  final GlobalKey keyTarget;
+  final ContentAlign align;
+  final IconData icon;
+  final String title;
+  final String description;
+  final String? gestureHint;
+  final IconData? gestureIcon;
+  final ShapeLightFocus shape;
+  final double radius;
+
+  const TutorialStepInfo({
+    required this.id,
+    required this.keyTarget,
+    required this.align,
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.gestureHint,
+    this.gestureIcon,
+    this.shape = ShapeLightFocus.RRect,
+    this.radius = 18.0,
+  });
+}
+
+/// Service managing the interactive, step-by-step walkthrough tutorial.
+class AppTutorialService {
+  static const String kTutorialCompletedKey = 'has_completed_app_walkthrough_tutorial_v2';
+  static const String kTutorialRecipeListCompletedKey = 'has_completed_recipe_list_walkthrough_tutorial_v1';
+  static const String kTutorialRecipeEditorCompletedKey = 'has_completed_recipe_editor_walkthrough_tutorial_v1';
+
+  /// Global lock tracking whether any walkthrough overlay is actively displayed.
+  static bool _isTutorialActive = false;
+  static TutorialCoachMark? _activeTutorial;
+  static final Map<String, ContentAlign> _stepAlignments = {};
+  static final Map<String, TutorialStepInfo> _activeStepsMap = {};
+  static final Map<String, int> _activeStepIndices = {};
+  static int _activeTotalSteps = 0;
+
+  /// Returns true if any walkthrough tutorial is currently being displayed on screen.
+  static bool get isTutorialActive => _isTutorialActive;
+
+  /// Global notifier fired when a walkthrough tutorial finishes or is skipped,
+  /// allowing subsequent screens on tablet/multi-pane layouts to proceed without overlap.
+  static final ValueNotifier<int> tutorialStepCompletedNotifier = ValueNotifier<int>(0);
+
+  /// Dismisses and cleans up the currently active tutorial, if any.
+  static void dismissActiveTutorial() {
+    if (_isTutorialActive) {
+      try {
+        _activeTutorial?.finish();
+      } catch (_) {}
+      _activeTutorial = null;
+      _isTutorialActive = false;
+    }
+  }
+
+  /// Global notifier to trigger a walkthrough replay from anywhere in the app.
+  static final ValueNotifier<int> replayNotifier = ValueNotifier<int>(0);
+
+  static Future<SharedPreferences> _getPrefs([SharedPreferences? prefs]) async {
+    return prefs ?? await SharedPreferences.getInstance();
+  }
+
+  /// Checks if the main app walkthrough has been completed or skipped previously.
+  static Future<bool> isTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    return p.getBool(kTutorialCompletedKey) ?? false;
+  }
+
+  /// Marks the main walkthrough as completed in persistent storage.
+  static Future<void> markTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialCompletedKey, true);
+  }
+
+  /// Checks if the recipe list walkthrough has been completed or skipped previously.
+  static Future<bool> isRecipeListTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    return p.getBool(kTutorialRecipeListCompletedKey) ?? false;
+  }
+
+  /// Marks the recipe list walkthrough as completed in persistent storage.
+  static Future<void> markRecipeListTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialRecipeListCompletedKey, true);
+  }
+
+  /// Checks if the recipe editor walkthrough has been completed or skipped previously.
+  static Future<bool> isRecipeEditorTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    return p.getBool(kTutorialRecipeEditorCompletedKey) ?? false;
+  }
+
+  /// Marks the recipe editor walkthrough as completed in persistent storage.
+  static Future<void> markRecipeEditorTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialRecipeEditorCompletedKey, true);
+  }
+
+  /// Resets all walkthrough tutorials so they will run again.
+  static Future<void> resetTutorial([SharedPreferences? prefs]) async {
+    dismissActiveTutorial();
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialCompletedKey, false);
+    await p.setBool(kTutorialRecipeListCompletedKey, false);
+    await p.setBool(kTutorialRecipeEditorCompletedKey, false);
+    tutorialStepCompletedNotifier.value++;
+  }
+
+  /// Resets specifically the recipe list walkthrough status.
+  static Future<void> resetRecipeListTutorial([SharedPreferences? prefs]) async {
+    dismissActiveTutorial();
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialRecipeListCompletedKey, false);
+    tutorialStepCompletedNotifier.value++;
+  }
+
+  /// Resets specifically the recipe editor walkthrough status.
+  static Future<void> resetRecipeEditorTutorial([SharedPreferences? prefs]) async {
+    dismissActiveTutorial();
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialRecipeEditorCompletedKey, false);
+    tutorialStepCompletedNotifier.value++;
+  }
+
+  /// Signals that the tutorial should replay immediately.
+  static void requestReplay() {
+    replayNotifier.value++;
+  }
+
+  /// Alias for requestReplay.
+  static void triggerReplay() => requestReplay();
+
+  /// Calculates a screen-safe vertical position close to the target focus.
+  static CustomTargetContentPosition calculateSafeTargetPosition({
+    required BuildContext context,
+    required GlobalKey keyTarget,
+    ContentAlign? preferredAlign,
+  }) {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom +
+        MediaQuery.viewInsetsOf(context).bottom;
+
+    final isSmallScreen = screenHeight < 680 || screenWidth < 380;
+    final isVerySmallScreen = screenHeight < 580 || screenWidth < 340;
+
+    final safeMargin = isVerySmallScreen
+        ? 6.0
+        : (isSmallScreen ? 8.0 : 16.0);
+    final gap = isVerySmallScreen
+        ? 4.0
+        : (isSmallScreen ? 6.0 : 12.0);
+
+    final minTop = topPadding + safeMargin;
+    final minBottom = bottomPadding + safeMargin;
+
+    // Use a realistic estimate of card height so clamping never pushes
+    // the card off the screen edges.
+    final estimatedCardHeight = isVerySmallScreen
+        ? (screenHeight * 0.38).clamp(160.0, 220.0)
+        : isSmallScreen
+            ? (screenHeight * 0.42).clamp(180.0, 260.0)
+            : (screenHeight * 0.35).clamp(200.0, 320.0);
+
+    final ctx = keyTarget.currentContext;
+    if (ctx == null) {
+      return CustomTargetContentPosition(
+        bottom: minBottom,
+        left: 0.0,
+        right: 0.0,
+      );
+    }
+
+    final renderBox = ctx.findRenderObject();
+    if (renderBox is! RenderBox || !renderBox.hasSize) {
+      return CustomTargetContentPosition(
+        bottom: minBottom,
+        left: 0.0,
+        right: 0.0,
+      );
+    }
+
+    final pos = renderBox.localToGlobal(Offset.zero);
+    final targetTop = pos.dy;
+    final targetHeight = renderBox.size.height;
+    final targetBottom = targetTop + targetHeight;
+
+    // Available screen space strictly outside the target
+    final availableBelow = screenHeight - minBottom - targetBottom - gap;
+    final availableAbove = targetTop - minTop - gap;
+
+    final isTargetTall = targetHeight > (screenHeight * 0.35);
+    final canFitBelow = availableBelow >= estimatedCardHeight;
+    final canFitAbove = availableAbove >= estimatedCardHeight;
+
+    // Determine placement:
+    final bool placeBelow;
+    if (isTargetTall) {
+      // Large targets occupying a large portion of the screen (e.g. recipe editor step 4
+      // list view) cannot fit normal exterior cards; prefer docking at the bottom so
+      // next/finish controls remain comfortably thumb-accessible and top header stays visible.
+      placeBelow = true;
+    } else if (preferredAlign == ContentAlign.bottom) {
+      if (canFitBelow) {
+        placeBelow = true;
+      } else if (canFitAbove) {
+        placeBelow = false;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
+      }
+    } else if (preferredAlign == ContentAlign.top) {
+      if (canFitAbove) {
+        placeBelow = false;
+      } else if (canFitBelow) {
+        placeBelow = true;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
+      }
+    } else {
+      if (canFitBelow && !canFitAbove) {
+        placeBelow = true;
+      } else if (canFitAbove && !canFitBelow) {
+        placeBelow = false;
+      } else if (canFitBelow && canFitAbove) {
+        placeBelow = availableBelow >= availableAbove;
+      } else {
+        placeBelow = availableBelow >= availableAbove;
+      }
+    }
+
+    if (placeBelow) {
+      if (!canFitBelow && !canFitAbove) {
+        // Target takes almost all screen space: dock cleanly to screen bottom
+        return CustomTargetContentPosition(
+          bottom: minBottom,
+          left: 0.0,
+          right: 0.0,
+        );
+      }
+      final maxAllowedTop =
+          (screenHeight - minBottom - estimatedCardHeight).clamp(minTop, double.infinity);
+      final desiredTop = targetBottom + gap;
+      final top = desiredTop.clamp(minTop, maxAllowedTop);
+      return CustomTargetContentPosition(
+        top: top,
+        left: 0.0,
+        right: 0.0,
+      );
+    } else {
+      if (!canFitAbove && !canFitBelow) {
+        // Target takes almost all screen space: dock cleanly to screen top
+        return CustomTargetContentPosition(
+          top: minTop,
+          left: 0.0,
+          right: 0.0,
+        );
+      }
+      final maxAllowedBottom =
+          (screenHeight - minTop - estimatedCardHeight).clamp(minBottom, double.infinity);
+      final desiredBottom = (screenHeight - targetTop) + gap;
+      final bottom = desiredBottom.clamp(minBottom, maxAllowedBottom);
+      return CustomTargetContentPosition(
+        bottom: bottom,
+        left: 0.0,
+        right: 0.0,
+      );
+    }
+  }
+
+  /// Helper to convert a list of TutorialStepInfo into TargetFocus items with screen-safe, close-to-focus positioning.
+  static List<TargetFocus> _buildTargetFocusList(
+    BuildContext context,
+    List<TutorialStepInfo> rawSteps,
+    AppLocalizations l10n,
+  ) {
+    final activeSteps = rawSteps.where((step) {
+      final ctx = step.keyTarget.currentContext;
+      if (ctx == null) return false;
+      final renderBox = ctx.findRenderObject();
+      return renderBox is RenderBox && renderBox.hasSize && renderBox.size.height > 0;
+    }).toList();
+
+    if (activeSteps.isEmpty) return const [];
+
+    _activeStepsMap.clear();
+    _activeStepIndices.clear();
+    _activeTotalSteps = activeSteps.length;
+
+    for (int i = 0; i < activeSteps.length; i++) {
+      final step = activeSteps[i];
+      _stepAlignments[step.id] = step.align;
+      _activeStepsMap[step.id] = step;
+      _activeStepIndices[step.id] = i;
+    }
+
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isSmallScreen = screenWidth < 380 || screenHeight < 680;
+
+    final totalSteps = activeSteps.length;
+    final targets = <TargetFocus>[];
+
+    for (int i = 0; i < totalSteps; i++) {
+      final step = activeSteps[i];
+      final stepIndex = i;
+
+      final customPos = calculateSafeTargetPosition(
+        context: context,
+        keyTarget: step.keyTarget,
+        preferredAlign: step.align,
+      );
+
+      targets.add(
+        TargetFocus(
+          identify: step.id,
+          keyTarget: step.keyTarget,
+          shape: step.shape,
+          radius: step.radius,
+          enableOverlayTab: false,
+          enableTargetTab: step.id == 'step_recipe_list_hold' ||
+              step.id == 'step_recipe_editor_ingredient_hold' ||
+              step.id == 'step_recipe_editor_scale_bar',
+          contents: [
+            TargetContent(
+              align: ContentAlign.custom,
+              customPosition: customPos,
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 6.0 : 16.0,
+                vertical: isSmallScreen ? 2.0 : 4.0,
+              ),
+              builder: (ctx, controller) {
+                return _buildStepCard(
+                  context: ctx,
+                  controller: controller,
+                  step: step,
+                  stepIndex: stepIndex,
+                  totalSteps: totalSteps,
+                  l10n: l10n,
+                  customPosition: customPos,
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
+    return targets;
+  }
+
+  /// Builds the list of TargetFocus targets based on currently mounted keys on Home.
+  static List<TargetFocus> createTargets({
+    required BuildContext context,
+    required AppTutorialKeys keys,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return const [];
+
+    final isWide = MediaQuery.sizeOf(context).width >= 640;
+    final rawSteps = <TutorialStepInfo>[
+      // 1. Navigation Bar & Gestures
+      TutorialStepInfo(
+        id: 'step_nav_bar',
+        keyTarget: keys.navBarKey,
+        align: isWide ? ContentAlign.right : ContentAlign.top,
+        icon: Icons.swipe_rounded,
+        title: l10n.tutorial_target_nav_title,
+        description: l10n.tutorial_target_nav_desc,
+        gestureHint: l10n.tutorial_target_nav_hint,
+        radius: 18.0,
+      ),
+      // 2. Quick Actions
+      TutorialStepInfo(
+        id: 'step_quick_actions',
+        keyTarget: keys.quickActionsKey,
+        align: ContentAlign.bottom,
+        icon: Icons.bolt_rounded,
+        title: l10n.tutorial_target_quick_actions_title,
+        description: l10n.tutorial_target_quick_actions_desc,
+        gestureHint: l10n.tutorial_target_quick_actions_hint,
+        radius: 18.0,
+      ),
+      // 3. Recent Recipes & Long-Press
+      TutorialStepInfo(
+        id: 'step_recent_recipes',
+        keyTarget: keys.recentRecipesKey,
+        align: ContentAlign.bottom,
+        icon: Icons.touch_app_rounded,
+        title: l10n.tutorial_target_recipes_title,
+        description: l10n.tutorial_target_recipes_desc,
+        gestureHint: l10n.tutorial_target_recipes_hint,
+        radius: 20.0,
+      ),
+      // 4. Kitchen Tools & Timers
+      TutorialStepInfo(
+        id: 'step_tools_section',
+        keyTarget: keys.toolsSectionKey,
+        align: ContentAlign.top,
+        icon: Icons.calculate_rounded,
+        title: l10n.tutorial_target_tools_title,
+        description: l10n.tutorial_target_tools_desc,
+        gestureHint: l10n.tutorial_target_tools_hint,
+        radius: 18.0,
+      ),
+    ];
+
+    return _buildTargetFocusList(context, rawSteps, l10n);
+  }
+
+  /// Builds the list of TargetFocus targets for Recipe List screen.
+  static List<TargetFocus> createRecipeListTargets({
+    required BuildContext context,
+    required RecipeListTutorialKeys keys,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return const [];
+
+    final rawSteps = <TutorialStepInfo>[
+      // 1. Recipe Long-Press / Options
+      TutorialStepInfo(
+        id: 'step_recipe_list_hold',
+        keyTarget: keys.recipeCardKey,
+        align: ContentAlign.bottom,
+        icon: Icons.touch_app_rounded,
+        title: l10n.tutorial_recipe_list_hold_title,
+        description: l10n.tutorial_recipe_list_hold_desc,
+        gestureHint: l10n.tutorial_recipe_list_hold_hint,
+        radius: 18.0,
+      ),
+      // 2. Financial Metrics Breakdown
+      TutorialStepInfo(
+        id: 'step_recipe_list_finance',
+        keyTarget: keys.recipeFinanceGridKey,
+        align: ContentAlign.bottom,
+        icon: Icons.attach_money_rounded,
+        title: l10n.tutorial_recipe_list_finance_title,
+        description: l10n.tutorial_recipe_list_finance_desc,
+        gestureHint: l10n.tutorial_recipe_list_finance_hint,
+        radius: 14.0,
+      ),
+    ];
+
+    return _buildTargetFocusList(context, rawSteps, l10n);
+  }
+
+  /// Builds the list of TargetFocus targets for Recipe Editor screen.
+  static List<TargetFocus> createRecipeEditorTargets({
+    required BuildContext context,
+    required RecipeEditorTutorialKeys keys,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return const [];
+
+    final rawSteps = <TutorialStepInfo>[
+      // 1. Financial Bar & Margin Calculator
+      TutorialStepInfo(
+        id: 'step_recipe_editor_finance',
+        keyTarget: keys.recipeEditorFinanceKey,
+        align: ContentAlign.top,
+        icon: Icons.analytics_outlined,
+        title: l10n.tutorial_editor_finance_title,
+        description: l10n.tutorial_editor_finance_desc,
+        gestureHint: l10n.tutorial_editor_finance_hint,
+        radius: 16.0,
+      ),
+      // 2. Portion Scaling Bar & Multipliers
+      TutorialStepInfo(
+        id: 'step_recipe_editor_scale_bar',
+        keyTarget: keys.recipeEditorScaleBarKey,
+        align: ContentAlign.bottom,
+        icon: Icons.linear_scale_rounded,
+        title: l10n.tutorial_editor_scale_bar_title,
+        description: l10n.tutorial_editor_scale_bar_desc,
+        gestureHint: l10n.tutorial_editor_scale_bar_hint,
+        gestureIcon: Icons.swipe_rounded,
+        radius: 14.0,
+      ),
+      // 3. Ingredient Long-Press / Inline Actions Dropdown
+      TutorialStepInfo(
+        id: 'step_recipe_editor_ingredient_hold',
+        keyTarget: keys.recipeEditorFirstIngredientKey,
+        align: ContentAlign.bottom,
+        icon: Icons.touch_app_rounded,
+        title: l10n.tutorial_editor_ingredient_hold_title,
+        description: l10n.tutorial_editor_ingredient_hold_desc,
+        gestureHint: l10n.tutorial_editor_ingredient_hold_hint,
+        radius: 14.0,
+      ),
+      // 4. Ingredients, Counters & Step Organization
+      TutorialStepInfo(
+        id: 'step_recipe_editor_gestures',
+        keyTarget: keys.recipeEditorIngredientsKey,
+        align: ContentAlign.bottom,
+        icon: Icons.drag_indicator_rounded,
+        title: l10n.tutorial_editor_gestures_title,
+        description: l10n.tutorial_editor_gestures_desc,
+        gestureHint: l10n.tutorial_editor_gestures_hint,
+        radius: 14.0,
+      ),
+    ];
+
+    return _buildTargetFocusList(context, rawSteps, l10n);
+  }
+
+  /// Common internal builder for TutorialCoachMark controllers.
+  static TutorialCoachMark? _createTutorialWithTargets({
+    required BuildContext context,
+    required List<TargetFocus> targets,
+    required Future<void> Function() onComplete,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+  }) {
+    if (targets.isEmpty) return null;
+
+    TutorialCoachMark? tutorialInstance;
+
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isSmallScreen = screenWidth < 380 || screenHeight < 680;
+
+    tutorialInstance = TutorialCoachMark(
+      targets: targets,
+      colorShadow: Colors.black,
+      opacityShadow: 0.82,
+      paddingFocus: isSmallScreen ? 4 : 8,
+      hideSkip: true, // We embed dedicated skip controls in every step card
+      beforeFocus: (target) async {
+        final key = target.keyTarget;
+        final ctx = key?.currentContext;
+        final preferred =
+            target.identify != null ? _stepAlignments[target.identify!] : null;
+        if (ctx != null) {
+          try {
+            double scrollAlign = 0.50;
+            final rb = ctx.findRenderObject();
+            final isTall = rb is RenderBox &&
+                rb.hasSize &&
+                rb.size.height > (screenHeight * 0.35);
+
+            if (isTall) {
+              scrollAlign = 0.06;
+            } else if (isSmallScreen && preferred != null) {
+              if (preferred == ContentAlign.bottom) {
+                scrollAlign = 0.18;
+              } else if (preferred == ContentAlign.top) {
+                scrollAlign = 0.82;
+              }
+            }
+            await Scrollable.ensureVisible(
+              ctx,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              alignment: scrollAlign,
+            );
+          } catch (_) {}
+        }
+        if (onStepFocus != null && target.identify != null) {
+          await onStepFocus(target.identify!);
+        }
+        if (key != null &&
+            target.contents != null &&
+            target.contents!.isNotEmpty &&
+            context.mounted) {
+          final updatedPos = calculateSafeTargetPosition(
+            context: context,
+            keyTarget: key,
+            preferredAlign: preferred,
+          );
+          final oldContent = target.contents!.first;
+          final step = target.identify != null ? _activeStepsMap[target.identify!] : null;
+          final stepIndex = target.identify != null ? (_activeStepIndices[target.identify!] ?? 0) : 0;
+          final total = _activeTotalSteps > 0 ? _activeTotalSteps : targets.length;
+
+          target.contents![0] = TargetContent(
+            align: ContentAlign.custom,
+            customPosition: updatedPos,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 6.0 : 16.0,
+              vertical: isSmallScreen ? 2.0 : 4.0,
+            ),
+            builder: (c, ctrl) {
+              if (step != null) {
+                return _buildStepCard(
+                  context: c,
+                  controller: ctrl,
+                  step: step,
+                  stepIndex: stepIndex,
+                  totalSteps: total,
+                  l10n: AppLocalizations.of(c)!,
+                  customPosition: updatedPos,
+                );
+              }
+              return oldContent.builder?.call(c, ctrl) ?? const SizedBox.shrink();
+            },
+          );
+        }
+      },
+      onFinish: () {
+        _isTutorialActive = false;
+        _activeTutorial = null;
+        tutorialStepCompletedNotifier.value++;
+        onComplete();
+        onFinish?.call();
+      },
+      onSkip: () {
+        _isTutorialActive = false;
+        _activeTutorial = null;
+        tutorialStepCompletedNotifier.value++;
+        onComplete();
+        onSkip?.call();
+        return true;
+      },
+    );
+
+    return tutorialInstance;
+  }
+
+  /// Instantiates a TutorialCoachMark controller for the Home walkthrough.
+  static TutorialCoachMark? createTutorial({
+    required BuildContext context,
+    required AppTutorialKeys keys,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+  }) {
+    final targets = createTargets(context: context, keys: keys);
+    return _createTutorialWithTargets(
+      context: context,
+      targets: targets,
+      onComplete: () => markTutorialCompleted(prefs),
+      onFinish: onFinish,
+      onSkip: onSkip,
+    );
+  }
+
+  /// Shows the Home walkthrough tutorial immediately if valid targets exist.
+  static bool showTutorial(
+    BuildContext context, {
+    required AppTutorialKeys keys,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    bool force = false,
+  }) {
+    if (_isTutorialActive) {
+      if (force) {
+        dismissActiveTutorial();
+      } else {
+        return false;
+      }
+    }
+
+    final tutorial = createTutorial(
+      context: context,
+      keys: keys,
+      onFinish: onFinish,
+      onSkip: onSkip,
+      prefs: prefs,
+    );
+    if (tutorial == null) return false;
+
+    _isTutorialActive = true;
+    _activeTutorial = tutorial;
+    tutorial.show(context: context, rootOverlay: true);
+    return true;
+  }
+
+  /// Checks if Home walkthrough should trigger on first launch.
+  static Future<bool> checkAndShowTutorial(
+    BuildContext context, {
+    required AppTutorialKeys keys,
+    bool force = false,
+    bool bypassTestCheck = false,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    int maxRetries = 3,
+  }) async {
+    if (kIsWeb) {
+      try {
+        final uri = Uri.base;
+        if (uri.queryParameters['tutorial'] == 'true' ||
+            uri.queryParameters['replay'] == 'true' ||
+            uri.queryParameters['walkthrough'] == 'true') {
+          force = true;
+          await resetTutorial(prefs);
+        }
+      } catch (_) {}
+    }
+
+    if (!force) {
+      if (!kIsWeb && !bypassTestCheck) {
+        try {
+          if (Platform.environment['FLUTTER_TEST'] == 'true') {
+            return false;
+          }
+        } catch (_) {}
+      }
+      if (_isTutorialActive) return false;
+      final isCompleted = await isTutorialCompleted(prefs);
+      if (isCompleted) return false;
+    }
+
+    if (!context.mounted) return false;
+
+    final targets = createTargets(context: context, keys: keys);
+    if (targets.isEmpty && maxRetries > 0) {
+      await Future.delayed(const Duration(milliseconds: 350));
+      if (!context.mounted) return false;
+      return checkAndShowTutorial(
+        context,
+        keys: keys,
+        force: force,
+        bypassTestCheck: bypassTestCheck,
+        onFinish: onFinish,
+        onSkip: onSkip,
+        prefs: prefs,
+        maxRetries: maxRetries - 1,
+      );
+    }
+
+    if (targets.isEmpty) return false;
+
+    return showTutorial(
+      context,
+      keys: keys,
+      onFinish: onFinish,
+      onSkip: onSkip,
+      prefs: prefs,
+      force: force,
+    );
+  }
+
+  /// Shows the Recipe List walkthrough tutorial immediately if valid targets exist.
+  static bool showRecipeListTutorial(
+    BuildContext context, {
+    required RecipeListTutorialKeys keys,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    bool force = false,
+  }) {
+    if (_isTutorialActive) {
+      if (force) {
+        dismissActiveTutorial();
+      } else {
+        return false;
+      }
+    }
+
+    final targets = createRecipeListTargets(context: context, keys: keys);
+    if (targets.isEmpty) return false;
+
+    final tutorial = _createTutorialWithTargets(
+      context: context,
+      targets: targets,
+      onComplete: () => markRecipeListTutorialCompleted(prefs),
+      onStepFocus: onStepFocus,
+      onFinish: onFinish,
+      onSkip: onSkip,
+    );
+    if (tutorial == null) return false;
+
+    _isTutorialActive = true;
+    _activeTutorial = tutorial;
+    tutorial.show(context: context, rootOverlay: true);
+    return true;
+  }
+
+  /// Checks if Recipe List walkthrough should trigger on first launch.
+  static Future<bool> checkAndShowRecipeListTutorial(
+    BuildContext context, {
+    required RecipeListTutorialKeys keys,
+    bool force = false,
+    bool bypassTestCheck = false,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    int maxRetries = 3,
+  }) async {
+    if (!force) {
+      if (!kIsWeb && !bypassTestCheck) {
+        try {
+          if (Platform.environment['FLUTTER_TEST'] == 'true') {
+            return false;
+          }
+        } catch (_) {}
+      }
+      if (_isTutorialActive) return false;
+
+      // On tablet or multi-pane layout, ensure Home walkthrough has completed first
+      final isHomeCompleted = await isTutorialCompleted(prefs);
+      if (!isHomeCompleted) return false;
+
+      final isCompleted = await isRecipeListTutorialCompleted(prefs);
+      if (isCompleted) return false;
+    }
+
+    if (!context.mounted) return false;
+
+    final targets = createRecipeListTargets(context: context, keys: keys);
+    if (targets.isEmpty && maxRetries > 0) {
+      await Future.delayed(const Duration(milliseconds: 350));
+      if (!context.mounted) return false;
+      return checkAndShowRecipeListTutorial(
+        context,
+        keys: keys,
+        force: force,
+        bypassTestCheck: bypassTestCheck,
+        onStepFocus: onStepFocus,
+        onFinish: onFinish,
+        onSkip: onSkip,
+        prefs: prefs,
+        maxRetries: maxRetries - 1,
+      );
+    }
+
+    if (targets.isEmpty) return false;
+
+    return showRecipeListTutorial(
+      context,
+      keys: keys,
+      onStepFocus: onStepFocus,
+      onFinish: onFinish,
+      onSkip: onSkip,
+      prefs: prefs,
+      force: force,
+    );
+  }
+
+  /// Shows the Recipe Editor walkthrough tutorial immediately if valid targets exist.
+  static bool showRecipeEditorTutorial(
+    BuildContext context, {
+    required RecipeEditorTutorialKeys keys,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    bool force = false,
+  }) {
+    if (_isTutorialActive) {
+      if (force) {
+        dismissActiveTutorial();
+      } else {
+        return false;
+      }
+    }
+
+    final targets = createRecipeEditorTargets(context: context, keys: keys);
+    if (targets.isEmpty) return false;
+
+    final tutorial = _createTutorialWithTargets(
+      context: context,
+      targets: targets,
+      onComplete: () => markRecipeEditorTutorialCompleted(prefs),
+      onStepFocus: onStepFocus,
+      onFinish: onFinish,
+      onSkip: onSkip,
+    );
+    if (tutorial == null) return false;
+
+    _isTutorialActive = true;
+    _activeTutorial = tutorial;
+    tutorial.show(context: context, rootOverlay: true);
+    return true;
+  }
+
+  /// Checks if Recipe Editor walkthrough should trigger on first launch.
+  static Future<bool> checkAndShowRecipeEditorTutorial(
+    BuildContext context, {
+    required RecipeEditorTutorialKeys keys,
+    bool force = false,
+    bool bypassTestCheck = false,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    int maxRetries = 3,
+  }) async {
+    if (!force) {
+      if (!kIsWeb && !bypassTestCheck) {
+        try {
+          if (Platform.environment['FLUTTER_TEST'] == 'true') {
+            return false;
+          }
+        } catch (_) {}
+      }
+      if (_isTutorialActive) return false;
+
+      // On tablet or multi-pane layout, ensure Home walkthrough has completed first
+      final isHomeCompleted = await isTutorialCompleted(prefs);
+      if (!isHomeCompleted) return false;
+
+      // On tablet/desktop (wide layout), also ensure Recipe List walkthrough has completed first
+      if (context.mounted && MediaQuery.sizeOf(context).width >= 640) {
+        final isListCompleted = await isRecipeListTutorialCompleted(prefs);
+        if (!isListCompleted) return false;
+      }
+
+      final isCompleted = await isRecipeEditorTutorialCompleted(prefs);
+      if (isCompleted) return false;
+    }
+
+    if (!context.mounted) return false;
+
+    final targets = createRecipeEditorTargets(context: context, keys: keys);
+    if (targets.isEmpty && maxRetries > 0) {
+      await Future.delayed(const Duration(milliseconds: 350));
+      if (!context.mounted) return false;
+      return checkAndShowRecipeEditorTutorial(
+        context,
+        keys: keys,
+        force: force,
+        bypassTestCheck: bypassTestCheck,
+        onStepFocus: onStepFocus,
+        onFinish: onFinish,
+        onSkip: onSkip,
+        prefs: prefs,
+        maxRetries: maxRetries - 1,
+      );
+    }
+
+    if (targets.isEmpty) return false;
+
+    return showRecipeEditorTutorial(
+      context,
+      keys: keys,
+      onStepFocus: onStepFocus,
+      onFinish: onFinish,
+      onSkip: onSkip,
+      prefs: prefs,
+      force: force,
+    );
+  }
+
+  /// Builds the custom target focus card containing step counter, description, gesture hints, and controls.
+  static Widget _buildStepCard({
+    required BuildContext context,
+    required TutorialCoachMarkController controller,
+    required TutorialStepInfo step,
+    required int stepIndex,
+    required int totalSteps,
+    required AppLocalizations l10n,
+    CustomTargetContentPosition? customPosition,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final cardBg = isDark
+        ? theme.colorScheme.surfaceContainerHigh
+        : theme.colorScheme.surface;
+
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom +
+        MediaQuery.viewInsetsOf(context).bottom;
+
+    final isSmallScreen = screenHeight < 680 || screenWidth < 380;
+    final isVerySmallScreen = screenHeight < 580 || screenWidth < 340;
+
+    final cardHorizontalMargin = isVerySmallScreen
+        ? 6.0
+        : (isSmallScreen ? 8.0 : 12.0);
+    final cardPadding = isVerySmallScreen
+        ? const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0)
+        : isSmallScreen
+            ? const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0)
+            : const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0);
+
+    final cardMaxWidth = (screenWidth - (cardHorizontalMargin * 2) - 16.0)
+        .clamp(260.0, 420.0);
+
+    double horizontalAlignment = 0.0;
+    final keyCtx = step.keyTarget.currentContext;
+    if (keyCtx != null && screenWidth > (cardMaxWidth + 32.0)) {
+      final rb = keyCtx.findRenderObject();
+      if (rb is RenderBox && rb.hasSize) {
+        final pos = rb.localToGlobal(Offset.zero);
+        final liveTargetCenterX = pos.dx + (rb.size.width / 2.0);
+        final availableSpan = (screenWidth - cardMaxWidth) / 2.0;
+        if (availableSpan > 0) {
+          horizontalAlignment =
+              ((liveTargetCenterX - (screenWidth / 2.0)) / availableSpan)
+                  .clamp(-0.95, 0.95);
+        }
+      }
+    }
+
+    final resolvedPos = customPosition ??
+        calculateSafeTargetPosition(
+          context: context,
+          keyTarget: step.keyTarget,
+          preferredAlign: step.align,
+        );
+
+    final defaultMaxHeight = isVerySmallScreen
+        ? (screenHeight * 0.55).clamp(160.0, 260.0)
+        : isSmallScreen
+            ? (screenHeight * 0.48).clamp(180.0, 300.0)
+            : (screenHeight * 0.38).clamp(200.0, 360.0);
+
+    final safeMargin = isVerySmallScreen ? 6.0 : (isSmallScreen ? 8.0 : 16.0);
+    double remainingVerticalSpace =
+        screenHeight - topPadding - bottomPadding - (safeMargin * 2);
+
+    if (resolvedPos.top != null) {
+      remainingVerticalSpace =
+          screenHeight - resolvedPos.top! - bottomPadding - safeMargin;
+    } else if (resolvedPos.bottom != null) {
+      remainingVerticalSpace =
+          screenHeight - resolvedPos.bottom! - topPadding - safeMargin;
+    }
+
+    final safeMaxCardHeight = defaultMaxHeight.clamp(
+      120.0,
+      remainingVerticalSpace.clamp(120.0, screenHeight),
+    );
+
+    return Align(
+      alignment: Alignment(horizontalAlignment, 0.0),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: cardMaxWidth,
+          maxHeight: safeMaxCardHeight,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: EdgeInsets.symmetric(
+              horizontal: cardHorizontalMargin,
+              vertical: isVerySmallScreen ? 2.0 : 4.0,
+            ),
+            padding: cardPadding,
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(isSmallScreen ? 16 : 22),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                width: isSmallScreen ? 1.0 : 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: isSmallScreen ? 12 : 20,
+                  offset: Offset(0, isSmallScreen ? 4 : 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Header: Step Badge & Skip Action (Pinned at top)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 8 : 10,
+                          vertical: isSmallScreen ? 3 : 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              step.icon,
+                              size: isSmallScreen ? 13 : 14,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                l10n.tutorial_step_counter(stepIndex + 1, totalSteps),
+                                style: (isSmallScreen
+                                        ? theme.textTheme.labelSmall?.copyWith(fontSize: 10.5)
+                                        : theme.textTheme.labelSmall)
+                                    ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 6 : 8,
+                          vertical: isSmallScreen ? 2 : 4,
+                        ),
+                        foregroundColor: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      icon: Icon(Icons.close_rounded, size: isSmallScreen ? 14 : 16),
+                      label: Text(
+                        l10n.tutorial_action_skip,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 11 : 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onPressed: () => controller.skip(),
+                    ),
+                  ],
+                ),
+                SizedBox(height: isSmallScreen ? 6 : 10),
+
+                // 2. Scrollable Body: Title, Description, Gesture Hint Banner
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          step.title,
+                          style: (isSmallScreen
+                                  ? theme.textTheme.titleSmall
+                                  : theme.textTheme.titleMedium)
+                              ?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            fontSize: isSmallScreen ? 14.0 : null,
+                          ),
+                        ),
+                        SizedBox(height: isSmallScreen ? 3 : 6),
+
+                        // Description
+                        Text(
+                          step.description,
+                          style: (isSmallScreen
+                                  ? theme.textTheme.bodySmall
+                                  : theme.textTheme.bodyMedium)
+                              ?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.3,
+                            fontSize: isSmallScreen ? 12.0 : null,
+                          ),
+                        ),
+
+                        // Highlight Gesture Hint Banner (if present)
+                        if (step.gestureHint != null) ...[
+                          SizedBox(height: isSmallScreen ? 6 : 10),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 8 : 12,
+                              vertical: isSmallScreen ? 5 : 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                              border: Border.all(
+                                color: theme.colorScheme.tertiary.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  step.gestureIcon ?? Icons.touch_app_rounded,
+                                  size: isSmallScreen ? 14 : 16,
+                                  color: theme.colorScheme.tertiary,
+                                ),
+                                SizedBox(width: isSmallScreen ? 6 : 8),
+                                Expanded(
+                                  child: Text(
+                                    step.gestureHint!,
+                                    style: (isSmallScreen
+                                            ? theme.textTheme.labelSmall
+                                            : theme.textTheme.labelMedium)
+                                        ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onTertiaryContainer,
+                                      height: 1.25,
+                                      fontSize: isSmallScreen ? 11.0 : null,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: isSmallScreen ? 8 : 14),
+
+                // 3. Navigation Controls (Always visible, pinned at bottom of card)
+                Row(
+                  mainAxisAlignment: stepIndex > 0
+                      ? MainAxisAlignment.spaceBetween
+                      : MainAxisAlignment.end,
+                  children: [
+                    if (stepIndex > 0)
+                      Flexible(
+                        flex: 1,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 8 : 12,
+                              vertical: isSmallScreen ? 4 : 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                            ),
+                          ),
+                          onPressed: () => controller.previous(),
+                          icon: Icon(Icons.arrow_back_rounded, size: isSmallScreen ? 14 : 16),
+                          label: Text(
+                            l10n.tutorial_action_prev,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: isSmallScreen ? 11.5 : null),
+                          ),
+                        ),
+                      ),
+                    if (stepIndex > 0) const SizedBox(width: 8),
+                    Flexible(
+                      flex: 1,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 10 : 16,
+                            vertical: isSmallScreen ? 4 : 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                          ),
+                        ),
+                        onPressed: () => controller.next(),
+                        icon: Icon(
+                          stepIndex == totalSteps - 1
+                              ? Icons.check_rounded
+                              : Icons.arrow_forward_rounded,
+                          size: isSmallScreen ? 14 : 16,
+                        ),
+                        label: Text(
+                          stepIndex == totalSteps - 1
+                              ? l10n.tutorial_action_finish
+                              : l10n.tutorial_action_next,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: isSmallScreen ? 11.5 : null),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,851 @@
+{
+  "unit_fluid_ounces": "Fluid ounces (US)",
+  "ingredient_deleted_label": "Deleted",
+  "@@locale": "en",
+  "home_title": "Home",
+  "home_greeting_morning": "Good morning, Chef",
+  "home_greeting_afternoon": "Good afternoon, Chef",
+  "home_greeting_evening": "Good evening, Chef",
+  "home_quick_actions": "Quick Actions",
+  "home_recent_recipes": "Recent Recipes",
+  "home_view_all": "View all",
+  "home_active_timers": "Active Timers",
+  "home_kitchen_tools": "Kitchen Tools",
+  "home_stats_recipes": "Recipes",
+  "home_stats_ingredients": "Ingredients",
+  "home_stats_avg_margin": "Avg. Margin",
+  "recipes_title": "Recipes",
+  "new_recipe_title": "New Recipe",
+  "recipe_title": "Recipe",
+  "ingredients_title": "Ingredients",
+  "units_title": "Units",
+  "recipe_name": "Recipe Name",
+  "recipe_description": "Description",
+  "recipe_description_hint": "Short description of the recipe...",
+  "recipe_yield": "Default Yield",
+  "recipe_yield_name": "Yield Unit (e.g. cookies)",
+  "target_profit_margin": "Target Profit Margin",
+  "target_price_portion": "Target Price per Portion",
+  "fixed_overhead": "Fixed Overhead Cost",
+  "total_cost": "Total Cost",
+  "profit_per_recipe": "Profit per Recipe",
+  "ingredient_name": "Ingredient Name",
+  "ingredient_cost": "Cost",
+  "ingredient_quantity": "Quantity",
+  "unit_grams": "Grams",
+  "unit_kilograms": "Kilograms",
+  "unit_milliliters": "Milliliters",
+  "unit_liters": "Liters",
+  "unit_pieces": "Pieces",
+  "unit_spoonfuls": "Spoonfuls",
+  "unit_tablespoons": "Tablespoons",
+  "unit_teaspoons": "Teaspoons",
+  "unit_cups": "Cups",
+  "unit_ounces": "Ounces",
+  "step_instruction": "Instruction",
+  "step_instruction_hint": "Describe the step...",
+  "save_button": "Save",
+  "add_button": "Add",
+  "edit_button": "Edit",
+  "delete_button": "Delete",
+  "duplicate_button": "Duplicate",
+  "delete_recipe_title": "Delete Recipe",
+  "delete_recipe_message": "Are you sure you want to delete this recipe? This cannot be undone.",
+  "discard_button": "Discard",
+  "cancel_button": "Cancel",
+  "unsaved_changes_title": "Unsaved changes",
+  "unsaved_changes_body": "Do you want to save or discard this recipe?",
+  "new_ingredient_button": "New Ingredient",
+  "config_button": "Settings",
+  "recipe_steps": "Steps",
+  "tools_title": "Tools",
+  "no_steps": "No steps added yet.",
+  "est_revenue": "Est. Revenue",
+  "financial_targets": "Financial Targets",
+  "financial_margin": "Total Margin",
+  "financial_price": "Price per Portion",
+  "no_ingredients": "No ingredients added yet.",
+  "unit_portions": "Portions",
+  "cost_per_portion": "Cost per Portion",
+  "profit_per_portion": "Profit per Portion",
+  "total_profit": "Total Profit",
+  "total_sale": "Total Sale",
+  "sale_per_portion": "Sale per Portion",
+  "validation_required": "Required",
+  "profit_margin_helper": "Enter whole numbers (e.g., 35 for 35%)",
+  "assign_ingredients_tooltip": "Assign ingredients to this step",
+  "select_ingredient_recipe_title": "Select Ingredient",
+  "assign_to_step_title": "Assign to Step {number}",
+  "@assign_to_step_title": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "mention_ingredient_title": "Mention Ingredient",
+  "add_ingredients_first_error": "Add ingredients to the recipe first",
+  "assign_step_ingredients_first_error": "Assign ingredients to the step header (+)",
+  "done_button": "Done",
+  "add_ingredient_title": "Add Ingredient",
+  "edit_ingredient_title": "Edit Ingredient",
+  "select_unit": "Select Unit",
+  "ingredient_price_per_quantity": "{price} per {quantity} {unit}",
+  "@ingredient_price_per_quantity": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "search_hint": "Search...",
+  "search_ingredients_hint": "Search ingredients...",
+  "no_ingredients_found": "No ingredients found.",
+  "no_recipes_found": "No recipes found.",
+  "no_recipes_in_space": "No recipes assigned to this space yet. Tap + to create one, or edit an existing recipe to add it here.",
+  "related_ingredients": "Related",
+  "no_similar_ingredients": "No similar ingredients",
+  "merge_button": "Merge",
+  "compare_button": "Compare",
+  "merge_confirm_title": "Merge Ingredients?",
+  "merge_confirm_message": "This will replace all references to {oldName} with {newName} in your recipes. This action cannot be undone.",
+  "@merge_confirm_message": {
+    "placeholders": {
+      "oldName": {
+        "type": "String"
+      },
+      "newName": {
+        "type": "String"
+      }
+    }
+  },
+  "price_comparison": "Price Comparison",
+  "error_select_unit": "Please select a unit",
+  "error_prefix": "Error: {error}",
+  "@error_prefix": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "short_cost": "COST",
+  "short_profit": "PROFIT",
+  "short_price_portion": "P/PORTION",
+  "per_unit": "per",
+  "error_text": "Error",
+  "scale_recipe_tooltip": "Scale recipe (temporary view)",
+  "temporary_view_title": "Temporary View",
+  "temporary_view_banner": "This is a temporary view scaled by {multiplier}x. Changes will not be saved.",
+  "@temporary_view_banner": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_button": "Scale",
+  "rule_of_three_title": "Rule of Three",
+  "rule_of_three_desc": "Calculate proportions easily for ingredient quantities and recipe yields.",
+  "rule_of_three_if": "If",
+  "rule_of_three_corresponds": "corresponds to",
+  "rule_of_three_then": "Then",
+  "rule_of_three_will_be": "will be",
+  "rule_of_three_result": "Result",
+  "rule_of_three_clear": "Clear",
+  "rule_of_three_example": "Example: If 100g of flour makes 10 portions, then to make 25 portions you need 250g of flour.",
+  "unit_converter_title": "Unit Converter",
+  "unit_converter_desc": "Convert cooking units for mass, volume, and quantities easily.",
+  "unit_converter_category": "Category",
+  "unit_converter_from": "From",
+  "unit_converter_to": "To",
+  "unit_converter_value": "Value",
+  "unit_converter_result": "Result",
+  "unit_category_mass": "Weight / Mass",
+  "unit_category_volume": "Volume",
+  "unit_category_count": "Count / Quantity",
+  "settings_general": "General Settings",
+  "settings_reset_db": "Reset Database",
+  "settings_reset_db_desc": "Delete all recipes and ingredients. This cannot be undone.",
+  "settings_reset_db_confirm": "Reset Database?",
+  "settings_reset_db_warning": "Are you sure you want to delete all recipes, ingredients, and steps? This action is permanent.",
+  "settings_reset_db_success": "Database reset successfully.",
+  "settings_theme_title": "Theme & Style",
+  "settings_theme_mode": "Theme Mode",
+  "settings_theme_color": "Accent Color",
+  "settings_theme_system": "System",
+  "settings_theme_light": "Light",
+  "settings_theme_dark": "Dark",
+  "settings_locale_title": "Localization & Formatting",
+  "settings_locale_lang": "Language",
+  "settings_locale_es": "Spanish",
+  "settings_locale_en": "English",
+  "settings_format_decimals": "Decimal Places",
+  "settings_about": "About",
+  "settings_version": "Version",
+  "settings_font_size": "Font Size",
+  "settings_font_size_small": "Small",
+  "settings_font_size_medium": "Medium",
+  "settings_font_size_large": "Large",
+  "settings_font_size_xlarge": "X-Large",
+  "settings_styles_title": "Styles",
+  "settings_about_app_title": "About App",
+  "settings_haptic_feedback": "Haptic Feedback",
+  "settings_haptic_feedback_desc": "Enable system vibrations on buttons and interactions",
+  "settings_styles_m3": "Use Material 3",
+  "settings_styles_m3_desc": "Enable modern Material 3 styling and components",
+  "settings_styles_icon_style": "Icon Style",
+  "settings_styles_icon_style_outlined": "Outlined",
+  "settings_styles_icon_style_rounded": "Rounded",
+  "settings_styles_icon_style_sharp": "Sharp",
+  "settings_styles_number_colors": "Colorize Numbers",
+  "settings_styles_number_colors_desc": "Use semantic colors for financial metrics",
+  "settings_styles_animations": "Animations",
+  "settings_styles_animations_desc": "Enable screen transitions and micro-animations",
+  "settings_styles_scroll": "Scroll Behavior",
+  "settings_styles_scroll_default": "Default",
+  "settings_styles_scroll_simple": "Simple (Clamp)",
+  "settings_styles_scroll_stretch": "Stretch",
+  "settings_styles_scroll_bounce": "Bounce",
+  "settings_styles_left_hand": "Left-Handed Mode",
+  "settings_styles_left_hand_desc": "Mirror controls for easier left-hand use",
+  "settings_styles_high_contrast": "High Contrast Text",
+  "settings_styles_high_contrast_desc": "Force pure black/white text for readability",
+  "settings_styles_font": "Font Family",
+  "settings_styles_font_system": "Default",
+  "settings_styles_font_sans": "Metropolis",
+  "settings_styles_font_serif": "Nunito",
+  "settings_styles_font_mono": "Inconsolata Monospace",
+  "settings_styles_font_amatic": "Amatic SC",
+  "settings_styles_font_butler": "Butler",
+  "settings_styles_font_caveat": "Caveat",
+  "settings_styles_show_nav_labels": "Show Navigation Labels",
+  "settings_styles_show_nav_labels_desc": "Display text labels below the navigation bar icons",
+  "settings_styles_navbar_size": "Navigation Bar Size",
+  "settings_styles_navbar_size_desc": "Adjust the height and icon scale of the navigation bar",
+  "settings_styles_navbar_size_compact": "Compact",
+  "settings_styles_navbar_size_normal": "Normal",
+  "settings_styles_navbar_size_large": "Large",
+  "settings_format_mass_unit": "Default Mass Unit",
+  "settings_format_volume_unit": "Default Volume Unit",
+  "settings_format_decimals_1": "1 Place",
+  "settings_format_decimals_2": "2 Places",
+  "settings_format_decimals_3": "3 Places",
+  "settings_format_decimals_4": "4 Places",
+  "settings_format_mass_g": "Grams (g)",
+  "settings_format_mass_kg": "Kilograms (kg)",
+  "settings_format_volume_ml": "Milliliters (ml)",
+  "settings_format_volume_l": "Liters (l)",
+  "settings_format_currency": "Currency Symbol",
+  "cloud_sync_title": "Cloud Sync",
+  "cloud_sync_desc": "Back up and restore your recipes and ingredients securely using your Google Drive AppData folder.",
+  "cloud_sync_connected": "Connected to Google Drive",
+  "cloud_sync_disconnected": "Disconnected",
+  "cloud_sync_connect_btn": "Sign in with Google",
+  "cloud_sync_disconnect_btn": "Sign Out",
+  "cloud_sync_backup_btn": "Back Up Now",
+  "cloud_sync_backups_header": "Backups History",
+  "cloud_sync_no_backups": "No backups found.",
+  "cloud_sync_backup_confirm_title": "Create Backup",
+  "cloud_sync_backup_confirm_desc": "This will upload a copy of your current database to Google Drive.",
+  "cloud_sync_restore_confirm_title": "Restore Backup",
+  "cloud_sync_restore_confirm_desc": "This will overwrite all current recipes, steps, and ingredients with the selected backup. This action cannot be undone.",
+  "cloud_sync_delete_confirm_title": "Delete Backup",
+  "cloud_sync_delete_confirm_desc": "Are you sure you want to permanently delete this backup from Google Drive?",
+  "cloud_sync_sandbox_badge": "Local Backup",
+  "cloud_sync_sandbox_desc": "Data is backed up to a local directory on your device.",
+  "cloud_sync_sync_btn": "Two-Way Cloud Sync",
+  "cloud_sync_sync_confirm_title": "Two-Way Cloud Sync",
+  "cloud_sync_sync_confirm_desc": "This will merge your local recipes and ingredients with your cloud backup. Conflicts are resolved using last-write-wins based on modification timestamps. Local records and newer edits will not be wiped.",
+  "cloud_sync_sync_with_backup_confirm_desc": "This will merge your local recipes and ingredients with this backup. Conflicts are resolved using last-write-wins based on modification timestamps. Local records and newer edits will not be wiped.",
+  "cloud_sync_merge_tooltip": "Merge with local database",
+  "timers_title": "Kitchen Timers",
+  "timers_desc": "Run multiple cooking and baking timers simultaneously in the background.",
+  "timers_add_title": "New Timer",
+  "timers_timer_name": "Timer Name",
+  "timers_duration": "Duration",
+  "timers_no_timers": "No active timers.",
+  "timers_no_timers_desc": "Create a new timer to start cooking!",
+  "timers_finished": "Timer Finished!",
+  "filter_all": "All",
+  "filter_solids": "Dry",
+  "filter_liquids": "Liquids",
+  "filter_pieces": "Pieces",
+  "filter_tooltip": "Filter ingredients",
+  "sort_by": "Sort:",
+  "sort_default": "Default",
+  "sort_type": "Type (Solid / Liquid / Pieces)",
+  "sort_alphabetical": "Alphabetical",
+  "sort_solids": "Solids",
+  "sort_liquids": "Liquids",
+  "sort_pieces": "Pieces",
+  "staged_ingredients_title": "Save selected ingredients?",
+  "staged_ingredients_body": "You have staged ingredients. Do you want to add them to the recipe or discard changes?",
+  "add_custom_ingredient": "Add '{name}'",
+  "@add_custom_ingredient": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "total_weight": "Total Weight",
+  "total_volume": "Total Volume",
+  "scale_by_ingredient": "Scale by Ingredient",
+  "scale_by_ingredient_desc": "Adjust recipe quantities based on target amount of an ingredient",
+  "target_quantity": "Target Quantity",
+  "current_quantity": "Current Quantity",
+  "scale_factor_label": "Scale Factor: {factor}x",
+  "@scale_factor_label": {
+    "placeholders": {
+      "factor": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_preview_button": "Preview Scaling",
+  "select_ingredient": "Select Ingredient",
+  "scale_temporary_title": "Temporary Scaled View ({multiplier}x)",
+  "@scale_temporary_title": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_temporary_notice": "This scaling is temporary and does not change your real recipe in the database.",
+  "scale_revert_button": "Revert to Original",
+  "scale_save_as_real_button": "Save as Real Recipe",
+  "scale_reverted_toast": "Recipe reverted to original quantities",
+  "scale_saved_toast": "Scaled quantities saved to the real recipe",
+  "brand_home_tooltip": "Chef&Cost - Home",
+  "back_to_home_tooltip": "Back to Home",
+  "back_button": "Back",
+  "close_button": "Close",
+  "apply_button": "Apply",
+  "save_changes_button": "Save Changes",
+  "view_button": "View",
+  "sign_in_button": "Sign In",
+  "toggle_theme_tooltip": "Toggle Theme",
+  "search_recipes_hint": "Search recipes...",
+  "sample_data_loaded_snackbar": "Sample data loaded: {recipes} recipes and {ingredients} ingredients",
+  "@sample_data_loaded_snackbar": {
+    "placeholders": {
+      "recipes": {
+        "type": "int"
+      },
+      "ingredients": {
+        "type": "int"
+      }
+    }
+  },
+  "load_sample_data": "Load sample data",
+  "timer_finished_banner": "Timer Finished!",
+  "timer_finished_at": "Finished at {time}",
+  "@timer_finished_at": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "delete_ingredient_title": "Delete Ingredient?",
+  "delete_ingredient_confirm": "Are you sure you want to delete \"{name}\" from the database?",
+  "@delete_ingredient_confirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unsaved_changes_ingredient_body": "Do you want to save or discard changes to this ingredient?",
+  "recipe_editor_add_ingredients_to_scale": "Add ingredients to recipe before scaling",
+  "recipe_editor_please_enter_name": "Please enter a recipe name",
+  "recipe_duplicated_success": "Recipe duplicated successfully",
+  "apply_to_recipe_button": "Apply to Recipe",
+  "recipe_duplicate_name": "{name} ({copyLabel})",
+  "@recipe_duplicate_name": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "copyLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "financial_summary_title": "Financial Summary",
+  "financial_costs_section": "Costs",
+  "financial_margin_pricing_section": "Margin & Pricing",
+  "financial_results_section": "Results",
+  "financial_total_revenue": "Total Gross Revenue",
+  "recipe_stats_section": "Recipe Stats",
+  "hide_financial_summary": "Hide Financial Summary",
+  "show_financial_summary": "Show Financial Summary",
+  "recipe_editor_live": "Live",
+  "recipe_editor_other_category": "Other",
+  "recipe_timers_section": "Recipe Timers",
+  "recipe_timer_single": "Timer",
+  "recipe_timers_title": "Timers",
+  "recipe_timer_add_badge": "+ Timer",
+  "start_timer_tooltip": "Start timer",
+  "timer_started_snackbar": "Timer started: {name} ({duration})",
+  "@timer_started_snackbar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "recipe_timer_edit_title": "Edit Recipe Timer",
+  "recipe_timer_add_title": "Add Recipe Timer",
+  "recipe_timer_name_label": "Timer label",
+  "recipe_timer_name_hint": "e.g. Boil Noodles, Bake",
+  "add_timer_preset_button": "Add Timer Preset",
+  "edit_ingredient_action": "Edit ingredient",
+  "edit_ingredient_action_desc": "Modify name, cost, quantity or unit in the database",
+  "merge_ingredient_action": "Merge ingredient",
+  "merge_ingredient_action_desc": "Add amount into another ingredient in this recipe",
+  "delete_ingredient_action": "Delete ingredient",
+  "delete_ingredient_action_desc": "Remove ingredient from this recipe",
+  "merge_ingredient_title": "Merge Ingredient",
+  "merge_ingredient_into_prompt": "Merge \"{name}\" into:",
+  "@merge_ingredient_into_prompt": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_merged_success": "Merged successfully",
+  "compare_no_units_error": "DATABASE ERROR: No units loaded. Please restart the app.",
+  "compare_more_costly": "+{amount} MORE",
+  "@compare_more_costly": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_less_costly": "-{amount} LESS",
+  "@compare_less_costly": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "compare_loading": "Loading comparison data...",
+  "timers_running": "Running",
+  "timers_paused": "Paused",
+  "timers_stop_alarm": "STOP ALARM",
+  "timers_reset": "Reset",
+  "timers_pause": "Pause",
+  "timers_start": "Start",
+  "timers_start_timer": "Start Timer",
+  "timers_edit_title": "Edit Timer",
+  "timers_hint": "e.g. Boil Potatoes",
+  "timers_min": "Min",
+  "timers_sec": "Sec",
+  "timers_add_minutes": "+{minutes}m",
+  "@timers_add_minutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "rule_of_three_error_zero": "Initial value cannot be zero",
+  "rule_of_three_explanation": "If {a} corresponds to {b}, then {c} will correspond to {result}.",
+  "@rule_of_three_explanation": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "cloud_sync_sync_target": "Sync Target",
+  "cloud_sync_target_firestore": "Firestore",
+  "cloud_sync_target_drive": "Google Drive",
+  "cloud_sync_target_local": "Local Directory",
+  "cloud_sync_desc_web": "On Web, sync is powered by Cloud Firestore to synchronize data in real-time between your browser and mobile app. Google Drive file backups are available on mobile and desktop devices.",
+  "cloud_sync_desc_firestore": "Real-time cross-platform sync between Web and Mobile via Cloud Firestore.",
+  "cloud_sync_desc_local": "Local Directory mode stores your backups in the device's local storage. It does not require internet connection or a Google Account.",
+  "cloud_sync_switch_account": "Switch account",
+  "cloud_sync_sync_now": "Sync Now",
+  "cloud_sync_save_copy_dialog_title": "Select folder to save backup",
+  "cloud_sync_save_copy_tooltip": "Save backup to...",
+  "cloud_sync_restore_tooltip": "Restore",
+  "cloud_sync_delete_tooltip": "Delete",
+  "cloud_sync_connect_account_title": "Connect Your Account",
+  "cloud_sync_connect_account_subtitle": "Sync your recipes in real-time across Web and Mobile",
+  "cloud_sync_continue_google": "Continue with Google",
+  "cloud_sync_or_email": "or with email",
+  "cloud_sync_create_account": "Create Account",
+  "cloud_sync_email_label": "Email address",
+  "cloud_sync_email_hint": "example@mail.com",
+  "cloud_sync_password_label": "Password",
+  "cloud_sync_password_hint": "At least 6 characters",
+  "cloud_sync_forgot_password": "Forgot password?",
+  "cloud_sync_connected_to_firestore": "Connected to Firestore",
+  "cloud_sync_authenticated_user": "Authenticated user",
+  "cloud_sync_sign_out_confirm_title": "Sign Out",
+  "cloud_sync_sign_out_confirm_message": "Are you sure you want to sign out from Firestore sync?",
+  "cloud_sync_error_invalid_email": "Please enter a valid email address.",
+  "cloud_sync_error_short_password": "Password must be at least 6 characters.",
+  "cloud_sync_reset_email_sent": "Password reset email sent! Check your inbox.",
+  "cloud_sync_connected_account": "Connected account",
+  "settings_category_data_subtitle": "App data management",
+  "settings_category_backup_subtitle": "Back up and restore on Google Drive",
+  "settings_category_themes_subtitle": "Themes, colors and font size",
+  "settings_category_locale_subtitle": "Language and number formatting",
+  "settings_category_info_subtitle": "Version and information",
+  "settings_sample_data_dialog_message": "Do you want to add the sample recipes to your existing list, or replace all current database contents?",
+  "settings_sample_data_add_button": "Add to current",
+  "settings_sample_data_replace_button": "Replace all",
+  "settings_sample_data_replaced_snackbar": "Database replaced with sample data ({recipes} recipes, {ingredients} ingredients)",
+  "@settings_sample_data_replaced_snackbar": {
+    "placeholders": {
+      "recipes": {
+        "type": "int"
+      },
+      "ingredients": {
+        "type": "int"
+      }
+    }
+  },
+  "settings_sample_data_subtitle": "Load test ingredients and recipes to evaluate the app",
+  "settings_brand_theme_adapt_notice": "The icon and branding adapt to your selected theme",
+  "scale_multiplier_button": "x{multiplier}",
+  "@scale_multiplier_button": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "scale_custom_multiplier_hint": "e.g. 1.5",
+  "scaled_recipe_name": "{name} (x{multiplier})",
+  "@scaled_recipe_name": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "merge_no_other_ingredients": "No other ingredients in this recipe to merge into.",
+  "merge_no_other_database_ingredients": "No other ingredients in the database to merge into.",
+  "merge_ingredient_action_db_desc": "Merge into another ingredient in the database",
+  "delete_ingredient_permanent_desc": "Permanently delete from database",
+  "ingredient_deleted_snackbar": "Ingredient \"{name}\" deleted.",
+  "@ingredient_deleted_snackbar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "no_timers_in_recipe": "No timer presets added to this recipe.",
+  "recipe_timer_min": "Min",
+  "recipe_timer_sec": "Sec",
+  "gain_per_portion": "Gain/Portion",
+  "price_per_portion": "Price/Portion",
+  "force_overwrite_danger_zone": "Danger Zone",
+  "force_overwrite_cloud_btn": "Force Overwrite Cloud",
+  "force_overwrite_first_confirm_title": "Force Overwrite Cloud",
+  "force_overwrite_first_confirm_desc": "This will permanently OVERWRITE all cloud data with your local copy. This action is irreversible.",
+  "force_overwrite_understand_risk": "Yes, I understand the risk",
+  "force_overwrite_challenge_title": "Type OVERWRITE to Confirm",
+  "force_overwrite_challenge_desc": "To prevent accidental loss, please type OVERWRITE below to proceed.",
+  "force_overwrite_challenge_placeholder": "OVERWRITE",
+  "force_overwrite_confirm_final_btn": "Confirm Overwrite",
+  "force_overwrite_success_toast": "Cloud data successfully overwritten with local copy.",
+  "force_overwrite_failure_toast": "Failed to overwrite cloud data.",
+  "settings_about_developer": "Developer",
+  "settings_about_developer_name": "Esteban Z.",
+  "settings_about_developer_role": "Lead Creator & Developer",
+  "settings_about_developer_email": "kbradevp@gmail.com",
+  "settings_about_email_copied": "Email copied to clipboard",
+  "settings_about_copy_email": "Copy Email",
+  "settings_about_db_schema": "DB Schema",
+  "settings_about_channel_beta": "Beta Channel",
+  "settings_about_channel_stable": "Stable Channel",
+  "settings_about_changelog": "Changelog",
+  "settings_about_changelog_desc": "View release notes and version history",
+  "settings_about_privacy_terms": "Terms & Privacy Policy",
+  "settings_about_privacy_terms_desc": "Read data ownership and privacy commitments",
+  "settings_about_licenses": "Open Source Licenses",
+  "settings_about_licenses_desc": "View software licenses and third-party libraries",
+  "settings_about_debug_logs": "Debug Diagnostics (Beta)",
+  "settings_about_debug_logs_desc": "Inspect system logs, memory buffer and events",
+  "settings_about_logs_copied": "Diagnostics copied to clipboard",
+  "settings_about_logs_clear": "Clear Logs",
+  "settings_about_logs_copy": "Copy All",
+  "settings_about_logs_empty": "No logs recorded yet",
+  "settings_about_version_current": "Current",
+  "settings_about_logs_test": "Test Log",
+  "settings_about_badge_beta": "BETA",
+  "settings_about_privacy_storage_title": "Offline-First Local Storage",
+  "settings_about_privacy_storage_desc": "Your ingredients, recipes, and cost data are stored securely on your device using SQLite (Drift). Your data stays strictly under your control.",
+  "settings_about_privacy_sync_title": "Opt-in Cloud Synchronization",
+  "settings_about_privacy_sync_desc": "Synchronization with Firebase Firestore and Google Drive is 100% optional and only occurs if you explicitly log in.",
+  "settings_about_privacy_ownership_title": "Full Data Ownership",
+  "settings_about_privacy_ownership_desc": "Your recipes and calculations belong exclusively to you. Chef&Cost does not claim ownership or distribute your culinary creations.",
+  "settings_about_privacy_ads_title": "Zero Advertising Trackers",
+  "settings_about_privacy_ads_desc": "We do not embed third-party advertising SDKs or monetize your personal culinary metrics.",
+  "settings_about_privacy_permissions_title": "System Permissions",
+  "settings_about_privacy_permissions_desc": "The application only requests notification and audio permissions to alert you when recipe cooking timers complete.",
+  "cloud_sync_load_local_backup_btn": "Load Local Backup",
+  "cloud_sync_load_local_backup_desc": "Select a .sqlite backup file from your device to restore recipes and costs.",
+  "cloud_sync_load_local_backup_confirm_title": "Load Local Backup?",
+  "cloud_sync_load_local_backup_confirm_desc": "All current recipes and ingredients will be replaced with the selected file ({fileName}). This action cannot be undone. Do you wish to continue?",
+  "@cloud_sync_load_local_backup_confirm_desc": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "cloud_sync_load_local_backup_success": "Local backup loaded successfully.",
+  "cloud_sync_load_local_backup_invalid": "The selected file is not a valid SQLite database.",
+  "cloud_sync_local_backup_title": "Local Backup & Restore",
+  "cloud_sync_local_backup_desc": "Manage offline backups directly on your device storage without requiring cloud services.",
+  "cloud_sync_export_local_backup_btn": "Export Backup to Device",
+  "cloud_sync_export_local_backup_success": "Backup saved successfully to device.",
+  "settings_about_changelog_loading": "Loading release notes...",
+  "settings_about_changelog_empty": "No release notes found.",
+  "settings_about_changelog_error": "Could not load release notes.",
+  "settings_about_changelog_retry": "Retry",
+  "settings_about_changelog_refresh": "Refresh",
+  "tutorial_replay_title": "App Walkthrough Tutorial",
+  "tutorial_replay_subtitle": "Replay step-by-step guide of gestures, shortcuts, and key features",
+  "tutorial_replay_button": "Repeat Walkthrough",
+  "tutorial_replay_reset_toast": "Tutorial reset. Launching walkthrough...",
+  "tutorial_step_counter": "Step {current} of {total}",
+  "@tutorial_step_counter": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tutorial_action_next": "Next",
+  "tutorial_action_prev": "Previous",
+  "tutorial_action_skip": "Skip Tutorial",
+  "tutorial_action_finish": "Get Started",
+  "tutorial_target_nav_title": "Adaptive Navigation & Gestures",
+  "tutorial_target_nav_desc": "Switch smoothly between Recipes, Ingredients, Tools, and Settings.",
+  "tutorial_target_nav_hint": "Gesture tip: Swipe horizontally anywhere to switch between tabs instantly!",
+  "tutorial_target_quick_actions_title": "Quick Action Shortcuts",
+  "tutorial_target_quick_actions_desc": "Create new recipes, calculate costs, or add ingredients on the fly.",
+  "tutorial_target_quick_actions_hint": "Tip: Tap 'New Recipe' or 'New Ingredient' to jump directly into editing.",
+  "tutorial_target_recipes_title": "Recipes & Long-Press Preview",
+  "tutorial_target_recipes_desc": "Browse and manage your recipe catalog with live cost metrics.",
+  "tutorial_target_recipes_hint": "Hidden gesture: Long-press any recipe card to expand quick financial breakdown without leaving!",
+  "tutorial_target_tools_title": "Kitchen Utilities & Multi-Timers",
+  "tutorial_target_tools_desc": "Use Unit Converters, Rule of Three, and multi-alarm Kitchen Timers.",
+  "tutorial_target_tools_hint": "Feature tip: Timers keep running in the background with audio alarms and auto-dismiss.",
+  "tutorial_target_settings_title": "Cloud Sync & Preferences",
+  "tutorial_target_settings_desc": "Customize styles, connect Firebase sync, and manage database backups.",
+  "tutorial_target_settings_hint": "You can replay this interactive walkthrough anytime from Settings.",
+  "tutorial_help_tooltip": "View guided walkthrough",
+  "tutorial_recipe_list_hold_title": "Recipe Quick Actions",
+  "tutorial_recipe_list_hold_desc": "Tap any recipe to open and edit it. But there is a powerful shortcut hidden here!",
+  "tutorial_recipe_list_hold_hint": "Hold / Long-press this recipe card to reveal more options: Scale portions, Duplicate, Edit, or Delete directly from the list.",
+  "tutorial_recipe_list_finance_title": "Recipe Financial Breakdown",
+  "tutorial_recipe_list_finance_desc": "Every recipe card displays its live Total Cost, Estimated Profit, and Target Sale Price per portion.",
+  "tutorial_recipe_list_finance_hint": "Tip: These numbers recalculate automatically when ingredient costs or portions change.",
+  "tutorial_editor_finance_title": "Recipe Finance & Margins",
+  "tutorial_editor_finance_desc": "Calculate total cost, cost per portion, desired profit margin, overhead expenses, and target sale price.",
+  "tutorial_editor_finance_hint": "Key action: Tap the bottom finance bar to expand the full profit calculator and price simulator.",
+  "tutorial_editor_scale_bar_title": "Portion Scaling & Multipliers",
+  "tutorial_editor_scale_bar_desc": "Quickly scale recipe quantities using custom portions or 1/4x, 1/2x, 1x, 2x, 3x presets without modifying base recipe data.",
+  "tutorial_editor_scale_bar_hint": "Tip: Scroll horizontally to view all scaling options. Tap any option to recalculate all ingredient amounts on the fly.",
+  "tutorial_editor_gestures_title": "Counters & Step Organization",
+  "tutorial_editor_gestures_desc": "Track recipe scale with header counter badges and item index numbers for ingredients and steps.",
+  "tutorial_editor_gestures_hint": "Gestures: Drag to reorder steps or ingredients. Badges reflect dynamic item totals in real time.",
+  "tutorial_editor_ingredient_hold_title": "Ingredient Inline Actions",
+  "tutorial_editor_ingredient_hold_desc": "Tap the quantity to edit directly, or hold any ingredient to reveal its inline actions dropdown.",
+  "tutorial_editor_ingredient_hold_hint": "Inline dropdown: Scale by ingredient, Edit details, Merge/Swap, or Delete directly in the list.",
+  "sample_manufacturing_recipe_title": "Butter Cookies (Manufacturing Batch)",
+  "sample_manufacturing_recipe_desc": "Standard 3:2:1 manufacturing batch for production costing, yield tracking, and industrial margin calculation.",
+  "sample_manufacturing_yield_name": "pieces",
+  "sample_manufacturing_flour_name": "All-Purpose Wheat Flour",
+  "sample_manufacturing_butter_name": "Unsalted Butter",
+  "sample_manufacturing_sugar_name": "Refined White Sugar",
+  "sample_manufacturing_step1": "[timer:Industrial Creaming|240] Beat butter at medium-high speed until creamy and pale.",
+  "sample_manufacturing_step2": "Sift flour with sugar and incorporate at low speed in 2 parts until combined without overworking.",
+  "sample_manufacturing_step3": "[timer:Batch Baking|900] Portion 24 pieces of dough, arrange on baking sheet lined with parchment paper, and bake at 180°C.",
+  "sample_manufacturing_badge": "Temporary Sample",
+  "sample_manufacturing_banner_desc": "Temporary sample recipe for manufacturing & cost simulation (3 ingredients). It will not be saved permanently unless you choose to save it.",
+  "sample_manufacturing_save_btn": "Save as Real Recipe",
+  "sample_manufacturing_dismiss_btn": "Dismiss Sample",
+  "sample_manufacturing_auto_removed": "Tutorial completed. Temporary sample recipe removed.",
+  "share_recipe_menu_title": "Share Recipe",
+  "share_recipe_bottom_sheet_title": "Share Recipe",
+  "share_recipe_format_chefy_title": "Chef&Cost Recipe (.chefy)",
+  "share_recipe_format_chefy_subtitle": "Exchange file to open and import in Chef&Cost on another device",
+  "share_recipe_format_pdf_title": "PDF Recipe Sheet (.pdf)",
+  "share_recipe_format_pdf_subtitle": "Printable document with ingredients, costs and instructions",
+  "share_recipe_format_csv_title": "CSV Spreadsheet (.csv)",
+  "share_recipe_format_csv_subtitle": "Spreadsheet for Excel or Google Sheets with ingredients and costs",
+  "share_recipe_generating": "Generating file...",
+  "share_recipe_success": "Recipe shared successfully",
+  "share_recipe_pdf_instructions_title": "Preparation Steps",
+  "share_recipe_pdf_ingredients_title": "Ingredients & Cost",
+  "share_recipe_pdf_summary_title": "Financial Summary",
+  "share_recipe_pdf_cost_per_unit": "Cost/Unit",
+  "share_recipe_pdf_amount": "Amount",
+  "share_recipe_pdf_unit": "Unit",
+  "share_recipe_pdf_subtotal": "Subtotal",
+  "share_recipe_pdf_timers_title": "Kitchen Timers",
+  "share_recipe_pdf_footer": "Generated with Chef&Cost",
+  "share_recipe_with_cost": "With costs",
+  "share_recipe_without_cost": "Without costs (Kitchen)",
+  "share_recipe_cost_options_title": "Cost Options",
+  "share_recipe_format_pdf_subtitle_no_cost": "Kitchen sheet with ingredients, quantities and steps (no prices)",
+  "share_recipe_format_csv_subtitle_no_cost": "Spreadsheet with ingredients, quantities and steps (no prices)",
+  "import_recipe_button": "Import Recipe",
+  "import_recipe_dialog_title": "Import Recipe",
+  "import_recipe_dialog_desc": "Do you want to import this recipe into your collection?",
+  "import_recipe_name_conflict_warning": "A recipe with this name already exists. It will be imported as \"{name}\".",
+  "@import_recipe_name_conflict_warning": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "import_recipe_success": "Recipe \"{name}\" imported successfully",
+  "@import_recipe_success": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "import_recipe_invalid_file": "The selected file is not a valid Chef&Cost recipe file",
+  "import_recipe_ingredients_count": "{count} ingredients",
+  "@import_recipe_ingredients_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "import_recipe_steps_count": "{count} steps",
+  "@import_recipe_steps_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "import_recipe_portions": "Yield: {yield} {yieldName}",
+  "@import_recipe_portions": {
+    "placeholders": {
+      "yield": {
+        "type": "String"
+      },
+      "yieldName": {
+        "type": "String"
+      }
+    }
+  },
+  "import_recipe_confirm_btn": "Import",
+  "import_recipe_open_now_action": "Open",
+  "category_all": "All",
+  "category_cocina": "Kitchen",
+  "category_pasteleria": "Pastry",
+  "category_cocteleria": "Cocktails",
+  "category_label": "Category",
+  "category_filter_tooltip": "Filter by category",
+  "groups_title": "Workspaces & Groups",
+  "group_default_name": "Main",
+  "group_switcher_tooltip": "Switch workspace",
+  "group_active_label": "Active Workspace",
+  "group_add_new": "New Workspace",
+  "group_edit": "Edit Workspace",
+  "group_name_label": "Workspace Name",
+  "group_name_hint": "e.g., Main Kitchen, Barú...",
+  "group_color_label": "Color",
+  "group_icon_label": "Icon",
+  "group_delete": "Delete Workspace",
+  "group_delete_confirm": "Are you sure you want to delete this workspace?",
+  "group_delete_cannot_last": "You cannot delete the only remaining workspace.",
+  "group_switch_success": "Switched to {name}",
+  "@group_switch_success": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "group_all_workspaces": "All Workspaces",
+  "group_select_prompt": "Select a workspace to manage its recipes",
+  "group_management_subtitle": "Manage venues, kitchens and operational workspaces",
+  "settings_about_privacy_view_online": "View Online Privacy Policy",
+  "settings_about_privacy_delete_portal": "Web Account & Data Deletion Portal",
+  "cloud_sync_delete_account_btn": "Delete account & cloud data",
+  "cloud_sync_delete_account_title": "Delete account & data",
+  "cloud_sync_delete_account_confirm_desc": "Are you sure you want to permanently delete your account and all data synced to the cloud? This action will remove your recipes, ingredients, and backups from Firestore and cannot be undone. Recipes stored locally on this device will not be deleted.",
+  "cloud_sync_delete_account_password_prompt": "Enter your password to confirm deletion:",
+  "cloud_sync_delete_account_confirm_btn": "Permanently delete",
+  "cloud_sync_delete_account_deleting": "Deleting account and cloud data...",
+  "cloud_sync_delete_account_success": "Account and cloud data successfully deleted.",
+  "cloud_sync_delete_account_reauth_required": "Recent authentication required. Please sign in again and retry.",
+  "cloud_sync_sign_in_canceled": "Sign-in was canceled.",
+  "cloud_sync_error_network": "No internet connection. Please check your network and try again.",
+  "cloud_sync_error_drive_permission_denied": "Google Drive permission was denied. Please grant permission to back up your data.",
+  "cloud_sync_revoke_google_btn": "Disconnect & Revoke Google Access",
+  "cloud_sync_delete_cloud_data_btn": "Delete Cloud Data",
+  "cloud_sync_delete_cloud_data_confirm_title": "Delete All Cloud Data?",
+  "cloud_sync_delete_cloud_data_confirm_desc": "This will permanently delete all recipes, ingredients, and units stored in Firestore. Local data on this device will not be deleted.",
+  "cloud_sync_delete_cloud_data_success": "Cloud data deleted successfully.",
+  "cloud_sync_delete_all_backups_btn": "Delete All Backups",
+  "cloud_sync_delete_all_backups_confirm_title": "Delete All Cloud Backups?",
+  "cloud_sync_delete_all_backups_confirm_desc": "Are you sure you want to delete all backups from Google Drive? This action cannot be undone.",
+  "cloud_sync_delete_all_backups_success": "All cloud backups have been deleted.",
+  "cloud_sync_account_management_title": "Account & Data Management",
+  "cloud_sync_terms_dialog_title": "Cloud Sync Terms & Privacy",
+  "cloud_sync_terms_dialog_subtitle": "Please review and accept how Chef&Cost syncs your data with Firebase and Google Drive before proceeding.",
+  "cloud_sync_terms_firestore_title": "Google Firebase Firestore",
+  "cloud_sync_terms_firestore_desc": "Synchronizes your recipes, ingredient costs, and settings in real-time across your authorized devices.",
+  "cloud_sync_terms_drive_title": "Google Drive (AppData)",
+  "cloud_sync_terms_drive_desc": "Uploads database backups strictly to Chef&Cost's hidden application folder. We cannot access or see any of your personal Google Drive files.",
+  "cloud_sync_terms_privacy_title": "100% Data Ownership & Privacy",
+  "cloud_sync_terms_privacy_desc": "Your recipes, yields, and business financial figures belong exclusively to you. Your data is never sold, shared, or mined for third parties.",
+  "cloud_sync_terms_control_title": "Full Revocation & Deletion Rights",
+  "cloud_sync_terms_control_desc": "You can disconnect your account, revoke Google authorization, or delete all cloud-stored data permanently at any time.",
+  "cloud_sync_terms_view_privacy": "Read Full Privacy Policy online",
+  "cloud_sync_terms_accept_btn": "Accept & Continue",
+  "cloud_sync_terms_decline_btn": "Not Now",
+  "cloud_sync_terms_banner_unaccepted": "Cloud Terms & Privacy must be accepted before syncing with Firebase or Google Drive.",
+  "cloud_sync_terms_accepted_badge": "Cloud Terms & Privacy Policy Accepted",
+  "cloud_sync_terms_review_btn": "Review Terms",
+  "cloud_sync_terms_required_warning": "You must accept the terms of service and privacy policy to connect to cloud services."
+}
