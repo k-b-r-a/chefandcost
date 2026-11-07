@@ -76,7 +76,7 @@ void main() {
 
       expect(find.text('Chef&Cost'), findsOneWidget);
       expect(find.textContaining('0.1.2'), findsOneWidget);
-      expect(find.textContaining('Esquema DB v2'), findsOneWidget);
+      expect(find.textContaining('Esquema DB v${mockDb.schemaVersion}'), findsOneWidget);
       expect(find.text('Canal Estable'), findsOneWidget);
     });
 
@@ -142,6 +142,11 @@ void main() {
     });
 
     testWidgets('Displays Licenses tile and Beta Debug Logging tile', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 

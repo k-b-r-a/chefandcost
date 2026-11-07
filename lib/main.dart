@@ -456,39 +456,53 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       final webNotifier = ref.read(webLayoutProvider.notifier);
 
       return Scaffold(
-        body: Row(
+        body: Stack(
           children: [
-            _buildWebNavigationRail(
-              context,
-              settings,
-              l10n,
-              theme,
-              webLayout,
-              webNotifier,
+            Row(
+              children: [
+                _buildWebNavigationRail(
+                  context,
+                  settings,
+                  l10n,
+                  theme,
+                  webLayout,
+                  webNotifier,
+                ),
+                const VerticalDivider(width: 1, thickness: 1),
+                SizedBox(
+                  width: middleWidth,
+                  child: _buildWebMiddleColumn(
+                    context,
+                    settings,
+                    l10n,
+                    theme,
+                    webLayout,
+                    webNotifier,
+                  ),
+                ),
+                const VerticalDivider(width: 1, thickness: 1),
+                Expanded(
+                  child: _buildWebRightPane(
+                    context,
+                    settings,
+                    l10n,
+                    theme,
+                    webLayout,
+                    webNotifier,
+                  ),
+                ),
+              ],
             ),
-            const VerticalDivider(width: 1, thickness: 1),
-            SizedBox(
-              width: middleWidth,
-              child: _buildWebMiddleColumn(
-                context,
-                settings,
-                l10n,
-                theme,
-                webLayout,
-                webNotifier,
+            if (ref.watch(cloudSyncProvider.select((s) => s.isSyncing)))
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SizedBox(
+                  height: 2,
+                  child: LinearProgressIndicator(minHeight: 2),
+                ),
               ),
-            ),
-            const VerticalDivider(width: 1, thickness: 1),
-            Expanded(
-              child: _buildWebRightPane(
-                context,
-                settings,
-                l10n,
-                theme,
-                webLayout,
-                webNotifier,
-              ),
-            ),
           ],
         ),
       );
@@ -496,7 +510,24 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     return Scaffold(
       extendBody: true,
-      body: pageView,
+      body: Stack(
+        children: [
+          pageView,
+          if (ref.watch(cloudSyncProvider.select((s) => s.isSyncing)))
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: SizedBox(
+                  height: 2,
+                  child: LinearProgressIndicator(minHeight: 2),
+                ),
+              ),
+            ),
+        ],
+      ),
       floatingActionButtonLocation: settings.leftHandedMode
           ? FloatingActionButtonLocation.startFloat
           : FloatingActionButtonLocation.centerFloat,
@@ -624,7 +655,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   IconButton(
                     key: const ValueKey('web_nav_sync_button'),
                     visualDensity: VisualDensity.compact,
-                    icon: syncState.loading
+                    icon: (syncState.loading || syncState.isSyncing)
                         ? const SizedBox(
                             width: 20,
                             height: 20,
@@ -635,7 +666,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                         syncState.storageType == CloudSyncStorageType.firestore
                         ? l10n.cloud_sync_sync_now
                         : l10n.cloud_sync_sync_btn,
-                    onPressed: syncState.loading
+                    onPressed: (syncState.loading || syncState.isSyncing)
                         ? null
                         : () {
                             ref.read(cloudSyncProvider.notifier).syncTwoWay();

@@ -41,6 +41,23 @@ class MockCloudSyncNotifier extends CloudSyncNotifier {
   }
 }
 
+class MockSyncingCloudSyncNotifier extends CloudSyncNotifier {
+  @override
+  CloudSyncState build() {
+    return CloudSyncState(
+      signedIn: true,
+      email: 'test@example.com',
+      loading: false,
+      isSyncing: true,
+      storageType: CloudSyncStorageType.firestore,
+      hasAcceptedTerms: true,
+    );
+  }
+
+  @override
+  Future<void> checkStatus() async {}
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -508,5 +525,57 @@ void main() {
       // Redundant developer_mode container is not rendered
       expect(find.byIcon(Icons.developer_mode), findsNothing);
     });
+  });
+
+  group('Non-Blocking Background Sync & State Tests', () {
+    test('CloudSyncState exposes isSyncing and syncError properties', () {
+      final state = CloudSyncState();
+      expect(state.isSyncing, isFalse);
+      expect(state.syncError, isNull);
+
+      final syncingState =
+          state.copyWith(isSyncing: true, syncError: 'Network timeout');
+      expect(syncingState.isSyncing, isTrue);
+      expect(syncingState.syncError, 'Network timeout');
+
+      final clearedState =
+          syncingState.copyWith(isSyncing: false, syncError: null);
+      expect(clearedState.isSyncing, isFalse);
+      expect(clearedState.syncError, isNull);
+    });
+
+    testWidgets(
+      'CloudSyncScreen renders top LinearProgressIndicator when isSyncing is true without modal barrier',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(1200, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              cloudSyncProvider.overrideWith(MockSyncingCloudSyncNotifier.new),
+            ],
+            child: const MaterialApp(
+              locale: Locale('en'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: CloudSyncScreen(),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        // Top LinearProgressIndicator should be rendered
+        expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+        // Modal loading barrier (which displays only when loading is true) should NOT be displayed
+        expect(
+          find.byKey(const ValueKey('cloud_sync_modal_barrier')),
+          findsNothing,
+        );
+      },
+    );
   });
 }

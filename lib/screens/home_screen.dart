@@ -71,36 +71,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final syncState = ref.watch(cloudSyncProvider);
 
     return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          buildFloatingPillAppBar(
-            context: context,
-            title: l10n.home_title,
+      body: Stack(
+        children: [
+          CustomScrollView(
             controller: _scrollController,
-            showCollapsedTitlePill: false,
-            actions: [
-              IconButton(
-                key: const ValueKey('home_sync_button'),
-                icon: syncState.loading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.sync),
-                tooltip: syncState.storageType == CloudSyncStorageType.firestore
-                    ? l10n.cloud_sync_sync_now
-                    : l10n.cloud_sync_sync_btn,
-                onPressed: syncState.loading
-                    ? null
-                    : () {
-                        ref.read(cloudSyncProvider.notifier).syncTwoWay();
-                      },
+            slivers: [
+              buildFloatingPillAppBar(
+                context: context,
+                title: l10n.home_title,
+                controller: _scrollController,
+                showCollapsedTitlePill: false,
+                actions: [
+                  IconButton(
+                    key: const ValueKey('home_sync_button'),
+                    icon: (syncState.loading || syncState.isSyncing)
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.sync),
+                    tooltip: syncState.storageType == CloudSyncStorageType.firestore
+                        ? l10n.cloud_sync_sync_now
+                        : l10n.cloud_sync_sync_btn,
+                    onPressed: (syncState.loading || syncState.isSyncing)
+                        ? null
+                        : () {
+                            ref.read(cloudSyncProvider.notifier).syncTwoWay();
+                          },
+                  ),
+                  const SizedBox(width: 8),
+                ],
               ),
-              const SizedBox(width: 8),
-            ],
-          ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 100.0),
             sliver: SliverToBoxAdapter(
@@ -149,7 +151,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-    );
+      if (syncState.isSyncing)
+        const Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            bottom: false,
+            child: SizedBox(
+              height: 2,
+              child: LinearProgressIndicator(minHeight: 2),
+            ),
+          ),
+        ),
+    ],
+  ),
+);
   }
 
   // --- 1. Greeting Card ---
@@ -277,7 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: Icons.sync,
                 isPrimary: false,
                 onTap: () {
-                  if (syncState.loading) return;
+                  if (syncState.loading || syncState.isSyncing) return;
                   ref.read(cloudSyncProvider.notifier).syncTwoWay();
                 },
               ),

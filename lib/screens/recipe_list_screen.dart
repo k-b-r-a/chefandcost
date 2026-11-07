@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../database/database.dart';
 import '../l10n/app_localizations.dart';
+import '../provider/cloud_sync_provider.dart';
 import '../provider/database_provider.dart';
 import '../provider/settings_provider.dart';
 import '../utils/dialog_utils.dart';
@@ -120,11 +121,14 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     final searchQuery = ref.watch(recipeSearchQueryProvider).toLowerCase();
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
+    final syncState = ref.watch(cloudSyncProvider);
 
     return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
+      body: Stack(
+        children: [
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
           buildFloatingPillAppBar(
             context: context,
             title: l10n.recipes_title,
@@ -767,7 +771,22 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
           ),
         ],
       ),
-    );
+      if (syncState.isSyncing)
+        const Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            bottom: false,
+            child: SizedBox(
+              height: 2,
+              child: LinearProgressIndicator(minHeight: 2),
+            ),
+          ),
+        ),
+    ],
+  ),
+);
   }
 
   Widget _buildStaticFinancialGridItem(

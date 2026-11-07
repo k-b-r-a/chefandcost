@@ -4121,6 +4121,277 @@ class RecipeSpacesCompanion extends UpdateCompanion<RecipeSpace> {
   }
 }
 
+class $DeletedRecordsTable extends DeletedRecords
+    with TableInfo<$DeletedRecordsTable, DeletedRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DeletedRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _recordPkMeta = const VerificationMeta(
+    'recordPk',
+  );
+  @override
+  late final GeneratedColumn<String> recordPk = GeneratedColumn<String>(
+    'record_pk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entityTypeMeta = const VerificationMeta(
+    'entityType',
+  );
+  @override
+  late final GeneratedColumn<String> entityType = GeneratedColumn<String>(
+    'entity_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [recordPk, entityType, deletedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'deleted_records';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DeletedRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('record_pk')) {
+      context.handle(
+        _recordPkMeta,
+        recordPk.isAcceptableOrUnknown(data['record_pk']!, _recordPkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordPkMeta);
+    }
+    if (data.containsKey('entity_type')) {
+      context.handle(
+        _entityTypeMeta,
+        entityType.isAcceptableOrUnknown(data['entity_type']!, _entityTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityTypeMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deletedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {recordPk, entityType};
+  @override
+  DeletedRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DeletedRecord(
+      recordPk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_pk'],
+      )!,
+      entityType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_type'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DeletedRecordsTable createAlias(String alias) {
+    return $DeletedRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class DeletedRecord extends DataClass implements Insertable<DeletedRecord> {
+  final String recordPk;
+  final String entityType;
+  final DateTime deletedAt;
+  const DeletedRecord({
+    required this.recordPk,
+    required this.entityType,
+    required this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['record_pk'] = Variable<String>(recordPk);
+    map['entity_type'] = Variable<String>(entityType);
+    map['deleted_at'] = Variable<DateTime>(deletedAt);
+    return map;
+  }
+
+  DeletedRecordsCompanion toCompanion(bool nullToAbsent) {
+    return DeletedRecordsCompanion(
+      recordPk: Value(recordPk),
+      entityType: Value(entityType),
+      deletedAt: Value(deletedAt),
+    );
+  }
+
+  factory DeletedRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DeletedRecord(
+      recordPk: serializer.fromJson<String>(json['recordPk']),
+      entityType: serializer.fromJson<String>(json['entityType']),
+      deletedAt: serializer.fromJson<DateTime>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'recordPk': serializer.toJson<String>(recordPk),
+      'entityType': serializer.toJson<String>(entityType),
+      'deletedAt': serializer.toJson<DateTime>(deletedAt),
+    };
+  }
+
+  DeletedRecord copyWith({
+    String? recordPk,
+    String? entityType,
+    DateTime? deletedAt,
+  }) => DeletedRecord(
+    recordPk: recordPk ?? this.recordPk,
+    entityType: entityType ?? this.entityType,
+    deletedAt: deletedAt ?? this.deletedAt,
+  );
+  DeletedRecord copyWithCompanion(DeletedRecordsCompanion data) {
+    return DeletedRecord(
+      recordPk: data.recordPk.present ? data.recordPk.value : this.recordPk,
+      entityType: data.entityType.present
+          ? data.entityType.value
+          : this.entityType,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeletedRecord(')
+          ..write('recordPk: $recordPk, ')
+          ..write('entityType: $entityType, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(recordPk, entityType, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DeletedRecord &&
+          other.recordPk == this.recordPk &&
+          other.entityType == this.entityType &&
+          other.deletedAt == this.deletedAt);
+}
+
+class DeletedRecordsCompanion extends UpdateCompanion<DeletedRecord> {
+  final Value<String> recordPk;
+  final Value<String> entityType;
+  final Value<DateTime> deletedAt;
+  final Value<int> rowid;
+  const DeletedRecordsCompanion({
+    this.recordPk = const Value.absent(),
+    this.entityType = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DeletedRecordsCompanion.insert({
+    required String recordPk,
+    required String entityType,
+    required DateTime deletedAt,
+    this.rowid = const Value.absent(),
+  }) : recordPk = Value(recordPk),
+       entityType = Value(entityType),
+       deletedAt = Value(deletedAt);
+  static Insertable<DeletedRecord> custom({
+    Expression<String>? recordPk,
+    Expression<String>? entityType,
+    Expression<DateTime>? deletedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (recordPk != null) 'record_pk': recordPk,
+      if (entityType != null) 'entity_type': entityType,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DeletedRecordsCompanion copyWith({
+    Value<String>? recordPk,
+    Value<String>? entityType,
+    Value<DateTime>? deletedAt,
+    Value<int>? rowid,
+  }) {
+    return DeletedRecordsCompanion(
+      recordPk: recordPk ?? this.recordPk,
+      entityType: entityType ?? this.entityType,
+      deletedAt: deletedAt ?? this.deletedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (recordPk.present) {
+      map['record_pk'] = Variable<String>(recordPk.value);
+    }
+    if (entityType.present) {
+      map['entity_type'] = Variable<String>(entityType.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeletedRecordsCompanion(')
+          ..write('recordPk: $recordPk, ')
+          ..write('entityType: $entityType, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4133,6 +4404,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RecipeStepsTable recipeSteps = $RecipeStepsTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
   late final $RecipeSpacesTable recipeSpaces = $RecipeSpacesTable(this);
+  late final $DeletedRecordsTable deletedRecords = $DeletedRecordsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4146,6 +4418,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     recipeSteps,
     categories,
     recipeSpaces,
+    deletedRecords,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -7893,6 +8166,172 @@ typedef $$RecipeSpacesTableProcessedTableManager =
       RecipeSpace,
       PrefetchHooks Function({bool recipeId, bool spaceId})
     >;
+typedef $$DeletedRecordsTableCreateCompanionBuilder =
+    DeletedRecordsCompanion Function({
+      required String recordPk,
+      required String entityType,
+      required DateTime deletedAt,
+      Value<int> rowid,
+    });
+typedef $$DeletedRecordsTableUpdateCompanionBuilder =
+    DeletedRecordsCompanion Function({
+      Value<String> recordPk,
+      Value<String> entityType,
+      Value<DateTime> deletedAt,
+      Value<int> rowid,
+    });
+
+class $$DeletedRecordsTableFilterComposer
+    extends Composer<_$AppDatabase, $DeletedRecordsTable> {
+  $$DeletedRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get recordPk => $composableBuilder(
+    column: $table.recordPk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DeletedRecordsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DeletedRecordsTable> {
+  $$DeletedRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get recordPk => $composableBuilder(
+    column: $table.recordPk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DeletedRecordsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DeletedRecordsTable> {
+  $$DeletedRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get recordPk =>
+      $composableBuilder(column: $table.recordPk, builder: (column) => column);
+
+  GeneratedColumn<String> get entityType => $composableBuilder(
+    column: $table.entityType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$DeletedRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DeletedRecordsTable,
+          DeletedRecord,
+          $$DeletedRecordsTableFilterComposer,
+          $$DeletedRecordsTableOrderingComposer,
+          $$DeletedRecordsTableAnnotationComposer,
+          $$DeletedRecordsTableCreateCompanionBuilder,
+          $$DeletedRecordsTableUpdateCompanionBuilder,
+          (
+            DeletedRecord,
+            BaseReferences<_$AppDatabase, $DeletedRecordsTable, DeletedRecord>,
+          ),
+          DeletedRecord,
+          PrefetchHooks Function()
+        > {
+  $$DeletedRecordsTableTableManager(
+    _$AppDatabase db,
+    $DeletedRecordsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DeletedRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DeletedRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DeletedRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> recordPk = const Value.absent(),
+                Value<String> entityType = const Value.absent(),
+                Value<DateTime> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DeletedRecordsCompanion(
+                recordPk: recordPk,
+                entityType: entityType,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String recordPk,
+                required String entityType,
+                required DateTime deletedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DeletedRecordsCompanion.insert(
+                recordPk: recordPk,
+                entityType: entityType,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DeletedRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DeletedRecordsTable,
+      DeletedRecord,
+      $$DeletedRecordsTableFilterComposer,
+      $$DeletedRecordsTableOrderingComposer,
+      $$DeletedRecordsTableAnnotationComposer,
+      $$DeletedRecordsTableCreateCompanionBuilder,
+      $$DeletedRecordsTableUpdateCompanionBuilder,
+      (
+        DeletedRecord,
+        BaseReferences<_$AppDatabase, $DeletedRecordsTable, DeletedRecord>,
+      ),
+      DeletedRecord,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7913,4 +8352,6 @@ class $AppDatabaseManager {
       $$CategoriesTableTableManager(_db, _db.categories);
   $$RecipeSpacesTableTableManager get recipeSpaces =>
       $$RecipeSpacesTableTableManager(_db, _db.recipeSpaces);
+  $$DeletedRecordsTableTableManager get deletedRecords =>
+      $$DeletedRecordsTableTableManager(_db, _db.deletedRecords);
 }

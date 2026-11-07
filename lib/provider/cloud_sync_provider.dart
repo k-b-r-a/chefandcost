@@ -17,8 +17,10 @@ class CloudSyncState {
   final String? email;
   final List<BackupFile> backups;
   final bool loading;
+  final bool isSyncing;
   final String? errorMessage;
   final String? successMessage;
+  final String? syncError;
   final CloudSyncStorageType storageType;
   final bool hasAcceptedTerms;
 
@@ -27,8 +29,10 @@ class CloudSyncState {
     this.email,
     this.backups = const [],
     this.loading = false,
+    this.isSyncing = false,
     this.errorMessage,
     this.successMessage,
+    this.syncError,
     this.storageType = CloudSyncStorageType.firestore,
     this.hasAcceptedTerms = false,
   });
@@ -38,8 +42,10 @@ class CloudSyncState {
     String? email,
     List<BackupFile>? backups,
     bool? loading,
+    bool? isSyncing,
     String? errorMessage,
     String? successMessage,
+    String? syncError,
     CloudSyncStorageType? storageType,
     bool? hasAcceptedTerms,
   }) {
@@ -48,8 +54,10 @@ class CloudSyncState {
       email: email ?? this.email,
       backups: backups ?? this.backups,
       loading: loading ?? this.loading,
+      isSyncing: isSyncing ?? this.isSyncing,
       errorMessage: errorMessage,
       successMessage: successMessage,
+      syncError: syncError,
       storageType: storageType ?? this.storageType,
       hasAcceptedTerms: hasAcceptedTerms ?? this.hasAcceptedTerms,
     );
@@ -748,7 +756,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       return await syncFirestore();
     }
 
-    state = state.copyWith(loading: true);
+    state = state.copyWith(isSyncing: true, syncError: null);
     File? tempFile;
     AppDatabase? remoteDb;
     try {
@@ -761,13 +769,14 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           final updatedBackups = await _syncService.getBackups();
           state = state.copyWith(
             backups: updatedBackups,
-            loading: false,
+            isSyncing: false,
             successMessage: 'Initial sync complete: Cloud backup created.',
           );
           return const SyncMergeResult();
         } else {
           state = state.copyWith(
-            loading: false,
+            isSyncing: false,
+            syncError: 'Failed to create initial cloud backup.',
             errorMessage: 'Failed to create initial cloud backup.',
           );
           return null;
@@ -778,7 +787,8 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       tempFile = await _syncService.downloadBackupToTemp(backupId);
       if (tempFile == null || !await tempFile.exists()) {
         state = state.copyWith(
-          loading: false,
+          isSyncing: false,
+          syncError: 'Failed to download cloud backup for merging.',
           errorMessage: 'Failed to download cloud backup for merging.',
         );
         return null;
@@ -824,14 +834,15 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
 
       state = state.copyWith(
         backups: updatedBackups,
-        loading: false,
+        isSyncing: false,
         successMessage: buffer.toString(),
       );
 
       return mergeResult;
     } catch (e) {
       state = state.copyWith(
-        loading: false,
+        isSyncing: false,
+        syncError: 'Sync error: $e',
         errorMessage: 'Sync error: $e',
       );
       return null;
@@ -846,11 +857,12 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<SyncMergeResult?> syncFirestore({String? customUserId}) async {
-    state = state.copyWith(loading: true);
+    state = state.copyWith(isSyncing: true, syncError: null);
     try {
       if (!_firestoreService.isConfigured) {
         state = state.copyWith(
-          loading: false,
+          isSyncing: false,
+          syncError: 'Firebase is not configured. Please see firebase_options.dart setup instructions.',
           errorMessage: 'Firebase is not configured. Please see firebase_options.dart setup instructions.',
         );
         return null;
@@ -859,7 +871,8 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       final currentUser = _firestoreService.authCurrentUser;
       if (currentUser == null) {
         state = state.copyWith(
-          loading: false,
+          isSyncing: false,
+          syncError: 'Please sign in with Email or Google before syncing.',
           errorMessage: 'Please sign in with Email or Google before syncing.',
         );
         return null;
@@ -892,14 +905,15 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       state = state.copyWith(
         signedIn: true,
         email: _firestoreService.authCurrentUser?.email ?? 'Sync ID: $activeUid',
-        loading: false,
+        isSyncing: false,
         successMessage: buffer.toString(),
       );
 
       return mergeResult;
     } catch (e) {
       state = state.copyWith(
-        loading: false,
+        isSyncing: false,
+        syncError: 'Firestore sync error: $e',
         errorMessage: 'Firestore sync error: $e',
       );
       return null;

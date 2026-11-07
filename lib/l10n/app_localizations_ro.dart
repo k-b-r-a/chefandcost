@@ -2012,4 +2012,10 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get cloud_sync_terms_required_warning =>
       'You must accept the terms of service and privacy policy to connect to cloud services.';
+
+  @override
+  String get cloud_sync_in_progress => 'Syncing in background...';
+
+  @override
+  String get cloud_sync_error_prefix => 'Sync error: ';
 }

@@ -25,6 +25,13 @@ const String kSampleSugarPk = 'sample_mfg_sugar_v1';
 bool isSampleManufacturingRecipe(String? recipePk) =>
     recipePk == kSampleManufacturingRecipePk;
 
+/// Returns true if [ingredientPk] corresponds to a sample recipe ingredient.
+bool isSampleManufacturingIngredient(String? ingredientPk) =>
+    ingredientPk == kSampleFlourPk ||
+    ingredientPk == kSampleButterPk ||
+    ingredientPk == kSampleSugarPk;
+
+
 /// Resolves appropriate [AppLocalizations] adapting to the device language or user preference.
 AppLocalizations getSampleRecipeLocalizations({
   SharedPreferences? prefs,
