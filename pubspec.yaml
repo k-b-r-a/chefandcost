@@ -65,6 +65,7 @@ dependencies:
   csv: ^8.0.0
   image: ">=4.0.0 <4.11.0"
   web: ^1.0.0
+  google_mobile_ads: ^9.2.0
 
 dev_dependencies:
   flutter_test:

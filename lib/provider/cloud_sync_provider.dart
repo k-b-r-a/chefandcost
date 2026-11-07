@@ -23,6 +23,9 @@ class CloudSyncState {
   final String? syncError;
   final CloudSyncStorageType storageType;
   final bool hasAcceptedTerms;
+  final bool isSubscribed;
+  final String? subscriptionPlan;
+  final DateTime? subscriptionExpiresAt;
 
   CloudSyncState({
     this.signedIn = false,
@@ -35,7 +38,12 @@ class CloudSyncState {
     this.syncError,
     this.storageType = CloudSyncStorageType.firestore,
     this.hasAcceptedTerms = false,
+    this.isSubscribed = false,
+    this.subscriptionPlan,
+    this.subscriptionExpiresAt,
   });
+
+  bool get hasActiveSubscription => isSubscribed;
 
   CloudSyncState copyWith({
     bool? signedIn,
@@ -48,6 +56,9 @@ class CloudSyncState {
     String? syncError,
     CloudSyncStorageType? storageType,
     bool? hasAcceptedTerms,
+    bool? isSubscribed,
+    String? subscriptionPlan,
+    DateTime? subscriptionExpiresAt,
   }) {
     return CloudSyncState(
       signedIn: signedIn ?? this.signedIn,
@@ -60,6 +71,9 @@ class CloudSyncState {
       syncError: syncError,
       storageType: storageType ?? this.storageType,
       hasAcceptedTerms: hasAcceptedTerms ?? this.hasAcceptedTerms,
+      isSubscribed: isSubscribed ?? this.isSubscribed,
+      subscriptionPlan: subscriptionPlan ?? this.subscriptionPlan,
+      subscriptionExpiresAt: subscriptionExpiresAt ?? this.subscriptionExpiresAt,
     );
   }
 }
@@ -67,6 +81,11 @@ class CloudSyncState {
 class CloudSyncNotifier extends Notifier<CloudSyncState> {
   GoogleDriveSyncService get _syncService => ref.read(googleDriveSyncServiceProvider);
   FirestoreSyncService get _firestoreService => ref.read(firestoreSyncServiceProvider);
+
+  static const String monthlySubscriptionId = 'monthly_1_99';
+  static const String annualSubscriptionId = 'annual_14_99';
+  static const double monthlySubscriptionPrice = 1.99;
+  static const double annualSubscriptionPrice = 14.99;
 
   bool _disposed = false;
 
@@ -93,6 +112,15 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final acceptedTermsPref = prefs.getBool('cloud_terms_accepted') ?? false;
+      final isSubscribedPref = prefs.getBool('cloud_sync_is_subscribed') ?? false;
+      final planPref = prefs.getString('cloud_sync_subscription_plan');
+      final expiresPref = prefs.getInt('cloud_sync_subscription_expires_at');
+      final expiresAt = expiresPref != null ? DateTime.fromMillisecondsSinceEpoch(expiresPref) : null;
+      bool activeSubscribed = isSubscribedPref;
+      if (activeSubscribed && expiresAt != null && expiresAt.isBefore(DateTime.now())) {
+        activeSubscribed = false;
+        await prefs.setBool('cloud_sync_is_subscribed', false);
+      }
 
       final storageType = await _syncService.getStorageType();
       if (_disposed) return;
@@ -112,6 +140,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           backups: const [],
           storageType: storageType,
           hasAcceptedTerms: hasAccepted,
+          isSubscribed: activeSubscribed,
+          subscriptionPlan: activeSubscribed ? planPref : null,
+          subscriptionExpiresAt: expiresAt,
           loading: false,
         );
         return;
@@ -152,6 +183,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         backups: backups,
         storageType: storageType,
         hasAcceptedTerms: hasAccepted,
+        isSubscribed: activeSubscribed,
+        subscriptionPlan: activeSubscribed ? planPref : null,
+        subscriptionExpiresAt: expiresAt,
         loading: false,
       );
     } catch (e) {
@@ -161,6 +195,45 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         errorMessage: 'Failed to verify cloud sync connection status.',
       );
     }
+  }
+
+  Future<void> setSubscription({
+    required bool isSubscribed,
+    String? plan,
+    DateTime? expiresAt,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('cloud_sync_is_subscribed', isSubscribed);
+    if (plan != null) {
+      await prefs.setString('cloud_sync_subscription_plan', plan);
+    } else {
+      await prefs.remove('cloud_sync_subscription_plan');
+    }
+    if (expiresAt != null) {
+      await prefs.setInt('cloud_sync_subscription_expires_at', expiresAt.millisecondsSinceEpoch);
+    } else {
+      await prefs.remove('cloud_sync_subscription_expires_at');
+    }
+    state = state.copyWith(
+      isSubscribed: isSubscribed,
+      subscriptionPlan: plan,
+      subscriptionExpiresAt: expiresAt,
+    );
+  }
+
+  Future<void> purchaseSubscription(String planId) async {
+    final now = DateTime.now();
+    final isAnnual = planId.contains('annual') || planId == annualSubscriptionId;
+    final expiresAt = now.add(isAnnual ? const Duration(days: 365) : const Duration(days: 30));
+    await setSubscription(
+      isSubscribed: true,
+      plan: isAnnual ? annualSubscriptionId : monthlySubscriptionId,
+      expiresAt: expiresAt,
+    );
+  }
+
+  Future<void> cancelSubscription() async {
+    await setSubscription(isSubscribed: false, plan: null, expiresAt: null);
   }
 
   Future<void> setStorageType(CloudSyncStorageType type) async {
@@ -179,6 +252,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         backups: const [],
         loading: false,
         hasAcceptedTerms: state.hasAcceptedTerms || signedIn,
+        isSubscribed: state.isSubscribed,
+        subscriptionPlan: state.subscriptionPlan,
+        subscriptionExpiresAt: state.subscriptionExpiresAt,
       );
       return;
     }
@@ -192,6 +268,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       backups: backups,
       loading: false,
       hasAcceptedTerms: state.hasAcceptedTerms || type == CloudSyncStorageType.localDirectory,
+      isSubscribed: state.isSubscribed,
+      subscriptionPlan: state.subscriptionPlan,
+      subscriptionExpiresAt: state.subscriptionExpiresAt,
     );
   }
 
@@ -449,6 +528,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         signedIn: false,
         email: null,
         hasAcceptedTerms: state.hasAcceptedTerms,
+        isSubscribed: state.isSubscribed,
+        subscriptionPlan: state.subscriptionPlan,
+        subscriptionExpiresAt: state.subscriptionExpiresAt,
       );
       return;
     }
@@ -462,6 +544,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       storageType: storageType,
       backups: list,
       hasAcceptedTerms: state.hasAcceptedTerms,
+      isSubscribed: state.isSubscribed,
+      subscriptionPlan: state.subscriptionPlan,
+      subscriptionExpiresAt: state.subscriptionExpiresAt,
     );
   }
 
@@ -509,6 +594,13 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<bool> createBackup() async {
+    if (state.storageType == CloudSyncStorageType.firestore && !state.isSubscribed) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'cloud_sync_subscription_required',
+      );
+      return false;
+    }
     state = state.copyWith(loading: true);
     try {
       final success = await _syncService.createBackup();
@@ -649,6 +741,9 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         backups: const [],
         loading: false,
         hasAcceptedTerms: state.hasAcceptedTerms,
+        isSubscribed: state.isSubscribed,
+        subscriptionPlan: state.subscriptionPlan,
+        subscriptionExpiresAt: state.subscriptionExpiresAt,
       );
     } catch (e) {
       state = state.copyWith(
@@ -857,6 +952,14 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<SyncMergeResult?> syncFirestore({String? customUserId}) async {
+    if (!state.isSubscribed) {
+      state = state.copyWith(
+        isSyncing: false,
+        syncError: 'cloud_sync_subscription_required',
+        errorMessage: 'cloud_sync_subscription_required',
+      );
+      return null;
+    }
     state = state.copyWith(isSyncing: true, syncError: null);
     try {
       if (!_firestoreService.isConfigured) {
@@ -941,7 +1044,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   /// with recipes is instant and never blocks or freezes the UI.
   void syncRecipe(RecipeDetail detail) {
     if (isSampleManufacturingRecipe(detail.recipe.recipePk)) return;
-    if (state.signedIn && state.storageType == CloudSyncStorageType.firestore) {
+    if (state.signedIn && state.storageType == CloudSyncStorageType.firestore && state.isSubscribed) {
       _enqueueRecipeSync(detail);
     }
   }
@@ -979,7 +1082,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
 
   Future<void> saveRecipe(RecipeDetail detail) async {
     if (isSampleManufacturingRecipe(detail.recipe.recipePk)) return;
-    if (state.signedIn && state.storageType == CloudSyncStorageType.firestore) {
+    if (state.signedIn && state.storageType == CloudSyncStorageType.firestore && state.isSubscribed) {
       try {
         await _firestoreService.saveRecipe(detail);
       } catch (e) {
@@ -989,6 +1092,13 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<bool> forceOverwriteCloud() async {
+    if (state.storageType == CloudSyncStorageType.firestore && !state.isSubscribed) {
+      state = state.copyWith(
+        loading: false,
+        errorMessage: 'cloud_sync_subscription_required',
+      );
+      return false;
+    }
     state = state.copyWith(loading: true);
     try {
       if (state.storageType == CloudSyncStorageType.firestore) {

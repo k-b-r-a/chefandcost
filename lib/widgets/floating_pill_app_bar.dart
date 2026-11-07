@@ -175,6 +175,21 @@ Widget buildFloatingPillAppBar({
                     ),
                   ),
                 ),
+                if (filtersOnly && leading != null)
+                  Positioned(
+                    top: MediaQuery.paddingOf(context).top,
+                    left: 4,
+                    child: IgnorePointer(
+                      ignoring: opacity < 0.05,
+                      child: Opacity(
+                        opacity: opacity,
+                        child: Transform.translate(
+                          offset: Offset(0, -12 * progress),
+                          child: leading,
+                        ),
+                      ),
+                    ),
+                  ),
                 if (filtersOnly && actions != null)
                   Positioned(
                     top: MediaQuery.paddingOf(context).top,

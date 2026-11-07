@@ -2018,4 +2018,72 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get cloud_sync_error_prefix => 'Sync error: ';
+
+  @override
+  String get ad_free_pass_btn_label => 'Ad-Free Pass';
+
+  @override
+  String get ad_free_pass_btn_label_8h => 'Ad-Free (8h)';
+
+  @override
+  String ad_free_pass_active_badge(String time) {
+    return '$time ad-free';
+  }
+
+  @override
+  String get ad_free_pass_unlocked_success =>
+      '8-hour ad-free pass activated! Enjoy uninterrupted cooking.';
+
+  @override
+  String get ad_free_pass_load_error =>
+      'Unable to load rewarded ad. Please try again later.';
+
+  @override
+  String get ad_free_pass_loading => 'Loading ad...';
+
+  @override
+  String get cloud_sync_subscription_required =>
+      'Cloud synchronization and backups require an active Cloud Sync subscription.';
+
+  @override
+  String get cloud_sync_subscription_monthly =>
+      'Cloud Sync Monthly (\$1.99/mo)';
+
+  @override
+  String get cloud_sync_subscription_annual => 'Cloud Sync Annual (\$14.99/yr)';
+
+  @override
+  String get ad_sponsored_recipe => 'Sponsored Recipe';
+
+  @override
+  String get ad_sponsored_ingredient => 'Sponsored Ingredient';
+
+  @override
+  String get ad_badge_label => 'AD';
+
+  @override
+  String get ad_card_subtitle => 'Chef&Cost • Watch pass to remove';
+
+  @override
+  String get ad_free_pass_button => '8h Ad-Free';
+
+  @override
+  String get ad_free_pass_watch_prompt =>
+      'Watch a short video to disable ads for 8 hours';
+
+  @override
+  String ad_free_pass_active(String time) {
+    return 'Ad-free: $time left';
+  }
+
+  @override
+  String get ad_free_pass_unlocked_snackbar =>
+      'Ads disabled for the next 8 hours!';
+
+  @override
+  String get ad_free_pass_error_snackbar =>
+      'Could not load video ad. Please try again later.';
+
+  @override
+  String get ad_sponsored_label => 'Sponsored';
 }

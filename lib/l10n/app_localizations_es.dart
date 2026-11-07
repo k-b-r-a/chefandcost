@@ -2047,4 +2047,72 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cloud_sync_error_prefix => 'Error de sincronización: ';
+
+  @override
+  String get ad_free_pass_btn_label => 'Pase sin anuncios';
+
+  @override
+  String get ad_free_pass_btn_label_8h => 'Sin anuncios (8h)';
+
+  @override
+  String ad_free_pass_active_badge(String time) {
+    return '$time sin anuncios';
+  }
+
+  @override
+  String get ad_free_pass_unlocked_success =>
+      '¡Pase de 8 horas sin anuncios activado! Disfruta cocinando sin interrupciones.';
+
+  @override
+  String get ad_free_pass_load_error =>
+      'No se pudo cargar el anuncio con recompensa. Por favor intenta de nuevo más tarde.';
+
+  @override
+  String get ad_free_pass_loading => 'Cargando anuncio...';
+
+  @override
+  String get cloud_sync_subscription_required =>
+      'La sincronización en la nube y las copias de seguridad requieren una suscripción activa a Cloud Sync.';
+
+  @override
+  String get cloud_sync_subscription_monthly =>
+      'Cloud Sync Mensual (\$1.99/mes)';
+
+  @override
+  String get cloud_sync_subscription_annual => 'Cloud Sync Anual (\$14.99/año)';
+
+  @override
+  String get ad_sponsored_recipe => 'Receta patrocinada';
+
+  @override
+  String get ad_sponsored_ingredient => 'Ingrediente patrocinado';
+
+  @override
+  String get ad_badge_label => 'ANUNCIO';
+
+  @override
+  String get ad_card_subtitle => 'Chef&Cost • Ver pase para quitar';
+
+  @override
+  String get ad_free_pass_button => '8h sin anuncios';
+
+  @override
+  String get ad_free_pass_watch_prompt =>
+      'Mira un video corto para desactivar los anuncios por 8 horas';
+
+  @override
+  String ad_free_pass_active(String time) {
+    return 'Sin anuncios: quedan $time';
+  }
+
+  @override
+  String get ad_free_pass_unlocked_snackbar =>
+      '¡Anuncios desactivados por las próximas 8 horas!';
+
+  @override
+  String get ad_free_pass_error_snackbar =>
+      'No se pudo cargar el anuncio. Inténtalo más tarde.';
+
+  @override
+  String get ad_sponsored_label => 'Publicidad';
 }

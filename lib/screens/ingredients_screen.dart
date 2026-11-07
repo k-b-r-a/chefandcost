@@ -12,6 +12,11 @@ import '../widgets/ingredient_filter_chips_row.dart';
 import 'add_ingredient_screen.dart';
 import '../provider/settings_provider.dart';
 import '../provider/web_layout_provider.dart';
+import '../widgets/ad_free_pass_button.dart';
+import '../provider/ad_provider.dart';
+import '../services/ad_service.dart';
+import '../utils/ad_interleaving_helper.dart';
+import '../widgets/inline_ad_card.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
   const IngredientsScreen({super.key});
@@ -42,14 +47,17 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final webLayout = isWide ? ref.watch(webLayoutProvider) : null;
 
     return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          buildFloatingPillAppBar(
-            context: context,
-            title: l10n.ingredients_title,
+      body: Stack(
+        children: [
+          CustomScrollView(
             controller: _scrollController,
-            bottom: PreferredSize(
+            slivers: [
+              buildFloatingPillAppBar(
+                context: context,
+                title: l10n.ingredients_title,
+                controller: _scrollController,
+                leading: const AdFreePassButton(),
+                bottom: PreferredSize(
               preferredSize: const Size.fromHeight(52),
               child: SizedBox(
                 height: 52,
@@ -178,14 +186,22 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     );
                   }
 
-                  final totalItemCount =
-                      filteredIngredients.length + (showCreateNewCard ? 1 : 0);
+                  final adState = ref.watch(adProvider);
+                  final bool showAds = !adState.isAdFree && AdService.isSupportedPlatform;
+                  final int ingredientsVisualCount = AdInterleavingHelper.getVisualCount(
+                    filteredIngredients.length,
+                    showAds,
+                  );
+                  final int totalItemCount =
+                      ingredientsVisualCount + (showCreateNewCard ? 1 : 0);
 
                   return SliverPadding(
                     padding: const EdgeInsets.only(bottom: 100, top: 4),
                     sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        if (index == filteredIngredients.length) {
+                      delegate: SliverChildBuilderDelegate((context, visualIndex) {
+                        if (visualIndex >= totalItemCount) return null;
+
+                        if (visualIndex == ingredientsVisualCount) {
                           return Center(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 860),
@@ -206,7 +222,21 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                           );
                         }
 
-                        final ingredient = filteredIngredients[index];
+                        if (showAds && AdInterleavingHelper.isAdIndex(visualIndex)) {
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 860),
+                              child: const InlineAdCard(style: InlineAdCardStyle.ingredient),
+                            ),
+                          );
+                        }
+
+                        final dataIndex = showAds
+                            ? AdInterleavingHelper.getDataIndex(visualIndex)
+                            : visualIndex;
+                        if (dataIndex >= filteredIngredients.length) return null;
+
+                        final ingredient = filteredIngredients[dataIndex];
                         final unit = unitMap[ingredient.unitFk];
                         final unitSymbol = unit?.symbol ?? '';
                         final category = unit?.category;
@@ -330,6 +360,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
             error: (error, stack) => SliverFillRemaining(
               child: Center(child: Text(l10n.error_prefix(error.toString()))),
             ),
+          ),
+            ],
           ),
         ],
       ),
