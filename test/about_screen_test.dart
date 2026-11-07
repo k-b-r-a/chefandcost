@@ -75,7 +75,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Chef&Cost'), findsOneWidget);
-      expect(find.textContaining('0.1.2'), findsOneWidget);
+      expect(find.textContaining('0.1.3'), findsOneWidget);
       expect(find.textContaining('Esquema DB v${mockDb.schemaVersion}'), findsOneWidget);
       expect(find.text('Canal Estable'), findsOneWidget);
     });
