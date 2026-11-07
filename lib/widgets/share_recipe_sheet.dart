@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../provider/database_provider.dart';
 import '../provider/settings_provider.dart';
 import '../services/recipe_share_service.dart';
+import 'gooey_toast.dart';
 
 class ShareRecipeSheet extends ConsumerStatefulWidget {
   final RecipeDetail recipeDetail;
@@ -61,33 +62,21 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
       );
 
       if (mounted) {
-        final messenger = ScaffoldMessenger.of(context);
         final l10n = AppLocalizations.of(context)!;
         Navigator.pop(context);
         if (kIsWeb) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                l10n.share_recipe_success,
-                softWrap: true,
-                overflow: TextOverflow.clip,
-              ),
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
-            ),
+          GooeyToast.showSuccess(
+            context,
+            message: l10n.share_recipe_success,
+            duration: const Duration(seconds: 3),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${AppLocalizations.of(context)!.error_text}: $e',
-              softWrap: true,
-              overflow: TextOverflow.clip,
-            ),
-          ),
+        GooeyToast.showError(
+          context,
+          message: '${AppLocalizations.of(context)!.error_text}: $e',
         );
       }
     } finally {
@@ -134,32 +123,20 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
       );
 
       if (mounted) {
-        final messenger = ScaffoldMessenger.of(context);
         Navigator.pop(context);
         if (kIsWeb) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                l10n.share_recipe_success,
-                softWrap: true,
-                overflow: TextOverflow.clip,
-              ),
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
-            ),
+          GooeyToast.showSuccess(
+            context,
+            message: l10n.share_recipe_success,
+            duration: const Duration(seconds: 3),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${AppLocalizations.of(context)!.error_text}: $e',
-              softWrap: true,
-              overflow: TextOverflow.clip,
-            ),
-          ),
+        GooeyToast.showError(
+          context,
+          message: '${AppLocalizations.of(context)!.error_text}: $e',
         );
       }
     } finally {
@@ -206,32 +183,20 @@ class _ShareRecipeSheetState extends ConsumerState<ShareRecipeSheet> {
       );
 
       if (mounted) {
-        final messenger = ScaffoldMessenger.of(context);
         Navigator.pop(context);
         if (kIsWeb) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                l10n.share_recipe_success,
-                softWrap: true,
-                overflow: TextOverflow.clip,
-              ),
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
-            ),
+          GooeyToast.showSuccess(
+            context,
+            message: l10n.share_recipe_success,
+            duration: const Duration(seconds: 3),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${AppLocalizations.of(context)!.error_text}: $e',
-              softWrap: true,
-              overflow: TextOverflow.clip,
-            ),
-          ),
+        GooeyToast.showError(
+          context,
+          message: '${AppLocalizations.of(context)!.error_text}: $e',
         );
       }
     } finally {

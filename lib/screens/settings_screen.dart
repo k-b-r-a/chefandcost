@@ -19,6 +19,7 @@ import '../services/app_tutorial_service.dart';
 import '../services/url_launcher_service.dart';
 import '../widgets/active_group_chip.dart';
 import '../widgets/group_management_sheet.dart';
+import '../widgets/gooey_toast.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -170,11 +171,10 @@ class SettingsScreen extends ConsumerWidget {
                           onCustomTap: () async {
                             await AppTutorialService.resetTutorial();
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l10n.tutorial_replay_reset_toast),
-                                  duration: const Duration(seconds: 2),
-                                ),
+                              GooeyToast.show(
+                                context,
+                                message: l10n.tutorial_replay_reset_toast,
+                                duration: const Duration(seconds: 2),
                               );
                               AppTutorialService.requestReplay();
                             }
@@ -286,7 +286,6 @@ class SettingsGeneralScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
               final successText = l10n.settings_reset_db_success;
               Navigator.pop(context);
               try {
@@ -300,12 +299,11 @@ class SettingsGeneralScreen extends ConsumerWidget {
                 ref.invalidate(ingredientsStreamProvider);
                 ref.invalidate(unitsProvider);
 
-                messenger.showSnackBar(
-                  SnackBar(content: Text(successText, softWrap: true)),
-                );
+                GooeyToast.showSuccess(null, message: successText);
               } catch (e) {
-                messenger.showSnackBar(
-                  SnackBar(content: Text(l10n.error_prefix(e.toString()), softWrap: true)),
+                GooeyToast.showError(
+                  null,
+                  message: l10n.error_prefix(e.toString()),
                 );
               }
             },
@@ -372,7 +370,6 @@ class SettingsGeneralScreen extends ConsumerWidget {
   }) async {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.read(settingsProvider);
-    final messenger = ScaffoldMessenger.of(context);
 
     try {
       if (settings.hapticFeedbackEnabled) {
@@ -396,18 +393,17 @@ class SettingsGeneralScreen extends ConsumerWidget {
               result.ingredientsAdded,
             );
 
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            snackbarMessage,
-            softWrap: true,
-          ),
-        ),
-      );
+      if (context.mounted) {
+        GooeyToast.showSuccess(context, message: snackbarMessage);
+      } else {
+        GooeyToast.showSuccess(null, message: snackbarMessage);
+      }
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.error_prefix(e.toString()), softWrap: true)),
-      );
+      if (context.mounted) {
+        GooeyToast.showError(context, message: l10n.error_prefix(e.toString()));
+      } else {
+        GooeyToast.showError(null, message: l10n.error_prefix(e.toString()));
+      }
     }
   }
 
@@ -494,28 +490,22 @@ class SettingsGeneralScreen extends ConsumerWidget {
 
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? l10n.cloud_sync_load_local_backup_success
-                : l10n.cloud_sync_load_local_backup_invalid,
-            softWrap: true,
-          ),
-          backgroundColor: success
-              ? Theme.of(context).colorScheme.secondary
-              : Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (success) {
+        GooeyToast.showSuccess(
+          context,
+          message: l10n.cloud_sync_load_local_backup_success,
+        );
+      } else {
+        GooeyToast.showError(
+          context,
+          message: l10n.cloud_sync_load_local_backup_invalid,
+        );
+      }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.error_prefix(e.toString()), softWrap: true),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
+      GooeyToast.showError(
+        context,
+        message: l10n.error_prefix(e.toString()),
       );
     }
   }
@@ -1182,6 +1172,88 @@ class SettingsStylesScreen extends ConsumerWidget {
                   },
                 ),
                 const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.water_drop_rounded, size: 18, color: theme.colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Gooey Toast Notification',
+                            style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ActionChip(
+                            avatar: const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF10B981)),
+                            label: const Text('Success'),
+                            onPressed: () {
+                              triggerHaptic();
+                              GooeyToast.showSuccess(
+                                context,
+                                message: 'Receta guardada con éxito',
+                                title: 'Guardado',
+                              );
+                            },
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.error_outline_rounded, size: 16, color: Color(0xFFEF4444)),
+                            label: const Text('Error'),
+                            onPressed: () {
+                              triggerHaptic();
+                              GooeyToast.showError(
+                                context,
+                                message: 'No se pudo sincronizar los datos',
+                                title: 'Error',
+                              );
+                            },
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.warning_amber_rounded, size: 16, color: Color(0xFFF59E0B)),
+                            label: const Text('Warning'),
+                            onPressed: () {
+                              triggerHaptic();
+                              GooeyToast.showWarning(
+                                context,
+                                message: 'El temporizador está por expirar',
+                                title: 'Atención',
+                              );
+                            },
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF3B82F6)),
+                            label: const Text('Info'),
+                            onPressed: () {
+                              triggerHaptic();
+                              GooeyToast.show(
+                                context,
+                                message: 'Nueva versión disponible para sincronizar',
+                                title: 'Información',
+                                type: GooeyToastType.info,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: settings.leftHandedMode,
@@ -1611,12 +1683,10 @@ class SettingsAboutScreen extends ConsumerWidget {
   void _copyToClipboard(BuildContext context, String text, String message) {
     Clipboard.setData(ClipboardData(text: text));
     HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, softWrap: true),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
+    GooeyToast.show(
+      context,
+      message: message,
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -2288,22 +2358,16 @@ class SettingsAboutScreen extends ConsumerWidget {
                         subtitle: Text(l10n.tutorial_replay_subtitle),
                         trailing: const Icon(Icons.play_circle_outline_rounded),
                         onTap: () async {
-                          final messenger = ScaffoldMessenger.of(context);
                           final navigator = Navigator.of(context);
                           await AppTutorialService.resetTutorial();
                           if (navigator.canPop()) {
                             navigator.pop();
                           }
                           AppTutorialService.triggerReplay();
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                l10n.tutorial_replay_reset_toast,
-                                softWrap: true,
-                              ),
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 2),
-                            ),
+                          GooeyToast.show(
+                            null,
+                            message: l10n.tutorial_replay_reset_toast,
+                            duration: const Duration(seconds: 2),
                           );
                         },
                       ),

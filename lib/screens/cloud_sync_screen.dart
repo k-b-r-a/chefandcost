@@ -10,6 +10,7 @@ import '../provider/cloud_sync_provider.dart';
 import '../services/url_launcher_service.dart';
 import '../utils/cloud_sync_service.dart';
 import '../widgets/floating_pill_app_bar.dart';
+import '../widgets/gooey_toast.dart';
 
 class CloudSyncScreen extends ConsumerStatefulWidget {
   final VoidCallback? onClose;
@@ -110,23 +111,11 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
       }
       if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
         final resolved = _resolveMessage(next.errorMessage!, l10n);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(resolved, softWrap: true),
-            backgroundColor: theme.colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GooeyToast.showError(context, message: resolved);
       }
       if (next.successMessage != null && next.successMessage != previous?.successMessage) {
         final resolved = _resolveMessage(next.successMessage!, l10n);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(resolved, softWrap: true),
-            backgroundColor: theme.colorScheme.secondary,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GooeyToast.showSuccess(context, message: resolved);
       }
     });
 
@@ -1281,20 +1270,17 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                           Navigator.of(dialogContext).pop();
                           final success = await notifier.forceOverwriteCloud();
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  success
-                                      ? l10n.force_overwrite_success_toast
-                                      : l10n.force_overwrite_failure_toast,
-                                  softWrap: true,
-                                ),
-                                backgroundColor: success
-                                    ? Theme.of(context).colorScheme.secondary
-                                    : const Color(0xFFDC2626),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            if (success) {
+                              GooeyToast.showSuccess(
+                                context,
+                                message: l10n.force_overwrite_success_toast,
+                              );
+                            } else {
+                              GooeyToast.showError(
+                                context,
+                                message: l10n.force_overwrite_failure_toast,
+                              );
+                            }
                           }
                         }
                       : null,
@@ -2065,15 +2051,9 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               Navigator.of(dialogCtx).pop();
               final success = await notifier.deleteFirestoreCloudData();
               if (context.mounted && success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      l10n.cloud_sync_delete_cloud_data_success,
-                      softWrap: true,
-                    ),
-                    backgroundColor: Colors.green,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                GooeyToast.showSuccess(
+                  context,
+                  message: l10n.cloud_sync_delete_cloud_data_success,
                 );
               }
             },
@@ -2201,15 +2181,9 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                   password: (password != null && password.isNotEmpty) ? password : null,
                 );
                 if (context.mounted && success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        l10n.cloud_sync_delete_account_success,
-                        softWrap: true,
-                      ),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  GooeyToast.showSuccess(
+                    context,
+                    message: l10n.cloud_sync_delete_account_success,
                   );
                 }
               },
@@ -2422,28 +2396,22 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
 
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? l10n.cloud_sync_load_local_backup_success
-                : l10n.cloud_sync_load_local_backup_invalid,
-            softWrap: true,
-          ),
-          backgroundColor: success
-              ? Theme.of(context).colorScheme.secondary
-              : Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (success) {
+        GooeyToast.showSuccess(
+          context,
+          message: l10n.cloud_sync_load_local_backup_success,
+        );
+      } else {
+        GooeyToast.showError(
+          context,
+          message: l10n.cloud_sync_load_local_backup_invalid,
+        );
+      }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.error_prefix(e.toString()), softWrap: true),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
+      GooeyToast.showError(
+        context,
+        message: l10n.error_prefix(e.toString()),
       );
     }
   }
@@ -2462,28 +2430,22 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
       final success = await notifier.exportLocalBackup(selectedDirectory);
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? l10n.cloud_sync_export_local_backup_success
-                : l10n.cloud_sync_save_copy_dialog_title,
-            softWrap: true,
-          ),
-          backgroundColor: success
-              ? Theme.of(context).colorScheme.secondary
-              : Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (success) {
+        GooeyToast.showSuccess(
+          context,
+          message: l10n.cloud_sync_export_local_backup_success,
+        );
+      } else {
+        GooeyToast.showError(
+          context,
+          message: l10n.cloud_sync_save_copy_dialog_title,
+        );
+      }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.error_prefix(e.toString()), softWrap: true),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
+      GooeyToast.showError(
+        context,
+        message: l10n.error_prefix(e.toString()),
       );
     }
   }

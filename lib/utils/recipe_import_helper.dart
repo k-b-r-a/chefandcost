@@ -12,6 +12,7 @@ import '../provider/web_layout_provider.dart';
 import '../screens/recipe_editor_screen.dart';
 import '../services/recipe_share_service.dart';
 import '../widgets/import_recipe_dialog.dart';
+import '../widgets/gooey_toast.dart';
 
 class RecipeImportHelper {
   static bool _isImportInProgress = false;
@@ -43,14 +44,9 @@ class RecipeImportHelper {
       final pickedFile = result.files.first;
       if (!pickedFile.name.toLowerCase().endsWith(".chefy")) {
         if (!context.mounted) return null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n.import_recipe_invalid_file,
-              softWrap: true,
-              overflow: TextOverflow.clip,
-            ),
-          ),
+        GooeyToast.showError(
+          context,
+          message: l10n.import_recipe_invalid_file,
         );
         return null;
       }
@@ -64,14 +60,9 @@ class RecipeImportHelper {
 
       if (bytes == null || bytes.isEmpty) {
         if (!context.mounted) return null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n.import_recipe_invalid_file,
-              softWrap: true,
-              overflow: TextOverflow.clip,
-            ),
-          ),
+        GooeyToast.showError(
+          context,
+          message: l10n.import_recipe_invalid_file,
         );
         return null;
       }
@@ -86,14 +77,9 @@ class RecipeImportHelper {
       );
     } catch (e) {
       if (!context.mounted) return null;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${l10n.import_recipe_invalid_file}: $e',
-            softWrap: true,
-            overflow: TextOverflow.clip,
-          ),
-        ),
+      GooeyToast.showError(
+        context,
+        message: '${l10n.import_recipe_invalid_file}: $e',
       );
       return null;
     } finally {
@@ -159,46 +145,34 @@ class RecipeImportHelper {
       ref.invalidate(recipesWithFinancialsStreamProvider);
 
       try {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n.import_recipe_success(importResult.recipe.name),
-              softWrap: true,
-              overflow: TextOverflow.clip,
-            ),
-            action: SnackBarAction(
-              label: l10n.import_recipe_open_now_action,
-              onPressed: () {
-                if (MediaQuery.sizeOf(context).width >= 640) {
-                  ref
-                      .read(webLayoutProvider.notifier)
-                      .openRecipe(importResult.recipe.recipePk);
-                } else {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RecipeEditorScreen(
-                        recipeId: importResult.recipe.recipePk,
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
+        GooeyToast.showSuccess(
+          context,
+          message: l10n.import_recipe_success(importResult.recipe.name),
+          actionLabel: l10n.import_recipe_open_now_action,
+          onAction: () {
+            if (MediaQuery.sizeOf(context).width >= 640) {
+              ref
+                  .read(webLayoutProvider.notifier)
+                  .openRecipe(importResult.recipe.recipePk);
+            } else {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => RecipeEditorScreen(
+                    recipeId: importResult.recipe.recipePk,
+                  ),
+                ),
+              );
+            }
+          },
         );
       } catch (_) {}
       return importResult;
     } catch (e) {
       if (!context.mounted) return null;
       try {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${l10n.import_recipe_invalid_file}: $e',
-              softWrap: true,
-              overflow: TextOverflow.clip,
-            ),
-          ),
+        GooeyToast.showError(
+          context,
+          message: '${l10n.import_recipe_invalid_file}: $e',
         );
       } catch (_) {}
       return null;

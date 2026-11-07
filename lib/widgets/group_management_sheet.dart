@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../database/database.dart';
 import '../l10n/app_localizations.dart';
 import '../provider/database_provider.dart';
+import 'gooey_toast.dart';
 
 /// Available icons for workspace / venue identification.
 const List<({String id, IconData icon, String label})> kGroupIcons = [
@@ -213,14 +214,10 @@ class GroupManagementSheet extends ConsumerWidget {
                                 .read(activeGroupIdProvider.notifier)
                                 .setActiveGroupId(group.id);
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    l10n.group_switch_success(group.name),
-                                  ),
-                                  duration: const Duration(seconds: 2),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
+                              GooeyToast.showSuccess(
+                                context,
+                                message: l10n.group_switch_success(group.name),
+                                duration: const Duration(seconds: 2),
                               );
                               Navigator.of(context).pop();
                             }
@@ -317,16 +314,9 @@ class GroupManagementSheet extends ConsumerWidget {
                                   tooltip: l10n.group_delete,
                                   onPressed: activeList.length <= 1
                                       ? () {
-                                          ScaffoldMessenger.of(
+                                          GooeyToast.showWarning(
                                             context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                l10n.group_delete_cannot_last,
-                                              ),
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                            ),
+                                            message: l10n.group_delete_cannot_last,
                                           );
                                         }
                                       : () => _confirmDeleteGroup(
