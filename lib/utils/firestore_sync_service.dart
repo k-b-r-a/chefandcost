@@ -264,7 +264,7 @@ class FirestoreSyncService {
       await GoogleSignIn.instance.initialize(
         serverClientId: defaultFirebaseWebClientId,
       );
-      GoogleSignInAccount? googleUser;
+      final GoogleSignInAccount googleUser;
       try {
         googleUser = await GoogleSignIn.instance.authenticate();
       } on GoogleSignInException catch (e) {
@@ -822,15 +822,30 @@ class FirestoreSyncService {
     final recipeDoc = userDoc.collection('recipes').doc(detail.recipe.recipePk);
     final data = recipeToFirestore(detail);
 
-    final batchQueue = FirestoreBatchQueue(_firestore, maxBatchSize: 450);
-    for (final space in detail.spaces) {
-      final spaceRef = userDoc.collection('groups').doc(space.id);
-      await batchQueue.queueSet(
-        spaceRef,
-        groupToFirestore(space),
-        SetOptions(merge: true),
+    if (detail.spaces.isNotEmpty) {
+      await Future.wait(
+        detail.spaces.map((space) async {
+          final spaceRef = userDoc.collection('groups').doc(space.id);
+          await _firestore.runTransaction((transaction) async {
+            final snapshot = await transaction.get(spaceRef);
+            final remote = snapshot.data();
+            if (remote != null) {
+              final remoteTime = _parseDate(
+                remote['updated_at'] ?? remote['updatedAt'],
+              );
+              if (!space.updatedAt.isAfter(remoteTime)) return;
+            }
+            transaction.set(
+              spaceRef,
+              groupToFirestore(space),
+              SetOptions(merge: true),
+            );
+          });
+        }),
       );
     }
+
+    final batchQueue = FirestoreBatchQueue(_firestore, maxBatchSize: 450);
 
     // Update/upsert the nested ingredients in the cloud ingredients subcollection
     for (final ri in detail.ingredients) {

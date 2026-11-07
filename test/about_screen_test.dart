@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:recipetools/constants.dart';
 import 'package:recipetools/database/database.dart';
 import 'package:recipetools/l10n/app_localizations.dart';
 import 'package:recipetools/provider/database_provider.dart';
@@ -152,34 +151,30 @@ void main() {
       await tester.pumpAndSettle();
 
       final licensesTile = find.text('Licencias de Código Abierto');
+      await tester.scrollUntilVisible(licensesTile, 200, scrollable: find.byType(Scrollable).first);
       expect(licensesTile, findsOneWidget);
 
-      final isBetaOrAlpha = kAppVersion.toLowerCase().contains('alpha') ||
-          kAppVersion.toLowerCase().contains('beta');
       final debugTile = find.text('Diagnóstico y Depuración (Beta)');
-      if (isBetaOrAlpha) {
-        expect(debugTile, findsOneWidget);
+      await tester.scrollUntilVisible(debugTile, 200, scrollable: find.byType(Scrollable).first);
+      expect(debugTile, findsOneWidget);
 
-        // Tap Debug Logs
-        await tester.tap(debugTile);
-        await tester.pumpAndSettle();
+      // Tap Debug Logs
+      await tester.tap(debugTile);
+      await tester.pumpAndSettle();
 
-        expect(find.byType(AlertDialog), findsOneWidget);
-        expect(find.text('Probar Registro'), findsOneWidget);
-        expect(find.text('Limpiar Registros'), findsOneWidget);
-        expect(find.text('Copiar Todo'), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Probar Registro'), findsOneWidget);
+      expect(find.text('Limpiar Registros'), findsOneWidget);
+      expect(find.text('Copiar Todo'), findsOneWidget);
 
-        // Tap Test Log button
-        await tester.tap(find.text('Probar Registro'));
-        await tester.pumpAndSettle();
+      // Tap Test Log button
+      await tester.tap(find.text('Probar Registro'));
+      await tester.pumpAndSettle();
 
-        // Tap Copy All button
-        await tester.tap(find.text('Copiar Todo'));
-        await tester.pumpAndSettle();
-        expect(find.text('Registros copiados al portapapeles'), findsOneWidget);
-      } else {
-        expect(debugTile, findsNothing);
-      }
+      // Tap Copy All button
+      await tester.tap(find.text('Copiar Todo'));
+      await tester.pumpAndSettle();
+      expect(find.text('Registros copiados al portapapeles'), findsOneWidget);
     });
   });
 }

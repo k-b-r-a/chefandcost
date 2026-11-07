@@ -27,6 +27,7 @@ import 'utils/cloud_sync_service.dart';
 import 'widgets/app_logo.dart';
 import 'services/app_tutorial_service.dart';
 import 'services/recipe_file_intent_service.dart';
+import 'services/windows_registry_helper.dart';
 import 'utils/recipe_import_helper.dart';
 import 'database/sample_manufacturing_recipe.dart';
 import 'widgets/active_group_chip.dart';
@@ -37,10 +38,24 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'utils/notification_service.dart';
 
-void main() async {
+void main([List<String> args = const []]) async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPreferences = await SharedPreferences.getInstance();
   await NotificationService().initialize();
+
+  // If launched with a .chefy file path (e.g. Windows double-click), stage it for import
+  for (final arg in args) {
+    final trimmed = arg.trim();
+    if (trimmed.toLowerCase().endsWith('.chefy')) {
+      RecipeFileIntentService.setInitialCliFilePath(trimmed);
+      break;
+    }
+  }
+
+  // Register Windows file association in background
+  if (!kIsWeb && Platform.isWindows) {
+    unawaited(WindowsRegistryHelper.registerFileAssociation());
+  }
 
   try {
     if (DefaultFirebaseOptions.isConfigured) {

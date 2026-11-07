@@ -16,7 +16,19 @@ Future<XFile> prepareFileForShare({
   if (!await shareDir.exists()) {
     await shareDir.create(recursive: true);
   }
-  final file = File('${shareDir.path}/$filename');
+
+  final isChefy = filename.toLowerCase().endsWith('.chefy') ||
+      mimeType == 'application/vnd.chefandcost.recipe' ||
+      mimeType == 'application/x-chefy';
+
+  final resolvedFilename = isChefy && !filename.toLowerCase().endsWith('.chefy')
+      ? '$filename.chefy'
+      : (filename.isNotEmpty ? filename : (isChefy ? 'recipe.chefy' : 'file'));
+
+  final resolvedMimeType =
+      isChefy ? 'application/vnd.chefandcost.recipe' : mimeType;
+
+  final file = File('${shareDir.path}/$resolvedFilename');
   await file.writeAsBytes(bytes, flush: true);
-  return XFile(file.path, name: filename, mimeType: mimeType);
+  return XFile(file.path, name: resolvedFilename, mimeType: resolvedMimeType);
 }

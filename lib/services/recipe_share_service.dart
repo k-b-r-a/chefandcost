@@ -66,6 +66,9 @@ class RecipeImportResult {
 class RecipeShareService {
   static const String chefyFormatIdentifier = 'chefy_recipe';
   static const int currentFormatVersion = 1;
+  static const String chefyMimeType = 'application/vnd.chefandcost.recipe';
+  static const String chefyLegacyMimeType = 'application/x-chefy';
+  static const String chefyExtension = '.chefy';
   static const Uuid _uuid = Uuid();
 
   /// Cleans strings to be safe for filenames across OSes.
@@ -668,7 +671,7 @@ class RecipeShareService {
   }) async {
     final String resolvedMimeType;
     if (filename.toLowerCase().endsWith('.chefy')) {
-      resolvedMimeType = 'application/octet-stream';
+      resolvedMimeType = chefyMimeType;
     } else {
       resolvedMimeType = mimeType;
     }

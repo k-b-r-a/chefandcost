@@ -1,8 +1,8 @@
+// ignore_for_file: depend_on_referenced_packages, curly_braces_in_flow_control_structures
 import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-// ignore: depend_on_referenced_packages
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:recipetools/database/database.dart';
 import 'package:recipetools/utils/firestore_sync_service.dart';
