@@ -769,23 +769,27 @@ class FirestoreSyncService {
     final data = recipeToFirestore(detail);
 
     final batch = _firestore.batch();
-    for (final space in detail.spaces) {
-      final spaceRef = userDoc.collection('groups').doc(space.id);
-      await _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(spaceRef);
-        final remote = snapshot.data();
-        if (remote != null) {
-          final remoteTime = _parseDate(
-            remote['updated_at'] ?? remote['updatedAt'],
-          );
-          if (!space.updatedAt.isAfter(remoteTime)) return;
-        }
-        transaction.set(
-          spaceRef,
-          groupToFirestore(space),
-          SetOptions(merge: true),
-        );
-      });
+    if (detail.spaces.isNotEmpty) {
+      await Future.wait(
+        detail.spaces.map((space) async {
+          final spaceRef = userDoc.collection('groups').doc(space.id);
+          await _firestore.runTransaction((transaction) async {
+            final snapshot = await transaction.get(spaceRef);
+            final remote = snapshot.data();
+            if (remote != null) {
+              final remoteTime = _parseDate(
+                remote['updated_at'] ?? remote['updatedAt'],
+              );
+              if (!space.updatedAt.isAfter(remoteTime)) return;
+            }
+            transaction.set(
+              spaceRef,
+              groupToFirestore(space),
+              SetOptions(merge: true),
+            );
+          });
+        }),
+      );
     }
 
     // Also update/upsert the nested ingredients in the cloud ingredients subcollection
