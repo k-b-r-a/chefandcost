@@ -1,11 +1,56 @@
 import 'package:flutter/material.dart';
+import '../widgets/gooey_toast.dart';
 
-/// Helper for showing consistent SnackBars throughout the application.
+/// Helper for showing consistent SnackBars and Gooey Toasts throughout the application.
 class AppSnackBar {
   AppSnackBar._();
 
-  /// Shows a standard snackbar.
+  /// Shows an organic gooey drop toast notification.
   static void show(
+    BuildContext context,
+    String message, {
+    bool isError = false,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    if (!context.mounted) return;
+    GooeyToast.show(
+      context,
+      message: message,
+      type: isError ? GooeyToastType.error : GooeyToastType.info,
+      duration: duration,
+    );
+  }
+
+  /// Shows an error gooey drop toast with error styling.
+  static void showError(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    if (!context.mounted) return;
+    GooeyToast.showError(
+      context,
+      message: message,
+      duration: duration,
+    );
+  }
+
+  /// Shows a success gooey drop toast.
+  static void showSuccess(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    if (!context.mounted) return;
+    GooeyToast.showSuccess(
+      context,
+      message: message,
+      duration: duration,
+    );
+  }
+
+  /// Fallback helper to show a traditional standard floating SnackBar if required.
+  static void showStandard(
     BuildContext context,
     String message, {
     bool isError = false,
@@ -25,24 +70,6 @@ class AppSnackBar {
         ),
       ),
     );
-  }
-
-  /// Shows an error snackbar with error styling.
-  static void showError(
-    BuildContext context,
-    String message, {
-    Duration duration = const Duration(seconds: 4),
-  }) {
-    show(context, message, isError: true, duration: duration);
-  }
-
-  /// Shows a success snackbar.
-  static void showSuccess(
-    BuildContext context,
-    String message, {
-    Duration duration = const Duration(seconds: 3),
-  }) {
-    show(context, message, isError: false, duration: duration);
   }
 }
 

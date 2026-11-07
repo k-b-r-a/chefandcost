@@ -22,6 +22,7 @@ import '../services/app_tutorial_service.dart';
 import '../database/sample_manufacturing_recipe.dart';
 import '../database/recipe_category.dart';
 import '../widgets/share_recipe_sheet.dart';
+import '../widgets/gooey_toast.dart';
 
 enum WebRecipeRightPanelMode {
   financials,
@@ -553,13 +554,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   }) {
     final l10n = AppLocalizations.of(context)!;
     if (_ingredients.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.recipe_editor_add_ingredients_to_scale,
-            softWrap: true,
-          ),
-        ),
+      GooeyToast.showWarning(
+        context,
+        message: l10n.recipe_editor_add_ingredients_to_scale,
       );
       return;
     }
@@ -1388,13 +1385,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   void _applyScaleMultiplier(double multiplier) {
     if (_ingredients.isEmpty) {
       final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.recipe_editor_add_ingredients_to_scale,
-            softWrap: true,
-          ),
-        ),
+      GooeyToast.showWarning(
+        context,
+        message: l10n.recipe_editor_add_ingredients_to_scale,
       );
       return;
     }
@@ -1507,11 +1500,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     });
     _calculateSummary();
     final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.scale_reverted_toast),
-        duration: const Duration(seconds: 2),
-      ),
+    GooeyToast.show(
+      context,
+      message: l10n.scale_reverted_toast,
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -1526,12 +1518,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         _initialSnapshot = _createSnapshot();
       });
       final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.scale_saved_toast),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          duration: const Duration(seconds: 2),
-        ),
+      GooeyToast.showSuccess(
+        context,
+        message: l10n.scale_saved_toast,
+        duration: const Duration(seconds: 2),
       );
     }
   }
@@ -1822,14 +1812,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   Future<void> _shareCurrentRecipe() async {
     final l10n = AppLocalizations.of(context)!;
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.recipe_editor_please_enter_name,
-            softWrap: true,
-            overflow: TextOverflow.clip,
-          ),
-        ),
+      GooeyToast.showWarning(
+        context,
+        message: l10n.recipe_editor_please_enter_name,
       );
       setState(() {
         _isEditingName = true;
@@ -2099,10 +2084,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     }
 
     if (otherIngredients.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.merge_no_other_ingredients, softWrap: true),
-        ),
+      GooeyToast.showWarning(
+        context,
+        message: l10n.merge_no_other_ingredients,
       );
       return;
     }
@@ -2416,10 +2400,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   Future<bool> _saveRecipe({bool popOnSuccess = true}) async {
     final l10n = AppLocalizations.of(context)!;
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.recipe_editor_please_enter_name, softWrap: true),
-        ),
+      GooeyToast.showWarning(
+        context,
+        message: l10n.recipe_editor_please_enter_name,
       );
       setState(() {
         _isEditingName = true;
@@ -3166,30 +3149,21 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           .read(kitchenTimersProvider.notifier)
           .addTimer(timerName, timerData.durationSeconds);
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            content: Text(
-              l10n.timer_started_snackbar(
-                timerName,
-                timerData.formattedDuration,
-              ),
-              softWrap: true,
-            ),
-            action: SnackBarAction(
-              label: l10n.view_button,
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const KitchenTimersScreen(),
-                  ),
-                );
-              },
-            ),
+        GooeyToast.showSuccess(
+          context,
+          message: l10n.timer_started_snackbar(
+            timerName,
+            timerData.formattedDuration,
           ),
+          duration: const Duration(seconds: 3),
+          actionLabel: l10n.view_button,
+          onAction: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const KitchenTimersScreen(),
+              ),
+            );
+          },
         );
       }
     }
@@ -5832,13 +5806,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
   void _showScaleByPortionsDialog(ThemeData theme, AppLocalizations l10n) {
     if (_ingredients.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.recipe_editor_add_ingredients_to_scale,
-            softWrap: true,
-          ),
-        ),
+      GooeyToast.showWarning(
+        context,
+        message: l10n.recipe_editor_add_ingredients_to_scale,
       );
       return;
     }
@@ -7081,35 +7051,22 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                         timerData.durationSeconds,
                                       );
 
-                                  ScaffoldMessenger.of(
+                                  GooeyToast.showSuccess(
                                     context,
-                                  ).hideCurrentSnackBar();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      duration: const Duration(seconds: 3),
-                                      behavior: SnackBarBehavior.floating,
-                                      content: Text(
-                                        l10n.timer_started_snackbar(
-                                          timerName,
-                                          timerData.formattedDuration,
-                                        ),
-                                        softWrap: true,
-                                      ),
-                                      action: SnackBarAction(
-                                        label: l10n.view_button,
-                                        onPressed: () {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).hideCurrentSnackBar();
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const KitchenTimersScreen(),
-                                            ),
-                                          );
-                                        },
-                                      ),
+                                    message: l10n.timer_started_snackbar(
+                                      timerName,
+                                      timerData.formattedDuration,
                                     ),
+                                    duration: const Duration(seconds: 3),
+                                    actionLabel: l10n.view_button,
+                                    onAction: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const KitchenTimersScreen(),
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                                 icon: const Icon(
@@ -7582,13 +7539,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         .toList();
 
     if (otherIngredients.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.merge_no_other_database_ingredients,
-            softWrap: true,
-          ),
-        ),
+      GooeyToast.showWarning(
+        context,
+        message: l10n.merge_no_other_database_ingredients,
       );
       return;
     }

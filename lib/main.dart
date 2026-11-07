@@ -29,6 +29,7 @@ import 'services/app_tutorial_service.dart';
 import 'services/recipe_file_intent_service.dart';
 import 'services/windows_registry_helper.dart';
 import 'utils/recipe_import_helper.dart';
+import 'widgets/gooey_toast.dart';
 import 'database/sample_manufacturing_recipe.dart';
 import 'widgets/active_group_chip.dart';
 
@@ -414,25 +415,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       }
       if (next.errorMessage != null &&
           next.errorMessage != previous?.errorMessage) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage!),
-            backgroundColor: theme.colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GooeyToast.showError(context, message: next.errorMessage!);
       }
       if (next.successMessage != null &&
           next.successMessage != previous?.successMessage) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.successMessage!),
-            backgroundColor: theme.colorScheme.secondary,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GooeyToast.showSuccess(context, message: next.successMessage!);
       }
     });
 

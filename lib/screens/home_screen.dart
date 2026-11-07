@@ -22,6 +22,7 @@ import '../services/app_tutorial_service.dart';
 import '../provider/cloud_sync_provider.dart';
 import '../utils/cloud_sync_service.dart';
 import '../utils/recipe_import_helper.dart';
+import '../widgets/gooey_toast.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int index)? onNavigateToTab;
@@ -586,15 +587,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ref.invalidate(unitsProvider);
                             ref.invalidate(unitsStreamProvider);
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    l10n.sample_data_loaded_snackbar(
-                                      res.recipesAdded,
-                                      res.ingredientsAdded,
-                                    ),
-                                    softWrap: true,
-                                  ),
+                              GooeyToast.showSuccess(
+                                context,
+                                message: l10n.sample_data_loaded_snackbar(
+                                  res.recipesAdded,
+                                  res.ingredientsAdded,
                                 ),
                               );
                             }

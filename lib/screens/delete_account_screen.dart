@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../provider/cloud_sync_provider.dart';
 import '../services/url_launcher_service.dart';
+import '../widgets/gooey_toast.dart';
 
 class DeleteAccountScreen extends ConsumerWidget {
   const DeleteAccountScreen({super.key});
@@ -169,11 +170,9 @@ class DeleteAccountScreen extends ConsumerWidget {
                             if (confirm == true && context.mounted) {
                               final success = await notifier.deleteAccountAndCloudData();
                               if (context.mounted && success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(l10n.cloud_sync_delete_account_success),
-                                    backgroundColor: Colors.green,
-                                  ),
+                                GooeyToast.showSuccess(
+                                  context,
+                                  message: l10n.cloud_sync_delete_account_success,
                                 );
                               }
                             }
