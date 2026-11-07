@@ -26,6 +26,7 @@ import 'provider/cloud_sync_provider.dart';
 import 'utils/cloud_sync_service.dart';
 import 'widgets/app_logo.dart';
 import 'services/app_tutorial_service.dart';
+import 'services/ad_service.dart';
 import 'services/recipe_file_intent_service.dart';
 import 'services/windows_registry_helper.dart';
 import 'utils/recipe_import_helper.dart';
@@ -42,6 +43,7 @@ void main([List<String> args = const []]) async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPreferences = await SharedPreferences.getInstance();
   await NotificationService().initialize();
+  await AdService.initialize();
 
   // If launched with a .chefy file path (e.g. Windows double-click), stage it for import
   for (final arg in args) {

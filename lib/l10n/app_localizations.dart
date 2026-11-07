@@ -3815,6 +3815,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync error: '**
   String get cloud_sync_error_prefix;
+
+  /// No description provided for @ad_free_pass_btn_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad-Free Pass'**
+  String get ad_free_pass_btn_label;
+
+  /// No description provided for @ad_free_pass_btn_label_8h.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad-Free (8h)'**
+  String get ad_free_pass_btn_label_8h;
+
+  /// Label for active ad-free pass remaining time badge
+  ///
+  /// In en, this message translates to:
+  /// **'{time} ad-free'**
+  String ad_free_pass_active_badge(String time);
+
+  /// No description provided for @ad_free_pass_unlocked_success.
+  ///
+  /// In en, this message translates to:
+  /// **'8-hour ad-free pass activated! Enjoy uninterrupted cooking.'**
+  String get ad_free_pass_unlocked_success;
+
+  /// No description provided for @ad_free_pass_load_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load rewarded ad. Please try again later.'**
+  String get ad_free_pass_load_error;
+
+  /// No description provided for @ad_free_pass_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading ad...'**
+  String get ad_free_pass_loading;
+
+  /// No description provided for @cloud_sync_subscription_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud synchronization and backups require an active Cloud Sync subscription.'**
+  String get cloud_sync_subscription_required;
+
+  /// No description provided for @cloud_sync_subscription_monthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Sync Monthly (\$1.99/mo)'**
+  String get cloud_sync_subscription_monthly;
+
+  /// No description provided for @cloud_sync_subscription_annual.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Sync Annual (\$14.99/yr)'**
+  String get cloud_sync_subscription_annual;
+
+  /// No description provided for @ad_sponsored_recipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Sponsored Recipe'**
+  String get ad_sponsored_recipe;
+
+  /// No description provided for @ad_sponsored_ingredient.
+  ///
+  /// In en, this message translates to:
+  /// **'Sponsored Ingredient'**
+  String get ad_sponsored_ingredient;
+
+  /// No description provided for @ad_badge_label.
+  ///
+  /// In en, this message translates to:
+  /// **'AD'**
+  String get ad_badge_label;
+
+  /// No description provided for @ad_card_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chef&Cost • Watch pass to remove'**
+  String get ad_card_subtitle;
+
+  /// No description provided for @ad_free_pass_button.
+  ///
+  /// In en, this message translates to:
+  /// **'8h Ad-Free'**
+  String get ad_free_pass_button;
+
+  /// No description provided for @ad_free_pass_watch_prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch a short video to disable ads for 8 hours'**
+  String get ad_free_pass_watch_prompt;
+
+  /// Label for active ad-free pass remaining time badge
+  ///
+  /// In en, this message translates to:
+  /// **'Ad-free: {time} left'**
+  String ad_free_pass_active(String time);
+
+  /// No description provided for @ad_free_pass_unlocked_snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Ads disabled for the next 8 hours!'**
+  String get ad_free_pass_unlocked_snackbar;
+
+  /// No description provided for @ad_free_pass_error_snackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load video ad. Please try again later.'**
+  String get ad_free_pass_error_snackbar;
+
+  /// No description provided for @ad_sponsored_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Sponsored'**
+  String get ad_sponsored_label;
 }
 
 class _AppLocalizationsDelegate

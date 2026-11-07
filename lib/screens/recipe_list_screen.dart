@@ -19,6 +19,11 @@ import '../widgets/recipe_category_filter_chips_row.dart';
 import '../widgets/recipe_category_badge.dart';
 import '../widgets/active_group_chip.dart';
 import '../utils/recipe_import_helper.dart';
+import '../widgets/ad_free_pass_button.dart';
+import '../provider/ad_provider.dart';
+import '../services/ad_service.dart';
+import '../utils/ad_interleaving_helper.dart';
+import '../widgets/inline_ad_card.dart';
 import 'recipe_editor_screen.dart';
 
 class RecipeListScreen extends ConsumerStatefulWidget {
@@ -134,6 +139,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
             title: l10n.recipes_title,
             controller: _scrollController,
             showCollapsedTitlePill: false,
+            leading: const AdFreePassButton(),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(52),
               child: SizedBox(
@@ -266,12 +272,34 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 );
               }
 
+              final adState = ref.watch(adProvider);
+              final bool showAds = !adState.isAdFree && AdService.isSupportedPlatform;
+              final int totalVisualCount = AdInterleavingHelper.getVisualCount(
+                filteredRecipes.length,
+                showAds,
+              );
+
               return SliverPadding(
                 padding: const EdgeInsets.only(bottom: 100),
                 sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    if (index >= filteredRecipes.length) return null;
-                    final item = filteredRecipes[index];
+                  delegate: SliverChildBuilderDelegate((context, visualIndex) {
+                    if (visualIndex >= totalVisualCount) return null;
+
+                    if (showAds && AdInterleavingHelper.isAdIndex(visualIndex)) {
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 860),
+                          child: const InlineAdCard(style: InlineAdCardStyle.recipe),
+                        ),
+                      );
+                    }
+
+                    final dataIndex = showAds
+                        ? AdInterleavingHelper.getDataIndex(visualIndex)
+                        : visualIndex;
+                    if (dataIndex >= filteredRecipes.length) return null;
+
+                    final item = filteredRecipes[dataIndex];
                     final recipe = item.recipe;
                     final financials = item.financials;
                     final isExpanded = _expandedRecipeId == recipe.recipePk;
@@ -293,7 +321,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 860),
                           child: KeyedSubtree(
-                            key: index == 0
+                            key: dataIndex == 0
                                 ? _tutorialKeys.recipeCardKey
                                 : null,
                             child: Card(
@@ -542,7 +570,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                       ),
                                       const SizedBox(height: 16),
                                       KeyedSubtree(
-                                        key: index == 0
+                                        key: dataIndex == 0
                                             ? _tutorialKeys.recipeFinanceGridKey
                                             : null,
                                         child: Row(

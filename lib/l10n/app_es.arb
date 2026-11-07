@@ -777,5 +777,40 @@
   "cloud_sync_terms_review_btn": "Ver términos",
   "cloud_sync_terms_required_warning": "Debes aceptar los términos de servicio y política de privacidad para conectarte a los servicios en la nube.",
   "cloud_sync_in_progress": "Sincronizando en segundo plano...",
-  "cloud_sync_error_prefix": "Error de sincronización: "
+  "cloud_sync_error_prefix": "Error de sincronización: ",
+  "ad_free_pass_btn_label": "Pase sin anuncios",
+  "ad_free_pass_btn_label_8h": "Sin anuncios (8h)",
+  "ad_free_pass_active_badge": "{time} sin anuncios",
+  "@ad_free_pass_active_badge": {
+    "description": "Etiqueta para la insignia de tiempo restante del pase sin anuncios",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "ad_free_pass_unlocked_success": "¡Pase de 8 horas sin anuncios activado! Disfruta cocinando sin interrupciones.",
+  "ad_free_pass_load_error": "No se pudo cargar el anuncio con recompensa. Por favor intenta de nuevo más tarde.",
+  "ad_free_pass_loading": "Cargando anuncio...",
+  "cloud_sync_subscription_required": "La sincronización en la nube y las copias de seguridad requieren una suscripción activa a Cloud Sync.",
+  "cloud_sync_subscription_monthly": "Cloud Sync Mensual ($1.99/mes)",
+  "cloud_sync_subscription_annual": "Cloud Sync Anual ($14.99/año)",
+  "ad_sponsored_recipe": "Receta patrocinada",
+  "ad_sponsored_ingredient": "Ingrediente patrocinado",
+  "ad_badge_label": "ANUNCIO",
+  "ad_card_subtitle": "Chef&Cost • Ver pase para quitar",
+  "ad_free_pass_button": "8h sin anuncios",
+  "ad_free_pass_watch_prompt": "Mira un video corto para desactivar los anuncios por 8 horas",
+  "ad_free_pass_active": "Sin anuncios: quedan {time}",
+  "@ad_free_pass_active": {
+    "description": "Etiqueta para la insignia de tiempo restante del pase sin anuncios",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "ad_free_pass_unlocked_snackbar": "¡Anuncios desactivados por las próximas 8 horas!",
+  "ad_free_pass_error_snackbar": "No se pudo cargar el anuncio. Inténtalo más tarde.",
+  "ad_sponsored_label": "Publicidad"
 }
