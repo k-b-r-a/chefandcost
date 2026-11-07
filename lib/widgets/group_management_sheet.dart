@@ -168,7 +168,7 @@ class GroupManagementSheet extends ConsumerWidget {
                       horizontal: 16,
                     ),
                     itemCount: activeList.length + 1,
-                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    separatorBuilder: (_, _) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
                       if (index == 0) {
                         final isSelected =

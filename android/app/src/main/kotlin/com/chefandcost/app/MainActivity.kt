@@ -129,16 +129,22 @@ class MainActivity : FlutterActivity() {
 
         try {
             val fileName = getFileName(uri)
-            if (!fileName.endsWith(".chefy", ignoreCase = true)) {
-                return
-            }
+            val mimeType = intent.type ?: try { contentResolver.getType(uri) } catch (e: Exception) { null }
+            val isChefyMime = mimeType == "application/vnd.chefandcost.recipe" ||
+                              mimeType == "application/x-chefy"
+            val hasChefyExt = fileName.endsWith(".chefy", ignoreCase = true)
+
             val content = readFileContent(uri)
 
             if (!content.isNullOrBlank()) {
                 val trimmed = content.trim()
-                if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+                val isChefyJson = trimmed.startsWith("{") && trimmed.endsWith("}") &&
+                    (trimmed.contains("\"chefy_recipe\"") || trimmed.contains("\"recipe\""))
+
+                if (hasChefyExt || isChefyMime || isChefyJson) {
+                    val safeFileName = if (hasChefyExt) fileName else "$fileName.chefy"
                     val payload = mapOf(
-                        "fileName" to fileName,
+                        "fileName" to safeFileName,
                         "content" to content
                     )
                     if (isNewIntent) {
@@ -158,7 +164,7 @@ class MainActivity : FlutterActivity() {
 
     private fun getFileName(uri: Uri?): String {
         if (uri == null) return "recipe.chefy"
-        var name = "recipe.chefy"
+        var name: String? = null
         if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
             try {
                 val cursor = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
@@ -177,7 +183,7 @@ class MainActivity : FlutterActivity() {
                 // Fallback to lastPathSegment
             }
         }
-        if (name == "recipe.chefy") {
+        if (name.isNullOrBlank()) {
             uri.lastPathSegment?.let { segment ->
                 val clean = segment.substringAfterLast('/')
                 if (clean.isNotBlank()) {
@@ -185,7 +191,7 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
-        return name
+        return name ?: "recipe.chefy"
     }
 
     private fun readFileContent(uri: Uri?): String? {
