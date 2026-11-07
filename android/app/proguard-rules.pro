@@ -1,39 +1,25 @@
-# Flutter Wrapper
--keep class io.flutter.app.** { *; }
--keep class io.flutter.plugin.**  { *; }
--keep class io.flutter.util.**  { *; }
--keep class io.flutter.view.**  { *; }
--keep class io.flutter.**  { *; }
--keep class io.flutter.plugins.**  { *; }
+# SDK consumer rules and @Keep annotations preserve Flutter JNI and SDK entry points.
+# Flutter loads this generated entry point by name through reflection.
+-keep class io.flutter.plugins.GeneratedPluginRegistrant {
+    public static void registerWith(io.flutter.embedding.engine.FlutterEngine);
+}
 
-# Drift & SQLite3 Native Bindings
--keepclasseswithmembers class * {
+# Native method names must remain stable for JNI registration.
+-keepclasseswithmembernames,includedescriptorclasses class * {
     native <methods>;
 }
--keep class org.sqlite.** { *; }
--keep class com.simolus3.sqlite3_flutter_libs.** { *; }
--keep class sqlite3.** { *; }
--dontwarn org.sqlite.**
 
-# Firebase Core, Auth, Firestore
--keep class com.google.firebase.** { *; }
--keep class io.flutter.plugins.firebase.** { *; }
--dontwarn com.google.firebase.**
+# flutter_local_notifications 18.x persists these models using Gson reflection.
+# Keep model names and fields stable across upgrades of persisted notifications.
+-keep class com.dexterous.flutterlocalnotifications.models.** { *; }
+-keepattributes Signature,InnerClasses,EnclosingMethod,*Annotation*
+-keep,allowobfuscation class com.google.gson.reflect.TypeToken { *; }
+-keep,allowobfuscation class * extends com.google.gson.reflect.TypeToken { *; }
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
 
-# Flutter Local Notifications
--keep class com.dexterous.flutterlocalnotifications.** { *; }
--dontwarn com.dexterous.flutterlocalnotifications.**
-
-# Share Plus
--keep class dev.fluttercommunity.plus.share.** { *; }
-
-# Google Sign In
--keep class com.google.android.gms.auth.api.signin.** { *; }
-
-# Desugaring & Java Time
--dontwarn java.time.**
-
-# Play Core Split Install (Flutter Deferred Components)
+# Optional Play Core APIs referenced by Flutter; this app has no deferred components.
 -dontwarn com.google.android.play.core.splitcompat.**
 -dontwarn com.google.android.play.core.splitinstall.**
 -dontwarn com.google.android.play.core.tasks.**
