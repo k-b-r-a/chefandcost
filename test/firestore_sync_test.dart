@@ -36,6 +36,7 @@ class MockFirestoreLoggedOutCloudSyncNotifier extends CloudSyncNotifier {
       email: null,
       loading: false,
       storageType: CloudSyncStorageType.firestore,
+      hasAcceptedTerms: true,
     );
   }
 
@@ -1437,7 +1438,7 @@ void main() {
 
   group('Drift Schema Migration v1 to v2 Tests', () {
     test(
-      'Database schema version is 3 and table schema includes is_deleted and deleted_at',
+      'Database schema version is 2 and table schema includes is_deleted and deleted_at',
       () async {
         final db = AppDatabase.forTesting(NativeDatabase.memory());
         expect(db.schemaVersion, 2);
@@ -1448,6 +1449,15 @@ void main() {
         final colNames = cols.map((row) => row.data['name'] as String).toList();
         expect(colNames, contains('is_deleted'));
         expect(colNames, contains('deleted_at'));
+
+        final deletedCols = await db
+            .customSelect("PRAGMA table_info('deleted_records');")
+            .get();
+        final deletedColNames =
+            deletedCols.map((row) => row.data['name'] as String).toList();
+        expect(deletedColNames, contains('record_pk'));
+        expect(deletedColNames, contains('entity_type'));
+        expect(deletedColNames, contains('deleted_at'));
 
         await db.close();
       },
@@ -1612,5 +1622,298 @@ void main() {
         );
       },
     );
+  });
+
+  group('Delta Sync, Tombstones & Batching Tests', () {
+    late AppDatabase db;
+
+    setUp(() {
+      db = AppDatabase.forTesting(NativeDatabase.memory());
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    test('Recipe insert and update properly update dateTimeModified', () async {
+      final initialTime = DateTime.utc(2025, 1, 1, 10, 0);
+      final recipe = Recipe(
+        recipePk: 'rec-delta-1',
+        name: 'Delta Sourdough',
+        defaultYield: 4.0,
+        yieldName: 'Loaves',
+        targetProfitMargin: 0.6,
+        targetPricePerPortion: 5.0,
+        fixedOverheadCost: 1.0,
+        archived: false,
+        dateCreated: initialTime,
+        dateTimeModified: initialTime,
+      );
+
+      await db.insertRecipe(recipe.toCompanion(false));
+      var fetched = (await (db.select(db.recipes)
+                ..where((t) => t.recipePk.equals('rec-delta-1'))
+                ..limit(1))
+              .get())
+          .firstOrNull;
+      expect(fetched, isNotNull);
+      final modified = fetched!.dateTimeModified;
+      expect(modified, isNotNull);
+      expect(
+        modified!.isAfter(initialTime.subtract(const Duration(seconds: 1))),
+        isTrue,
+      );
+
+      final modifiedBefore = modified;
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      final updated = fetched.copyWith(name: 'Updated Sourdough');
+      await db.updateRecipe(updated);
+      fetched = (await (db.select(db.recipes)
+                ..where((t) => t.recipePk.equals('rec-delta-1'))
+                ..limit(1))
+              .get())
+          .firstOrNull;
+      expect(fetched!.name, 'Updated Sourdough');
+      expect(fetched.dateTimeModified!.isAfter(modifiedBefore), isTrue);
+    });
+
+    test(
+      'Recipe physical delete automatically records tombstones in DeletedRecords',
+      () async {
+        final now = DateTime.now().toUtc();
+        final recipe = Recipe(
+          recipePk: 'rec-del-tomb',
+          name: 'To Delete',
+          defaultYield: 1.0,
+          yieldName: 'portion',
+          targetProfitMargin: 0.5,
+          targetPricePerPortion: 2.0,
+          fixedOverheadCost: 0.0,
+          archived: false,
+          dateCreated: now,
+          dateTimeModified: now,
+        );
+        await db.insertRecipe(recipe.toCompanion(false));
+
+        final unit = Unit(
+          unitPk: 'unit-g',
+          name: 'Gram',
+          symbol: 'g',
+          factorToBase: 1.0,
+          isMutable: false,
+        );
+        await db.into(db.units).insert(unit);
+
+        final ing = Ingredient(
+          ingredientPk: 'ing-del-tomb',
+          name: 'Flour',
+          unitFk: 'unit-g',
+          cost: 5.0,
+          quantityForCost: 1000.0,
+          dateCreated: now,
+          dateTimeModified: now,
+          isDeleted: false,
+        );
+        await db.insertIngredient(ing.toCompanion(false));
+
+        final recipeIng = RecipeIngredient(
+          recipeIngredientPk: 'rec-del-tomb_ing-del-tomb',
+          recipeFk: 'rec-del-tomb',
+          ingredientFk: 'ing-del-tomb',
+          amountNeeded: 250.0,
+          dateTimeModified: now,
+        );
+        await db.insertRecipeIngredient(recipeIng.toCompanion(false));
+
+        final step = RecipeStep(
+          stepPk: 'step-del-tomb',
+          recipeFk: 'rec-del-tomb',
+          stepNumber: 1,
+          instruction: 'Mix well',
+          dateTimeModified: now,
+        );
+        await db.insertRecipeStep(step.toCompanion(false));
+
+        // Verify DeletedRecords is empty before deletion
+        var tombstones = await db.getAllDeletedRecords();
+        expect(tombstones, isEmpty);
+
+        // Delete recipe physically
+        await db.deleteRecipe(recipe);
+
+        // Verify recipe was physically deleted from SQLite
+        final checkRecipe = (await (db.select(db.recipes)
+                  ..where((t) => t.recipePk.equals('rec-del-tomb'))
+                  ..limit(1))
+                .get())
+            .firstOrNull;
+        expect(checkRecipe, isNull);
+
+        // Verify tombstones were recorded for recipe, step, and recipe ingredient
+        tombstones = await db.getAllDeletedRecords();
+        expect(tombstones.length, 3);
+        expect(
+          tombstones.any(
+            (t) =>
+                t.recordPk == 'rec-del-tomb' && t.entityType == 'recipes',
+          ),
+          isTrue,
+        );
+        expect(
+          tombstones.any(
+            (t) =>
+                t.recordPk == 'step-del-tomb' &&
+                t.entityType == 'recipe_steps',
+          ),
+          isTrue,
+        );
+        expect(
+          tombstones.any(
+            (t) =>
+                t.recordPk == 'rec-del-tomb_ing-del-tomb' &&
+                t.entityType == 'recipe_ingredients',
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'Ingredient soft delete and restore update DeletedRecords accordingly',
+      () async {
+        final now = DateTime.now().toUtc();
+        final unit = Unit(
+          unitPk: 'unit-g2',
+          name: 'Gram',
+          symbol: 'g',
+          factorToBase: 1.0,
+          isMutable: false,
+        );
+        await db.into(db.units).insert(unit);
+
+        final ing = Ingredient(
+          ingredientPk: 'ing-soft-tomb',
+          name: 'Sugar',
+          unitFk: 'unit-g2',
+          cost: 2.0,
+          quantityForCost: 1000.0,
+          dateCreated: now,
+          dateTimeModified: now,
+          isDeleted: false,
+        );
+        await db.insertIngredient(ing.toCompanion(false));
+
+        // Soft delete records a tombstone
+        await db.deleteIngredient(ing);
+        var tombstones = await db.getAllDeletedRecords();
+        expect(tombstones.length, 1);
+        expect(tombstones.first.recordPk, 'ing-soft-tomb');
+        expect(tombstones.first.entityType, 'ingredients');
+
+        // Restoring clears the tombstone
+        await db.restoreIngredient(ing.ingredientPk);
+        tombstones = await db.getAllDeletedRecords();
+        expect(tombstones, isEmpty);
+      },
+    );
+
+    test(
+      'Inbound tombstone deletes local record physically without local tombstone echo',
+      () async {
+        final now = DateTime.now().toUtc();
+        final olderTime = now.subtract(const Duration(hours: 1));
+        final newerTime = now;
+
+        final unit = Unit(
+          unitPk: 'unit-kg',
+          name: 'Kilogram',
+          symbol: 'kg',
+          factorToBase: 1000.0,
+          isMutable: false,
+        );
+        await db.into(db.units).insert(unit);
+
+        final ing = Ingredient(
+          ingredientPk: 'ing-inbound-del',
+          name: 'Salt',
+          unitFk: 'unit-kg',
+          cost: 1.0,
+          quantityForCost: 1.0,
+          dateCreated: olderTime,
+          dateTimeModified: olderTime,
+          isDeleted: false,
+        );
+        await db.insertIngredient(ing.toCompanion(false));
+
+        // Inbound remote ingredient is marked as deleted with a newer timestamp
+        final localIng =
+            await db.getIngredientById('ing-inbound-del', includeDeleted: true);
+        expect(localIng, isNotNull);
+
+        final localTime = localIng!.dateTimeModified ?? localIng.dateCreated;
+        expect(newerTime.isAfter(localTime), isTrue);
+
+        // Physically delete without tombstone echo (as firestore_sync_service does on inbound isDeleted)
+        await db.deleteIngredientPhysically('ing-inbound-del', recordTombstone: false);
+
+        // Should be removed from local database
+        final local =
+            await db.getIngredientById('ing-inbound-del', includeDeleted: true);
+        expect(local, isNull);
+
+        // Local tombstones should NOT be generated (avoiding bounce-back)
+        final tombstones = await db.getAllDeletedRecords();
+        expect(tombstones.where((t) => t.recordPk == 'ing-inbound-del'), isEmpty);
+      },
+    );
+
+    test('Per-user last_sync_timestamp storage and retrieval', () async {
+      final service = FirestoreSyncService();
+
+      expect(await service.getLastSyncedAt('user-alice'), isNull);
+      expect(await service.getLastSyncedAt('user-bob'), isNull);
+
+      final t1 = DateTime.utc(2026, 3, 1, 12, 0);
+      final t2 = DateTime.utc(2026, 3, 2, 15, 30);
+
+      await service.setLastSyncedAt('user-alice', t1);
+      await service.setLastSyncedAt('user-bob', t2);
+
+      final aliceSynced = await service.getLastSyncedAt('user-alice');
+      final bobSynced = await service.getLastSyncedAt('user-bob');
+
+      expect(aliceSynced, t1);
+      expect(bobSynced, t2);
+
+      await service.clearLastSyncedAt('user-alice');
+      expect(await service.getLastSyncedAt('user-alice'), isNull);
+      expect(await service.getLastSyncedAt('user-bob'), t2);
+    });
+
+    test('FirestoreBatchQueue chunks mutations into <= 450 per commit', () async {
+      int commitCount = 0;
+      final batchSizes = <int>[];
+
+      final queue = FirestoreBatchQueue(
+        null,
+        maxBatchSize: 450,
+        onCommit: (batchSize) async {
+          commitCount++;
+          batchSizes.add(batchSize);
+        },
+      );
+
+      // Enqueue 950 mutations
+      for (int i = 0; i < 950; i++) {
+        await queue.queueDelete(null);
+      }
+      await queue.commit();
+
+      // Expected chunks: 450, 450, 50 = 3 commits total
+      expect(commitCount, 3);
+      expect(batchSizes, [450, 450, 50]);
+      expect(batchSizes.every((s) => s <= 450), isTrue);
+    });
   });
 }

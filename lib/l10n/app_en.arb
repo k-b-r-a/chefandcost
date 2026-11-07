@@ -847,5 +847,7 @@
   "cloud_sync_terms_banner_unaccepted": "Cloud Terms & Privacy must be accepted before syncing with Firebase or Google Drive.",
   "cloud_sync_terms_accepted_badge": "Cloud Terms & Privacy Policy Accepted",
   "cloud_sync_terms_review_btn": "Review Terms",
-  "cloud_sync_terms_required_warning": "You must accept the terms of service and privacy policy to connect to cloud services."
+  "cloud_sync_terms_required_warning": "You must accept the terms of service and privacy policy to connect to cloud services.",
+  "cloud_sync_in_progress": "Syncing in background...",
+  "cloud_sync_error_prefix": "Sync error: "
 }

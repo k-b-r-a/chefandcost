@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:recipetools/constants.dart';
 import 'package:recipetools/database/database.dart';
 import 'package:recipetools/l10n/app_localizations.dart';
 import 'package:recipetools/provider/database_provider.dart';
@@ -76,7 +77,7 @@ void main() {
 
       expect(find.text('Chef&Cost'), findsOneWidget);
       expect(find.textContaining('0.1.2'), findsOneWidget);
-      expect(find.textContaining('Esquema DB v2'), findsOneWidget);
+      expect(find.textContaining('Esquema DB v${mockDb.schemaVersion}'), findsOneWidget);
       expect(find.text('Canal Estable'), findsOneWidget);
     });
 
@@ -142,34 +143,43 @@ void main() {
     });
 
     testWidgets('Displays Licenses tile and Beta Debug Logging tile', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
       final licensesTile = find.text('Licencias de Código Abierto');
-      await tester.scrollUntilVisible(licensesTile, 200);
       expect(licensesTile, findsOneWidget);
 
+      final isBetaOrAlpha = kAppVersion.toLowerCase().contains('alpha') ||
+          kAppVersion.toLowerCase().contains('beta');
       final debugTile = find.text('Diagnóstico y Depuración (Beta)');
-      await tester.scrollUntilVisible(debugTile, 200);
-      expect(debugTile, findsOneWidget);
+      if (isBetaOrAlpha) {
+        expect(debugTile, findsOneWidget);
 
-      // Tap Debug Logs
-      await tester.tap(debugTile);
-      await tester.pumpAndSettle();
+        // Tap Debug Logs
+        await tester.tap(debugTile);
+        await tester.pumpAndSettle();
 
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Probar Registro'), findsOneWidget);
-      expect(find.text('Limpiar Registros'), findsOneWidget);
-      expect(find.text('Copiar Todo'), findsOneWidget);
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.text('Probar Registro'), findsOneWidget);
+        expect(find.text('Limpiar Registros'), findsOneWidget);
+        expect(find.text('Copiar Todo'), findsOneWidget);
 
-      // Tap Test Log button
-      await tester.tap(find.text('Probar Registro'));
-      await tester.pumpAndSettle();
+        // Tap Test Log button
+        await tester.tap(find.text('Probar Registro'));
+        await tester.pumpAndSettle();
 
-      // Tap Copy All button
-      await tester.tap(find.text('Copiar Todo'));
-      await tester.pumpAndSettle();
-      expect(find.text('Registros copiados al portapapeles'), findsOneWidget);
+        // Tap Copy All button
+        await tester.tap(find.text('Copiar Todo'));
+        await tester.pumpAndSettle();
+        expect(find.text('Registros copiados al portapapeles'), findsOneWidget);
+      } else {
+        expect(debugTile, findsNothing);
+      }
     });
   });
 }

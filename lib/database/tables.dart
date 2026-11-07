@@ -172,3 +172,14 @@ class RecipeSteps extends Table {
   @override
   Set<Column> get primaryKey => {stepPk};
 }
+
+@DataClassName('DeletedRecord')
+class DeletedRecords extends Table {
+  TextColumn get recordPk => text().named('record_pk')();
+  TextColumn get entityType => text().named('entity_type')();
+  DateTimeColumn get deletedAt => dateTime().named('deleted_at')();
+
+  @override
+  Set<Column> get primaryKey => {recordPk, entityType};
+}
+

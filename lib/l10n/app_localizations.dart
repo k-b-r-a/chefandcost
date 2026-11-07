@@ -3803,6 +3803,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You must accept the terms of service and privacy policy to connect to cloud services.'**
   String get cloud_sync_terms_required_warning;
+
+  /// No description provided for @cloud_sync_in_progress.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing in background...'**
+  String get cloud_sync_in_progress;
+
+  /// No description provided for @cloud_sync_error_prefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync error: '**
+  String get cloud_sync_error_prefix;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'tables.dart';
 import 'initialize_default_database.dart';
@@ -18,6 +17,7 @@ part 'database.g.dart';
     Groups,
     Categories,
     RecipeSpaces,
+    DeletedRecords,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -67,6 +67,9 @@ class AppDatabase extends _$AppDatabase {
           if (!await _tableExists('categories')) {
             await m.createTable(categories);
           }
+          if (!await _tableExists('deleted_records')) {
+            await m.createTable(deletedRecords);
+          }
           if (!await _columnExists('recipes', 'group_id')) {
             await m.addColumn(recipes, recipes.groupId);
           }
@@ -97,8 +100,16 @@ class AppDatabase extends _$AppDatabase {
         }
       },
       beforeOpen: (details) async {
-        // Repair databases already stamped at v2 that are missing this table.
+        // Repair databases already stamped at v2/v3 that are missing tables.
         // Drift only calls onUpgrade when the stored schema version is older.
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS deleted_records (
+            record_pk TEXT NOT NULL,
+            entity_type TEXT NOT NULL,
+            deleted_at INTEGER NOT NULL,
+            PRIMARY KEY (record_pk, entity_type)
+          )
+        ''');
         await customStatement('''
           CREATE TABLE IF NOT EXISTS categories (
             id TEXT NOT NULL PRIMARY KEY,
@@ -453,10 +464,80 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<int> insertRecipe(RecipesCompanion recipe) =>
-      into(recipes).insert(recipe);
-  Future<bool> updateRecipe(Recipe recipe) => update(recipes).replace(recipe);
-  Future<int> deleteRecipe(Recipe recipe) => delete(recipes).delete(recipe);
+  Future<int> insertRecipe(RecipesCompanion recipe) {
+    final now = DateTime.now();
+    final withTime = recipe.dateTimeModified.present
+        ? recipe
+        : recipe.copyWith(dateTimeModified: Value(now));
+    return into(recipes).insert(withTime);
+  }
+
+  Future<bool> updateRecipe(Recipe recipe) {
+    final updated = recipe.copyWith(dateTimeModified: Value(DateTime.now()));
+    return update(recipes).replace(updated);
+  }
+
+  Future<int> deleteRecipe(Recipe recipe, {bool recordTombstone = true}) =>
+      deleteRecipeById(recipe.recipePk, recordTombstone: recordTombstone);
+
+  Future<int> deleteRecipeById(
+    String recipePk, {
+    bool recordTombstone = true,
+  }) async {
+    return transaction(() async {
+      final now = DateTime.now();
+      if (recordTombstone) {
+        await into(deletedRecords).insert(
+          DeletedRecordsCompanion(
+            recordPk: Value(recipePk),
+            entityType: const Value('recipes'),
+            deletedAt: Value(now),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+      final steps = await (select(recipeSteps)
+            ..where((t) => t.recipeFk.equals(recipePk)))
+          .get();
+      for (final s in steps) {
+        if (recordTombstone) {
+          await into(deletedRecords).insert(
+            DeletedRecordsCompanion(
+              recordPk: Value(s.stepPk),
+              entityType: const Value('recipe_steps'),
+              deletedAt: Value(now),
+            ),
+            mode: InsertMode.insertOrReplace,
+          );
+        }
+      }
+      await (delete(recipeSteps)..where((t) => t.recipeFk.equals(recipePk)))
+          .go();
+
+      final ings = await (select(recipeIngredients)
+            ..where((t) => t.recipeFk.equals(recipePk)))
+          .get();
+      for (final ri in ings) {
+        if (recordTombstone) {
+          await into(deletedRecords).insert(
+            DeletedRecordsCompanion(
+              recordPk: Value(ri.recipeIngredientPk),
+              entityType: const Value('recipe_ingredients'),
+              deletedAt: Value(now),
+            ),
+            mode: InsertMode.insertOrReplace,
+          );
+        }
+      }
+      await (delete(recipeIngredients)
+            ..where((t) => t.recipeFk.equals(recipePk)))
+          .go();
+
+      return await (delete(recipes)
+            ..where((t) => t.recipePk.equals(recipePk)))
+          .go();
+    });
+  }
 
   Future<void> duplicateRecipe(String sourcePk, String newName) async {
     final detail = await getRecipeDetail(sourcePk);
@@ -539,8 +620,13 @@ class AppDatabase extends _$AppDatabase {
     return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
   }
 
-  Future<int> insertIngredient(IngredientsCompanion ingredient) =>
-      into(ingredients).insert(ingredient);
+  Future<int> insertIngredient(IngredientsCompanion ingredient) {
+    final now = DateTime.now();
+    final withTime = ingredient.dateTimeModified.present
+        ? ingredient
+        : ingredient.copyWith(dateTimeModified: Value(now));
+    return into(ingredients).insert(withTime);
+  }
 
   Future<bool> updateIngredient(Ingredient ingredient) async {
     return transaction(() async {
@@ -575,39 +661,214 @@ class AppDatabase extends _$AppDatabase {
                   (t) => t.recipeIngredientPk.equals(entry.recipeIngredientPk),
                 ))
                 .write(
-                  RecipeIngredientsCompanion(amountNeeded: Value(converted)),
+                  RecipeIngredientsCompanion(
+                    amountNeeded: Value(converted),
+                    dateTimeModified: Value(DateTime.now()),
+                  ),
                 );
           }
         }
       }
-      return update(ingredients).replace(ingredient);
+      final updated = ingredient.copyWith(
+        dateTimeModified: Value(DateTime.now()),
+      );
+      return update(ingredients).replace(updated);
     });
   }
 
-  Future<int> deleteIngredient(Ingredient ingredient) {
+  Future<int> deleteIngredient(
+    Ingredient ingredient, {
+    bool recordTombstone = true,
+  }) {
     final now = DateTime.now();
-    return (update(
-      ingredients,
-    )..where((t) => t.ingredientPk.equals(ingredient.ingredientPk))).write(
-      IngredientsCompanion(
-        isDeleted: const Value(true),
-        deletedAt: Value(now),
-        dateTimeModified: Value(now),
-      ),
-    );
+    return transaction(() async {
+      if (recordTombstone) {
+        await into(deletedRecords).insert(
+          DeletedRecordsCompanion(
+            recordPk: Value(ingredient.ingredientPk),
+            entityType: const Value('ingredients'),
+            deletedAt: Value(now),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+      return (update(
+        ingredients,
+      )..where((t) => t.ingredientPk.equals(ingredient.ingredientPk))).write(
+        IngredientsCompanion(
+          isDeleted: const Value(true),
+          deletedAt: Value(now),
+          dateTimeModified: Value(now),
+        ),
+      );
+    });
+  }
+
+  Future<int> deleteIngredientPhysically(
+    String ingredientPk, {
+    bool recordTombstone = true,
+  }) async {
+    return transaction(() async {
+      final now = DateTime.now();
+      if (recordTombstone) {
+        await into(deletedRecords).insert(
+          DeletedRecordsCompanion(
+            recordPk: Value(ingredientPk),
+            entityType: const Value('ingredients'),
+            deletedAt: Value(now),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+      return await (delete(ingredients)
+            ..where((t) => t.ingredientPk.equals(ingredientPk)))
+          .go();
+    });
   }
 
   Future<int> restoreIngredient(String ingredientPk) {
     final now = DateTime.now();
-    return (update(
-      ingredients,
-    )..where((t) => t.ingredientPk.equals(ingredientPk))).write(
-      IngredientsCompanion(
-        isDeleted: const Value(false),
-        deletedAt: const Value(null),
-        dateTimeModified: Value(now),
+    return transaction(() async {
+      await (delete(deletedRecords)
+            ..where(
+              (t) =>
+                  t.recordPk.equals(ingredientPk) &
+                  t.entityType.equals('ingredients'),
+            ))
+          .go();
+      return (update(
+        ingredients,
+      )..where((t) => t.ingredientPk.equals(ingredientPk))).write(
+        IngredientsCompanion(
+          isDeleted: const Value(false),
+          deletedAt: const Value(null),
+          dateTimeModified: Value(now),
+        ),
+      );
+    });
+  }
+
+  // --- Recipe Ingredient & Step CRUD ---
+  Future<int> insertRecipeIngredient(RecipeIngredientsCompanion entry) {
+    final now = DateTime.now();
+    final withTime = entry.dateTimeModified.present
+        ? entry
+        : entry.copyWith(dateTimeModified: Value(now));
+    return into(recipeIngredients).insert(withTime);
+  }
+
+  Future<bool> updateRecipeIngredient(RecipeIngredient entry) {
+    final updated = entry.copyWith(dateTimeModified: Value(DateTime.now()));
+    return update(recipeIngredients).replace(updated);
+  }
+
+  Future<int> deleteRecipeIngredient(
+    String recipeIngredientPk, {
+    bool recordTombstone = true,
+  }) async {
+    return transaction(() async {
+      final now = DateTime.now();
+      if (recordTombstone) {
+        await into(deletedRecords).insert(
+          DeletedRecordsCompanion(
+            recordPk: Value(recipeIngredientPk),
+            entityType: const Value('recipe_ingredients'),
+            deletedAt: Value(now),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+      return await (delete(recipeIngredients)
+            ..where((t) => t.recipeIngredientPk.equals(recipeIngredientPk)))
+          .go();
+    });
+  }
+
+  Future<int> insertRecipeStep(RecipeStepsCompanion step) {
+    final now = DateTime.now();
+    final withTime = step.dateTimeModified.present
+        ? step
+        : step.copyWith(dateTimeModified: Value(now));
+    return into(recipeSteps).insert(withTime);
+  }
+
+  Future<bool> updateRecipeStep(RecipeStep step) {
+    final updated = step.copyWith(dateTimeModified: Value(DateTime.now()));
+    return update(recipeSteps).replace(updated);
+  }
+
+  Future<int> deleteRecipeStep(
+    String stepPk, {
+    bool recordTombstone = true,
+  }) async {
+    return transaction(() async {
+      final now = DateTime.now();
+      if (recordTombstone) {
+        await into(deletedRecords).insert(
+          DeletedRecordsCompanion(
+            recordPk: Value(stepPk),
+            entityType: const Value('recipe_steps'),
+            deletedAt: Value(now),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+      return await (delete(recipeSteps)..where((t) => t.stepPk.equals(stepPk)))
+          .go();
+    });
+  }
+
+  // --- Deletion Tracking (Tombstones) ---
+  Future<void> recordTombstone(
+    String recordPk,
+    String entityType, {
+    DateTime? deletedAt,
+  }) async {
+    await into(deletedRecords).insert(
+      DeletedRecordsCompanion(
+        recordPk: Value(recordPk),
+        entityType: Value(entityType),
+        deletedAt: Value(deletedAt ?? DateTime.now()),
       ),
+      mode: InsertMode.insertOrReplace,
     );
+  }
+
+  Future<List<DeletedRecord>> getAllDeletedRecords() =>
+      select(deletedRecords).get();
+
+  Future<List<DeletedRecord>> getDeletedRecordsSince(DateTime? since) {
+    final query = select(deletedRecords);
+    if (since != null) {
+      query.where((t) => t.deletedAt.isBiggerOrEqualValue(since));
+    }
+    return query.get();
+  }
+
+  Future<int> clearDeletedRecords(Iterable<DeletedRecord> records) async {
+    if (records.isEmpty) return 0;
+    return transaction(() async {
+      int count = 0;
+      for (final r in records) {
+        count += await (delete(deletedRecords)
+              ..where(
+                (t) =>
+                    t.recordPk.equals(r.recordPk) &
+                    t.entityType.equals(r.entityType),
+              ))
+            .go();
+      }
+      return count;
+    });
+  }
+
+  Future<int> clearDeletedRecord(String recordPk, String entityType) {
+    return (delete(deletedRecords)
+          ..where(
+            (t) =>
+                t.recordPk.equals(recordPk) & t.entityType.equals(entityType),
+          ))
+        .go();
   }
 
   Stream<List<Ingredient>> searchIngredients(String query) {
@@ -650,11 +911,13 @@ class AppDatabase extends _$AppDatabase {
 
             // 2. Starts with
             if (nameA.startsWith(trimmedQuery) &&
-                !nameB.startsWith(trimmedQuery))
+                !nameB.startsWith(trimmedQuery)) {
               return -1;
+            }
             if (nameB.startsWith(trimmedQuery) &&
-                !nameA.startsWith(trimmedQuery))
+                !nameA.startsWith(trimmedQuery)) {
               return 1;
+            }
 
             // 3. Count matching terms
             int matchesA = terms.where((t) => nameA.contains(t)).length;
@@ -735,8 +998,9 @@ class AppDatabase extends _$AppDatabase {
       for (final entry in recipeIngredientsToUpdate) {
         affected.add(entry.recipeFk);
         final convertedAmount = entry.amountNeeded * conversion;
-        if (!convertedAmount.isFinite)
+        if (!convertedAmount.isFinite) {
           throw ArgumentError('Invalid ingredient quantity');
+        }
         final existingNewEntry =
             (await (select(recipeIngredients)
                       ..where((t) => t.recipeFk.equals(entry.recipeFk))

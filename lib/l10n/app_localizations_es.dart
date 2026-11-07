@@ -2041,4 +2041,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get cloud_sync_terms_required_warning =>
       'Debes aceptar los términos de servicio y política de privacidad para conectarte a los servicios en la nube.';
+
+  @override
+  String get cloud_sync_in_progress => 'Sincronizando en segundo plano...';
+
+  @override
+  String get cloud_sync_error_prefix => 'Error de sincronización: ';
 }

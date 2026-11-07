@@ -202,8 +202,22 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
               ),
             ],
           ),
+          if (syncState.isSyncing)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: SizedBox(
+                  height: 2,
+                  child: LinearProgressIndicator(minHeight: 2),
+                ),
+              ),
+            ),
           if (syncState.loading)
             Container(
+              key: const ValueKey('cloud_sync_modal_barrier'),
               color: Colors.black.withValues(alpha: 0.3),
               child: const Center(
                 child: CircularProgressIndicator(),
@@ -883,7 +897,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ElevatedButton.icon(
-          onPressed: state.loading ? null : () => notifier.syncTwoWay(),
+          onPressed: (state.loading || state.isSyncing) ? null : () => notifier.syncTwoWay(),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
             backgroundColor: theme.colorScheme.primary,
@@ -893,7 +907,16 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
             ),
             elevation: 0,
           ),
-          icon: const Icon(Icons.sync),
+          icon: state.isSyncing
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Icon(Icons.sync),
           label: Text(
             isFirestore
                 ? l10n.cloud_sync_sync_now

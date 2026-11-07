@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+// ignore: depend_on_referenced_packages
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:recipetools/database/database.dart';
 import 'package:recipetools/utils/firestore_sync_service.dart';
@@ -97,16 +98,18 @@ void createV1(
         'Mezclar ñ 🍞',
         null,
       ]);
-      if (legacyGroups)
+      if (legacyGroups) {
         raw.execute('UPDATE recipes SET group_id = ? WHERE recipe_pk = ?', [
           i == 0 ? 'venue' : 'deleted',
           'r$i',
         ]);
+      }
     }
-    if (partial && count > 0)
+    if (partial && count > 0) {
       raw.execute(
         "UPDATE ingredients SET is_deleted = 1, current_stock = 42.5 WHERE ingredient_pk = 'i0'",
       );
+    }
   } finally {
     raw.close();
   }
@@ -233,7 +236,7 @@ void main() {
               .data
               .values
               .single,
-          2,
+          db.schemaVersion,
         );
         expect(
           (await db.customSelect('PRAGMA integrity_check').getSingle())
@@ -283,8 +286,9 @@ void main() {
             await db.getSpaceIdsForRecipe('r0'),
             scenario.legacy ? ['venue'] : isEmpty,
           );
-          if (scenario.legacy)
+          if (scenario.legacy) {
             expect(await db.getSpaceIdsForRecipe('r1'), isEmpty);
+          }
           final dto = FirestoreSyncService.recipeToFirestore(detail);
           expect(
             FirestoreSyncService.recipeFromFirestore(dto).spaceIds,
@@ -303,8 +307,9 @@ void main() {
           hasLength(groupCount),
         );
         expect(await db.getAllUnits(), hasLength(unitCount));
-        if (scenario.count > 0)
+        if (scenario.count > 0) {
           expect(await db.getSpaceIdsForRecipe('r0'), isEmpty);
+        }
         expect(
           await db.customSelect('PRAGMA foreign_key_check').get(),
           isEmpty,

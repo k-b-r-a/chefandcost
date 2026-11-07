@@ -135,8 +135,6 @@ class GoogleDriveSyncService {
       rethrow;
     }
 
-    if (account == null) return null;
-
     // Immediately prompt and verify driveAppdataScope authorization
     try {
       final authHeaders = await account.authorizationClient.authorizationHeaders([
