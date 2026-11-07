@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -2310,8 +2311,8 @@ class SettingsAboutScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // 4. Beta Debug & Diagnostics (Only displayed if beta app)
-                if (isBeta || isAlpha)
+                // 4. Beta Debug & Diagnostics (Only displayed if beta app or in debug mode)
+                if (isBeta || isAlpha || kDebugMode)
                   buildCard(
                     padding: EdgeInsets.zero,
                     child: ListTile(

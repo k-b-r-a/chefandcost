@@ -2586,8 +2586,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   }
 
   void _maybeTriggerTutorial() {
-    if (_tutorialChecked || _isCheckingTutorial || _isLoading || !mounted)
+    if (_tutorialChecked || _isCheckingTutorial || _isLoading || !mounted) {
       return;
+    }
     _isCheckingTutorial = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {

@@ -114,7 +114,7 @@ class GoogleDriveSyncService {
       serverClientId: defaultServerClientId,
     );
     
-    GoogleSignInAccount? account;
+    final GoogleSignInAccount account;
     try {
       account = await GoogleSignIn.instance.authenticate();
     } on GoogleSignInException catch (e) {
@@ -134,8 +134,6 @@ class GoogleDriveSyncService {
       }
       rethrow;
     }
-
-    if (account == null) return null;
 
     // Immediately prompt and verify driveAppdataScope authorization
     try {

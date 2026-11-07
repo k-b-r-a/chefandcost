@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'tables.dart';
 import 'initialize_default_database.dart';
@@ -650,11 +649,13 @@ class AppDatabase extends _$AppDatabase {
 
             // 2. Starts with
             if (nameA.startsWith(trimmedQuery) &&
-                !nameB.startsWith(trimmedQuery))
+                !nameB.startsWith(trimmedQuery)) {
               return -1;
+            }
             if (nameB.startsWith(trimmedQuery) &&
-                !nameA.startsWith(trimmedQuery))
+                !nameA.startsWith(trimmedQuery)) {
               return 1;
+            }
 
             // 3. Count matching terms
             int matchesA = terms.where((t) => nameA.contains(t)).length;
@@ -735,8 +736,9 @@ class AppDatabase extends _$AppDatabase {
       for (final entry in recipeIngredientsToUpdate) {
         affected.add(entry.recipeFk);
         final convertedAmount = entry.amountNeeded * conversion;
-        if (!convertedAmount.isFinite)
+        if (!convertedAmount.isFinite) {
           throw ArgumentError('Invalid ingredient quantity');
+        }
         final existingNewEntry =
             (await (select(recipeIngredients)
                       ..where((t) => t.recipeFk.equals(entry.recipeFk))

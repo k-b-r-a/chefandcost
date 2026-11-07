@@ -146,11 +146,11 @@ void main() {
       await tester.pumpAndSettle();
 
       final licensesTile = find.text('Licencias de Código Abierto');
-      await tester.scrollUntilVisible(licensesTile, 200);
+      await tester.scrollUntilVisible(licensesTile, 200, scrollable: find.byType(Scrollable).first);
       expect(licensesTile, findsOneWidget);
 
       final debugTile = find.text('Diagnóstico y Depuración (Beta)');
-      await tester.scrollUntilVisible(debugTile, 200);
+      await tester.scrollUntilVisible(debugTile, 200, scrollable: find.byType(Scrollable).first);
       expect(debugTile, findsOneWidget);
 
       // Tap Debug Logs

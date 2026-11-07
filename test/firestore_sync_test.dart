@@ -33,6 +33,7 @@ class MockFirestoreLoggedOutCloudSyncNotifier extends CloudSyncNotifier {
   CloudSyncState build() {
     return CloudSyncState(
       signedIn: false,
+      hasAcceptedTerms: true,
       email: null,
       loading: false,
       storageType: CloudSyncStorageType.firestore,
@@ -1596,8 +1597,8 @@ void main() {
         expect(find.text('Forgot password?'), findsOneWidget);
 
         // Tap 'Create Account' in segmented button
-        await tester.tap(find.text('Create Account'));
-        await tester.pump();
+        await tester.tap(find.text('Create Account'), warnIfMissed: false);
+        await tester.pumpAndSettle();
 
         // Forgot password link should disappear in Register mode
         expect(find.text('Forgot password?'), findsNothing);

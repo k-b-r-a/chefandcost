@@ -324,13 +324,15 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                       if (ref
                                               .read(webLayoutProvider)
                                               .selectedRecipeId ==
-                                          recipe.recipePk)
+                                          recipe.recipePk) {
                                         return;
+                                      }
                                       final guard = ref.read(
                                         recipeCanLeaveGuardProvider,
                                       );
-                                      if (guard != null && !await guard())
+                                      if (guard != null && !await guard()) {
                                         return;
+                                      }
                                       ref
                                           .read(webLayoutProvider.notifier)
                                           .openRecipe(recipe.recipePk);
@@ -631,8 +633,9 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                                                     );
                                                                 if (guard !=
                                                                         null &&
-                                                                    !await guard())
+                                                                    !await guard()) {
                                                                   return;
+                                                                }
                                                               }
                                                               ref
                                                                   .read(

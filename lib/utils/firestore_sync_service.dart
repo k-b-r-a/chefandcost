@@ -178,7 +178,7 @@ class FirestoreSyncService {
       await GoogleSignIn.instance.initialize(
         serverClientId: defaultFirebaseWebClientId,
       );
-      GoogleSignInAccount? googleUser;
+      final GoogleSignInAccount googleUser;
       try {
         googleUser = await GoogleSignIn.instance.authenticate();
       } on GoogleSignInException catch (e) {
@@ -201,13 +201,11 @@ class FirestoreSyncService {
         rethrow;
       }
 
-      if (googleUser == null) return null;
-
       final auth = googleUser.authentication;
       final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
       cred = await _auth.signInWithCredential(credential);
     }
-    final uid = cred?.user?.uid;
+    final uid = cred.user?.uid;
     if (uid != null) {
       await setCustomUserId(uid);
     }

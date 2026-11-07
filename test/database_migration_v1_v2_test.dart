@@ -1,3 +1,4 @@
+// ignore_for_file: depend_on_referenced_packages, curly_braces_in_flow_control_structures
 import 'dart:io';
 
 import 'package:drift/native.dart';

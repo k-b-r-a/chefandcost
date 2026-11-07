@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show Directory;
+import 'dart:io' show Directory, File;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +11,7 @@ import 'package:recipetools/provider/database_provider.dart';
 import 'package:recipetools/services/file_share_helper.dart';
 import 'package:recipetools/services/recipe_file_intent_service.dart';
 import 'package:recipetools/services/recipe_share_service.dart';
+import 'package:recipetools/services/windows_registry_helper.dart';
 import 'package:recipetools/utils/recipe_import_helper.dart';
 import 'package:recipetools/widgets/share_recipe_sheet.dart';
 import 'package:recipetools/widgets/import_recipe_dialog.dart';
@@ -414,7 +415,7 @@ void main() {
       );
 
       expect(xFile.name.endsWith('My_Delicious_Cake.chefy'), isTrue);
-      expect(xFile.mimeType, 'application/octet-stream');
+      expect(xFile.mimeType, RecipeShareService.chefyMimeType);
       expect(await xFile.readAsBytes(), sampleBytes);
     });
 
@@ -542,6 +543,59 @@ void main() {
 
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, null);
+    });
+
+    test('RecipeFileIntentService stages and retrieves CLI argument .chefy file path', () async {
+      RecipeFileIntentService.resetForTesting();
+      final tempDir = Directory.systemTemp;
+      final testFile = File('${tempDir.path}/test_cli_recipe.chefy');
+      await testFile.writeAsString('{"format":"chefy_recipe","recipe":{"name":"CliRecipe"}}');
+      addTearDown(() async {
+        if (await testFile.exists()) {
+          await testFile.delete();
+        }
+        RecipeFileIntentService.resetForTesting();
+      });
+
+      // Non-chefy paths are ignored
+      RecipeFileIntentService.setInitialCliFilePath('ignore_this_file.txt');
+      expect(await RecipeFileIntentService.getInitialFile(), isNull);
+
+      // Chefy paths are loaded and parsed
+      RecipeFileIntentService.setInitialCliFilePath(testFile.path);
+      final initial = await RecipeFileIntentService.getInitialFile();
+      expect(initial, isNotNull);
+      expect(initial?['fileName'], 'test_cli_recipe.chefy');
+      expect(initial?['content'], contains('CliRecipe'));
+    });
+
+    test('RecipeFileIntentService.handleFilePath broadcasts on fileStream', () async {
+      RecipeFileIntentService.resetForTesting();
+      final tempDir = Directory.systemTemp;
+      final testFile = File('${tempDir.path}/stream_recipe.chefy');
+      await testFile.writeAsString('{"format":"chefy_recipe","recipe":{"name":"StreamRecipe"}}');
+      addTearDown(() async {
+        if (await testFile.exists()) {
+          await testFile.delete();
+        }
+        RecipeFileIntentService.resetForTesting();
+      });
+
+      final futureEvent = RecipeFileIntentService.fileStream.first;
+      final handled = await RecipeFileIntentService.handleFilePath(testFile.path);
+      expect(handled, isTrue);
+
+      final event = await futureEvent;
+      expect(event['fileName'], 'stream_recipe.chefy');
+      expect(event['content'], contains('StreamRecipe'));
+    });
+
+    test('WindowsRegistryHelper defines correct ProgID, mime type, and commands', () async {
+      expect(WindowsRegistryHelper.progId, 'ChefAndCost.RecipeFile');
+      expect(WindowsRegistryHelper.fileExtension, '.chefy');
+      expect(WindowsRegistryHelper.mimeType, 'application/vnd.chefandcost.recipe');
+      // Should execute without throwing on any platform
+      await WindowsRegistryHelper.registerFileAssociation();
     });
 
     testWidgets('RecipeImportHelper blocks concurrent import calls with isImportInProgress', (tester) async {
