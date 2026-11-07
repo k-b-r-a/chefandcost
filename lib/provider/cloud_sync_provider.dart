@@ -919,6 +919,50 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     await checkStatus();
   }
 
+  final List<RecipeDetail> _pendingRecipeSyncs = [];
+  bool _isProcessingRecipeSync = false;
+
+  /// Syncs a recipe to cloud storage asynchronously in the background.
+  /// Decouples sync execution from the UI lifecycle so saving and interacting
+  /// with recipes is instant and never blocks or freezes the UI.
+  void syncRecipe(RecipeDetail detail) {
+    if (isSampleManufacturingRecipe(detail.recipe.recipePk)) return;
+    if (state.signedIn && state.storageType == CloudSyncStorageType.firestore) {
+      _enqueueRecipeSync(detail);
+    }
+  }
+
+  /// Alias for background recipe synchronization.
+  void saveRecipeInBackground(RecipeDetail detail) => syncRecipe(detail);
+
+  void _enqueueRecipeSync(RecipeDetail detail) {
+    final existingIndex = _pendingRecipeSyncs.indexWhere(
+      (d) => d.recipe.recipePk == detail.recipe.recipePk,
+    );
+    if (existingIndex >= 0) {
+      _pendingRecipeSyncs[existingIndex] = detail;
+    } else {
+      _pendingRecipeSyncs.add(detail);
+    }
+    _processNextRecipeSync();
+  }
+
+  Future<void> _processNextRecipeSync() async {
+    if (_isProcessingRecipeSync || _pendingRecipeSyncs.isEmpty || _disposed) {
+      return;
+    }
+    _isProcessingRecipeSync = true;
+    while (_pendingRecipeSyncs.isNotEmpty && !_disposed) {
+      final nextDetail = _pendingRecipeSyncs.removeAt(0);
+      try {
+        await _firestoreService.saveRecipe(nextDetail);
+      } catch (e) {
+        debugPrint('Background cloud sync recipe error: $e');
+      }
+    }
+    _isProcessingRecipeSync = false;
+  }
+
   Future<void> saveRecipe(RecipeDetail detail) async {
     if (isSampleManufacturingRecipe(detail.recipe.recipePk)) return;
     if (state.signedIn && state.storageType == CloudSyncStorageType.firestore) {

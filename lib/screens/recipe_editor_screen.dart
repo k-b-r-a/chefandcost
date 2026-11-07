@@ -1758,7 +1758,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           : null,
     );
 
-    await RecipeUtils.saveRecipe(
+    final savedDetail = await RecipeUtils.saveRecipe(
       db: db,
       recipePk: newPk,
       name: _nameController.text.trim(),
@@ -1774,6 +1774,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       category: _selectedCategory.name,
       spaceIds: _selectedSpaceIds.toList(),
     );
+
+    // Sync converted permanent recipe in the background without blocking the UI
+    ref.read(cloudSyncProvider.notifier).syncRecipe(savedDetail);
 
     if (mounted) {
       AppSnackBar.showSuccess(context, l10n.scale_saved_toast);
@@ -2438,7 +2441,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final margin = _profitMarginController.text;
     final price = _priceController.text;
 
-    setState(() => _isLoading = true);
+    setState(() => _isSaving = true);
     try {
       final db = ref.read(databaseProvider);
 
@@ -2494,8 +2497,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
       _currentRecipePk = savedDetail.recipe.recipePk;
 
-      // Persist to cloud database if cloud sync is active
-      await ref.read(cloudSyncProvider.notifier).saveRecipe(savedDetail);
+      // Delegate sync to the cloud provider asynchronously in the background.
+      // Separating sync logic from the UI lifecycle ensures save is instant and
+      // never makes the UI block, freeze, or become unusable.
+      ref.read(cloudSyncProvider.notifier).syncRecipe(savedDetail);
 
       _initialSnapshot = _createSnapshot();
       if (mounted && popOnSuccess) {
@@ -2513,7 +2518,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
           _isSaving = false;
         });
       }
@@ -2983,8 +2987,14 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               ),
             if (!widget.isTemporary) ...[
               IconButton(
-                icon: const Icon(Icons.check),
-                onPressed: _isLoading ? null : _saveRecipe,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check),
+                onPressed: (_isLoading || _isSaving) ? null : _saveRecipe,
                 tooltip: l10n.save_button,
               ),
             ],
