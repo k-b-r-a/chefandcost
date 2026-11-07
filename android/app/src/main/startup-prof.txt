@@ -1,0 +1,4 @@
+# Native startup entry points used by R8 for DEX layout.
+Lcom/chefandcost/app/MainActivity;
+SLcom/chefandcost/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
+SLcom/chefandcost/app/MainActivity;->configureFlutterEngine(Lio/flutter/embedding/engine/FlutterEngine;)V

@@ -1,0 +1,4 @@
+# Manually selected native startup entry points; expand with device-recorded journeys.
+Lcom/chefandcost/app/MainActivity;
+HSPLcom/chefandcost/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/chefandcost/app/MainActivity;->configureFlutterEngine(Lio/flutter/embedding/engine/FlutterEngine;)V

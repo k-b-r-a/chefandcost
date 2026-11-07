@@ -19,7 +19,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.chefandcost.app"
-    // Google Play requires targeting modern Android SDK (API 35+ for 2024/2025/2026 releases)
+    // Google Play requires targeting Android 16 (API 36) or higher.
     compileSdk = 36
     ndkVersion = "28.2.13676358"
 
@@ -36,7 +36,7 @@ android {
     defaultConfig {
         applicationId = "com.chefandcost.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -59,6 +59,9 @@ android {
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+
             val releaseSigning = signingConfigs.getByName("release")
             val hasValidReleaseKeystore = releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()
 
@@ -100,6 +103,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
 
