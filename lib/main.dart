@@ -551,7 +551,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               },
               child: Padding(
                 padding: const EdgeInsets.all(2.0),
-                child: AppIcon(size: logoSize),
+                child: AppLogo(size: logoSize),
               ),
             ),
           ),
