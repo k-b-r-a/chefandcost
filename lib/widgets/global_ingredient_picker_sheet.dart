@@ -797,6 +797,17 @@ class _GlobalIngredientPickerSheetState
                                                       isDense: true,
                                                       border:
                                                           const UnderlineInputBorder(),
+                                                      enabledBorder:
+                                                          const UnderlineInputBorder(),
+                                                      focusedBorder:
+                                                          UnderlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                          color: theme
+                                                              .colorScheme
+                                                              .primary,
+                                                          width: 1.5,
+                                                        ),
+                                                      ),
                                                     ),
                                                     onChanged: (val) =>
                                                         setState(() {}),

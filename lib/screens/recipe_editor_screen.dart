@@ -6566,11 +6566,24 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                               ),
                               decoration: InputDecoration(
                                 isDense: true,
+                                filled: false,
                                 contentPadding: const EdgeInsets.symmetric(
                                   vertical: 4,
                                   horizontal: 0,
                                 ),
-                                border: InputBorder.none,
+                                border: const UnderlineInputBorder(),
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.outlineVariant
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.primary,
+                                    width: 1.5,
+                                  ),
+                                ),
                                 hintText: '0',
                                 hintStyle: TextStyle(
                                   color: theme.colorScheme.outlineVariant,
