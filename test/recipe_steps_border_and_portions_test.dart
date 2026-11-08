@@ -164,6 +164,7 @@ void main() {
           name: 'Pie',
           defaultYield: 4.0,
           yieldName: 'portions',
+          targetProfitMargin: const drift.Value(0.30),
         ),
       );
 
@@ -216,6 +217,96 @@ void main() {
 
       // On wide web page layout, the scale bar custom portions pill chip is not rendered
       expect(find.byKey(const ValueKey('scale_chip_custom_portions')), findsNothing);
+
+      // Financial inputs in web layout have UnderlineInputBorder and no box border in default theme
+      final yieldField = tester.widget<TextField>(find.byKey(const ValueKey('right_panel_yield_field')));
+      expect(yieldField.decoration?.border is UnderlineInputBorder, isTrue);
+
+      final marginEditableFinder = find.byWidgetPredicate(
+        (w) => w is TextField && (w.controller?.text.startsWith('30') ?? false),
+      );
+      expect(marginEditableFinder, findsOneWidget);
+      final marginField = tester.widget<TextField>(marginEditableFinder);
+      expect(marginField.decoration?.border is UnderlineInputBorder, isTrue);
+    },
+  );
+
+  testWidgets(
+    'Financial inputs in mobile bottom sheet use UnderlineInputBorder and no box border in default theme',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      SharedPreferences.setMockInitialValues({});
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(() => db.close());
+
+      await db.into(db.recipes).insert(
+        RecipesCompanion.insert(
+          recipePk: const drift.Value('mobile_finance_recipe'),
+          name: 'Bread',
+          defaultYield: 2.0,
+          yieldName: 'portions',
+          targetProfitMargin: const drift.Value(0.30),
+        ),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          databaseProvider.overrideWith(() => MockDatabaseNotifier(db)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.buildTheme(
+              seedColor: AppColors.primary,
+              brightness: Brightness.light,
+              highContrastText: false,
+              fontFamily: 'system',
+              animationsEnabled: false,
+            ),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: RecipeEditorScreen(
+                recipeId: 'mobile_finance_recipe',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Expand bottom financials
+      final collapsedFinder = find.byKey(const ValueKey('collapsed_financials'));
+      expect(collapsedFinder, findsOneWidget);
+      await tester.tap(collapsedFinder);
+      await tester.pumpAndSettle();
+
+      // Find the financial input TextFields (margin starting with '30')
+      final marginInputFinder = find.byWidgetPredicate(
+        (w) => w is TextField && (w.controller?.text.startsWith('30') ?? false),
+      );
+      expect(marginInputFinder, findsOneWidget);
+
+      final marginTextField = tester.widget<TextField>(marginInputFinder);
+      expect(marginTextField.decoration?.border is UnderlineInputBorder, isTrue);
+
+      // The enclosing card Container has null decoration (no border) in default theme
+      final cardContainer = tester.widget<Container>(
+        find.ancestor(
+          of: marginInputFinder,
+          matching: find.byType(Container),
+        ).first,
+      );
+      expect(cardContainer.decoration, isNull);
     },
   );
 }
