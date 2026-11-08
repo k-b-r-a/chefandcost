@@ -1325,6 +1325,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     required IconData icon,
     bool isPrimary = false,
   }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final numberColor = isDark ? Colors.white : Colors.black;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -1373,9 +1376,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: isPrimary
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface,
+              color: numberColor,
             ),
           ),
         ],
@@ -3432,12 +3433,14 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     required String label,
     required String value,
     Color? iconColor,
-    Color? valueColor,
     bool isBold = false,
     bool isHighlighted = false,
     String? subtitle,
     Widget? trailingWidget,
   }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final numberColor = isDark ? Colors.white : Colors.black;
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isHighlighted ? 12 : 6,
@@ -3518,15 +3521,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 style: TextStyle(
                   fontWeight: isBold ? FontWeight.w900 : FontWeight.w700,
                   fontSize: isHighlighted ? 14.5 : 12.5,
-                  color:
-                      valueColor ??
-                      (isHighlighted
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface),
+                  color: numberColor,
                 ),
-                currencyColor: isHighlighted
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.primary.withValues(alpha: 0.8),
+                currencyColor: numberColor,
               ),
             ),
         ],
@@ -3547,6 +3544,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   }) {
     final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
         theme.colorScheme.primary == AppColors.primaryDark;
+    final isDark = theme.brightness == Brightness.dark;
+    final numberColor = isDark ? Colors.white : Colors.black;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -3607,7 +3606,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
-                      color: theme.colorScheme.primary,
+                      color: numberColor,
                     ),
                   ),
                   const SizedBox(width: 2),
@@ -3620,9 +3619,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       decimal: true,
                     ),
                     textAlign: TextAlign.end,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 12.5,
+                      color: numberColor,
                     ),
                     decoration: isDefaultTheme
                         ? InputDecoration(
@@ -3666,7 +3666,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: numberColor,
                     ),
                   ),
                 ],
@@ -3686,6 +3686,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final yieldVal = RecipeUtils.parseFormattedNumber(_yieldController.text);
     final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
         theme.colorScheme.primary == AppColors.primaryDark;
+    final isDark = theme.brightness == Brightness.dark;
+    final numberColor = isDark ? Colors.white : Colors.black;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -3783,9 +3785,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           decimal: true,
                         ),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 12.5,
+                          color: numberColor,
                         ),
                         decoration: isDefaultTheme
                             ? InputDecoration(
@@ -3893,7 +3896,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
+                            color: numberColor,
                           ),
                         ),
                       ),
@@ -4107,7 +4110,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                       fontWeight: FontWeight.bold,
                                       color: isSelected
                                           ? theme.colorScheme.onPrimary
-                                          : theme.colorScheme.onSurface,
+                                          : (theme.brightness == Brightness.dark
+                                              ? Colors.white
+                                              : Colors.black),
                                     ),
                                   ),
                                 ),
@@ -4173,7 +4178,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   label: l10n.total_profit,
                   value:
                       '+$currency${RecipeUtils.formatNumber(_currentRevenue)}',
-                  valueColor: theme.colorScheme.primary,
                   isBold: true,
                   isHighlighted: true,
                   subtitle:
@@ -4188,7 +4192,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   label: l10n.profit_per_portion,
                   value:
                       '+$currency${RecipeUtils.formatNumber(_currentProfitPerPortion)}',
-                  valueColor: theme.colorScheme.primary,
                   isBold: true,
                 ),
                 _buildFinancialDataRow(
@@ -5333,6 +5336,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   }) {
     final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
         theme.colorScheme.primary == AppColors.primaryDark;
+    final isDark = theme.brightness == Brightness.dark;
+    final numberColor = isDark ? Colors.white : Colors.black;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -5377,7 +5382,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   '$prefix ',
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
+                    color: numberColor,
                     fontSize: 12,
                   ),
                 ),
@@ -5402,6 +5407,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     fontSize: 13.5,
+                    color: numberColor,
                   ),
                   decoration: isDefaultTheme
                       ? InputDecoration(
@@ -5433,7 +5439,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                   suffix,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: numberColor,
                     fontSize: 12,
                   ),
                 ),
@@ -5452,6 +5458,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     bool isHighlighted = false,
     double? minWidth,
   }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final numberColor = isDark ? Colors.white : Colors.black;
+
     return Container(
       constraints: BoxConstraints(minWidth: minWidth ?? 115),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -5493,12 +5502,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 currencySymbol: currency,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w900,
-                  color: color,
+                  color: numberColor,
                   fontSize: 13.5,
                 ),
-                currencyColor: isHighlighted
-                    ? color
-                    : theme.colorScheme.primary,
+                currencyColor: numberColor,
               ),
             ),
           ),
@@ -5584,7 +5591,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     context,
                     l10n.gain_per_portion,
                     profitPerPortionStr,
-                    valueColor: theme.colorScheme.primary,
                   ),
                 ),
               ],
@@ -5598,10 +5604,12 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   Widget _buildCollapsedMetric(
     BuildContext context,
     String label,
-    String value, {
-    Color? valueColor,
-  }) {
+    String value,
+  ) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final numberColor = isDark ? Colors.white : Colors.black;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -5623,7 +5631,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w900,
-            color: valueColor ?? theme.colorScheme.onSurface,
+            color: numberColor,
             fontSize: 13,
           ),
         ),

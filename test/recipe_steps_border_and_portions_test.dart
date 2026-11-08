@@ -307,6 +307,106 @@ void main() {
         ).first,
       );
       expect(cardContainer.decoration, isNull);
+
+      // Verify financial input number text style uses black in light mode, not theme primary color
+      expect(marginTextField.style?.color, equals(Colors.black));
+      expect(marginTextField.style?.color, isNot(equals(AppColors.primary)));
+    },
+  );
+
+  testWidgets(
+    'Financial numbers use black and white colors instead of active theme primary',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      SharedPreferences.setMockInitialValues({});
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(() => db.close());
+
+      await db.into(db.recipes).insert(
+        RecipesCompanion.insert(
+          recipePk: const drift.Value('finance_colors_recipe'),
+          name: 'Pie',
+          defaultYield: 4.0,
+          yieldName: 'portions',
+          targetProfitMargin: const drift.Value(0.25),
+        ),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          databaseProvider.overrideWith(() => MockDatabaseNotifier(db)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // 1. Light Mode (Warm Mocha theme) -> numbers should be Colors.black
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.buildTheme(
+              seedColor: AppColors.primary,
+              brightness: Brightness.light,
+              highContrastText: false,
+              fontFamily: 'system',
+              animationsEnabled: false,
+            ),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: RecipeEditorScreen(
+                recipeId: 'finance_colors_recipe',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Expand bottom financials
+      final collapsedFinder = find.byKey(const ValueKey('collapsed_financials'));
+      expect(collapsedFinder, findsOneWidget);
+      await tester.tap(collapsedFinder);
+      await tester.pumpAndSettle();
+
+      final marginInputFinder = find.byWidgetPredicate(
+        (w) => w is TextField && (w.controller?.text.startsWith('25') ?? false),
+      );
+      expect(marginInputFinder, findsOneWidget);
+      final marginFieldLight = tester.widget<TextField>(marginInputFinder);
+      expect(marginFieldLight.style?.color, equals(Colors.black));
+
+      // 2. Dark Mode -> numbers should be Colors.white
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.buildTheme(
+              seedColor: AppColors.primary,
+              brightness: Brightness.dark,
+              highContrastText: false,
+              fontFamily: 'system',
+              animationsEnabled: false,
+            ),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: RecipeEditorScreen(
+                recipeId: 'finance_colors_recipe',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final marginFieldDark = tester.widget<TextField>(marginInputFinder);
+      expect(marginFieldDark.style?.color, equals(Colors.white));
     },
   );
 }

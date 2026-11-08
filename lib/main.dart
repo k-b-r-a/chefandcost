@@ -36,7 +36,6 @@ import 'database/sample_manufacturing_recipe.dart';
 import 'widgets/active_group_chip.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'utils/notification_service.dart';
