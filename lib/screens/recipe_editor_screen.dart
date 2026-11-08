@@ -6877,14 +6877,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
     return Container(
       decoration: isDefaultTheme
-          ? BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                  width: 1.0,
-                ),
-              ),
-            )
+          ? null
           : BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest.withValues(
                 alpha: 0.1,

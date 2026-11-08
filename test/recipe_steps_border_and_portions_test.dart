@@ -23,7 +23,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'Step items use bottom line border in default theme and full rounded border in alternative theme',
+    'Step items have no border in default theme and full rounded border in alternative theme',
     (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
       final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -90,21 +90,12 @@ void main() {
       final defaultStepContainer = tester.widget<Container>(
         find.ancestor(
           of: stepTextFieldFinder,
-          matching: find.byWidgetPredicate(
-            (w) => w is Container && w.decoration is BoxDecoration,
-          ),
+          matching: find.byType(Container),
         ).first,
       );
 
-      final defaultBoxDec = defaultStepContainer.decoration as BoxDecoration;
-      expect(defaultBoxDec.border, isNotNull);
-      expect(defaultBoxDec.border is Border, isTrue);
-      final defaultBorder = defaultBoxDec.border as Border;
-      expect(defaultBorder.bottom, isNot(BorderSide.none));
-      expect(defaultBorder.top, BorderSide.none);
-      expect(defaultBorder.left, BorderSide.none);
-      expect(defaultBorder.right, BorderSide.none);
-      expect(defaultBoxDec.borderRadius, isNull);
+      // In default theme, step container has no decoration or borders
+      expect(defaultStepContainer.decoration, isNull);
 
       // 2. In alternative non-default theme (Colors.blue)
       await tester.pumpWidget(
