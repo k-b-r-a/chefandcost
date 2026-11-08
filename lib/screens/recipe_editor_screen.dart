@@ -23,6 +23,7 @@ import '../database/sample_manufacturing_recipe.dart';
 import '../database/recipe_category.dart';
 import '../widgets/share_recipe_sheet.dart';
 import '../widgets/gooey_toast.dart';
+import '../theme/app_theme.dart';
 
 enum WebRecipeRightPanelMode {
   financials,
@@ -3657,6 +3658,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     required AppLocalizations l10n,
   }) {
     final yieldVal = RecipeUtils.parseFormattedNumber(_yieldController.text);
+    final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
+        theme.colorScheme.primary == AppColors.primaryDark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -3680,45 +3683,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l10n.unit_portions,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface,
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(
-                      height: 16,
-                      child: TextField(
-                        controller: _yieldNameController,
-                        textCapitalization: TextCapitalization.sentences,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: theme.colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.8,
-                          ),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          hintText: l10n.unit_portions.toLowerCase(),
-                          hintStyle: TextStyle(
-                            fontSize: 10,
-                            color: theme.colorScheme.outlineVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  l10n.unit_portions,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
@@ -3726,15 +3699,28 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               Container(
                 height: 32,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.35,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.4,
-                    ),
-                  ),
+                  color: isDefaultTheme
+                      ? Colors.transparent
+                      : theme.colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.35,
+                        ),
+                  borderRadius: isDefaultTheme
+                      ? BorderRadius.zero
+                      : BorderRadius.circular(10),
+                  border: isDefaultTheme
+                      ? Border(
+                          bottom: BorderSide(
+                            color: theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.5,
+                            ),
+                            width: 1.0,
+                          ),
+                        )
+                      : Border.all(
+                          color: theme.colorScheme.outlineVariant.withValues(
+                            alpha: 0.4,
+                          ),
+                        ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -6000,20 +5986,21 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: _buildScaleOptionChip(
-                theme: theme,
-                icon: Icons.people_outline_rounded,
-                label: isCustomActive
-                    ? '${RecipeUtils.formatMultiplier(activeMultiplier)} (${_yieldController.text} ${l10n.unit_portions.toLowerCase()})'
-                    : '${l10n.unit_portions}...',
-                isSelected: isCustomActive,
-                key: const ValueKey('scale_chip_custom_portions'),
-                tooltip: l10n.unit_portions,
-                onTap: () => _showScaleByPortionsDialog(theme, l10n),
+            if (MediaQuery.sizeOf(context).width < 640)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: _buildScaleOptionChip(
+                  theme: theme,
+                  icon: Icons.people_outline_rounded,
+                  label: isCustomActive
+                      ? '${RecipeUtils.formatMultiplier(activeMultiplier)} (${_yieldController.text} ${l10n.unit_portions.toLowerCase()})'
+                      : '${l10n.unit_portions}...',
+                  isSelected: isCustomActive,
+                  key: const ValueKey('scale_chip_custom_portions'),
+                  tooltip: l10n.unit_portions,
+                  onTap: () => _showScaleByPortionsDialog(theme, l10n),
+                ),
               ),
-            ),
             ...presets.map((mult) {
               final isSelected = !_isScaledTemporarily
                   ? mult == 1.0
@@ -6814,17 +6801,32 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final step = _steps[index];
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
+        theme.colorScheme.primary == AppColors.primaryDark;
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
-      ),
+      decoration: isDefaultTheme
+          ? BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                  width: 1.0,
+                ),
+              ),
+            )
+          : BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.1,
+              ),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+            ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: isDefaultTheme
+            ? const EdgeInsets.fromLTRB(4, 8, 4, 12)
+            : const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
