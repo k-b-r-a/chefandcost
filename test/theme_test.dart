@@ -6,13 +6,13 @@ import 'package:recipetools/widgets/app_logo.dart';
 
 void main() {
   group('Warm Mocha Theme Option & Base Theme', () {
-    test('Default base theme remains deep purple', () {
+    test('Default theme is Warm Mocha', () {
       final initialSettings = SettingsState.initial();
-      expect(initialSettings.seedColor, Colors.deepPurple);
+      expect(initialSettings.seedColor, AppColors.primary);
     });
 
-    test('Standard base theme builds without Warm Mocha override', () {
-      final baseTheme = AppTheme.buildTheme(
+    test('Standard alternative theme builds without Warm Mocha override', () {
+      final otherTheme = AppTheme.buildTheme(
         brightness: Brightness.light,
         seedColor: Colors.deepPurple,
         highContrastText: false,
@@ -20,9 +20,9 @@ void main() {
         animationsEnabled: true,
       );
 
-      // Base theme is generated from deep purple, not warm mocha
-      expect(baseTheme.colorScheme.primary, isNot(AppColors.primary));
-      expect(baseTheme.colorScheme.secondary, isNot(AppColors.secondary));
+      // When another theme is selected, it is generated from that color, not warm mocha
+      expect(otherTheme.colorScheme.primary, isNot(AppColors.primary));
+      expect(otherTheme.colorScheme.secondary, isNot(AppColors.secondary));
     });
 
     test('Warm Mocha color system definitions match user specifications', () {
