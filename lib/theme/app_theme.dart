@@ -1,91 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Semantic colors for Chef&Cost theme based on the Warm Mocha design system:
+/// Semantic colors for Chef&Cost theme based on the Color System Definitions:
 ///
-/// Color Palette:
-/// - Primary: #5C381E (Warm Deep Mocha / Chocolate Brown)
-///   Use for main brand actions, key buttons, headers, icons, and primary text/borders.
-/// - Secondary / Background Tint: #E8B896 (Warm Peach / Soft Cinnamon Beige)
-///   Use for secondary accents, subtle card highlights, chips, and tinted containers.
-/// - Surface / Neutral Light: #FAF6F0 (or pure #FFFFFF)
-///   Use for main backgrounds, input surfaces, and card backgrounds to maintain clean contrast.
-/// - On-Primary: #FFFFFF
-///   White text/icons on primary colored surfaces.
-/// - On-Secondary: #5C381E
-///   Mocha text on secondary tinted backgrounds.
+/// - Primary:
+///   * HSV: (27, 0.68, 0.42)
+///   * HEX: #6B3C22 | RGB: (107, 60, 34)
+///   * Role: Brand primary actions, elevated buttons, headers, icons, borders, and main dark accents.
+/// - Secondary:
+///   * HSV: (28, 0.34, 0.92)
+///   * HEX: #EBBB9B | RGB: (235, 187, 155)
+///   * Role: Secondary buttons, chip containers, card accents, subtle borders, and contextual background highlights.
+/// - Surface / Clean Canvas:
+///   * HSV: (0, 0.0, 1.00)
+///   * HEX: #FFFFFF | RGB: (255, 255, 255)
+///   * Role: Primary surface backgrounds, card bases, dialogs, and input fills.
+/// - Contrast Roles:
+///   * On-Primary: #FFFFFF (White text/icons over Primary).
+///   * On-Secondary: #6B3C22 (Deep Brown text/icons over Secondary).
+///   * On-Surface: #2B180E (Deep brown/near-black neutral for base typography to preserve the warm hue).
 class AppColors {
   AppColors._();
 
-  /// Primary: #5C381E (Warm Deep Mocha / Chocolate Brown)
-  /// Used for main brand actions, key buttons, headers, icons, and primary text/borders.
-  static const Color primary = Color(0xFF5C381E);
+  /// Primary: #6B3C22 | RGB: (107, 60, 34) | HSV: (27, 0.68, 0.42)
+  /// Role: Brand primary actions, elevated buttons, headers, icons, borders, and main dark accents.
+  static const Color primary = Color(0xFF6B3C22);
 
-  /// Secondary / Background Tint: #E8B896 (Warm Peach / Soft Cinnamon Beige)
-  /// Used for secondary accents, subtle card highlights, chips, and tinted containers.
-  static const Color secondary = Color(0xFFE8B896);
+  /// Secondary: #EBBB9B | RGB: (235, 187, 155) | HSV: (28, 0.34, 0.92)
+  /// Role: Secondary buttons, chip containers, card accents, subtle borders, and contextual background highlights.
+  static const Color secondary = Color(0xFFEBBB9B);
 
-  /// Surface / Neutral Light: #FAF6F0
-  /// Used for main backgrounds, input surfaces, and card backgrounds to maintain clean contrast.
-  static const Color surface = Color(0xFFFAF6F0);
+  /// Surface / Clean Canvas: #FFFFFF | RGB: (255, 255, 255) | HSV: (0, 0.0, 1.00)
+  /// Role: Primary surface backgrounds, card bases, dialogs, and input fills.
+  static const Color surface = Color(0xFFFFFFFF);
 
   /// Pure Neutral Light: #FFFFFF
-  /// Clean contrast for input surfaces, card backgrounds, and elevated dialogs.
   static const Color surfacePure = Color(0xFFFFFFFF);
 
-  /// On-Primary: #FFFFFF
-  /// White text/icons on primary colored surfaces.
+  /// On-Primary: #FFFFFF (White text/icons over Primary)
   static const Color onPrimary = Color(0xFFFFFFFF);
 
-  /// On-Secondary: #5C381E
-  /// Mocha text on secondary tinted backgrounds.
-  static const Color onSecondary = Color(0xFF5C381E);
+  /// On-Secondary: #6B3C22 (Deep Brown text/icons over Secondary)
+  static const Color onSecondary = Color(0xFF6B3C22);
+
+  /// On-Surface: #2B180E (Deep brown/near-black neutral for base typography to preserve the warm hue)
+  static const Color onSurface = Color(0xFF2B180E);
+  static const Color onSurfaceVariant = Color(0xFF6B3C22);
 
   // --- Derived and complementary tones for comprehensive Material 3 compliance ---
 
   /// Primary container / subtle warmth tint
-  static const Color primaryContainer = Color(0xFFF3DEC8);
-  static const Color onPrimaryContainer = Color(0xFF381F0D);
+  static const Color primaryContainer = Color(0xFFF6E2D5);
+  static const Color onPrimaryContainer = Color(0xFF381F10);
 
-  /// Secondary container / tinted containers & subtle chips
-  static const Color secondaryContainer = Color(0xFFF8E7DB);
-  static const Color onSecondaryContainer = Color(0xFF5C381E);
+  /// Secondary container / chip containers & contextual background highlights
+  static const Color secondaryContainer = Color(0xFFF9ECE2);
+  static const Color onSecondaryContainer = Color(0xFF6B3C22);
 
   /// Tertiary warm cinnamon
-  static const Color tertiary = Color(0xFF8C532B);
+  static const Color tertiary = Color(0xFF8D532F);
   static const Color onTertiary = Color(0xFFFFFFFF);
-  static const Color tertiaryContainer = Color(0xFFFFDCC5);
-  static const Color onTertiaryContainer = Color(0xFF321400);
+  static const Color tertiaryContainer = Color(0xFFFFDCC9);
+  static const Color onTertiaryContainer = Color(0xFF351500);
 
-  /// Main text & surfaces for light mode
-  static const Color onSurface = Color(0xFF2E1A0F);
-  static const Color onSurfaceVariant = Color(0xFF5C381E);
-  static const Color outline = Color(0xFF5C381E);
-  static const Color outlineVariant = Color(0xFFE8B896);
+  /// Borders & outlines
+  static const Color outline = Color(0xFF6B3C22);
+  static const Color outlineVariant = Color(0xFFEBBB9B);
 
   /// Material 3 tonal surface steps for light mode
   static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
-  static const Color surfaceContainerLow = Color(0xFFFAF6F0);
-  static const Color surfaceContainer = Color(0xFFF4EDE6);
-  static const Color surfaceContainerHigh = Color(0xFFEFE5DC);
-  static const Color surfaceContainerHighest = Color(0xFFE8DCD2);
+  static const Color surfaceContainerLow = Color(0xFFFCF9F6);
+  static const Color surfaceContainer = Color(0xFFF7F3EE);
+  static const Color surfaceContainerHigh = Color(0xFFF2ECE6);
+  static const Color surfaceContainerHighest = Color(0xFFECE4DC);
 
   // --- Dark Mode Palette ---
-  static const Color primaryDark = Color(0xFFE8B896);
-  static const Color onPrimaryDark = Color(0xFF3B1E0A);
-  static const Color primaryContainerDark = Color(0xFF5C381E);
-  static const Color onPrimaryContainerDark = Color(0xFFFAF6F0);
+  static const Color primaryDark = Color(0xFFEBBB9B);
+  static const Color onPrimaryDark = Color(0xFF3D1F10);
+  static const Color primaryContainerDark = Color(0xFF6B3C22);
+  static const Color onPrimaryContainerDark = Color(0xFFFDF8F5);
 
-  static const Color secondaryDark = Color(0xFFE8B896);
-  static const Color onSecondaryDark = Color(0xFF3B1E0A);
-  static const Color secondaryContainerDark = Color(0xFF4C2F1E);
-  static const Color onSecondaryContainerDark = Color(0xFFFAF6F0);
+  static const Color secondaryDark = Color(0xFFEBBB9B);
+  static const Color onSecondaryDark = Color(0xFF3D1F10);
+  static const Color secondaryContainerDark = Color(0xFF53311E);
+  static const Color onSecondaryContainerDark = Color(0xFFFDF8F5);
 
   static const Color surfaceDark = Color(0xFF1B1410);
-  static const Color onSurfaceDark = Color(0xFFFAF6F0);
-  static const Color onSurfaceVariantDark = Color(0xFFDCC2B0);
-  static const Color outlineDark = Color(0xFF9E8474);
-  static const Color outlineVariantDark = Color(0xFF503E33);
+  static const Color onSurfaceDark = Color(0xFFFAF6F2);
+  static const Color onSurfaceVariantDark = Color(0xFFDFC6B6);
+  static const Color outlineDark = Color(0xFFA3897B);
+  static const Color outlineVariantDark = Color(0xFF554136);
 
   static const Color surfaceContainerLowestDark = Color(0xFF120C09);
   static const Color surfaceContainerLowDark = Color(0xFF201712);
@@ -227,6 +231,9 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       scaffoldBackgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+      dialogTheme: DialogThemeData(
+        backgroundColor: isDark ? AppColors.surfaceContainerDark : AppColors.surface,
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
         foregroundColor: isDark ? AppColors.onSurfaceDark : AppColors.primary,
@@ -279,9 +286,9 @@ class AppTheme {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      // Cards: clean contrast & subtle secondary highlights
+      // Cards: clean contrast (#FFFFFF base) & subtle secondary accents
       cardTheme: CardThemeData(
-        color: isDark ? AppColors.surfaceContainerDark : AppColors.surfacePure,
+        color: isDark ? AppColors.surfaceContainerDark : AppColors.surface,
         surfaceTintColor: isDark ? AppColors.secondaryDark : AppColors.secondary,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -289,7 +296,7 @@ class AppTheme {
           side: BorderSide(
             color: isDark
                 ? AppColors.outlineVariantDark.withValues(alpha: 0.4)
-                : AppColors.secondary.withValues(alpha: 0.4),
+                : AppColors.secondary.withValues(alpha: 0.45),
             width: 1,
           ),
         ),
@@ -298,7 +305,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: isDark
             ? AppColors.secondaryContainerDark
-            : AppColors.secondary.withValues(alpha: 0.28),
+            : AppColors.secondaryContainer,
         selectedColor: isDark ? AppColors.secondaryDark : AppColors.secondary,
         labelStyle: TextStyle(
           color: isDark ? AppColors.onSurfaceDark : AppColors.onSecondary,
@@ -316,17 +323,17 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      // Input surfaces: clean contrast with primary borders
+      // Input surfaces: clean contrast (#FFFFFF fill) with primary borders
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? AppColors.surfaceContainerDark : AppColors.surfacePure,
+        fillColor: isDark ? AppColors.surfaceContainerDark : AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: isDark
                 ? AppColors.outlineVariantDark
-                : AppColors.secondary.withValues(alpha: 0.6),
+                : AppColors.secondary.withValues(alpha: 0.65),
           ),
         ),
         enabledBorder: OutlineInputBorder(
@@ -334,7 +341,7 @@ class AppTheme {
           borderSide: BorderSide(
             color: isDark
                 ? AppColors.outlineVariantDark
-                : AppColors.secondary.withValues(alpha: 0.6),
+                : AppColors.secondary.withValues(alpha: 0.65),
           ),
         ),
         focusedBorder: OutlineInputBorder(

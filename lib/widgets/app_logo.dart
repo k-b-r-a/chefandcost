@@ -25,16 +25,16 @@ class AppIconThemePalette {
     highlightColor: Color(0xFFEACCA6),
   );
 
-  /// Warm Deep Mocha brand palette (#5C381E, #E8B896, #FAF6F0)
+  /// Warm Deep Mocha brand palette (#6B3C22, #EBBB9B, #FFFFFF)
   static const AppIconThemePalette warmMochaLight = AppIconThemePalette(
-    baseColor: Color(0xFF5C381E),
-    midColor: Color(0xFFE8B896),
-    highlightColor: Color(0xFFFAF6F0),
+    baseColor: Color(0xFF6B3C22),
+    midColor: Color(0xFFEBBB9B),
+    highlightColor: Color(0xFFFFFFFF),
   );
   static const AppIconThemePalette warmMochaDark = AppIconThemePalette(
-    baseColor: Color(0xFF331D0F),
-    midColor: Color(0xFFE8B896),
-    highlightColor: Color(0xFFFAF6F0),
+    baseColor: Color(0xFF3D1F10),
+    midColor: Color(0xFFEBBB9B),
+    highlightColor: Color(0xFFFFFFFF),
   );
 
   // Preset Handcrafted Palettes for Light & Dark Modes:
@@ -165,7 +165,9 @@ class AppIconThemePalette {
         theme.colorScheme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
 
-    if (primary == const Color(0xFF5C381E) || primary == const Color(0xFFE8B896)) {
+    if (primary == const Color(0xFF6B3C22) ||
+        primary == const Color(0xFFEBBB9B) ||
+        primary == const Color(0xFF5C381E)) {
       return isDark ? warmMochaDark : warmMochaLight;
     }
     final hsl = HSLColor.fromColor(primary);
