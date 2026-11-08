@@ -280,7 +280,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       // Cards: clean contrast & subtle secondary highlights
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: isDark ? AppColors.surfaceContainerDark : AppColors.surfacePure,
         surfaceTintColor: isDark ? AppColors.secondaryDark : AppColors.secondary,
         elevation: 0,
@@ -347,7 +347,7 @@ class AppTheme {
         prefixIconColor: colorScheme.primary,
         suffixIconColor: colorScheme.primary,
       ),
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: colorScheme.primary,
         unselectedLabelColor: colorScheme.primary.withValues(alpha: 0.6),
         indicatorColor: colorScheme.primary,
