@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Semantic colors for Chef&Cost theme based on the Color System Definitions:
+/// Semantic colors for Chef&Cost Warm Mocha theme:
 ///
 /// - Primary:
 ///   * HSV: (27, 0.68, 0.42)
@@ -47,7 +47,7 @@ class AppColors {
   static const Color onSurface = Color(0xFF2B180E);
   static const Color onSurfaceVariant = Color(0xFF6B3C22);
 
-  // --- Derived and complementary tones for comprehensive Material 3 compliance ---
+  // --- Derived and complementary tones for Warm Mocha Material 3 compliance ---
 
   /// Primary container / subtle warmth tint
   static const Color primaryContainer = Color(0xFFF6E2D5);
@@ -67,14 +67,14 @@ class AppColors {
   static const Color outline = Color(0xFF6B3C22);
   static const Color outlineVariant = Color(0xFFEBBB9B);
 
-  /// Material 3 tonal surface steps for light mode
+  /// Material 3 tonal surface steps for Warm Mocha light mode
   static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
   static const Color surfaceContainerLow = Color(0xFFFCF9F6);
   static const Color surfaceContainer = Color(0xFFF7F3EE);
   static const Color surfaceContainerHigh = Color(0xFFF2ECE6);
   static const Color surfaceContainerHighest = Color(0xFFECE4DC);
 
-  // --- Dark Mode Palette ---
+  // --- Dark Mode Palette for Warm Mocha ---
   static const Color primaryDark = Color(0xFFEBBB9B);
   static const Color onPrimaryDark = Color(0xFF3D1F10);
   static const Color primaryContainerDark = Color(0xFF6B3C22);
@@ -115,11 +115,13 @@ class NoTransitionsBuilder extends PageTransitionsBuilder {
 }
 
 /// Core application theme configurator.
+/// Supports both the standard app theme (deep purple base and presets)
+/// and the dedicated Warm Mocha theme when selected by the user.
 class AppTheme {
   AppTheme._();
 
-  /// Default Light ColorScheme according to the Warm Mocha Palette
-  static ColorScheme get lightColorScheme => const ColorScheme(
+  /// Light ColorScheme for the Warm Mocha theme option
+  static ColorScheme get warmMochaLightColorScheme => const ColorScheme(
         brightness: Brightness.light,
         primary: AppColors.primary,
         onPrimary: AppColors.onPrimary,
@@ -155,8 +157,8 @@ class AppTheme {
         surfaceContainerHighest: AppColors.surfaceContainerHighest,
       );
 
-  /// Default Dark ColorScheme according to the Warm Mocha Palette
-  static ColorScheme get darkColorScheme => const ColorScheme(
+  /// Dark ColorScheme for the Warm Mocha theme option
+  static ColorScheme get warmMochaDarkColorScheme => const ColorScheme(
         brightness: Brightness.dark,
         primary: AppColors.primaryDark,
         onPrimary: AppColors.onPrimaryDark,
@@ -192,8 +194,10 @@ class AppTheme {
         surfaceContainerHighest: AppColors.surfaceContainerHighestDark,
       );
 
-  /// Builds a complete [ThemeData] configured with the Warm Mocha design system
-  /// or a custom user-chosen seed color.
+  /// Builds the app's [ThemeData].
+  /// When [seedColor] is [AppColors.primary], it activates the handcrafted
+  /// Warm Mocha theme. For any other seed color (including the default deep purple base),
+  /// it builds the standard theme without applying Warm Mocha styles.
   static ThemeData buildTheme({
     required Brightness brightness,
     required Color seedColor,
@@ -201,18 +205,36 @@ class AppTheme {
     required String fontFamily,
     required bool animationsEnabled,
   }) {
-    final isDark = brightness == Brightness.dark;
-    final isWarmMocha = seedColor == AppColors.primary;
+    final isWarmMocha = seedColor.toARGB32() == AppColors.primary.toARGB32() ||
+        seedColor == AppColors.primary;
 
-    ColorScheme colorScheme;
     if (isWarmMocha) {
-      colorScheme = isDark ? darkColorScheme : lightColorScheme;
-    } else {
-      colorScheme = ColorScheme.fromSeed(
-        seedColor: seedColor,
+      return _buildWarmMochaTheme(
         brightness: brightness,
+        highContrastText: highContrastText,
+        fontFamily: fontFamily,
+        animationsEnabled: animationsEnabled,
       );
     }
+
+    return _buildStandardTheme(
+      brightness: brightness,
+      seedColor: seedColor,
+      highContrastText: highContrastText,
+      fontFamily: fontFamily,
+      animationsEnabled: animationsEnabled,
+    );
+  }
+
+  /// Builds the dedicated Warm Mocha theme option.
+  static ThemeData _buildWarmMochaTheme({
+    required Brightness brightness,
+    required bool highContrastText,
+    required String fontFamily,
+    required bool animationsEnabled,
+  }) {
+    final isDark = brightness == Brightness.dark;
+    var colorScheme = isDark ? warmMochaDarkColorScheme : warmMochaLightColorScheme;
 
     if (highContrastText) {
       final textColor = isDark ? Colors.white : Colors.black;
@@ -364,11 +386,6 @@ class AppTheme {
             ? AppColors.outlineVariantDark.withValues(alpha: 0.35)
             : AppColors.secondary.withValues(alpha: 0.35),
       ),
-      fontFamily: fontFamily == 'sans'
-          ? 'Metropolis'
-          : fontFamily == 'butler'
-              ? 'Butler'
-              : null,
       pageTransitionsTheme: animationsEnabled
           ? const PageTransitionsTheme()
           : const PageTransitionsTheme(
@@ -383,6 +400,72 @@ class AppTheme {
             ),
     );
 
+    return _applyTypography(
+      baseTheme: baseTheme,
+      fontFamily: fontFamily,
+      highContrastText: highContrastText,
+      isDark: isDark,
+    );
+  }
+
+  /// Builds the standard app theme for the base theme (deep purple) or other presets.
+  static ThemeData _buildStandardTheme({
+    required Brightness brightness,
+    required Color seedColor,
+    required bool highContrastText,
+    required String fontFamily,
+    required bool animationsEnabled,
+  }) {
+    final isDark = brightness == Brightness.dark;
+    var colorScheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: brightness,
+    );
+
+    if (highContrastText) {
+      final textColor = isDark ? Colors.white : Colors.black;
+      colorScheme = colorScheme.copyWith(
+        onSurface: textColor,
+        onSurfaceVariant: textColor,
+        primary: isDark ? Colors.white : Colors.black,
+        secondary: isDark ? Colors.white : Colors.black,
+        onPrimary: isDark ? Colors.black : Colors.white,
+        onSecondary: isDark ? Colors.black : Colors.white,
+        onError: isDark ? Colors.black : Colors.white,
+      );
+    }
+
+    final baseTheme = ThemeData(
+      colorScheme: colorScheme,
+      useMaterial3: true,
+      pageTransitionsTheme: animationsEnabled
+          ? const PageTransitionsTheme()
+          : const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: const NoTransitionsBuilder(),
+                TargetPlatform.iOS: const NoTransitionsBuilder(),
+                TargetPlatform.macOS: const NoTransitionsBuilder(),
+                TargetPlatform.windows: const NoTransitionsBuilder(),
+                TargetPlatform.linux: const NoTransitionsBuilder(),
+                TargetPlatform.fuchsia: const NoTransitionsBuilder(),
+              },
+            ),
+    );
+
+    return _applyTypography(
+      baseTheme: baseTheme,
+      fontFamily: fontFamily,
+      highContrastText: highContrastText,
+      isDark: isDark,
+    );
+  }
+
+  static ThemeData _applyTypography({
+    required ThemeData baseTheme,
+    required String fontFamily,
+    required bool highContrastText,
+    required bool isDark,
+  }) {
     var textTheme = baseTheme.textTheme;
     if (fontFamily == 'sans') {
       textTheme = textTheme.apply(fontFamily: 'Metropolis');

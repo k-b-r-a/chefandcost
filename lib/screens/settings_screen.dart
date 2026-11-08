@@ -124,8 +124,8 @@ class SettingsScreen extends ConsumerWidget {
                           title: l10n.settings_styles_title,
                           subtitle: l10n.settings_category_themes_subtitle,
                           icon: Icons.palette_outlined,
-                          iconColor: AppColors.primary,
-                          bgColor: AppColors.primary.withValues(alpha: 0.15),
+                          iconColor: Colors.deepPurple,
+                          bgColor: Colors.deepPurple.withValues(alpha: 0.15),
                           destination: const SettingsStylesScreen(),
                           webView: WebRightPaneView.settingsStyles,
                           isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsStyles,
@@ -666,7 +666,6 @@ class SettingsStylesScreen extends ConsumerWidget {
   const SettingsStylesScreen({super.key, this.onClose});
 
   final List<Color> _accentColors = const [
-    AppColors.primary,
     Colors.deepPurple,
     Colors.blue,
     Colors.teal,
@@ -675,6 +674,7 @@ class SettingsStylesScreen extends ConsumerWidget {
     Colors.orange,
     Colors.red,
     Colors.pink,
+    AppColors.primary,
   ];
 
   IconData _getPreviewIcon(int index, String style) {

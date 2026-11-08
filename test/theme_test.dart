@@ -5,8 +5,27 @@ import 'package:recipetools/provider/settings_provider.dart';
 import 'package:recipetools/widgets/app_logo.dart';
 
 void main() {
-  group('Warm Mocha Theme & Color System Definitions', () {
-    test('AppColors matches specified color system definitions', () {
+  group('Warm Mocha Theme Option & Base Theme', () {
+    test('Default base theme remains deep purple', () {
+      final initialSettings = SettingsState.initial();
+      expect(initialSettings.seedColor, Colors.deepPurple);
+    });
+
+    test('Standard base theme builds without Warm Mocha override', () {
+      final baseTheme = AppTheme.buildTheme(
+        brightness: Brightness.light,
+        seedColor: Colors.deepPurple,
+        highContrastText: false,
+        fontFamily: 'system',
+        animationsEnabled: true,
+      );
+
+      // Base theme is generated from deep purple, not warm mocha
+      expect(baseTheme.colorScheme.primary, isNot(AppColors.primary));
+      expect(baseTheme.colorScheme.secondary, isNot(AppColors.secondary));
+    });
+
+    test('Warm Mocha color system definitions match user specifications', () {
       // Primary: #6B3C22 | RGB: (107, 60, 34)
       expect(AppColors.primary, const Color(0xFF6B3C22));
       expect(AppColors.primary.r, closeTo(107 / 255, 0.01));
@@ -34,7 +53,7 @@ void main() {
       expect(AppColors.onSurface, const Color(0xFF2B180E));
     });
 
-    test('Light theme configures palette, surfaces, buttons, chips, and cards correctly', () {
+    test('Selecting Warm Mocha theme option configures full dedicated palette and component styles', () {
       final theme = AppTheme.buildTheme(
         brightness: Brightness.light,
         seedColor: AppColors.primary,
@@ -75,7 +94,7 @@ void main() {
       expect(theme.chipTheme.iconTheme?.color, const Color(0xFF6B3C22));
     });
 
-    test('Dark theme configures surfaces and accents gracefully', () {
+    test('Dark theme for Warm Mocha option configures surfaces and accents gracefully', () {
       final theme = AppTheme.buildTheme(
         brightness: Brightness.dark,
         seedColor: AppColors.primary,
@@ -89,8 +108,9 @@ void main() {
       expect(theme.scaffoldBackgroundColor, AppColors.surfaceDark);
     });
 
-    test('AppIconThemePalette resolves to Warm Mocha palette', () {
-      final lightTheme = AppTheme.buildTheme(
+    test('AppIconThemePalette resolves correctly for base theme and Warm Mocha option', () {
+      // 1. Warm Mocha Option
+      final mochaTheme = AppTheme.buildTheme(
         brightness: Brightness.light,
         seedColor: AppColors.primary,
         highContrastText: false,
@@ -98,29 +118,22 @@ void main() {
         animationsEnabled: true,
       );
 
-      final paletteLight = AppIconThemePalette.fromTheme(lightTheme);
+      final paletteLight = AppIconThemePalette.fromTheme(mochaTheme);
       expect(paletteLight.baseColor, const Color(0xFF6B3C22));
       expect(paletteLight.midColor, const Color(0xFFEBBB9B));
       expect(paletteLight.highlightColor, const Color(0xFFFFFFFF));
 
-      final darkTheme = AppTheme.buildTheme(
-        brightness: Brightness.dark,
-        seedColor: AppColors.primary,
+      // 2. Base Theme (Deep Purple)
+      final baseTheme = AppTheme.buildTheme(
+        brightness: Brightness.light,
+        seedColor: Colors.deepPurple,
         highContrastText: false,
         fontFamily: 'system',
         animationsEnabled: true,
       );
 
-      final paletteDark = AppIconThemePalette.fromTheme(darkTheme);
-      expect(paletteDark.baseColor, const Color(0xFF3D1F10));
-      expect(paletteDark.midColor, const Color(0xFFEBBB9B));
-      expect(paletteDark.highlightColor, const Color(0xFFFFFFFF));
-    });
-
-    test('SettingsState defaults to Warm Mocha primary as initial seedColor', () {
-      final initialSettings = SettingsState.initial();
-      expect(initialSettings.seedColor, AppColors.primary);
-      expect(initialSettings.seedColor, const Color(0xFF6B3C22));
+      final basePalette = AppIconThemePalette.fromTheme(baseTheme);
+      expect(basePalette.baseColor, AppIconThemePalette.deepPurpleLight.baseColor);
     });
   });
 }

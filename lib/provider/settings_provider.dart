@@ -54,7 +54,7 @@ class SettingsState {
   factory SettingsState.initial() {
     return SettingsState(
       themeMode: ThemeMode.system,
-      seedColor: AppColors.primary,
+      seedColor: Colors.deepPurple,
       locale: const Locale('es'),
       decimalDigits: 2,
       fontSizeScale: 1.0,
@@ -131,7 +131,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
     final themeMode = ThemeMode.values[themeIndex];
 
     final seedColorValue = _prefs.getInt('seedColor');
-    final seedColor = seedColorValue != null ? Color(seedColorValue) : AppColors.primary;
+    final seedColor = seedColorValue != null ? Color(seedColorValue) : Colors.deepPurple;
 
     final lang = _prefs.getString('locale') ?? 'es';
     final locale = Locale(lang);
