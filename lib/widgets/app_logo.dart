@@ -18,11 +18,11 @@ class AppIconThemePalette {
     required this.highlightColor,
   });
 
-  /// The original brand palette (warm roasted chocolate, caramel, and cream champagne).
+  /// The original brand palette from Chef&CostIcono and Chef&CostLogo.
   static const AppIconThemePalette original = AppIconThemePalette(
-    baseColor: Color(0xFF6B3208),
-    midColor: Color(0xFFB88A67),
-    highlightColor: Color(0xFFEACCA6),
+    baseColor: Color(0xFF6A4322),
+    midColor: Color(0xFFE9BE99),
+    highlightColor: Color(0xFFFFFFFF),
   );
 
   /// Warm Deep Mocha brand palette (#6B3C22, #EBBB9B, #FFFFFF)
@@ -194,13 +194,17 @@ class AppIconThemePalette {
     return dynamicPalette(hsl, isDark);
   }
 
-  /// Substitutes the original SVG color codes with this palette's colors.
+  /// Substitutes the SVG color codes with this palette's colors.
   String applyToSvg(String template) {
     final baseHex = colorToHex(baseColor);
     final midHex = colorToHex(midColor);
     final highlightHex = colorToHex(highlightColor);
 
     return template
+        .replaceAll('#6a4322', baseHex)
+        .replaceAll('#6A4322', baseHex)
+        .replaceAll('#e9be99', midHex)
+        .replaceAll('#E9BE99', midHex)
         .replaceAll('#6B3208', baseHex)
         .replaceAll('#6b3208', baseHex)
         .replaceAll('#B88A67', midHex)
@@ -210,7 +214,7 @@ class AppIconThemePalette {
   }
 }
 
-/// Reusable application icon widget for Chef&Cost.
+/// Official application icon widget for Chef&Cost (using Chef&CostIcono.svg).
 ///
 /// Dynamically updates its vector colors to match the active application theme
 /// (both seed accent colors and light/dark modes).
@@ -260,8 +264,60 @@ class AppIcon extends StatelessWidget {
   }
 }
 
-/// Backwards compatibility alias for AppIcon.
-typedef AppLogo = AppIcon;
+/// Official application logo widget for Chef&Cost (using Chef&CostLogo.svg).
+///
+/// Displays the refined vector brand logo with transparent/adaptive styling.
+class AppLogo extends StatelessWidget {
+  final double? width;
+  final double? height;
+  final double? size;
+  final BoxFit fit;
+  final BorderRadius? borderRadius;
+  final bool adaptToTheme;
+  final AppIconThemePalette? customPalette;
+
+  const AppLogo({
+    super.key,
+    this.width,
+    this.height,
+    this.size = 48,
+    this.fit = BoxFit.contain,
+    this.borderRadius,
+    this.adaptToTheme = true,
+    this.customPalette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final AppIconThemePalette palette;
+    if (customPalette != null) {
+      palette = customPalette!;
+    } else if (adaptToTheme) {
+      palette = AppIconThemePalette.fromTheme(Theme.of(context));
+    } else {
+      palette = AppIconThemePalette.original;
+    }
+
+    final themedSvg = palette.applyToSvg(kAppLogoSvgTemplate);
+    final effectiveWidth = width ?? size;
+    final effectiveHeight = height ?? size;
+
+    final logoWidget = SvgPicture.string(
+      themedSvg,
+      width: effectiveWidth,
+      height: effectiveHeight,
+      fit: fit,
+    );
+
+    if (borderRadius != null) {
+      return ClipRRect(
+        borderRadius: borderRadius!,
+        child: logoWidget,
+      );
+    }
+    return logoWidget;
+  }
+}
 
 /// Refined emblem badge container for Chef&Cost icon.
 class ChefAndCostBadge extends StatelessWidget {
