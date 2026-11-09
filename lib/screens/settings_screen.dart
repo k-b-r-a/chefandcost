@@ -84,8 +84,19 @@ class SettingsScreen extends ConsumerWidget {
                             l10n.groups_title,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          subtitle: Text(
-                            '${l10n.group_active_label}: ${ref.watch(activeGroupProvider)?.name ?? l10n.group_default_name}',
+                          subtitle: Builder(
+                            builder: (context) {
+                              final currentGroup = ref.watch(activeGroupProvider);
+                              final isDefaultPrincipal = currentGroup?.id == 'group_default_principal' &&
+                                  (currentGroup?.name == 'Principal' || currentGroup?.name == 'Main');
+                              final activeLabel = isDefaultPrincipal
+                                  ? l10n.group_default_name
+                                  : (currentGroup?.name ??
+                                      (ref.watch(activeGroupIdProvider) == kAllGroupsId
+                                          ? l10n.group_all_workspaces
+                                          : l10n.group_default_name));
+                              return Text('${l10n.group_active_label}: $activeLabel');
+                            },
                           ),
                           trailing: const Icon(Icons.chevron_right_rounded),
                           onTap: () => GroupManagementSheet.show(context),

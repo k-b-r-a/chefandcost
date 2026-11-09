@@ -81,7 +81,7 @@ void main() {
 
         final groups = await db.getAllGroups();
         expect(groups, isNotEmpty);
-        expect(groups.any((g) => g.name == 'Principal'), isTrue);
+        expect(groups.any((g) => g.name == 'Principal' || g.name == 'Main'), isTrue);
       },
     );
 
