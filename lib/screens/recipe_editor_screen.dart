@@ -3542,8 +3542,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     String? suffix,
     Color? iconColor,
   }) {
-    final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
-        theme.colorScheme.primary == AppColors.primaryDark;
     final isDark = theme.brightness == Brightness.dark;
     final numberColor = isDark ? Colors.white : Colors.black;
 
@@ -3582,21 +3580,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           const SizedBox(width: 8),
           Container(
             width: 95,
-            padding: EdgeInsets.symmetric(
-              horizontal: isDefaultTheme ? 4 : 8,
-              vertical: isDefaultTheme ? 2 : 4,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 4,
+              vertical: 2,
             ),
-            decoration: isDefaultTheme
-                ? null
-                : BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(
-                      alpha: 0.35,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-                    ),
-                  ),
+            decoration: null,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -3624,29 +3612,23 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       fontSize: 12.5,
                       color: numberColor,
                     ),
-                    decoration: isDefaultTheme
-                        ? InputDecoration(
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 2),
-                            border: const UnderlineInputBorder(),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: theme.colorScheme.outlineVariant
-                                    .withValues(alpha: 0.7),
-                              ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                color: theme.colorScheme.primary,
-                                width: 1.5,
-                              ),
-                            ),
-                          )
-                        : const InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                          ),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 2),
+                      border: const UnderlineInputBorder(),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.outlineVariant
+                              .withValues(alpha: 0.7),
+                        ),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
                     onTap: () {
                       if (controller.text.isNotEmpty) {
                         controller.selection = TextSelection(
@@ -3684,8 +3666,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     required AppLocalizations l10n,
   }) {
     final yieldVal = RecipeUtils.parseFormattedNumber(_yieldController.text);
-    final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
-        theme.colorScheme.primary == AppColors.primaryDark;
     final isDark = theme.brightness == Brightness.dark;
     final numberColor = isDark ? Colors.white : Colors.black;
 
@@ -3726,23 +3706,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               // Stepper: [-] [ Field ] [+]
               Container(
                 height: 32,
-                decoration: BoxDecoration(
-                  color: isDefaultTheme
-                      ? Colors.transparent
-                      : theme.colorScheme.surfaceContainerHighest.withValues(
-                          alpha: 0.35,
-                        ),
-                  borderRadius: isDefaultTheme
-                      ? BorderRadius.zero
-                      : BorderRadius.circular(10),
-                  border: isDefaultTheme
-                      ? null
-                      : Border.all(
-                          color: theme.colorScheme.outlineVariant.withValues(
-                            alpha: 0.4,
-                          ),
-                        ),
-                ),
+                decoration: null,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -3766,14 +3730,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         ),
                       ),
                     ),
-                    if (!isDefaultTheme)
-                      Container(
-                        width: 1,
-                        height: 18,
-                        color: theme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.4,
-                        ),
-                      ),
                     // Value Input
                     SizedBox(
                       width: 44,
@@ -3790,30 +3746,24 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           fontSize: 12.5,
                           color: numberColor,
                         ),
-                        decoration: isDefaultTheme
-                            ? InputDecoration(
-                                border: const UnderlineInputBorder(),
-                                enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: theme.colorScheme.outlineVariant
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                ),
-                                focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: theme.colorScheme.primary,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                isDense: true,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 2),
-                              )
-                            : const InputDecoration(
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
+                        decoration: InputDecoration(
+                          border: const UnderlineInputBorder(),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outlineVariant
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                          isDense: true,
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 2),
+                        ),
                         onTap: () {
                           if (_yieldController.text.isNotEmpty) {
                             _yieldController.selection = TextSelection(
@@ -3827,14 +3777,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         onSubmitted: (_) => FocusScope.of(context).unfocus(),
                       ),
                     ),
-                    if (!isDefaultTheme)
-                      Container(
-                        width: 1,
-                        height: 18,
-                        color: theme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.4,
-                        ),
-                      ),
                     // Increment Button [+]
                     InkWell(
                       key: const ValueKey('increment_portions_button'),
@@ -5334,24 +5276,12 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     String? suffix,
     required FocusNode focusNode,
   }) {
-    final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
-        theme.colorScheme.primary == AppColors.primaryDark;
     final isDark = theme.brightness == Brightness.dark;
     final numberColor = isDark ? Colors.white : Colors.black;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: isDefaultTheme
-          ? null
-          : BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.25,
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-              ),
-            ),
+      decoration: null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -5409,29 +5339,23 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     fontSize: 13.5,
                     color: numberColor,
                   ),
-                  decoration: isDefaultTheme
-                      ? InputDecoration(
-                          isDense: true,
-                          contentPadding: const EdgeInsets.only(bottom: 2),
-                          border: const UnderlineInputBorder(),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outlineVariant
-                                  .withValues(alpha: 0.7),
-                            ),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                        )
-                      : const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          border: InputBorder.none,
-                        ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.only(bottom: 2),
+                    border: const UnderlineInputBorder(),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.7),
+                      ),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
                 ),
               ),
               if (suffix != null)
@@ -6872,25 +6796,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final step = _steps[index];
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final isDefaultTheme = theme.colorScheme.primary == AppColors.primary ||
-        theme.colorScheme.primary == AppColors.primaryDark;
 
     return Container(
-      decoration: isDefaultTheme
-          ? null
-          : BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.1,
-              ),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-              ),
-            ),
+      decoration: null,
       child: Padding(
-        padding: isDefaultTheme
-            ? const EdgeInsets.fromLTRB(4, 8, 4, 12)
-            : const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

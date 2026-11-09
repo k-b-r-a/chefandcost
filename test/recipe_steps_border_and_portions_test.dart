@@ -23,7 +23,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'Step items have no border in default theme and full rounded border in alternative theme',
+    'Step items have no border in default theme and in alternative themes',
     (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
       final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -124,17 +124,12 @@ void main() {
       final altStepContainer = tester.widget<Container>(
         find.ancestor(
           of: stepTextFieldFinder,
-          matching: find.byWidgetPredicate(
-            (w) => w is Container && w.decoration is BoxDecoration,
-          ),
+          matching: find.byType(Container),
         ).first,
       );
 
-      final altBoxDec = altStepContainer.decoration as BoxDecoration;
-      expect(altBoxDec.borderRadius, BorderRadius.circular(15));
-      expect(altBoxDec.border is Border, isTrue);
-      final altBorder = altBoxDec.border as Border;
-      expect(altBorder.isUniform, isTrue);
+      // In alternative themes as well, step container has no decoration or borders
+      expect(altStepContainer.decoration, isNull);
     },
   );
 
