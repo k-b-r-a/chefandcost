@@ -24,6 +24,7 @@ import 'provider/settings_provider.dart';
 import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
 import 'utils/cloud_sync_service.dart';
+import 'utils/google_sign_in_initializer.dart';
 import 'widgets/app_logo.dart';
 import 'theme/app_theme.dart';
 import 'services/app_tutorial_service.dart';
@@ -73,6 +74,7 @@ void main([List<String> args = const []]) async {
     debugPrint('Firebase initialization notice: $e');
   }
 
+  unawaited(GoogleSignInInitializer.ensureInitialized());
   // Pre-warm Google Play Standard Integrity token provider in background
   unawaited(PlayIntegrityService.prepareTokenProvider());
 

@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:sqlite3/sqlite3.dart' as sq;
+import 'google_sign_in_initializer.dart';
 
 class GoogleDriveScopeDeniedException implements Exception {
   const GoogleDriveScopeDeniedException();
@@ -47,6 +48,7 @@ class GoogleDriveSyncService {
   static const defaultWebClientId = '194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com';
   static const defaultClientId = kIsWeb ? defaultWebClientId : defaultAndroidClientId;
   static const defaultServerClientId = defaultWebClientId;
+  static const googleDriveConnectedKey = 'google_drive_connected';
   static const _storageTypeKey = 'google_drive_storage_type';
   static const _simSignInKey = 'google_drive_sim_signed_in';
   static const _simEmailKey = 'google_drive_sim_email';
@@ -82,7 +84,9 @@ class GoogleDriveSyncService {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getBool(_simSignInKey) ?? false;
     }
-    return _currentUser != null;
+    final prefs = await SharedPreferences.getInstance();
+    final isConnected = prefs.getBool(googleDriveConnectedKey) ?? false;
+    return isConnected && _currentUser != null;
   }
 
   /// Gets the signed-in user's email address or sandbox identifier.
@@ -96,28 +100,29 @@ class GoogleDriveSyncService {
   }
 
   /// Connects / signs in. Returns the authenticated account on success.
-  Future<GoogleSignInAccount?> signIn() async {
+  Future<GoogleSignInAccount?> signIn({bool switchAccount = false}) async {
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_simSignInKey, true);
       await prefs.setString(_simEmailKey, 'sandbox.user@gmail.com');
+      await prefs.setBool(googleDriveConnectedKey, true);
       return null;
     }
 
-    // Ensure previous session is cleared so Google shows the Account Picker dialog
-    try {
-      await GoogleSignIn.instance.signOut();
-    } catch (_) {}
+    if (switchAccount) {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (_) {}
+    }
 
-    await GoogleSignIn.instance.initialize(
-      clientId: defaultClientId,
-      serverClientId: defaultServerClientId,
-    );
+    await GoogleSignInInitializer.ensureInitialized();
     
     final GoogleSignInAccount account;
     try {
-      account = await GoogleSignIn.instance.authenticate();
+      account = await GoogleSignIn.instance.authenticate(
+        scopeHint: const [drive.DriveApi.driveAppdataScope],
+      );
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
         return null;
@@ -143,39 +148,49 @@ class GoogleDriveSyncService {
       ], promptIfNecessary: true);
 
       if (authHeaders == null) {
-        await GoogleSignIn.instance.signOut();
         throw const GoogleDriveScopeDeniedException();
       }
     } catch (e) {
+      debugPrint('Google Drive authorization error: $e');
       if (e is GoogleDriveScopeDeniedException) rethrow;
       final str = e.toString().toLowerCase();
-      if (str.contains('canceled') || str.contains('cancelled') || str.contains('denied') || str.contains('12501')) {
-        await GoogleSignIn.instance.signOut();
+      if (str.contains('canceled') || str.contains('cancelled') || str.contains('12501')) {
+        return null;
+      }
+      if (str.contains('denied') || str.contains('permission')) {
         throw const GoogleDriveScopeDeniedException();
       }
       rethrow;
     }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(googleDriveConnectedKey, true);
 
     return account;
   }
 
   /// Signs the user out locally.
   Future<void> signOut() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(googleDriveConnectedKey, false);
+
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_simSignInKey, false);
       return;
     }
     try {
       await GoogleSignIn.instance.signOut();
     } catch (e) {
-      debugPrint('GoogleSignIn.signOut failed or unimplemented: $e');
+      debugPrint('GoogleSignIn.signOut notice: $e');
     }
   }
 
   /// Disconnects from Google account and revokes access permissions.
   Future<void> disconnect() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(googleDriveConnectedKey, false);
+
     final isSim = (await getStorageType()) == CloudSyncStorageType.localDirectory;
     if (isSim) {
       await signOut();

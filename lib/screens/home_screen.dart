@@ -23,6 +23,7 @@ import '../provider/cloud_sync_provider.dart';
 import '../utils/cloud_sync_service.dart';
 import '../utils/recipe_import_helper.dart';
 import '../widgets/gooey_toast.dart';
+import '../widgets/subscription_paywall_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final void Function(int index)? onNavigateToTab;
@@ -98,6 +99,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onPressed: (syncState.loading || syncState.isSyncing)
                         ? null
                         : () {
+                            if (syncState.storageType == CloudSyncStorageType.firestore && !syncState.isSubscribed) {
+                              SubscriptionPaywallCard.showPaywallDialog(context);
+                              return;
+                            }
                             ref.read(cloudSyncProvider.notifier).syncTwoWay();
                           },
                   ),
@@ -296,6 +301,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 isPrimary: false,
                 onTap: () {
                   if (syncState.loading || syncState.isSyncing) return;
+                  if (syncState.storageType == CloudSyncStorageType.firestore && !syncState.isSubscribed) {
+                    SubscriptionPaywallCard.showPaywallDialog(context);
+                    return;
+                  }
                   ref.read(cloudSyncProvider.notifier).syncTwoWay();
                 },
               ),
