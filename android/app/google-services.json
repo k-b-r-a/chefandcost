@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "194514517992-qoo22vkesdu3go7mq2sb7pptq3nho579.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.chefandcost.app",
+            "certificate_hash": "2050e8d93692f7661e5bb8a02d842297dd5f3904"
+          }
+        },
+        {
           "client_id": "194514517992-vcj4bbuljsrea1qaoathcc3a2ssg5ush.apps.googleusercontent.com",
           "client_type": 3
         }
