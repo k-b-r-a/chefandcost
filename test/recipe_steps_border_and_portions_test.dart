@@ -23,7 +23,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'Step items have no border in default theme and have borders in alternative themes',
+    'Step items have no border card container in any theme',
     (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
       final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -94,7 +94,7 @@ void main() {
         ).first,
       );
 
-      // In default theme, step container has no decoration or borders
+      // Step container has no border card decoration
       expect(defaultStepContainer.decoration, isNull);
 
       // 2. In alternative non-default theme (Colors.blue)
@@ -138,10 +138,8 @@ void main() {
         ).first,
       );
 
-      // In alternative themes, step container retains its border decoration
-      expect(altStepContainer.decoration is BoxDecoration, isTrue);
-      final altDecoration = altStepContainer.decoration as BoxDecoration;
-      expect(altDecoration.border, isNotNull);
+      // In alternative themes, step container also has no border card decoration
+      expect(altStepContainer.decoration, isNull);
     },
   );
 
@@ -233,8 +231,7 @@ void main() {
           matching: find.byType(Container),
         ).first,
       );
-      expect(marginContainer.decoration is BoxDecoration, isTrue);
-      expect((marginContainer.decoration as BoxDecoration).borderRadius, equals(BorderRadius.circular(10)));
+      expect(marginContainer.decoration, isNull);
     },
   );
 

@@ -23,7 +23,6 @@ import '../database/sample_manufacturing_recipe.dart';
 import '../database/recipe_category.dart';
 import '../widgets/share_recipe_sheet.dart';
 import '../widgets/gooey_toast.dart';
-import '../theme/app_theme.dart';
 
 enum WebRecipeRightPanelMode {
   financials,
@@ -3580,16 +3579,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           const SizedBox(width: 8),
           Container(
             width: 95,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.35,
-              ),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-              ),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            decoration: null,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -6796,27 +6787,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final step = _steps[index];
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final settings = ref.watch(settingsProvider);
-    final isDefaultTheme = settings.seedColor.toARGB32() == AppColors.primary.toARGB32() ||
-        theme.colorScheme.primary == AppColors.primary ||
-        theme.colorScheme.primary == AppColors.primaryDark;
 
     return Container(
-      decoration: isDefaultTheme
-          ? null
-          : BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.1,
-              ),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-              ),
-            ),
+      decoration: null,
       child: Padding(
-        padding: isDefaultTheme
-            ? const EdgeInsets.fromLTRB(4, 8, 4, 12)
-            : const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
