@@ -22,6 +22,7 @@ import '../services/url_launcher_service.dart';
 import '../widgets/active_group_chip.dart';
 import '../widgets/group_management_sheet.dart';
 import '../widgets/gooey_toast.dart';
+import '../theme/app_theme.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -140,8 +141,8 @@ class SettingsScreen extends ConsumerWidget {
                           title: l10n.settings_styles_title,
                           subtitle: l10n.settings_category_themes_subtitle,
                           icon: Icons.palette_outlined,
-                          iconColor: Colors.deepPurple,
-                          bgColor: Colors.deepPurple.withValues(alpha: 0.15),
+                          iconColor: AppColors.primary,
+                          bgColor: AppColors.primary.withValues(alpha: 0.15),
                           destination: const SettingsStylesScreen(),
                           webView: WebRightPaneView.settingsStyles,
                           isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsStyles,
@@ -682,6 +683,7 @@ class SettingsStylesScreen extends ConsumerWidget {
   const SettingsStylesScreen({super.key, this.onClose});
 
   final List<Color> _accentColors = const [
+    AppColors.primary,
     Colors.deepPurple,
     Colors.blue,
     Colors.teal,

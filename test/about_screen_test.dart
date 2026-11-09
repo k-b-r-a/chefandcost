@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:recipetools/constants.dart';
 import 'package:recipetools/database/database.dart';
 import 'package:recipetools/l10n/app_localizations.dart';
 import 'package:recipetools/provider/database_provider.dart';
@@ -75,7 +76,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Chef&Cost'), findsOneWidget);
-      expect(find.textContaining('0.1.3'), findsOneWidget);
+      expect(find.textContaining(kAppVersion), findsOneWidget);
       expect(find.textContaining('Esquema DB v${mockDb.schemaVersion}'), findsOneWidget);
       expect(find.text('Canal Estable'), findsOneWidget);
     });

@@ -847,9 +847,11 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     final effectiveBgColor = settings.numberColorsEnabled
         ? bgColor
         : theme.colorScheme.surfaceContainerHighest;
+    final isDark = theme.brightness == Brightness.dark;
+    final numberColor = isDark ? Colors.white : Colors.black;
     final effectiveTextColor = settings.numberColorsEnabled
         ? textColor
-        : theme.colorScheme.onSurfaceVariant;
+        : numberColor;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -888,7 +890,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 ),
                 currencyColor: settings.numberColorsEnabled
                     ? effectiveTextColor
-                    : theme.colorScheme.primary,
+                    : numberColor,
               ),
               textAlign: TextAlign.center,
             ),

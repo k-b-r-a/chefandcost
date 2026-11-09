@@ -25,6 +25,7 @@ import 'provider/web_layout_provider.dart';
 import 'provider/cloud_sync_provider.dart';
 import 'utils/cloud_sync_service.dart';
 import 'widgets/app_logo.dart';
+import 'theme/app_theme.dart';
 import 'services/app_tutorial_service.dart';
 import 'services/ad_service.dart';
 import 'services/recipe_file_intent_service.dart';
@@ -35,7 +36,6 @@ import 'database/sample_manufacturing_recipe.dart';
 import 'widgets/active_group_chip.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'utils/notification_service.dart';
@@ -82,20 +82,6 @@ void main([List<String> args = const []]) async {
   );
 }
 
-class NoTransitionsBuilder extends PageTransitionsBuilder {
-  const NoTransitionsBuilder();
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    return child;
-  }
-}
-
 class CustomScrollBehavior extends MaterialScrollBehavior {
   final String physicsType;
   const CustomScrollBehavior(this.physicsType);
@@ -133,74 +119,13 @@ class ChefAndCostApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
 
     ThemeData buildTheme(Brightness brightness) {
-      var colorScheme = ColorScheme.fromSeed(
-        seedColor: settings.seedColor,
+      return AppTheme.buildTheme(
         brightness: brightness,
+        seedColor: settings.seedColor,
+        highContrastText: settings.highContrastText,
+        fontFamily: settings.fontFamily,
+        animationsEnabled: settings.animationsEnabled,
       );
-
-      if (settings.highContrastText) {
-        final isDark = brightness == Brightness.dark;
-        final textColor = isDark ? Colors.white : Colors.black;
-        colorScheme = colorScheme.copyWith(
-          onSurface: textColor,
-          onSurfaceVariant: textColor,
-          primary: isDark ? Colors.white : Colors.black,
-          secondary: isDark ? Colors.white : Colors.black,
-          onPrimary: isDark ? Colors.black : Colors.white,
-          onSecondary: isDark ? Colors.black : Colors.white,
-          onError: isDark ? Colors.black : Colors.white,
-        );
-      }
-
-      final baseTheme = ThemeData(
-        colorScheme: colorScheme,
-        useMaterial3: true,
-        fontFamily: settings.fontFamily == 'sans'
-            ? 'Metropolis'
-            : settings.fontFamily == 'butler'
-            ? 'Butler'
-            : null,
-        pageTransitionsTheme: settings.animationsEnabled
-            ? const PageTransitionsTheme()
-            : const PageTransitionsTheme(
-                builders: {
-                  TargetPlatform.android: NoTransitionsBuilder(),
-                  TargetPlatform.iOS: NoTransitionsBuilder(),
-                  TargetPlatform.macOS: NoTransitionsBuilder(),
-                  TargetPlatform.windows: NoTransitionsBuilder(),
-                  TargetPlatform.linux: NoTransitionsBuilder(),
-                  TargetPlatform.fuchsia: NoTransitionsBuilder(),
-                },
-              ),
-      );
-
-      var textTheme = baseTheme.textTheme;
-      if (settings.fontFamily == 'sans') {
-        textTheme = textTheme.apply(fontFamily: 'Metropolis');
-      } else if (settings.fontFamily == 'butler') {
-        textTheme = textTheme.apply(fontFamily: 'Butler');
-      } else if (settings.fontFamily == 'serif') {
-        textTheme = GoogleFonts.nunitoTextTheme(textTheme);
-      } else if (settings.fontFamily == 'mono') {
-        textTheme = GoogleFonts.inconsolataTextTheme(textTheme);
-      } else if (settings.fontFamily == 'amatic') {
-        textTheme = GoogleFonts.amaticScTextTheme(textTheme);
-      } else if (settings.fontFamily == 'caveat') {
-        textTheme = GoogleFonts.caveatTextTheme(textTheme);
-      }
-
-      if (settings.highContrastText) {
-        final textColor = brightness == Brightness.dark
-            ? Colors.white
-            : Colors.black;
-        textTheme = textTheme.apply(
-          bodyColor: textColor,
-          displayColor: textColor,
-          decorationColor: textColor,
-        );
-      }
-
-      return baseTheme.copyWith(textTheme: textTheme);
     }
 
     return MaterialApp(
@@ -625,7 +550,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               },
               child: Padding(
                 padding: const EdgeInsets.all(2.0),
-                child: AppIcon(size: logoSize),
+                child: AppLogo(size: logoSize),
               ),
             ),
           ),
