@@ -11,12 +11,19 @@ import '../database/database.dart';
 import '../database/sample_manufacturing_recipe.dart';
 import '../utils/cloud_sync_service.dart';
 import '../utils/firestore_sync_service.dart';
+import '../utils/google_sign_in_initializer.dart';
 import 'database_provider.dart';
 import 'monetization_provider.dart';
 
+const _undefined = Object();
+
 class CloudSyncState {
-  final bool signedIn;
-  final String? email;
+  final bool? _signedIn;
+  final String? _email;
+  final bool googleDriveSignedIn;
+  final String? googleDriveEmail;
+  final bool firestoreSignedIn;
+  final String? firestoreEmail;
   final List<BackupFile> backups;
   final bool loading;
   final bool isSyncing;
@@ -30,8 +37,12 @@ class CloudSyncState {
   final DateTime? subscriptionExpiresAt;
 
   CloudSyncState({
-    this.signedIn = false,
-    this.email,
+    bool? signedIn,
+    String? email,
+    this.googleDriveSignedIn = false,
+    this.googleDriveEmail,
+    this.firestoreSignedIn = false,
+    this.firestoreEmail,
     this.backups = const [],
     this.loading = false,
     this.isSyncing = false,
@@ -43,13 +54,42 @@ class CloudSyncState {
     this.isSubscribed = false,
     this.subscriptionPlan,
     this.subscriptionExpiresAt,
-  });
+  }) : _signedIn = signedIn,
+       _email = email;
+
+  bool get signedIn {
+    if (_signedIn != null) return _signedIn;
+    switch (storageType) {
+      case CloudSyncStorageType.firestore:
+        return firestoreSignedIn;
+      case CloudSyncStorageType.googleDrive:
+        return googleDriveSignedIn;
+      case CloudSyncStorageType.localDirectory:
+        return true;
+    }
+  }
+
+  String? get email {
+    if (_email != null) return _email;
+    switch (storageType) {
+      case CloudSyncStorageType.firestore:
+        return firestoreEmail;
+      case CloudSyncStorageType.googleDrive:
+        return googleDriveEmail;
+      case CloudSyncStorageType.localDirectory:
+        return 'Local Backup';
+    }
+  }
 
   bool get hasActiveSubscription => isSubscribed;
 
   CloudSyncState copyWith({
-    bool? signedIn,
-    String? email,
+    Object? signedIn = _undefined,
+    Object? email = _undefined,
+    bool? googleDriveSignedIn,
+    Object? googleDriveEmail = _undefined,
+    bool? firestoreSignedIn,
+    Object? firestoreEmail = _undefined,
     List<BackupFile>? backups,
     bool? loading,
     bool? isSyncing,
@@ -59,12 +99,35 @@ class CloudSyncState {
     CloudSyncStorageType? storageType,
     bool? hasAcceptedTerms,
     bool? isSubscribed,
-    String? subscriptionPlan,
-    DateTime? subscriptionExpiresAt,
+    Object? subscriptionPlan = _undefined,
+    Object? subscriptionExpiresAt = _undefined,
   }) {
+    final newSignedIn = identical(signedIn, _undefined)
+        ? (googleDriveSignedIn != null || firestoreSignedIn != null ? null : _signedIn)
+        : signedIn as bool?;
+    final newEmail = identical(email, _undefined)
+        ? (googleDriveEmail != _undefined || firestoreEmail != _undefined ? null : _email)
+        : email as String?;
+    final newGoogleDriveEmail = identical(googleDriveEmail, _undefined)
+        ? this.googleDriveEmail
+        : googleDriveEmail as String?;
+    final newFirestoreEmail = identical(firestoreEmail, _undefined)
+        ? this.firestoreEmail
+        : firestoreEmail as String?;
+    final newSubscriptionPlan = identical(subscriptionPlan, _undefined)
+        ? this.subscriptionPlan
+        : subscriptionPlan as String?;
+    final newSubscriptionExpiresAt = identical(subscriptionExpiresAt, _undefined)
+        ? this.subscriptionExpiresAt
+        : subscriptionExpiresAt as DateTime?;
+
     return CloudSyncState(
-      signedIn: signedIn ?? this.signedIn,
-      email: email ?? this.email,
+      signedIn: newSignedIn,
+      email: newEmail,
+      googleDriveSignedIn: googleDriveSignedIn ?? this.googleDriveSignedIn,
+      googleDriveEmail: newGoogleDriveEmail,
+      firestoreSignedIn: firestoreSignedIn ?? this.firestoreSignedIn,
+      firestoreEmail: newFirestoreEmail,
       backups: backups ?? this.backups,
       loading: loading ?? this.loading,
       isSyncing: isSyncing ?? this.isSyncing,
@@ -74,8 +137,8 @@ class CloudSyncState {
       storageType: storageType ?? this.storageType,
       hasAcceptedTerms: hasAcceptedTerms ?? this.hasAcceptedTerms,
       isSubscribed: isSubscribed ?? this.isSubscribed,
-      subscriptionPlan: subscriptionPlan ?? this.subscriptionPlan,
-      subscriptionExpiresAt: subscriptionExpiresAt ?? this.subscriptionExpiresAt,
+      subscriptionPlan: newSubscriptionPlan,
+      subscriptionExpiresAt: newSubscriptionExpiresAt,
     );
   }
 }
@@ -130,74 +193,60 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       final storageType = await _syncService.getStorageType();
       if (_disposed) return;
 
-      if (storageType == CloudSyncStorageType.firestore) {
-        final user = _firestoreService.authCurrentUser;
-        final signedIn = _firestoreService.isConfigured && user != null;
-        final email = user?.email;
-        final hasAccepted = acceptedTermsPref || signedIn;
-        if (signedIn && !acceptedTermsPref) {
-          await prefs.setBool('cloud_terms_accepted', true);
-        }
-        if (user != null) {
-          final remote = await _firestoreService.checkRemoteEntitlement(
-            uid: user.uid,
-            email: email,
-          );
-          if (remote.isGranted) {
-            activeSubscribed = true;
-            planPref = remote.plan;
-            expiresAt = null;
-          }
-        }
-        if (_disposed) return;
-        state = state.copyWith(
-          signedIn: signedIn,
-          email: email,
-          backups: const [],
-          storageType: storageType,
-          hasAcceptedTerms: hasAccepted,
-          isSubscribed: activeSubscribed,
-          subscriptionPlan: activeSubscribed ? planPref : null,
-          subscriptionExpiresAt: expiresAt,
-          loading: false,
+      // 1. Check Firestore Auth status
+      final firestoreUser = _firestoreService.authCurrentUser;
+      final firestoreSignedIn = _firestoreService.isConfigured && firestoreUser != null;
+      final firestoreEmail = firestoreUser?.email;
+      if (firestoreUser != null) {
+        final remote = await _firestoreService.checkRemoteEntitlement(
+          uid: firestoreUser.uid,
+          email: firestoreEmail,
         );
-        return;
-      }
-      
-      GoogleSignInAccount? account;
-      if (storageType == CloudSyncStorageType.googleDrive) {
-        if (!kIsWeb) {
-          try {
-            await GoogleSignIn.instance.initialize(
-              clientId: GoogleDriveSyncService.defaultClientId,
-              serverClientId: GoogleDriveSyncService.defaultServerClientId,
-            );
-            account = await GoogleSignIn.instance.attemptLightweightAuthentication();
-            if (!_disposed) {
-              ref.read(googleUserProvider.notifier).setUser(account);
-            }
-          } catch (_) {}
+        if (remote.isGranted) {
+          activeSubscribed = true;
+          planPref = remote.plan;
+          expiresAt = null;
         }
       }
-      
-      final signedIn = storageType == CloudSyncStorageType.localDirectory || account != null;
-      final hasAccepted = acceptedTermsPref || signedIn;
-      if (signedIn && !acceptedTermsPref) {
+
+      // 2. Check Google Drive status
+      final googleDriveConnected = prefs.getBool(GoogleDriveSyncService.googleDriveConnectedKey) ?? false;
+      GoogleSignInAccount? driveAccount;
+      if (!kIsWeb && googleDriveConnected) {
+        try {
+          await GoogleSignInInitializer.ensureInitialized();
+          driveAccount = await GoogleSignIn.instance.attemptLightweightAuthentication();
+          if (!_disposed && driveAccount != null) {
+            ref.read(googleUserProvider.notifier).setUser(driveAccount);
+          }
+        } catch (_) {}
+      }
+      final googleDriveSignedIn = driveAccount != null;
+      final googleDriveEmail = driveAccount?.email;
+
+      final currentSignedIn = storageType == CloudSyncStorageType.firestore
+          ? firestoreSignedIn
+          : (storageType == CloudSyncStorageType.localDirectory || googleDriveSignedIn);
+      final hasAccepted = acceptedTermsPref || currentSignedIn;
+      if (currentSignedIn && !acceptedTermsPref) {
         await prefs.setBool('cloud_terms_accepted', true);
       }
-      String? email;
-      if (signedIn) {
-        email = storageType == CloudSyncStorageType.localDirectory ? 'Local Backup' : account?.email;
+
+      List<BackupFile> backups = const [];
+      if (storageType != CloudSyncStorageType.firestore) {
+        try {
+          backups = await _syncService.getBackups();
+        } catch (_) {}
       }
-      
-      final backups = await _syncService.getBackups();
+
       if (_disposed) return;
-      
       state = state.copyWith(
-        signedIn: signedIn,
-        email: email,
-        backups: backups,
         storageType: storageType,
+        firestoreSignedIn: firestoreSignedIn,
+        firestoreEmail: firestoreEmail,
+        googleDriveSignedIn: googleDriveSignedIn,
+        googleDriveEmail: googleDriveEmail,
+        backups: backups,
         hasAcceptedTerms: hasAccepted,
         isSubscribed: activeSubscribed,
         subscriptionPlan: activeSubscribed ? planPref : null,
@@ -279,39 +328,20 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
 
   Future<void> setStorageType(CloudSyncStorageType type) async {
     state = state.copyWith(loading: true);
-    await _syncService.signOut(); // Sign out of existing connection
     await _syncService.setStorageType(type);
     
-    if (type == CloudSyncStorageType.firestore) {
-      final user = _firestoreService.authCurrentUser;
-      final signedIn = _firestoreService.isConfigured && user != null;
-      final email = user?.email;
-      state = CloudSyncState(
-        storageType: type,
-        signedIn: signedIn,
-        email: email,
-        backups: const [],
-        loading: false,
-        hasAcceptedTerms: state.hasAcceptedTerms || signedIn,
-        isSubscribed: state.isSubscribed,
-        subscriptionPlan: state.subscriptionPlan,
-        subscriptionExpiresAt: state.subscriptionExpiresAt,
-      );
-      return;
+    List<BackupFile> backups = const [];
+    if (type != CloudSyncStorageType.firestore) {
+      try {
+        backups = await _syncService.getBackups();
+      } catch (_) {}
     }
 
-    final backups = await _syncService.getBackups();
-    
-    state = CloudSyncState(
+    state = state.copyWith(
       storageType: type,
-      signedIn: type == CloudSyncStorageType.localDirectory, // Local Backup mode is always connected
-      email: type == CloudSyncStorageType.localDirectory ? 'Local Backup' : null,
       backups: backups,
       loading: false,
       hasAcceptedTerms: state.hasAcceptedTerms || type == CloudSyncStorageType.localDirectory,
-      isSubscribed: state.isSubscribed,
-      subscriptionPlan: state.subscriptionPlan,
-      subscriptionExpiresAt: state.subscriptionExpiresAt,
     );
   }
 
@@ -353,8 +383,8 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           : await _firestoreService.signInWithEmail(email, password);
       final userEmail = cred.user?.email ?? email.trim();
       state = state.copyWith(
-        signedIn: true,
-        email: userEmail,
+        firestoreSignedIn: true,
+        firestoreEmail: userEmail,
         loading: false,
         successMessage: isRegister
             ? '¡Cuenta creada exitosamente! ($userEmail)'
@@ -406,8 +436,8 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       }
       final userEmail = cred.user?.email ?? 'Google User';
       state = state.copyWith(
-        signedIn: true,
-        email: userEmail,
+        firestoreSignedIn: true,
+        firestoreEmail: userEmail,
         loading: false,
         successMessage: 'Conectado a Firestore con Google: $userEmail',
       );
@@ -524,7 +554,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     return error.toString();
   }
 
-  Future<void> signIn() async {
+  Future<void> signIn({bool switchAccount = false}) async {
     final currentStorage = await _syncService.getStorageType();
     if (!state.hasAcceptedTerms && currentStorage != CloudSyncStorageType.localDirectory) {
       state = state.copyWith(
@@ -544,7 +574,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         return;
       }
 
-      final account = await _syncService.signIn();
+      final account = await _syncService.signIn(switchAccount: switchAccount);
       if (storageType == CloudSyncStorageType.localDirectory) {
         final backups = await _syncService.getBackups();
         state = state.copyWith(
@@ -558,8 +588,8 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         ref.read(googleUserProvider.notifier).setUser(account);
         final backups = await _syncService.getBackups();
         state = state.copyWith(
-          signedIn: true,
-          email: account.email,
+          googleDriveSignedIn: true,
+          googleDriveEmail: account.email,
           backups: backups,
           loading: false,
           successMessage: 'Connected successfully.',
@@ -579,6 +609,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     }
   }
 
+  Future<void> switchGoogleAccount() async {
+    await signIn(switchAccount: true);
+  }
+
   Future<void> signOut() async {
     state = state.copyWith(loading: true);
     final storageType = await _syncService.getStorageType();
@@ -587,15 +621,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       try {
         await FirebaseAuth.instance.signOut();
       } catch (_) {}
-      ref.read(googleUserProvider.notifier).setUser(null);
-      state = CloudSyncState(
-        storageType: storageType,
-        signedIn: false,
-        email: null,
-        hasAcceptedTerms: state.hasAcceptedTerms,
-        isSubscribed: state.isSubscribed,
-        subscriptionPlan: state.subscriptionPlan,
-        subscriptionExpiresAt: state.subscriptionExpiresAt,
+      state = state.copyWith(
+        firestoreSignedIn: false,
+        firestoreEmail: null,
+        loading: false,
       );
       return;
     }
@@ -605,13 +634,11 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     final list = storageType == CloudSyncStorageType.localDirectory
         ? await _syncService.getBackups()
         : const <BackupFile>[];
-    state = CloudSyncState(
-      storageType: storageType,
+    state = state.copyWith(
+      googleDriveSignedIn: false,
+      googleDriveEmail: null,
       backups: list,
-      hasAcceptedTerms: state.hasAcceptedTerms,
-      isSubscribed: state.isSubscribed,
-      subscriptionPlan: state.subscriptionPlan,
-      subscriptionExpiresAt: state.subscriptionExpiresAt,
+      loading: false,
     );
   }
 
@@ -623,13 +650,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     if (storageType == CloudSyncStorageType.firestore) {
       try {
         await _firestoreService.deleteAccountAndCloudData(reauthPassword: password);
-        ref.read(googleUserProvider.notifier).setUser(null);
-        state = CloudSyncState(
-          storageType: storageType,
-          signedIn: false,
-          email: null,
+        state = state.copyWith(
+          firestoreSignedIn: false,
+          firestoreEmail: null,
           loading: false,
-          hasAcceptedTerms: state.hasAcceptedTerms,
           successMessage: 'cloud_sync_delete_account_success',
         );
         return true;
@@ -799,16 +823,11 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     try {
       await _syncService.disconnect();
       ref.read(googleUserProvider.notifier).setUser(null);
-      state = CloudSyncState(
-        storageType: state.storageType,
-        signedIn: false,
-        email: null,
+      state = state.copyWith(
+        googleDriveSignedIn: false,
+        googleDriveEmail: null,
         backups: const [],
         loading: false,
-        hasAcceptedTerms: state.hasAcceptedTerms,
-        isSubscribed: state.isSubscribed,
-        subscriptionPlan: state.subscriptionPlan,
-        subscriptionExpiresAt: state.subscriptionExpiresAt,
       );
     } catch (e) {
       state = state.copyWith(
@@ -1130,7 +1149,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<void> _processNextRecipeSync() async {
-    if (_isProcessingRecipeSync || _pendingRecipeSyncs.isEmpty || _disposed) {
+    if (_isProcessingRecipeSync || _pendingRecipeSyncs.isEmpty || _disposed || !state.isSubscribed) {
+      if (!state.isSubscribed) {
+        _pendingRecipeSyncs.clear();
+      }
       return;
     }
     _isProcessingRecipeSync = true;

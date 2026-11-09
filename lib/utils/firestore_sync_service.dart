@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
 import '../database/sample_manufacturing_recipe.dart';
 import '../constants.dart';
+import 'google_sign_in_initializer.dart';
 
 /// Manages chunked batched mutations on Cloud Firestore with a maximum of [maxBatchSize] operations per batch.
 class FirestoreBatchQueue {
@@ -350,9 +351,7 @@ class FirestoreSyncService {
         rethrow;
       }
     } else {
-      await GoogleSignIn.instance.initialize(
-        serverClientId: defaultFirebaseWebClientId,
-      );
+      await GoogleSignInInitializer.ensureInitialized();
       final GoogleSignInAccount googleUser;
       try {
         googleUser = await GoogleSignIn.instance.authenticate();
@@ -501,9 +500,7 @@ class FirestoreSyncService {
             await user.reauthenticateWithPopup(googleProvider);
             await user.delete();
           } else {
-            await GoogleSignIn.instance.initialize(
-              serverClientId: defaultFirebaseWebClientId,
-            );
+            await GoogleSignInInitializer.ensureInitialized();
             final googleUser = await GoogleSignIn.instance.authenticate();
             final auth = googleUser.authentication;
             final credential = GoogleAuthProvider.credential(
