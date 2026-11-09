@@ -1,11 +1,19 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show Platform;
+import 'package:crypto/crypto.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/billing_client_wrappers.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+import 'package:in_app_purchase_platform_interface/in_app_purchase_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../constants.dart';
 import '../services/ad_service.dart';
+import '../services/play_integrity_service.dart';
 import '../utils/firestore_sync_service.dart';
 import 'cloud_sync_provider.dart';
 import 'settings_provider.dart';
@@ -152,6 +160,31 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
     }
   }
 
+  /// For automated testing: allows overriding sandbox fallback behavior.
+  @visibleForTesting
+  static bool? debugAllowSandboxFallback;
+
+  /// Whether sandbox / fallback activation is permitted.
+  /// Strictly prohibited in release builds (!kReleaseMode) unless running in an automated test environment.
+  static bool get allowSandboxFallback => _allowSandboxFallback;
+
+  static bool get _allowSandboxFallback {
+    if (debugAllowSandboxFallback != null) {
+      return debugAllowSandboxFallback!;
+    }
+    if (kIsWeb) {
+      return !kReleaseMode;
+    }
+    try {
+      if (Platform.environment.containsKey('FLUTTER_TEST')) {
+        return true;
+      }
+      return !kReleaseMode;
+    } catch (_) {
+      return !kReleaseMode;
+    }
+  }
+
   @override
   MonetizationState build() {
     _disposed = false;
@@ -178,6 +211,9 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
 
     _initPurchaseStream();
     AdService.preloadRewardedAd();
+    if (_canUseNativeStore) {
+      unawaited(PlayIntegrityService.prepareTokenProvider());
+    }
 
     ref.onDispose(() {
       _disposed = true;
@@ -467,6 +503,36 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
   /// Initiates purchase of the $14.99/year Cloud Sync & Ad-Free plan.
   Future<bool> buyAnnual() => purchasePlan(kAnnualSubscriptionId);
 
+  /// Generates a deterministic, privacy-preserving 64-character hex SHA-256 string
+  /// for Google Play Billing fraud prevention (obfuscatedAccountId & obfuscatedProfileId).
+  static String generateObfuscatedId(String input, {String salt = ''}) {
+    final raw = '$input::$salt';
+    final bytes = utf8.encode(raw);
+    return sha256.convert(bytes).toString();
+  }
+
+  /// Resolves the current user account identifier (Firebase Auth UID or persistent anonymous device UUID).
+  Future<String> _resolveUserAccountId() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.uid.isNotEmpty) {
+        return user.uid;
+      }
+    } catch (_) {}
+
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      var anonId = _prefs?.getString('security_anon_account_id');
+      if (anonId == null || anonId.isEmpty) {
+        anonId = const Uuid().v4();
+        await _prefs?.setString('security_anon_account_id', anonId);
+      }
+      return anonId;
+    } catch (_) {
+      return 'anonymous_user_device';
+    }
+  }
+
   /// Purchases a subscription plan via Store Billing or falls back to sandbox mode
   /// when running on Web/Desktop, test environments, or debug builds without live SKUs.
   Future<bool> purchasePlan(String planId) async {
@@ -490,7 +556,72 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
           });
           if (response.productDetails.isNotEmpty) {
             final productDetails = response.productDetails.first;
-            final param = PurchaseParam(productDetails: productDetails);
+
+            // Generate cryptographically safe obfuscated account and profile IDs
+            // to enable Google Play Billing Fraud & Abuse monitoring, Gift Card protection,
+            // Location Spoofing protection, and Offer Usage Limits.
+            final rawAccountId = await _resolveUserAccountId();
+            final obfuscatedAccountId = generateObfuscatedId(
+              rawAccountId,
+              salt: 'chefy_billing_account',
+            );
+            final obfuscatedProfileId = generateObfuscatedId(
+              rawAccountId,
+              salt: 'chefy_billing_profile',
+            );
+
+            // Concurrently obtain Play Integrity Token for checkout attestation
+            try {
+              unawaited(
+                PlayIntegrityService.requestTokenForAction(
+                  action: 'billing_checkout',
+                  userId: obfuscatedAccountId,
+                  metadata: {'planId': planId, 'sku': productDetails.id},
+                ).then((result) {
+                  if (result.isSuccess && result.token != null) {
+                    debugPrint(
+                      '[PlayBillingSecurity] Pre-checkout integrity token obtained (${result.type}).',
+                    );
+                  }
+                }).catchError((_) {}),
+              );
+            } catch (_) {}
+
+            // Android-specific: Pass obfuscatedAccountId and obfuscatedProfileId in BillingFlowParams
+            if (!kIsWeb &&
+                Platform.isAndroid &&
+                InAppPurchasePlatform.instance is InAppPurchaseAndroidPlatform) {
+              final androidPlatform =
+                  InAppPurchasePlatform.instance as InAppPurchaseAndroidPlatform;
+              String? offerToken;
+              if (productDetails is GooglePlayProductDetails) {
+                offerToken = productDetails.offerToken;
+              }
+
+              // ignore: invalid_use_of_visible_for_testing_member
+              final manager = androidPlatform.billingClientManager;
+              final billingResult = await manager.runWithClient(
+                (BillingClient client) => client.launchBillingFlow(
+                  product: productDetails.id,
+                  offerToken: offerToken,
+                  accountId: obfuscatedAccountId,
+                  obfuscatedProfileId: obfuscatedProfileId,
+                ),
+              );
+
+              if (billingResult.responseCode == BillingResponse.ok) {
+                debugPrint(
+                  '[PlayBillingSecurity] Successfully launched BillingFlowParams with obfuscatedAccountId & obfuscatedProfileId.',
+                );
+                return true;
+              }
+            }
+
+            // Universal fallback (cross-platform PurchaseParam)
+            final param = PurchaseParam(
+              productDetails: productDetails,
+              applicationUserName: obfuscatedAccountId,
+            );
             final launched = await InAppPurchase.instance.buyNonConsumable(
               purchaseParam: param,
             );
@@ -500,16 +631,35 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
           }
         }
         debugPrint(
-          'Store products not found or store unavailable; falling back to sandbox test mode.',
+          'Store products not found or store unavailable; checking sandbox fallback permission.',
         );
       } catch (e) {
         debugPrint(
-          'Error querying store products ($e); falling back to sandbox test mode.',
+          'Error querying store products ($e); checking sandbox fallback permission.',
         );
+      }
+
+      // If native store was queried but failed, and sandbox fallback is not permitted, fail securely
+      if (!_allowSandboxFallback) {
+        state = state.copyWith(
+          isLoadingPurchase: false,
+          errorMessage: 'subscription_store_unavailable',
+        );
+        return false;
       }
     }
 
-    // Sandbox / Fallback Testing Mode (Web, Desktop, Flutter Test, or when store SKUs are not yet live on console)
+    // Security Hardening: Never grant free subscriptions in release builds!
+    if (!_allowSandboxFallback) {
+      debugPrint('[Security] Sandbox subscription fallback blocked in release mode.');
+      state = state.copyWith(
+        isLoadingPurchase: false,
+        errorMessage: 'subscription_store_unavailable',
+      );
+      return false;
+    }
+
+    // Sandbox / Fallback Testing Mode (Debug / Profile builds, Flutter Test)
     final expiresAt = DateTime.now().add(
       isAnnual ? const Duration(days: 365) : const Duration(days: 30),
     );

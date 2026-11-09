@@ -105,6 +105,17 @@ android {
 dependencies {
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // Google Play Integrity API (StandardIntegrityManager & Classic Integrity)
+    implementation("com.google.android.play:integrity:1.4.0")
+
+    // Google Play Billing Library
+    implementation("com.android.billingclient:billing-ktx:8.0.0")
+
+    // Kotlin Coroutines for asynchronous Task handling
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 }
 
 flutter {

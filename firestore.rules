@@ -2,12 +2,25 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper: Validates that the requesting caller is authenticated and owns the document path
+    function isAuthenticatedOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Helper: Enforces sanity size check on write operations (deletions or documents with <= 50 keys)
+    // to defend against malformed key-flooding attacks.
+    function isValidWriteSize() {
+      return request.resource == null || request.resource.data.keys().size() <= 50;
+    }
+
     // 1. Datos del usuario (documento de usuario y todas sus subcolecciones: recipes, ingredients, units, groups, sync_meta)
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isAuthenticatedOwner(userId);
+      allow write: if isAuthenticatedOwner(userId) && isValidWriteSize();
 
       match /{allChildren=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if isAuthenticatedOwner(userId);
+        allow write: if isAuthenticatedOwner(userId) && isValidWriteSize();
       }
     }
 

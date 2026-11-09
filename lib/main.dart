@@ -28,6 +28,7 @@ import 'widgets/app_logo.dart';
 import 'theme/app_theme.dart';
 import 'services/app_tutorial_service.dart';
 import 'services/ad_service.dart';
+import 'services/play_integrity_service.dart';
 import 'services/recipe_file_intent_service.dart';
 import 'services/windows_registry_helper.dart';
 import 'utils/recipe_import_helper.dart';
@@ -71,6 +72,9 @@ void main([List<String> args = const []]) async {
   } catch (e) {
     debugPrint('Firebase initialization notice: $e');
   }
+
+  // Pre-warm Google Play Standard Integrity token provider in background
+  unawaited(PlayIntegrityService.prepareTokenProvider());
 
   runApp(
     ProviderScope(

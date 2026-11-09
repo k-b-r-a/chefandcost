@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:sqlite3/sqlite3.dart' as sq;
 
 class GoogleDriveScopeDeniedException implements Exception {
   const GoogleDriveScopeDeniedException();
@@ -371,6 +372,21 @@ class GoogleDriveSyncService {
       final sourceFile = File(backupId);
       if (!await sourceFile.exists()) return false;
 
+      final bytes = await sourceFile.readAsBytes();
+      if (!await _validateSqliteIntegrity(bytes)) {
+        debugPrint('[CloudSync] Local directory backup failed SQLite integrity validation.');
+        return false;
+      }
+
+      final walFile = File('${dbFile.path}-wal');
+      if (await walFile.exists()) {
+        try { await walFile.delete(); } catch (_) {}
+      }
+      final shmFile = File('${dbFile.path}-shm');
+      if (await shmFile.exists()) {
+        try { await shmFile.delete(); } catch (_) {}
+      }
+
       await sourceFile.copy(dbFile.path);
       return true;
     }
@@ -397,7 +413,22 @@ class GoogleDriveSyncService {
 
       if (fileBytes.isEmpty) return false;
 
-      await dbFile.writeAsBytes(fileBytes);
+      final bytes = Uint8List.fromList(fileBytes);
+      if (!await _validateSqliteIntegrity(bytes)) {
+        debugPrint('[CloudSync] Remote Google Drive backup failed SQLite integrity validation.');
+        return false;
+      }
+
+      final walFile = File('${dbFile.path}-wal');
+      if (await walFile.exists()) {
+        try { await walFile.delete(); } catch (_) {}
+      }
+      final shmFile = File('${dbFile.path}-shm');
+      if (await shmFile.exists()) {
+        try { await shmFile.delete(); } catch (_) {}
+      }
+
+      await dbFile.writeAsBytes(bytes);
       return true;
     } catch (e) {
       debugPrint('Error restoring Google Drive backup: $e');
@@ -417,6 +448,75 @@ class GoogleDriveSyncService {
     }
     return true;
   }
+
+  /// Validates that [bytes] represents a valid, non-corrupt SQLite 3 database
+  /// with the required schema tables before overwriting the user database.
+  Future<bool> _validateSqliteIntegrity(Uint8List bytes) async {
+    if (kIsWeb) return true;
+    if (!isValidSqliteBytes(bytes)) {
+      debugPrint('[CloudSync] Rejected database restore: invalid SQLite header.');
+      return false;
+    }
+
+    final tempDir = Directory.systemTemp;
+    final tempFile = File(p.join(
+      tempDir.path,
+      'db_validate_${DateTime.now().microsecondsSinceEpoch}_${bytes.length}.sqlite',
+    ));
+
+    sq.Database? db;
+    try {
+      await tempFile.writeAsBytes(bytes, flush: true);
+
+      try {
+        db = sq.sqlite3.open(tempFile.path, mode: sq.OpenMode.readOnly);
+      } catch (openErr) {
+        debugPrint('[CloudSync] Failed to open SQLite database: $openErr');
+        return false;
+      }
+
+      // 1. Run PRAGMA quick_check to verify b-tree and page integrity
+      final quickCheckResult = db.select('PRAGMA quick_check;');
+      if (quickCheckResult.isEmpty) return false;
+      final statusString = quickCheckResult.first.values.first?.toString().toLowerCase();
+      if (statusString != 'ok') {
+        debugPrint('[CloudSync] PRAGMA quick_check failed: $statusString');
+        return false;
+      }
+
+      // 2. Verify that core application schema tables exist in sqlite_master
+      final tablesQuery = db.select("SELECT name FROM sqlite_master WHERE type='table';");
+      final existingTables = tablesQuery
+          .map((row) => row['name']?.toString().toLowerCase())
+          .whereType<String>()
+          .toSet();
+
+      const requiredTables = {'recipes', 'ingredients', 'units'};
+      final missing = requiredTables.difference(existingTables);
+      if (missing.isNotEmpty) {
+        debugPrint('[CloudSync] SQLite backup missing required application tables: $missing');
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('[CloudSync] Unexpected error during SQLite integrity check: $e');
+      return false;
+    } finally {
+      try {
+        db?.close();
+      } catch (_) {}
+      try {
+        if (await tempFile.exists()) {
+          await tempFile.delete();
+        }
+      } catch (_) {}
+    }
+  }
+
+  /// Visible for testing deep SQLite validation
+  @visibleForTesting
+  Future<bool> validateSqliteIntegrityForTesting(Uint8List bytes) => _validateSqliteIntegrity(bytes);
 
   /// Restores the database from a user-selected local file on the device.
   Future<bool> restoreFromLocalFile(String filePath, {Uint8List? fileBytes}) async {
@@ -442,8 +542,15 @@ class GoogleDriveSyncService {
         bytes = await sourceFile.readAsBytes();
       }
 
+      // 1. Magic header check
       if (!isValidSqliteBytes(bytes)) {
         debugPrint('Invalid SQLite header in restored file.');
+        return false;
+      }
+
+      // 2. Deep SQLite integrity and schema check
+      if (!await _validateSqliteIntegrity(bytes)) {
+        debugPrint('SQLite file corrupted or missing required schema tables.');
         return false;
       }
 
