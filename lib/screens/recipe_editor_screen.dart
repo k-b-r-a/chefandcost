@@ -1933,6 +1933,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 cocktail: _selectedCategory == RecipeCategory.cocteleria,
               )
             : null;
+        final isCocktail = _selectedCategory == RecipeCategory.cocteleria;
+        final isVolume = UnitUtils.isVolume(sourceUnit?.category);
         final data = RecipeIngredientData(
           ingredient: effectiveIng,
           initialAmount: RecipeUtils.formatQuantity(
@@ -1940,6 +1942,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           ),
           sourceUnit: sourceUnit,
           targetUnit: targetUnit,
+          maxDecimalDigits: (isCocktail && isVolume) ? 2 : null,
+          preferFraction: isCocktail && isVolume,
         );
         data.amountController.addListener(_calculateSummary);
         _ingredients.add(data);
@@ -3608,14 +3612,27 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       fontSize: 12.5,
                       color: numberColor,
                     ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
+                    decoration: InputDecoration(
+                      border: const UnderlineInputBorder(),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.outlineVariant
+                              .withValues(alpha: 0.7),
+                        ),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 1.5,
+                        ),
+                      ),
                       disabledBorder: InputBorder.none,
                       filled: false,
                       isDense: true,
-                      contentPadding: EdgeInsets.zero,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 2,
+                        horizontal: 0,
+                      ),
                     ),
                     onTap: () {
                       if (controller.text.isNotEmpty) {
@@ -4282,24 +4299,35 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
   void _selectCategory(RecipeCategory category) {
     if (_selectedCategory == category) return;
+    final previousCategory = _selectedCategory;
     setState(() {
       _selectedCategory = category;
       final units = ref.read(unitsProvider).value ?? [];
       final settings = ref.read(settingsProvider);
+      final wasCocktail = previousCategory == RecipeCategory.cocteleria;
+      final isCocktail = _selectedCategory == RecipeCategory.cocteleria;
+
       for (var i = 0; i < _ingredients.length; i++) {
         final previous = _ingredients[i];
         final source = previous.sourceUnit;
         if (source == null) continue;
+        final isVolume = UnitUtils.isVolume(source.category);
+        final targetUnit = UnitUtils.getTargetUnit(
+          source,
+          units,
+          settings,
+          cocktail: isCocktail,
+        );
+        final shouldRoundMax2 = isVolume && (wasCocktail || isCocktail);
         final replacement = RecipeIngredientData(
           ingredient: previous.ingredient,
-          initialAmount: previous.amount.toString(),
+          initialAmount: shouldRoundMax2
+              ? RecipeUtils.formatQuantity(previous.amount, maxDecimalDigits: 2)
+              : previous.amount.toString(),
           sourceUnit: source,
-          targetUnit: UnitUtils.getTargetUnit(
-            source,
-            units,
-            settings,
-            cocktail: _selectedCategory == RecipeCategory.cocteleria,
-          ),
+          targetUnit: targetUnit,
+          maxDecimalDigits: shouldRoundMax2 ? 2 : null,
+          preferFraction: isCocktail && isVolume,
         );
         previous.amountController.removeListener(_calculateSummary);
         previous.amountController.dispose();
@@ -6605,10 +6633,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 4,
+                        runSpacing: 2,
                         children: [
                           SizedBox(
-                            width: 70,
+                            width: 54,
                             child: TextField(
                               controller: data.amountController,
                               onChanged: (_) => _calculateSummary(),
@@ -6620,9 +6651,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                 );
                               },
                               keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                  _selectedCategory == RecipeCategory.cocteleria
+                                      ? TextInputType.text
+                                      : const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
                               textInputAction: TextInputAction.done,
                               onEditingComplete: () {
                                 FocusScope.of(context).unfocus();
@@ -6669,6 +6702,27 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          if (_selectedCategory == RecipeCategory.cocteleria &&
+                              (unitSymbol.toLowerCase() == 'oz' ||
+                                  unitSymbol.toLowerCase() == 'fl oz')) ...[
+                            ListenableBuilder(
+                              listenable: data.amountController,
+                              builder: (context, _) {
+                                final ozVal = RecipeUtils.parseFormattedNumber(
+                                  data.amountController.text,
+                                );
+                                if (ozVal <= 0) return const SizedBox.shrink();
+                                final mlVal = RecipeUtils.cocktailOzToMl(ozVal);
+                                return Text(
+                                  '(${RecipeUtils.formatQuantity(mlVal, maxDecimalDigits: 1)} ml)',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -6965,11 +7019,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 )
               : null;
 
+          final isCocktail = _selectedCategory == RecipeCategory.cocteleria;
+          final isVolume = UnitUtils.isVolume(sourceUnit?.category);
           final data = RecipeIngredientData(
             ingredient: ing,
             initialAmount: RecipeUtils.formatQuantity(amountInSource),
             sourceUnit: sourceUnit,
             targetUnit: targetUnit,
+            maxDecimalDigits: (isCocktail && isVolume) ? 2 : null,
+            preferFraction: isCocktail && isVolume,
           );
           data.amountController.addListener(_calculateSummary);
           _ingredients.add(data);

@@ -219,7 +219,7 @@ void main() {
       // On wide web page layout, the scale bar custom portions pill chip is not rendered
       expect(find.byKey(const ValueKey('scale_chip_custom_portions')), findsNothing);
 
-      // Financial inputs in web layout are clean text fields with InputBorder.none across all states
+      // Financial inputs in web layout use UnderlineInputBorder (line like ingredients in recipe)
       final yieldField = tester.widget<TextField>(find.byKey(const ValueKey('right_panel_yield_field')));
       expect(yieldField.decoration?.border, equals(InputBorder.none));
       expect(yieldField.decoration?.enabledBorder, equals(InputBorder.none));
@@ -231,9 +231,9 @@ void main() {
       );
       expect(marginEditableFinder, findsOneWidget);
       final marginField = tester.widget<TextField>(marginEditableFinder);
-      expect(marginField.decoration?.border, equals(InputBorder.none));
-      expect(marginField.decoration?.enabledBorder, equals(InputBorder.none));
-      expect(marginField.decoration?.focusedBorder, equals(InputBorder.none));
+      expect(marginField.decoration?.border, isA<UnderlineInputBorder>());
+      expect(marginField.decoration?.enabledBorder, isA<UnderlineInputBorder>());
+      expect(marginField.decoration?.focusedBorder, isA<UnderlineInputBorder>());
       expect(marginField.decoration?.filled, isFalse);
 
       final marginContainer = tester.widget<Container>(
