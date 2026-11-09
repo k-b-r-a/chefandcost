@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +13,7 @@ import '../services/url_launcher_service.dart';
 import '../utils/cloud_sync_service.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../widgets/gooey_toast.dart';
+import '../widgets/subscription_paywall_card.dart';
 
 class CloudSyncScreen extends ConsumerStatefulWidget {
   final VoidCallback? onClose;
@@ -73,6 +76,8 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
         return l10n.cloud_sync_delete_all_backups_success;
       case 'cloud_sync_terms_required_warning':
         return l10n.cloud_sync_terms_required_warning;
+      case 'cloud_sync_subscription_required':
+        return l10n.cloud_sync_subscription_required;
       default:
         return msg;
     }
@@ -112,6 +117,13 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
       if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
         final resolved = _resolveMessage(next.errorMessage!, l10n);
         GooeyToast.showError(context, message: resolved);
+        if (next.errorMessage == 'cloud_sync_subscription_required' && mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              SubscriptionPaywallCard.showPaywallDialog(context);
+            }
+          });
+        }
       }
       if (next.successMessage != null && next.successMessage != previous?.successMessage) {
         final resolved = _resolveMessage(next.successMessage!, l10n);
@@ -149,6 +161,10 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                           _buildSettingsCard(syncState, syncNotifier, theme, l10n),
                           const SizedBox(height: 16),
                           _buildTermsStatusCard(syncState, syncNotifier, theme, l10n),
+                          if (syncState.storageType != CloudSyncStorageType.localDirectory) ...[
+                            const SizedBox(height: 16),
+                            const SubscriptionPaywallCard(),
+                          ],
                           const SizedBox(height: 24),
                           if (syncState.storageType == CloudSyncStorageType.firestore) ...[
                             if (syncState.signedIn) ...[
@@ -1801,6 +1817,12 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
   ) {
     final email = state.email ?? l10n.cloud_sync_authenticated_user;
     final initial = email.isNotEmpty ? email[0].toUpperCase() : 'U';
+    String? currentUid;
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        currentUid = FirebaseAuth.instance.currentUser?.uid;
+      }
+    } catch (_) {}
 
     return Card(
       margin: EdgeInsets.zero,
@@ -1866,6 +1888,62 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (currentUid != null) ...[
+                        const SizedBox(height: 6),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: currentUid!));
+                            GooeyToast.showSuccess(
+                              context,
+                              message: l10n.cloud_sync_uid_copied,
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.fingerprint,
+                                  size: 13,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    'UID: $currentUid',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontFamily: 'monospace',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.copy_rounded,
+                                  size: 13,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

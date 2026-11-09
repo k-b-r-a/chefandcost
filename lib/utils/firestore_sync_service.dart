@@ -133,6 +133,105 @@ class FirestoreSyncService {
     return prefs.getString(prefUserIdKey);
   }
 
+  /// Checks if the user has an owner-granted or lifetime entitlement in Firestore.
+  /// Looks up:
+  /// 1. [kVipUserIds] and [kVipEmails] defined in constants.dart
+  /// 2. Firestore `entitlements/{uid}` and `entitlements/{email}`
+  /// 3. Firestore `users/{uid}` document (`hasLifetimeSubscription` / `isSubscribed`)
+  Future<({bool isGranted, String plan})> checkRemoteEntitlement({
+    String? uid,
+    String? email,
+  }) async {
+    final activeUid = uid ?? await getActiveUserId();
+    final activeEmail = email ?? authCurrentUser?.email;
+
+    // 1. Check local VIP constant lists
+    if (activeUid != null && kVipUserIds.contains(activeUid)) {
+      return (isGranted: true, plan: kLifetimeSubscriptionId);
+    }
+    if (activeEmail != null &&
+        kVipEmails.contains(activeEmail.toLowerCase().trim())) {
+      return (isGranted: true, plan: kLifetimeSubscriptionId);
+    }
+
+    if (!isConfigured || activeUid == null || activeUid.isEmpty) {
+      return (isGranted: false, plan: '');
+    }
+
+    try {
+      // 2. Check entitlements/{uid}
+      final entDoc =
+          await _firestore.collection('entitlements').doc(activeUid).get();
+      if (entDoc.exists) {
+        final data = entDoc.data() ?? {};
+        final isSub = data['isSubscribed'] == true ||
+            data['hasLifetimeSubscription'] == true ||
+            data['active'] == true;
+        if (isSub) {
+          final plan = data['plan'] as String? ?? kLifetimeSubscriptionId;
+          return (isGranted: true, plan: plan);
+        }
+      }
+
+      // 3. Check entitlements/{email}
+      if (activeEmail != null && activeEmail.isNotEmpty) {
+        final emailDoc = await _firestore
+            .collection('entitlements')
+            .doc(activeEmail.toLowerCase().trim())
+            .get();
+        if (emailDoc.exists) {
+          final data = emailDoc.data() ?? {};
+          final isSub = data['isSubscribed'] == true ||
+              data['hasLifetimeSubscription'] == true ||
+              data['active'] == true;
+          if (isSub) {
+            final plan = data['plan'] as String? ?? kLifetimeSubscriptionId;
+            return (isGranted: true, plan: plan);
+          }
+        }
+      }
+
+      // 4. Check users/{uid} document
+      final userDoc = await _firestore.collection('users').doc(activeUid).get();
+      if (userDoc.exists) {
+        final data = userDoc.data() ?? {};
+        final isSub = data['hasLifetimeSubscription'] == true ||
+            data['isSubscribed'] == true ||
+            data['isVip'] == true;
+        if (isSub) {
+          final plan = data['subscriptionPlan'] as String? ??
+              data['plan'] as String? ??
+              kLifetimeSubscriptionId;
+          return (isGranted: true, plan: plan);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking remote entitlement: $e');
+    }
+
+    return (isGranted: false, plan: '');
+  }
+
+  /// Updates the user's subscription metadata in Firestore (`users/{userId}`).
+  Future<void> updateUserSubscriptionStatus({
+    required String userId,
+    required bool isSubscribed,
+    String? plan,
+    DateTime? expiresAt,
+  }) async {
+    if (!isConfigured) return;
+    try {
+      await _firestore.collection('users').doc(userId).set({
+        'isSubscribed': isSubscribed,
+        'subscriptionPlan': plan,
+        'subscriptionExpiresAt': expiresAt?.toUtc().toIso8601String(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Error updating user subscription status in Firestore: $e');
+    }
+  }
+
   /// Sets a custom sync user ID (allows manual pairing between devices).
   Future<void> setCustomUserId(String userId) async {
     final prefs = await SharedPreferences.getInstance();

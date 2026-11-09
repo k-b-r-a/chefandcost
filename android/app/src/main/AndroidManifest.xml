@@ -19,7 +19,7 @@
         <!-- Google AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-1924365084384799~3410415240"/>
+            android:value="ca-app-pub-9259522959057429~4046276855"/>
         <activity
             android:name=".MainActivity"
             android:icon="@mipmap/ic_launcher"

@@ -6,11 +6,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants.dart';
 import '../database/database.dart';
 import '../database/sample_manufacturing_recipe.dart';
 import '../utils/cloud_sync_service.dart';
 import '../utils/firestore_sync_service.dart';
 import 'database_provider.dart';
+import 'monetization_provider.dart';
 
 class CloudSyncState {
   final bool signedIn;
@@ -82,10 +84,10 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   GoogleDriveSyncService get _syncService => ref.read(googleDriveSyncServiceProvider);
   FirestoreSyncService get _firestoreService => ref.read(firestoreSyncServiceProvider);
 
-  static const String monthlySubscriptionId = 'monthly_1_99';
-  static const String annualSubscriptionId = 'annual_14_99';
-  static const double monthlySubscriptionPrice = 1.99;
-  static const double annualSubscriptionPrice = 14.99;
+  static const String monthlySubscriptionId = kMonthlySubscriptionId;
+  static const String annualSubscriptionId = kAnnualSubscriptionId;
+  static const double monthlySubscriptionPrice = kMonthlySubscriptionPrice;
+  static const double annualSubscriptionPrice = kAnnualSubscriptionPrice;
 
   bool _disposed = false;
 
@@ -112,10 +114,13 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final acceptedTermsPref = prefs.getBool('cloud_terms_accepted') ?? false;
-      final isSubscribedPref = prefs.getBool('cloud_sync_is_subscribed') ?? false;
-      final planPref = prefs.getString('cloud_sync_subscription_plan');
+      final isSubscribedPref = prefs.getBool('cloud_sync_is_subscribed') ??
+          prefs.getBool(MonetizationNotifier.hasActiveSubPrefKey) ??
+          false;
+      String? planPref = prefs.getString('cloud_sync_subscription_plan') ??
+          prefs.getString(MonetizationNotifier.activePlanIdPrefKey);
       final expiresPref = prefs.getInt('cloud_sync_subscription_expires_at');
-      final expiresAt = expiresPref != null ? DateTime.fromMillisecondsSinceEpoch(expiresPref) : null;
+      DateTime? expiresAt = expiresPref != null ? DateTime.fromMillisecondsSinceEpoch(expiresPref) : null;
       bool activeSubscribed = isSubscribedPref;
       if (activeSubscribed && expiresAt != null && expiresAt.isBefore(DateTime.now())) {
         activeSubscribed = false;
@@ -132,6 +137,17 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         final hasAccepted = acceptedTermsPref || signedIn;
         if (signedIn && !acceptedTermsPref) {
           await prefs.setBool('cloud_terms_accepted', true);
+        }
+        if (user != null) {
+          final remote = await _firestoreService.checkRemoteEntitlement(
+            uid: user.uid,
+            email: email,
+          );
+          if (remote.isGranted) {
+            activeSubscribed = true;
+            planPref = remote.plan;
+            expiresAt = null;
+          }
         }
         if (_disposed) return;
         state = state.copyWith(
@@ -201,13 +217,17 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
     required bool isSubscribed,
     String? plan,
     DateTime? expiresAt,
+    bool syncToMonetization = true,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('cloud_sync_is_subscribed', isSubscribed);
+    await prefs.setBool(MonetizationNotifier.hasActiveSubPrefKey, isSubscribed);
     if (plan != null) {
       await prefs.setString('cloud_sync_subscription_plan', plan);
+      await prefs.setString(MonetizationNotifier.activePlanIdPrefKey, plan);
     } else {
       await prefs.remove('cloud_sync_subscription_plan');
+      await prefs.remove(MonetizationNotifier.activePlanIdPrefKey);
     }
     if (expiresAt != null) {
       await prefs.setInt('cloud_sync_subscription_expires_at', expiresAt.millisecondsSinceEpoch);
@@ -219,6 +239,27 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       subscriptionPlan: plan,
       subscriptionExpiresAt: expiresAt,
     );
+    if (_firestoreService.isConfigured && _firestoreService.authCurrentUser != null) {
+      try {
+        final uid = _firestoreService.authCurrentUser!.uid;
+        await _firestoreService.updateUserSubscriptionStatus(
+          userId: uid,
+          isSubscribed: isSubscribed,
+          plan: plan,
+          expiresAt: expiresAt,
+        );
+      } catch (_) {}
+    }
+    if (syncToMonetization && !_disposed) {
+      try {
+        await ref.read(monetizationProvider.notifier).setSubscription(
+              isSubscribed: isSubscribed,
+              planId: plan,
+              expiresAt: expiresAt,
+              syncToCloudNotifier: false,
+            );
+      } catch (_) {}
+    }
   }
 
   Future<void> purchaseSubscription(String planId) async {
@@ -319,6 +360,18 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
             ? '¡Cuenta creada exitosamente! ($userEmail)'
             : 'Sesión iniciada como $userEmail',
       );
+      if (cred.user != null) {
+        final remote = await _firestoreService.checkRemoteEntitlement(
+          uid: cred.user!.uid,
+          email: userEmail,
+        );
+        if (remote.isGranted) {
+          await setSubscription(
+            isSubscribed: true,
+            plan: remote.plan,
+          );
+        }
+      }
     } catch (e) {
       state = state.copyWith(
         loading: false,
@@ -358,6 +411,18 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         loading: false,
         successMessage: 'Conectado a Firestore con Google: $userEmail',
       );
+      if (cred.user != null) {
+        final remote = await _firestoreService.checkRemoteEntitlement(
+          uid: cred.user!.uid,
+          email: userEmail,
+        );
+        if (remote.isGranted) {
+          await setSubscription(
+            isSubscribed: true,
+            plan: remote.plan,
+          );
+        }
+      }
     } catch (e) {
       final err = _formatAuthError(e, isGoogle: true);
       state = state.copyWith(

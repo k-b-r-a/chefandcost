@@ -812,5 +812,43 @@
   },
   "ad_free_pass_unlocked_snackbar": "¡Anuncios desactivados por las próximas 8 horas!",
   "ad_free_pass_error_snackbar": "No se pudo cargar el anuncio. Inténtalo más tarde.",
-  "ad_sponsored_label": "Publicidad"
+  "ad_sponsored_label": "Publicidad",
+  "subscription_card_title": "Plan Cloud Sync y Sin Anuncios",
+  "subscription_card_subtitle": "Desbloquea copias en la nube en tiempo real entre dispositivos y elimina todos los anuncios para siempre.",
+  "subscription_benefit_cloud": "Respaldo en la nube en tiempo real y sincronización multidispositivo",
+  "subscription_benefit_ad_free": "Eliminación permanente del 100% de anuncios",
+  "subscription_monthly_title": "Plan Mensual",
+  "subscription_monthly_price": "$1.99 / mes",
+  "subscription_monthly_btn": "Suscribirse $1.99/mes",
+  "subscription_annual_title": "Plan Anual",
+  "subscription_annual_price": "$14.99 / año",
+  "subscription_annual_btn": "Suscribirse $14.99/año",
+  "subscription_annual_savings_badge": "Ahorra 37% • Mejor Valor",
+  "subscription_restore_btn": "Restaurar compras",
+  "subscription_active_badge": "Premium Activo",
+  "subscription_active_plan_monthly": "Plan Activo: Mensual ($1.99/mes) • Cloud Sync y Sin Anuncios",
+  "subscription_active_plan_annual": "Plan Activo: Anual ($14.99/año) • Cloud Sync y Sin Anuncios",
+  "subscription_active_plan_lifetime": "Plan Activo: Pase Vitalicio (VIP) • Cloud Sync y Sin Anuncios",
+  "cloud_sync_copy_uid": "Copiar UID",
+  "cloud_sync_uid_copied": "¡UID de usuario copiado al portapapeles!",
+  "subscription_activated_success": "¡Suscripción activada! Cloud Sync y eliminación permanente de anuncios desbloqueados.",
+  "subscription_restored_success": "Compras restauradas con éxito.",
+  "subscription_restore_none_found": "No se encontraron compras activas anteriores para restaurar.",
+  "subscription_purchase_canceled": "La compra fue cancelada.",
+  "subscription_store_unavailable": "La tienda no está disponible en este momento. Inténtalo más tarde.",
+  "ad_free_popup_title": "Pase de 8 Horas Sin Anuncios",
+  "ad_free_popup_description": "Mira un video corto con recompensa para desactivar todos los anuncios en Chef&Cost durante las próximas 8 horas.",
+  "ad_free_popup_watch_btn": "Ver anuncio para quitar anuncios por 8 horas",
+  "ad_free_popup_active_title": "Pase Sin Anuncios Activo",
+  "ad_free_popup_active_subtitle": "Todos los anuncios están ocultos actualmente en la aplicación.",
+  "ad_free_popup_remaining_time": "Tiempo restante: {time}",
+  "@ad_free_popup_remaining_time": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "ad_free_popup_extend_btn": "Ver otro anuncio (Reiniciar a 8h)",
+  "ad_free_popup_upgrade_divider": "¿Quieres eliminar anuncios para siempre + Cloud Sync?"
 }

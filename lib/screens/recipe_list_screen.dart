@@ -21,6 +21,7 @@ import '../widgets/active_group_chip.dart';
 import '../utils/recipe_import_helper.dart';
 import '../widgets/ad_free_pass_button.dart';
 import '../provider/ad_provider.dart';
+import '../provider/monetization_provider.dart';
 import '../services/ad_service.dart';
 import '../utils/ad_interleaving_helper.dart';
 import '../widgets/inline_ad_card.dart';
@@ -273,7 +274,11 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
               }
 
               final adState = ref.watch(adProvider);
-              final bool showAds = !adState.isAdFree && AdService.isSupportedPlatform;
+              final isMonetizationAdFree =
+                  ref.watch(monetizationProvider.select((s) => s.isAdFree));
+              final bool showAds = !adState.isAdFree &&
+                  !isMonetizationAdFree &&
+                  AdService.isSupportedPlatform;
               final int totalVisualCount = AdInterleavingHelper.getVisualCount(
                 filteredRecipes.length,
                 showAds,

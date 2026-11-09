@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../l10n/app_localizations.dart';
 import '../provider/ad_provider.dart';
+import '../provider/monetization_provider.dart';
 import '../services/ad_service.dart';
-import '../utils/ui_utils.dart';
+import 'ad_free_pass_button.dart';
 
 enum SmartBannerAdStyle {
   recipe,
@@ -40,7 +41,8 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
   void _loadAdIfNeeded() {
     if (!AdService.isSupportedPlatform) return;
     final adState = ref.read(adNotifierProvider);
-    if (adState.isAdFree) return;
+    final monetization = ref.read(monetizationProvider);
+    if (adState.isAdFree || monetization.isAdFree) return;
     if (_nativeAd != null || _bannerAd != null || _isLoading) return;
 
     _isLoading = true;
@@ -162,13 +164,24 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
         _loadAdIfNeeded();
       }
     });
+    ref.listen<MonetizationState>(monetizationProvider, (previous, next) {
+      if (next.isAdFree && (_nativeAd != null || _bannerAd != null)) {
+        setState(() {
+          _disposeAds();
+        });
+      } else if (!next.isAdFree && _nativeAd == null && _bannerAd == null && !_isLoading) {
+        _loadAdIfNeeded();
+      }
+    });
 
     if (!AdService.isSupportedPlatform) {
       return const SizedBox.shrink();
     }
 
     final adState = ref.watch(adNotifierProvider);
-    if (adState.isAdFree) {
+    final isMonetizationAdFree =
+        ref.watch(monetizationProvider.select((s) => s.isAdFree));
+    if (adState.isAdFree || isMonetizationAdFree) {
       return const SizedBox.shrink();
     }
 
@@ -206,19 +219,7 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
                   right: 6,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      ref.read(adNotifierProvider.notifier).watchRewardedAd(
-                        onUnlocked: () {
-                          if (context.mounted) {
-                            AppSnackBar.showSuccess(
-                              context,
-                              l10n?.ad_free_pass_unlocked_success ??
-                                  '8-hour ad-free pass activated!',
-                            );
-                          }
-                        },
-                      );
-                    },
+                    onTap: () => AdFreePassDialog.show(context),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
@@ -370,19 +371,7 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
                       ),
                       InkWell(
                         borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          ref.read(adNotifierProvider.notifier).watchRewardedAd(
-                            onUnlocked: () {
-                              if (context.mounted) {
-                                AppSnackBar.showSuccess(
-                                  context,
-                                  l10n?.ad_free_pass_unlocked_success ??
-                                      '8-hour ad-free pass activated!',
-                                );
-                              }
-                            },
-                          );
-                        },
+                        onTap: () => AdFreePassDialog.show(context),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(

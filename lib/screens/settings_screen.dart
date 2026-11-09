@@ -8,7 +8,9 @@ import '../widgets/floating_pill_app_bar.dart';
 import '../provider/settings_provider.dart';
 import '../provider/database_provider.dart';
 import '../provider/cloud_sync_provider.dart';
+import '../provider/monetization_provider.dart';
 import 'cloud_sync_screen.dart';
+import '../widgets/ad_free_pass_button.dart';
 import '../provider/web_layout_provider.dart';
 import '../database/sample_data.dart';
 import '../widgets/app_logo.dart';
@@ -116,6 +118,21 @@ class SettingsScreen extends ConsumerWidget {
                           webView: WebRightPaneView.settingsCloudSync,
                           isSelected: isWide && webLayout?.rightPaneView == WebRightPaneView.settingsCloudSync,
                         ),
+                        if (!ref.watch(monetizationProvider.select((s) => s.hasActiveSubscription))) ...[
+                          const Divider(height: 1, indent: 20, endIndent: 20),
+                          _buildMenuTile(
+                            context,
+                            ref: ref,
+                            settings: settings,
+                            title: l10n.ad_free_popup_title,
+                            subtitle: l10n.ad_free_pass_watch_prompt,
+                            icon: Icons.shield_outlined,
+                            iconColor: Colors.green,
+                            bgColor: Colors.green.withValues(alpha: 0.15),
+                            destination: const SizedBox.shrink(),
+                            onCustomTap: () => AdFreePassDialog.show(context),
+                          ),
+                        ],
                         const Divider(height: 1, indent: 20, endIndent: 20),
                         _buildMenuTile(
                           context,

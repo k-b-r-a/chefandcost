@@ -14,6 +14,7 @@ import '../provider/settings_provider.dart';
 import '../provider/web_layout_provider.dart';
 import '../widgets/ad_free_pass_button.dart';
 import '../provider/ad_provider.dart';
+import '../provider/monetization_provider.dart';
 import '../services/ad_service.dart';
 import '../utils/ad_interleaving_helper.dart';
 import '../widgets/inline_ad_card.dart';
@@ -187,7 +188,11 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                   }
 
                   final adState = ref.watch(adProvider);
-                  final bool showAds = !adState.isAdFree && AdService.isSupportedPlatform;
+                  final isMonetizationAdFree =
+                      ref.watch(monetizationProvider.select((s) => s.isAdFree));
+                  final bool showAds = !adState.isAdFree &&
+                      !isMonetizationAdFree &&
+                      AdService.isSupportedPlatform;
                   final int ingredientsVisualCount = AdInterleavingHelper.getVisualCount(
                     filteredIngredients.length,
                     showAds,

@@ -2086,4 +2086,111 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get ad_sponsored_label => 'Sponsored';
+
+  @override
+  String get subscription_card_title => 'Cloud Sync & Ad-Free Plan';
+
+  @override
+  String get subscription_card_subtitle =>
+      'Unlock automatic multi-device cloud backup and remove all ads permanently.';
+
+  @override
+  String get subscription_benefit_cloud =>
+      'Real-time Cloud Backup & Multi-Device Sync';
+
+  @override
+  String get subscription_benefit_ad_free => '100% Permanent Ad Removal';
+
+  @override
+  String get subscription_monthly_title => 'Monthly Plan';
+
+  @override
+  String get subscription_monthly_price => '\$1.99 / month';
+
+  @override
+  String get subscription_monthly_btn => 'Subscribe \$1.99/mo';
+
+  @override
+  String get subscription_annual_title => 'Annual Plan';
+
+  @override
+  String get subscription_annual_price => '\$14.99 / year';
+
+  @override
+  String get subscription_annual_btn => 'Subscribe \$14.99/yr';
+
+  @override
+  String get subscription_annual_savings_badge => 'Save 37% • Best Value';
+
+  @override
+  String get subscription_restore_btn => 'Restore Purchases';
+
+  @override
+  String get subscription_active_badge => 'Premium Active';
+
+  @override
+  String get subscription_active_plan_monthly =>
+      'Active Plan: Monthly (\$1.99/mo) • Cloud Sync & Ad-Free';
+
+  @override
+  String get subscription_active_plan_annual =>
+      'Active Plan: Annual (\$14.99/yr) • Cloud Sync & Ad-Free';
+
+  @override
+  String get subscription_active_plan_lifetime =>
+      'Active Plan: Lifetime Pass (VIP) • Cloud Sync & Ad-Free';
+
+  @override
+  String get cloud_sync_copy_uid => 'Copy UID';
+
+  @override
+  String get cloud_sync_uid_copied => 'User UID copied to clipboard!';
+
+  @override
+  String get subscription_activated_success =>
+      'Subscription activated! Cloud Sync and permanent ad removal unlocked.';
+
+  @override
+  String get subscription_restored_success =>
+      'Purchases restored successfully.';
+
+  @override
+  String get subscription_restore_none_found =>
+      'No previous active purchases found to restore.';
+
+  @override
+  String get subscription_purchase_canceled => 'Purchase was canceled.';
+
+  @override
+  String get subscription_store_unavailable =>
+      'Store is currently unavailable. Please try again later.';
+
+  @override
+  String get ad_free_popup_title => '8-Hour Ad-Free Pass';
+
+  @override
+  String get ad_free_popup_description =>
+      'Watch a short rewarded video to disable all banners and inline ads across Chef&Cost for the next 8 hours.';
+
+  @override
+  String get ad_free_popup_watch_btn => 'Watch Ad to Disable Ads for 8 Hours';
+
+  @override
+  String get ad_free_popup_active_title => 'Ad-Free Pass Active';
+
+  @override
+  String get ad_free_popup_active_subtitle =>
+      'All ads are currently hidden across the app.';
+
+  @override
+  String ad_free_popup_remaining_time(String time) {
+    return 'Remaining time: $time';
+  }
+
+  @override
+  String get ad_free_popup_extend_btn => 'Watch Another Ad (Reset to 8h)';
+
+  @override
+  String get ad_free_popup_upgrade_divider =>
+      'Want permanent ad removal + Cloud Sync?';
 }
