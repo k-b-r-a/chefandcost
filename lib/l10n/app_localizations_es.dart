@@ -2115,4 +2115,113 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ad_sponsored_label => 'Publicidad';
+
+  @override
+  String get subscription_card_title => 'Plan Cloud Sync y Sin Anuncios';
+
+  @override
+  String get subscription_card_subtitle =>
+      'Desbloquea copias en la nube en tiempo real entre dispositivos y elimina todos los anuncios para siempre.';
+
+  @override
+  String get subscription_benefit_cloud =>
+      'Respaldo en la nube en tiempo real y sincronización multidispositivo';
+
+  @override
+  String get subscription_benefit_ad_free =>
+      'Eliminación permanente del 100% de anuncios';
+
+  @override
+  String get subscription_monthly_title => 'Plan Mensual';
+
+  @override
+  String get subscription_monthly_price => '\$1.99 / mes';
+
+  @override
+  String get subscription_monthly_btn => 'Suscribirse \$1.99/mes';
+
+  @override
+  String get subscription_annual_title => 'Plan Anual';
+
+  @override
+  String get subscription_annual_price => '\$14.99 / año';
+
+  @override
+  String get subscription_annual_btn => 'Suscribirse \$14.99/año';
+
+  @override
+  String get subscription_annual_savings_badge => 'Ahorra 37% • Mejor Valor';
+
+  @override
+  String get subscription_restore_btn => 'Restaurar compras';
+
+  @override
+  String get subscription_active_badge => 'Premium Activo';
+
+  @override
+  String get subscription_active_plan_monthly =>
+      'Plan Activo: Mensual (\$1.99/mes) • Cloud Sync y Sin Anuncios';
+
+  @override
+  String get subscription_active_plan_annual =>
+      'Plan Activo: Anual (\$14.99/año) • Cloud Sync y Sin Anuncios';
+
+  @override
+  String get subscription_active_plan_lifetime =>
+      'Plan Activo: Pase Vitalicio (VIP) • Cloud Sync y Sin Anuncios';
+
+  @override
+  String get cloud_sync_copy_uid => 'Copiar UID';
+
+  @override
+  String get cloud_sync_uid_copied =>
+      '¡UID de usuario copiado al portapapeles!';
+
+  @override
+  String get subscription_activated_success =>
+      '¡Suscripción activada! Cloud Sync y eliminación permanente de anuncios desbloqueados.';
+
+  @override
+  String get subscription_restored_success => 'Compras restauradas con éxito.';
+
+  @override
+  String get subscription_restore_none_found =>
+      'No se encontraron compras activas anteriores para restaurar.';
+
+  @override
+  String get subscription_purchase_canceled => 'La compra fue cancelada.';
+
+  @override
+  String get subscription_store_unavailable =>
+      'La tienda no está disponible en este momento. Inténtalo más tarde.';
+
+  @override
+  String get ad_free_popup_title => 'Pase de 8 Horas Sin Anuncios';
+
+  @override
+  String get ad_free_popup_description =>
+      'Mira un video corto con recompensa para desactivar todos los anuncios en Chef&Cost durante las próximas 8 horas.';
+
+  @override
+  String get ad_free_popup_watch_btn =>
+      'Ver anuncio para quitar anuncios por 8 horas';
+
+  @override
+  String get ad_free_popup_active_title => 'Pase Sin Anuncios Activo';
+
+  @override
+  String get ad_free_popup_active_subtitle =>
+      'Todos los anuncios están ocultos actualmente en la aplicación.';
+
+  @override
+  String ad_free_popup_remaining_time(String time) {
+    return 'Tiempo restante: $time';
+  }
+
+  @override
+  String get ad_free_popup_extend_btn => 'Ver otro anuncio (Reiniciar a 8h)';
+
+  @override
+  String get ad_free_popup_upgrade_divider =>
+      '¿Quieres eliminar anuncios para siempre + Cloud Sync?';
 }

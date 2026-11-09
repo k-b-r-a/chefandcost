@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/ad_service.dart';
 import 'cloud_sync_provider.dart';
+import 'monetization_provider.dart';
 import 'settings_provider.dart';
 
 class AdState {
@@ -60,9 +61,13 @@ class AdState {
   }) {
     return AdState(
       adFreeUntil: clearAdFreeUntil ? null : (adFreeUntil ?? this.adFreeUntil),
-      hasActiveSubscription: hasActiveSubscription ?? this.hasActiveSubscription,
-      isLoadingRewardedAd: isLoadingRewardedAd ?? isRewardedAdLoading ?? this.isLoadingRewardedAd,
-      errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+      hasActiveSubscription:
+          hasActiveSubscription ?? this.hasActiveSubscription,
+      isLoadingRewardedAd: isLoadingRewardedAd ??
+          isRewardedAdLoading ??
+          this.isLoadingRewardedAd,
+      errorMessage:
+          clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
       lastRefreshed: lastRefreshed ?? this.lastRefreshed,
     );
   }
@@ -95,7 +100,9 @@ class AdNotifier extends Notifier<AdState> {
 
   @override
   AdState build() {
-    final isSubscribed = ref.watch(cloudSyncProvider.select((s) => s.isSubscribed));
+    final isCloudSubscribed =
+        ref.watch(cloudSyncProvider.select((s) => s.isSubscribed));
+    final monetization = ref.watch(monetizationProvider);
 
     _periodicTimer?.cancel();
     _periodicTimer = Timer.periodic(const Duration(minutes: 1), (_) {
@@ -106,11 +113,12 @@ class AdNotifier extends Notifier<AdState> {
       _periodicTimer?.cancel();
     });
 
-    DateTime? initialUntil;
+    DateTime? initialUntil = monetization.adFreeUntil;
     try {
       _prefs = ref.watch(sharedPreferencesProvider);
-      final raw = _prefs?.getInt(adFreeUntilPrefKey);
-      if (raw != null) {
+      final raw = _prefs?.getInt(adFreeUntilPrefKey) ??
+          _prefs?.getInt(MonetizationNotifier.adFreeUntilPrefKey);
+      if (raw != null && initialUntil == null) {
         final parsed = DateTime.fromMillisecondsSinceEpoch(raw);
         if (DateTime.now().isBefore(parsed)) {
           initialUntil = parsed;
@@ -122,15 +130,19 @@ class AdNotifier extends Notifier<AdState> {
 
     return AdState(
       adFreeUntil: initialUntil,
-      hasActiveSubscription: isSubscribed,
-      lastRefreshed: DateTime.now(),
+      hasActiveSubscription:
+          isCloudSubscribed || monetization.hasActiveSubscription,
+      isLoadingRewardedAd: monetization.isLoadingRewardedAd,
+      errorMessage: monetization.errorMessage,
+      lastRefreshed: monetization.lastRefreshed ?? DateTime.now(),
     );
   }
 
   Future<void> _initAsyncPrefs() async {
     try {
       _prefs ??= await SharedPreferences.getInstance();
-      final raw = _prefs?.getInt(adFreeUntilPrefKey);
+      final raw = _prefs?.getInt(adFreeUntilPrefKey) ??
+          _prefs?.getInt(MonetizationNotifier.adFreeUntilPrefKey);
       if (raw != null) {
         final parsed = DateTime.fromMillisecondsSinceEpoch(raw);
         if (DateTime.now().isBefore(parsed)) {
@@ -152,7 +164,15 @@ class AdNotifier extends Notifier<AdState> {
     try {
       _prefs ??= await SharedPreferences.getInstance();
       await _prefs?.setInt(adFreeUntilPrefKey, until.millisecondsSinceEpoch);
+      await _prefs?.setInt(
+        MonetizationNotifier.adFreeUntilPrefKey,
+        until.millisecondsSinceEpoch,
+      );
     } catch (_) {}
+
+    await ref
+        .read(monetizationProvider.notifier)
+        .activateEightHourAdFreePass(explicitUntil: until);
 
     state = state.copyWith(
       adFreeUntil: until,
@@ -171,7 +191,15 @@ class AdNotifier extends Notifier<AdState> {
     try {
       _prefs ??= await SharedPreferences.getInstance();
       await _prefs?.setInt(adFreeUntilPrefKey, until.millisecondsSinceEpoch);
+      await _prefs?.setInt(
+        MonetizationNotifier.adFreeUntilPrefKey,
+        until.millisecondsSinceEpoch,
+      );
     } catch (_) {}
+
+    await ref
+        .read(monetizationProvider.notifier)
+        .activateEightHourAdFreePass(explicitUntil: until);
 
     state = state.copyWith(
       adFreeUntil: until,
@@ -186,7 +214,10 @@ class AdNotifier extends Notifier<AdState> {
     try {
       _prefs ??= await SharedPreferences.getInstance();
       await _prefs?.remove(adFreeUntilPrefKey);
+      await _prefs?.remove(MonetizationNotifier.adFreeUntilPrefKey);
     } catch (_) {}
+
+    await ref.read(monetizationProvider.notifier).clearAdFreePass();
 
     state = state.copyWith(
       clearAdFreeUntil: true,
@@ -233,5 +264,6 @@ class AdNotifier extends Notifier<AdState> {
   }
 }
 
-final adNotifierProvider = NotifierProvider<AdNotifier, AdState>(AdNotifier.new);
+final adNotifierProvider =
+    NotifierProvider<AdNotifier, AdState>(AdNotifier.new);
 final adProvider = adNotifierProvider;

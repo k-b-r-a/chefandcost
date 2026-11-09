@@ -3929,6 +3929,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sponsored'**
   String get ad_sponsored_label;
+
+  /// No description provided for @subscription_card_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Sync & Ad-Free Plan'**
+  String get subscription_card_title;
+
+  /// No description provided for @subscription_card_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock automatic multi-device cloud backup and remove all ads permanently.'**
+  String get subscription_card_subtitle;
+
+  /// No description provided for @subscription_benefit_cloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time Cloud Backup & Multi-Device Sync'**
+  String get subscription_benefit_cloud;
+
+  /// No description provided for @subscription_benefit_ad_free.
+  ///
+  /// In en, this message translates to:
+  /// **'100% Permanent Ad Removal'**
+  String get subscription_benefit_ad_free;
+
+  /// No description provided for @subscription_monthly_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Plan'**
+  String get subscription_monthly_title;
+
+  /// No description provided for @subscription_monthly_price.
+  ///
+  /// In en, this message translates to:
+  /// **'\$1.99 / month'**
+  String get subscription_monthly_price;
+
+  /// No description provided for @subscription_monthly_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe \$1.99/mo'**
+  String get subscription_monthly_btn;
+
+  /// No description provided for @subscription_annual_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual Plan'**
+  String get subscription_annual_title;
+
+  /// No description provided for @subscription_annual_price.
+  ///
+  /// In en, this message translates to:
+  /// **'\$14.99 / year'**
+  String get subscription_annual_price;
+
+  /// No description provided for @subscription_annual_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe \$14.99/yr'**
+  String get subscription_annual_btn;
+
+  /// No description provided for @subscription_annual_savings_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Save 37% • Best Value'**
+  String get subscription_annual_savings_badge;
+
+  /// No description provided for @subscription_restore_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Purchases'**
+  String get subscription_restore_btn;
+
+  /// No description provided for @subscription_active_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Active'**
+  String get subscription_active_badge;
+
+  /// No description provided for @subscription_active_plan_monthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Plan: Monthly (\$1.99/mo) • Cloud Sync & Ad-Free'**
+  String get subscription_active_plan_monthly;
+
+  /// No description provided for @subscription_active_plan_annual.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Plan: Annual (\$14.99/yr) • Cloud Sync & Ad-Free'**
+  String get subscription_active_plan_annual;
+
+  /// No description provided for @subscription_active_plan_lifetime.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Plan: Lifetime Pass (VIP) • Cloud Sync & Ad-Free'**
+  String get subscription_active_plan_lifetime;
+
+  /// No description provided for @cloud_sync_copy_uid.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy UID'**
+  String get cloud_sync_copy_uid;
+
+  /// No description provided for @cloud_sync_uid_copied.
+  ///
+  /// In en, this message translates to:
+  /// **'User UID copied to clipboard!'**
+  String get cloud_sync_uid_copied;
+
+  /// No description provided for @subscription_activated_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription activated! Cloud Sync and permanent ad removal unlocked.'**
+  String get subscription_activated_success;
+
+  /// No description provided for @subscription_restored_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases restored successfully.'**
+  String get subscription_restored_success;
+
+  /// No description provided for @subscription_restore_none_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous active purchases found to restore.'**
+  String get subscription_restore_none_found;
+
+  /// No description provided for @subscription_purchase_canceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase was canceled.'**
+  String get subscription_purchase_canceled;
+
+  /// No description provided for @subscription_store_unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Store is currently unavailable. Please try again later.'**
+  String get subscription_store_unavailable;
+
+  /// No description provided for @ad_free_popup_title.
+  ///
+  /// In en, this message translates to:
+  /// **'8-Hour Ad-Free Pass'**
+  String get ad_free_popup_title;
+
+  /// No description provided for @ad_free_popup_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch a short rewarded video to disable all banners and inline ads across Chef&Cost for the next 8 hours.'**
+  String get ad_free_popup_description;
+
+  /// No description provided for @ad_free_popup_watch_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Ad to Disable Ads for 8 Hours'**
+  String get ad_free_popup_watch_btn;
+
+  /// No description provided for @ad_free_popup_active_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad-Free Pass Active'**
+  String get ad_free_popup_active_title;
+
+  /// No description provided for @ad_free_popup_active_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All ads are currently hidden across the app.'**
+  String get ad_free_popup_active_subtitle;
+
+  /// No description provided for @ad_free_popup_remaining_time.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining time: {time}'**
+  String ad_free_popup_remaining_time(String time);
+
+  /// No description provided for @ad_free_popup_extend_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Another Ad (Reset to 8h)'**
+  String get ad_free_popup_extend_btn;
+
+  /// No description provided for @ad_free_popup_upgrade_divider.
+  ///
+  /// In en, this message translates to:
+  /// **'Want permanent ad removal + Cloud Sync?'**
+  String get ad_free_popup_upgrade_divider;
 }
 
 class _AppLocalizationsDelegate

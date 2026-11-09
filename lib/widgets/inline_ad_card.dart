@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../l10n/app_localizations.dart';
 import '../provider/ad_provider.dart';
+import '../provider/monetization_provider.dart';
 import '../services/ad_service.dart';
-import '../utils/ui_utils.dart';
+import 'ad_free_pass_button.dart';
 
 enum InlineAdCardStyle {
   recipe,
@@ -42,7 +43,8 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
   void _loadAdIfNeeded() {
     if (!AdService.isSupportedPlatform) return;
     final adState = ref.read(adProvider);
-    if (adState.isAdFree) return;
+    final monetization = ref.read(monetizationProvider);
+    if (adState.isAdFree || monetization.isAdFree) return;
     if (_bannerAd != null || _isLoading) return;
 
     _isLoading = true;
@@ -95,13 +97,24 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
         _loadAdIfNeeded();
       }
     });
+    ref.listen<MonetizationState>(monetizationProvider, (previous, next) {
+      if (next.isAdFree && _bannerAd != null) {
+        setState(() {
+          _disposeAd();
+        });
+      } else if (!next.isAdFree && _bannerAd == null && !_isLoading) {
+        _loadAdIfNeeded();
+      }
+    });
 
     if (!AdService.isSupportedPlatform) {
       return const SizedBox.shrink();
     }
 
     final adState = ref.watch(adProvider);
-    if (adState.isAdFree || !_isAdLoaded || _bannerAd == null) {
+    final isMonetizationAdFree =
+        ref.watch(monetizationProvider.select((s) => s.isAdFree));
+    if (adState.isAdFree || isMonetizationAdFree || !_isAdLoaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }
 
@@ -200,26 +213,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
                     ),
                     InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        ref.read(adProvider.notifier).watchRewardedAdFor8Hours(
-                          onSuccess: () {
-                            if (context.mounted) {
-                              AppSnackBar.showSuccess(
-                                context,
-                                l10n.ad_free_pass_unlocked_snackbar,
-                              );
-                            }
-                          },
-                          onError: () {
-                            if (context.mounted) {
-                              AppSnackBar.showError(
-                                context,
-                                l10n.ad_free_pass_error_snackbar,
-                              );
-                            }
-                          },
-                        );
-                      },
+                      onTap: () => AdFreePassDialog.show(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(

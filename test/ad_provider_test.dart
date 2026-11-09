@@ -3,14 +3,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:recipetools/constants.dart';
 import 'package:recipetools/l10n/app_localizations.dart';
 import 'package:recipetools/provider/ad_provider.dart';
 import 'package:recipetools/provider/cloud_sync_provider.dart';
+import 'package:recipetools/provider/monetization_provider.dart';
 import 'package:recipetools/provider/settings_provider.dart';
 import 'package:recipetools/services/ad_service.dart';
 import 'package:recipetools/utils/ad_interleaving_helper.dart';
 import 'package:recipetools/widgets/ad_free_pass_button.dart';
 import 'package:recipetools/widgets/inline_ad_card.dart';
+import 'package:recipetools/widgets/subscription_paywall_card.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -419,6 +422,137 @@ void main() {
 
       await tester.pumpWidget(const SizedBox());
       container.dispose();
+    });
+
+    test('MonetizationNotifier buyMonthly, buyAnnual, restorePurchases, and timer expiration', () async {
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(monetizationProvider.notifier);
+
+      // Initially neither subscribed nor ad-free
+      var state = container.read(monetizationProvider);
+      expect(state.canUseCloudSync, isFalse);
+      expect(state.isAdFree, isFalse);
+
+      // Test short pass expiration via timer
+      await notifier.activateEightHourAdFreePass(
+        duration: const Duration(milliseconds: 80),
+      );
+      state = container.read(monetizationProvider);
+      expect(state.isRewardedPassActive, isTrue);
+      expect(state.isAdFree, isTrue);
+      expect(state.canUseCloudSync, isFalse);
+      expect(prefs.getInt(MonetizationNotifier.adFreeUntilPrefKey), isNotNull);
+
+      await Future<void>.delayed(const Duration(milliseconds: 140));
+      state = container.read(monetizationProvider);
+      expect(state.isRewardedPassActive, isFalse);
+      expect(state.isAdFree, isFalse);
+
+      // Purchase Monthly ($1.99)
+      final monthlyOk = await notifier.buyMonthly();
+      expect(monthlyOk, isTrue);
+      state = container.read(monetizationProvider);
+      expect(state.hasActiveSubscription, isTrue);
+      expect(state.canUseCloudSync, isTrue);
+      expect(state.isAdFree, isTrue);
+      expect(state.activePlanId, kMonthlySubscriptionId);
+      expect(prefs.getBool(MonetizationNotifier.hasActiveSubPrefKey), isTrue);
+      expect(container.read(cloudSyncProvider).isSubscribed, isTrue);
+
+      // Purchase Annual ($14.99)
+      final annualOk = await notifier.buyAnnual();
+      expect(annualOk, isTrue);
+      state = container.read(monetizationProvider);
+      expect(state.isAnnualPlan, isTrue);
+      expect(state.activePlanId, kAnnualSubscriptionId);
+
+      // Interstitial ad is blocked when isAdFree is true
+      final interstitialShown = await AdService.showInterstitialAd(
+        isAdFree: state.isAdFree,
+      );
+      expect(interstitialShown, isFalse);
+    });
+
+    testWidgets('AdFreePassDialog opens on button tap and unlocks 8h pass with live countdown', (tester) async {
+      AdService.debugIsSupportedPlatform = true;
+      addTearDown(() {
+        AdService.debugIsSupportedPlatform = null;
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('en'),
+            home: Scaffold(
+              body: AdFreePassButton(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(IconButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.byKey(const ValueKey('ad_free_pass_dialog')), findsOneWidget);
+      final watchBtn = find.byKey(const ValueKey('watch_rewarded_ad_8h_btn'));
+      expect(watchBtn, findsOneWidget);
+
+      await tester.tap(watchBtn);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(
+        find.byKey(const ValueKey('ad_free_pass_countdown_box')),
+        findsOneWidget,
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets(r'SubscriptionPaywallCard renders $1.99/mo & $14.99/yr buttons and unlocks subscription', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('en'),
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: SubscriptionPaywallCard(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('subscription_paywall_card')), findsOneWidget);
+      expect(find.byKey(const ValueKey('subscribe_monthly_199_btn')), findsOneWidget);
+      expect(find.byKey(const ValueKey('subscribe_annual_1499_btn')), findsOneWidget);
+      expect(find.byKey(const ValueKey('restore_purchases_btn')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('subscribe_annual_1499_btn')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('subscription_active_card')), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }

@@ -516,35 +516,38 @@ class _GooeyToastState extends State<_GooeyToastWidget>
                                       Expanded(
                                         child: Transform.translate(
                                           offset: Offset(0, slideUpOffset),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              if (widget.title != null && widget.title!.isNotEmpty) ...[
-                                                Text(
-                                                  widget.title!,
-                                                  style: theme.textTheme.labelLarge?.copyWith(
-                                                    color: palette.textColor,
-                                                    fontWeight: FontWeight.bold,
-                                                    letterSpacing: 0.2,
+                                          child: SingleChildScrollView(
+                                            physics: const NeverScrollableScrollPhysics(),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                if (widget.title != null && widget.title!.isNotEmpty) ...[
+                                                  Text(
+                                                    widget.title!,
+                                                    style: theme.textTheme.labelLarge?.copyWith(
+                                                      color: palette.textColor,
+                                                      fontWeight: FontWeight.bold,
+                                                      letterSpacing: 0.2,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
-                                                  maxLines: 1,
+                                                  const SizedBox(height: 2),
+                                                ],
+                                                Text(
+                                                  widget.message,
+                                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                                    color: palette.secondaryTextColor,
+                                                    fontSize: 13.5,
+                                                    height: 1.25,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  maxLines: 3,
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
-                                                const SizedBox(height: 2),
                                               ],
-                                              Text(
-                                                widget.message,
-                                                style: theme.textTheme.bodyMedium?.copyWith(
-                                                  color: palette.secondaryTextColor,
-                                                  fontSize: 13.5,
-                                                  height: 1.25,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                maxLines: 3,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                         ),
                                       ),

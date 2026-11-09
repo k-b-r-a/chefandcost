@@ -884,5 +884,43 @@
   },
   "ad_free_pass_unlocked_snackbar": "Ads disabled for the next 8 hours!",
   "ad_free_pass_error_snackbar": "Could not load video ad. Please try again later.",
-  "ad_sponsored_label": "Sponsored"
+  "ad_sponsored_label": "Sponsored",
+  "subscription_card_title": "Cloud Sync & Ad-Free Plan",
+  "subscription_card_subtitle": "Unlock automatic multi-device cloud backup and remove all ads permanently.",
+  "subscription_benefit_cloud": "Real-time Cloud Backup & Multi-Device Sync",
+  "subscription_benefit_ad_free": "100% Permanent Ad Removal",
+  "subscription_monthly_title": "Monthly Plan",
+  "subscription_monthly_price": "$1.99 / month",
+  "subscription_monthly_btn": "Subscribe $1.99/mo",
+  "subscription_annual_title": "Annual Plan",
+  "subscription_annual_price": "$14.99 / year",
+  "subscription_annual_btn": "Subscribe $14.99/yr",
+  "subscription_annual_savings_badge": "Save 37% • Best Value",
+  "subscription_restore_btn": "Restore Purchases",
+  "subscription_active_badge": "Premium Active",
+  "subscription_active_plan_monthly": "Active Plan: Monthly ($1.99/mo) • Cloud Sync & Ad-Free",
+  "subscription_active_plan_annual": "Active Plan: Annual ($14.99/yr) • Cloud Sync & Ad-Free",
+  "subscription_active_plan_lifetime": "Active Plan: Lifetime Pass (VIP) • Cloud Sync & Ad-Free",
+  "cloud_sync_copy_uid": "Copy UID",
+  "cloud_sync_uid_copied": "User UID copied to clipboard!",
+  "subscription_activated_success": "Subscription activated! Cloud Sync and permanent ad removal unlocked.",
+  "subscription_restored_success": "Purchases restored successfully.",
+  "subscription_restore_none_found": "No previous active purchases found to restore.",
+  "subscription_purchase_canceled": "Purchase was canceled.",
+  "subscription_store_unavailable": "Store is currently unavailable. Please try again later.",
+  "ad_free_popup_title": "8-Hour Ad-Free Pass",
+  "ad_free_popup_description": "Watch a short rewarded video to disable all banners and inline ads across Chef&Cost for the next 8 hours.",
+  "ad_free_popup_watch_btn": "Watch Ad to Disable Ads for 8 Hours",
+  "ad_free_popup_active_title": "Ad-Free Pass Active",
+  "ad_free_popup_active_subtitle": "All ads are currently hidden across the app.",
+  "ad_free_popup_remaining_time": "Remaining time: {time}",
+  "@ad_free_popup_remaining_time": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "ad_free_popup_extend_btn": "Watch Another Ad (Reset to 8h)",
+  "ad_free_popup_upgrade_divider": "Want permanent ad removal + Cloud Sync?"
 }
