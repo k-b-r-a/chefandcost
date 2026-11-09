@@ -20,6 +20,7 @@ class MainActivity : FlutterActivity() {
     private var fileChannel: MethodChannel? = null
     private var pendingFilePayload: Map<String, String>? = null
     private var lastHandledUriString: String? = null
+    private var playIntegrityHandler: PlayIntegrityHandler? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,6 +108,17 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        // Initialize and bind Play Integrity Handler (StandardIntegrityManager & fallback)
+        playIntegrityHandler = PlayIntegrityHandler(this).apply {
+            setup(flutterEngine.dartExecutor.binaryMessenger)
+        }
+    }
+
+    override fun onDestroy() {
+        playIntegrityHandler?.dispose()
+        playIntegrityHandler = null
+        super.onDestroy()
     }
 
     private fun handleFileIntent(intent: Intent, isNewIntent: Boolean) {

@@ -24,6 +24,14 @@
 -dontwarn com.google.android.play.core.splitinstall.**
 -dontwarn com.google.android.play.core.tasks.**
 
+# Google Play Integrity API
+-keep class com.google.android.play.core.integrity.** { *; }
+-dontwarn com.google.android.play.core.integrity.**
+
+# Google Play Billing Library
+-keep class com.android.billingclient.** { *; }
+-dontwarn com.android.billingclient.**
+
 # Keeps Android Credential Manager Play Services integration classes from being stripped or obfuscated
 -keep class androidx.credentials.** { *; }
 -if class androidx.credentials.CredentialManager

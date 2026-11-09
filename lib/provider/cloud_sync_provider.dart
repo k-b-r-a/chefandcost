@@ -312,9 +312,20 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   Future<void> purchaseSubscription(String planId) async {
+    if (!MonetizationNotifier.allowSandboxFallback) {
+      if (!_disposed) {
+        state = state.copyWith(
+          loading: false,
+          errorMessage: 'subscription_store_unavailable',
+        );
+      }
+      return;
+    }
     final now = DateTime.now();
-    final isAnnual = planId.contains('annual') || planId == annualSubscriptionId;
-    final expiresAt = now.add(isAnnual ? const Duration(days: 365) : const Duration(days: 30));
+    final isAnnual =
+        planId.contains('annual') || planId == annualSubscriptionId;
+    final expiresAt =
+        now.add(isAnnual ? const Duration(days: 365) : const Duration(days: 30));
     await setSubscription(
       isSubscribed: true,
       plan: isAnnual ? annualSubscriptionId : monthlySubscriptionId,
