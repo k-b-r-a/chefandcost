@@ -1,9 +1,32 @@
+import 'dart:ui' as ui;
 import 'package:drift/drift.dart';
+import 'package:flutter/widgets.dart';
+
+import '../l10n/app_localizations.dart';
 import 'database.dart';
+
+/// Resolves the default group name according to the target [locale] or phone/device language.
+String resolveDefaultGroupName([Locale? targetLocale]) {
+  try {
+    final locale = targetLocale ??
+        WidgetsBinding.instance.platformDispatcher.locale;
+    return lookupAppLocalizations(locale).group_default_name;
+  } catch (_) {
+    try {
+      final lang = (targetLocale ?? ui.PlatformDispatcher.instance.locale)
+          .languageCode
+          .toLowerCase();
+      if (lang == 'es') return 'Principal';
+      return lookupAppLocalizations(Locale(lang)).group_default_name;
+    } catch (_) {
+      return 'Principal';
+    }
+  }
+}
 
 /// Initializes the database with default values and updates existing unit equivalences.
 /// Called during the launch of the application.
-Future<void> initializeDefaultDatabase(AppDatabase db) async {
+Future<void> initializeDefaultDatabase(AppDatabase db, [Locale? locale]) async {
   // 1. Deduplicate any duplicate units currently in the database (e.g. from cloud sync)
   final rawUnits = await db.getAllUnits();
   final unitsByName = <String, List<Unit>>{};
@@ -201,15 +224,17 @@ Future<void> initializeDefaultDatabase(AppDatabase db) async {
     );
   }
 
-  // 4. Ensure default fallback group ("Principal" / "Default") exists
+  // 4. Ensure default fallback group ("Principal" / "Main") exists
   final existingGroups = await db.getAllGroups(includeDeleted: true);
   String defaultGroupId;
+  final defaultName = resolveDefaultGroupName(locale);
+
   if (existingGroups.isEmpty) {
     defaultGroupId = 'group_default_principal';
     await db.insertGroup(
       GroupsCompanion(
         id: Value(defaultGroupId),
-        name: const Value('Principal'),
+        name: Value(defaultName),
         iconName: const Value('storefront'),
         colorHex: const Value('FF4CAF50'),
         isActive: const Value(true),
@@ -219,6 +244,24 @@ Future<void> initializeDefaultDatabase(AppDatabase db) async {
       ),
     );
   } else {
+    // If the default group exists and still has a default name ('Principal' or 'Main'),
+    // synchronize its name with the current language.
+    final principalGroup = existingGroups
+        .where((g) => g.id == 'group_default_principal' && !g.isDeleted)
+        .firstOrNull;
+    if (principalGroup != null &&
+        (principalGroup.name == 'Principal' || principalGroup.name == 'Main') &&
+        principalGroup.name != defaultName) {
+      await (db.update(db.groups)
+            ..where((t) => t.id.equals('group_default_principal')))
+          .write(
+        GroupsCompanion(
+          name: Value(defaultName),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    }
+
     final activeGroup = existingGroups.firstWhere(
       (g) => !g.isDeleted,
       orElse: () => existingGroups.first,

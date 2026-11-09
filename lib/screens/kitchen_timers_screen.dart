@@ -26,6 +26,16 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        NotificationService().requestPermission();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
@@ -627,6 +637,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                       onPressed: () {
                         final totalSeconds = (selectedMinutes * 60) + selectedSeconds;
                         if (totalSeconds > 0) {
+                          NotificationService().requestPermission();
                           if (existingTimer != null) {
                             notifier.updateTimer(
                               existingTimer.id,

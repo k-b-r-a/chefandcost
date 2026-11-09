@@ -151,7 +151,8 @@ class ActiveGroupIdNotifier extends Notifier<String?> {
   @override
   String? build() {
     final prefs = ref.watch(sharedPreferencesProvider);
-    return prefs.getString(prefActiveGroupIdKey);
+    // On first open, default to All Spaces (kAllGroupsId) instead of a single workspace.
+    return prefs.getString(prefActiveGroupIdKey) ?? kAllGroupsId;
   }
 
   Future<void> setActiveGroupId(String? id) async {
@@ -170,19 +171,17 @@ final activeGroupIdProvider = NotifierProvider<ActiveGroupIdNotifier, String?>(
   ActiveGroupIdNotifier.new,
 );
 
-/// Provider that resolves the active [Group] object or falls back to the first available group.
+/// Provider that resolves the active [Group] object.
+/// Returns null when All Spaces (kAllGroupsId) is active.
 final activeGroupProvider = Provider<Group?>((ref) {
   final activeId = ref.watch(activeGroupIdProvider);
   final groups = ref.watch(groupsStreamProvider).asData?.value ?? [];
   if (groups.isEmpty) return null;
-  if (activeId == kAllGroupsId) return null;
-  if (activeId != null) {
-    final found = groups
-        .where((g) => g.id == activeId && !g.isDeleted)
-        .firstOrNull;
-    if (found != null) return found;
-  }
-  return groups.firstWhere((g) => !g.isDeleted, orElse: () => groups.first);
+  if (activeId == kAllGroupsId || activeId == null) return null;
+  final found = groups
+      .where((g) => g.id == activeId && !g.isDeleted)
+      .firstOrNull;
+  return found;
 });
 
 /// Notifier for category filtering on recipes (null represents 'Todos').

@@ -50,7 +50,12 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 16.0),
+            padding: EdgeInsets.fromLTRB(
+              22.0,
+              16.0,
+              22.0,
+              isWide ? 16.0 : (100.0 + MediaQuery.paddingOf(context).bottom),
+            ),
             sliver: SliverToBoxAdapter(
               child: Center(
                 child: ConstrainedBox(
@@ -84,8 +89,19 @@ class SettingsScreen extends ConsumerWidget {
                             l10n.groups_title,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          subtitle: Text(
-                            '${l10n.group_active_label}: ${ref.watch(activeGroupProvider)?.name ?? l10n.group_default_name}',
+                          subtitle: Builder(
+                            builder: (context) {
+                              final currentGroup = ref.watch(activeGroupProvider);
+                              final isDefaultPrincipal = currentGroup?.id == 'group_default_principal' &&
+                                  (currentGroup?.name == 'Principal' || currentGroup?.name == 'Main');
+                              final activeLabel = isDefaultPrincipal
+                                  ? l10n.group_default_name
+                                  : (currentGroup?.name ??
+                                      (ref.watch(activeGroupIdProvider) == kAllGroupsId
+                                          ? l10n.group_all_workspaces
+                                          : l10n.group_default_name));
+                              return Text('${l10n.group_active_label}: $activeLabel');
+                            },
                           ),
                           trailing: const Icon(Icons.chevron_right_rounded),
                           onTap: () => GroupManagementSheet.show(context),
