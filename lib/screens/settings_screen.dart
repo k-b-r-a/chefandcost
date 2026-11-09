@@ -50,7 +50,12 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 16.0),
+            padding: EdgeInsets.fromLTRB(
+              22.0,
+              16.0,
+              22.0,
+              isWide ? 16.0 : (100.0 + MediaQuery.paddingOf(context).bottom),
+            ),
             sliver: SliverToBoxAdapter(
               child: Center(
                 child: ConstrainedBox(
