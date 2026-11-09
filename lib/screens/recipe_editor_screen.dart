@@ -3580,11 +3580,16 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           const SizedBox(width: 8),
           Container(
             width: 95,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 4,
-              vertical: 2,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.35,
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+              ),
             ),
-            decoration: null,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -3612,22 +3617,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       fontSize: 12.5,
                       color: numberColor,
                     ),
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 2),
-                      border: const UnderlineInputBorder(),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.outlineVariant
-                              .withValues(alpha: 0.7),
-                        ),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 1.5,
-                        ),
-                      ),
+                      contentPadding: EdgeInsets.zero,
                     ),
                     onTap: () {
                       if (controller.text.isNotEmpty) {
@@ -3706,7 +3699,17 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               // Stepper: [-] [ Field ] [+]
               Container(
                 height: 32,
-                decoration: null,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.35,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.4,
+                    ),
+                  ),
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -3730,6 +3733,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         ),
                       ),
                     ),
+                    Container(
+                      width: 1,
+                      height: 18,
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
+                      ),
+                    ),
                     // Value Input
                     SizedBox(
                       width: 44,
@@ -3746,23 +3756,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           fontSize: 12.5,
                           color: numberColor,
                         ),
-                        decoration: InputDecoration(
-                          border: const UnderlineInputBorder(),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outlineVariant
-                                  .withValues(alpha: 0.7),
-                            ),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.primary,
-                              width: 1.5,
-                            ),
-                          ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
                           isDense: true,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 2),
+                          contentPadding: EdgeInsets.zero,
                         ),
                         onTap: () {
                           if (_yieldController.text.isNotEmpty) {
@@ -3775,6 +3772,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         onEditingComplete: () =>
                             FocusScope.of(context).unfocus(),
                         onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 18,
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
                       ),
                     ),
                     // Increment Button [+]
@@ -5281,7 +5285,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: null,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.25,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -5339,22 +5351,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     fontSize: 13.5,
                     color: numberColor,
                   ),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     isDense: true,
-                    contentPadding: const EdgeInsets.only(bottom: 2),
-                    border: const UnderlineInputBorder(),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.outlineVariant
-                            .withValues(alpha: 0.7),
-                      ),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.primary,
-                        width: 1.5,
-                      ),
-                    ),
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
                   ),
                 ),
               ),
@@ -6796,11 +6796,27 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     final step = _steps[index];
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final settings = ref.watch(settingsProvider);
+    final isDefaultTheme = settings.seedColor.toARGB32() == AppColors.primary.toARGB32() ||
+        theme.colorScheme.primary == AppColors.primary ||
+        theme.colorScheme.primary == AppColors.primaryDark;
 
     return Container(
-      decoration: null,
+      decoration: isDefaultTheme
+          ? null
+          : BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.1,
+              ),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+            ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
+        padding: isDefaultTheme
+            ? const EdgeInsets.fromLTRB(4, 8, 4, 12)
+            : const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

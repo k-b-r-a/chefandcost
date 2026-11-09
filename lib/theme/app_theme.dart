@@ -390,12 +390,12 @@ class AppTheme {
           ? const PageTransitionsTheme()
           : const PageTransitionsTheme(
               builders: {
-                TargetPlatform.android: const NoTransitionsBuilder(),
-                TargetPlatform.iOS: const NoTransitionsBuilder(),
-                TargetPlatform.macOS: const NoTransitionsBuilder(),
-                TargetPlatform.windows: const NoTransitionsBuilder(),
-                TargetPlatform.linux: const NoTransitionsBuilder(),
-                TargetPlatform.fuchsia: const NoTransitionsBuilder(),
+                TargetPlatform.android: NoTransitionsBuilder(),
+                TargetPlatform.iOS: NoTransitionsBuilder(),
+                TargetPlatform.macOS: NoTransitionsBuilder(),
+                TargetPlatform.windows: NoTransitionsBuilder(),
+                TargetPlatform.linux: NoTransitionsBuilder(),
+                TargetPlatform.fuchsia: NoTransitionsBuilder(),
               },
             ),
     );
@@ -442,12 +442,12 @@ class AppTheme {
           ? const PageTransitionsTheme()
           : const PageTransitionsTheme(
               builders: {
-                TargetPlatform.android: const NoTransitionsBuilder(),
-                TargetPlatform.iOS: const NoTransitionsBuilder(),
-                TargetPlatform.macOS: const NoTransitionsBuilder(),
-                TargetPlatform.windows: const NoTransitionsBuilder(),
-                TargetPlatform.linux: const NoTransitionsBuilder(),
-                TargetPlatform.fuchsia: const NoTransitionsBuilder(),
+                TargetPlatform.android: NoTransitionsBuilder(),
+                TargetPlatform.iOS: NoTransitionsBuilder(),
+                TargetPlatform.macOS: NoTransitionsBuilder(),
+                TargetPlatform.windows: NoTransitionsBuilder(),
+                TargetPlatform.linux: NoTransitionsBuilder(),
+                TargetPlatform.fuchsia: NoTransitionsBuilder(),
               },
             ),
     );

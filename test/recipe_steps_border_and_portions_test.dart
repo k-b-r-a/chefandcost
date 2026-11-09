@@ -23,7 +23,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'Step items have no border in default theme and in alternative themes',
+    'Step items have no border in default theme and have borders in alternative themes',
     (WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
       final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -98,9 +98,19 @@ void main() {
       expect(defaultStepContainer.decoration, isNull);
 
       // 2. In alternative non-default theme (Colors.blue)
+      final altPrefs = await SharedPreferences.getInstance();
+      await altPrefs.setInt('seedColor', Colors.blue.toARGB32());
+      final altContainer = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(altPrefs),
+          databaseProvider.overrideWith(() => MockDatabaseNotifier(db)),
+        ],
+      );
+      addTearDown(altContainer.dispose);
+
       await tester.pumpWidget(
         UncontrolledProviderScope(
-          container: container,
+          container: altContainer,
           child: MaterialApp(
             theme: AppTheme.buildTheme(
               seedColor: Colors.blue,
@@ -128,8 +138,10 @@ void main() {
         ).first,
       );
 
-      // In alternative themes as well, step container has no decoration or borders
-      expect(altStepContainer.decoration, isNull);
+      // In alternative themes, step container retains its border decoration
+      expect(altStepContainer.decoration is BoxDecoration, isTrue);
+      final altDecoration = altStepContainer.decoration as BoxDecoration;
+      expect(altDecoration.border, isNotNull);
     },
   );
 
@@ -204,21 +216,30 @@ void main() {
       // On wide web page layout, the scale bar custom portions pill chip is not rendered
       expect(find.byKey(const ValueKey('scale_chip_custom_portions')), findsNothing);
 
-      // Financial inputs in web layout have UnderlineInputBorder and no box border in default theme
+      // Financial inputs in web layout are pill-shaped containers with InputBorder.none
       final yieldField = tester.widget<TextField>(find.byKey(const ValueKey('right_panel_yield_field')));
-      expect(yieldField.decoration?.border is UnderlineInputBorder, isTrue);
+      expect(yieldField.decoration?.border, equals(InputBorder.none));
 
       final marginEditableFinder = find.byWidgetPredicate(
         (w) => w is TextField && (w.controller?.text.startsWith('30') ?? false),
       );
       expect(marginEditableFinder, findsOneWidget);
       final marginField = tester.widget<TextField>(marginEditableFinder);
-      expect(marginField.decoration?.border is UnderlineInputBorder, isTrue);
+      expect(marginField.decoration?.border, equals(InputBorder.none));
+
+      final marginContainer = tester.widget<Container>(
+        find.ancestor(
+          of: marginEditableFinder,
+          matching: find.byType(Container),
+        ).first,
+      );
+      expect(marginContainer.decoration is BoxDecoration, isTrue);
+      expect((marginContainer.decoration as BoxDecoration).borderRadius, equals(BorderRadius.circular(10)));
     },
   );
 
   testWidgets(
-    'Financial inputs in mobile bottom sheet use UnderlineInputBorder and no box border in default theme',
+    'Financial inputs in mobile bottom sheet use card container and black numbers in light mode',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
@@ -283,16 +304,17 @@ void main() {
       expect(marginInputFinder, findsOneWidget);
 
       final marginTextField = tester.widget<TextField>(marginInputFinder);
-      expect(marginTextField.decoration?.border is UnderlineInputBorder, isTrue);
+      expect(marginTextField.decoration?.border, equals(InputBorder.none));
 
-      // The enclosing card Container has null decoration (no border) in default theme
+      // The enclosing card Container has BoxDecoration (card container)
       final cardContainer = tester.widget<Container>(
         find.ancestor(
           of: marginInputFinder,
           matching: find.byType(Container),
         ).first,
       );
-      expect(cardContainer.decoration, isNull);
+      expect(cardContainer.decoration is BoxDecoration, isTrue);
+      expect((cardContainer.decoration as BoxDecoration).borderRadius, equals(BorderRadius.circular(14)));
 
       // Verify financial input number text style uses black in light mode, not theme primary color
       expect(marginTextField.style?.color, equals(Colors.black));
