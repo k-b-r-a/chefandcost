@@ -13,6 +13,7 @@ import com.google.android.play.core.integrity.StandardIntegrityManager.StandardI
 import com.google.android.play.core.integrity.IntegrityServiceException
 import com.google.android.play.core.integrity.StandardIntegrityException
 import com.google.android.play.core.integrity.model.IntegrityErrorCode
+import com.google.android.play.core.integrity.model.StandardIntegrityErrorCode
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -222,7 +223,7 @@ class PlayIntegrityHandler(private val context: Context) : MethodChannel.MethodC
             val response = provider.request(tokenRequest).await()
             response.token()
         } catch (e: StandardIntegrityException) {
-            if (e.errorCode == IntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID) {
+            if (e.errorCode == StandardIntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID) {
                 Log.w(TAG, "Token provider invalid/expired. Refreshing provider and retrying...")
                 mutex.withLock {
                     cachedTokenProvider = null
@@ -299,7 +300,7 @@ class PlayIntegrityHandler(private val context: Context) : MethodChannel.MethodC
             IntegrityErrorCode.PLAY_SERVICES_VERSION_OUTDATED -> "PLAY_SERVICES_VERSION_OUTDATED (-15)"
             IntegrityErrorCode.CLOUD_PROJECT_NUMBER_IS_INVALID -> "CLOUD_PROJECT_NUMBER_IS_INVALID (-16)"
             IntegrityErrorCode.CLIENT_TRANSIENT_ERROR -> "CLIENT_TRANSIENT_ERROR (-17)"
-            IntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID -> "INTEGRITY_TOKEN_PROVIDER_INVALID (-19)"
+            StandardIntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID -> "INTEGRITY_TOKEN_PROVIDER_INVALID (-19)"
             else -> "UNKNOWN_INTEGRITY_ERROR (${errorCode ?: -999})"
         }
 
