@@ -161,7 +161,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                           _buildSettingsCard(syncState, syncNotifier, theme, l10n),
                           const SizedBox(height: 16),
                           _buildTermsStatusCard(syncState, syncNotifier, theme, l10n),
-                          if (syncState.storageType != CloudSyncStorageType.localDirectory) ...[
+                          if (syncState.storageType == CloudSyncStorageType.firestore) ...[
                             const SizedBox(height: 16),
                             const SubscriptionPaywallCard(),
                           ],
@@ -837,7 +837,7 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                         final accepted = await _ensureTermsAccepted(notifier, theme, l10n);
                         if (!accepted) return;
                       }
-                      notifier.signIn();
+                      notifier.switchGoogleAccount();
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -902,7 +902,15 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ElevatedButton.icon(
-          onPressed: (state.loading || state.isSyncing) ? null : () => notifier.syncTwoWay(),
+          onPressed: (state.loading || state.isSyncing)
+              ? null
+              : () {
+                  if (isFirestore && !state.isSubscribed) {
+                    SubscriptionPaywallCard.showPaywallDialog(context);
+                    return;
+                  }
+                  notifier.syncTwoWay();
+                },
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
             backgroundColor: theme.colorScheme.primary,
@@ -1164,6 +1172,11 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
     CloudSyncNotifier notifier,
     AppLocalizations l10n,
   ) {
+    final syncState = ref.read(cloudSyncProvider);
+    if (syncState.storageType == CloudSyncStorageType.firestore && !syncState.isSubscribed) {
+      SubscriptionPaywallCard.showPaywallDialog(context);
+      return;
+    }
     final challengeController = TextEditingController();
     bool understoodRisk = false;
     bool isMatch = false;
