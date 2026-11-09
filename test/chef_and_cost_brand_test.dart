@@ -122,8 +122,8 @@ void main() {
       matching: find.byType(SvgPicture),
     ));
     stringLoader = svgPicture.bytesLoader as SvgStringLoader;
-    expect(stringLoader.provideSvg(null).contains('#6B3208'), isTrue,
-        reason: 'SVG should contain original baseColor #6B3208 when adaptToTheme is false');
+    expect(stringLoader.provideSvg(null).toLowerCase().contains('#6a4322'), isTrue,
+        reason: 'SVG should contain original baseColor #6A4322 when adaptToTheme is false');
   });
 
   testWidgets('ChefAndCostText renders "Chef", "&", and "Cost" on a single fitted line',

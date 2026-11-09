@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/recipe_utils.dart';
+import '../theme/app_theme.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError();
@@ -53,7 +54,7 @@ class SettingsState {
   factory SettingsState.initial() {
     return SettingsState(
       themeMode: ThemeMode.system,
-      seedColor: Colors.deepPurple,
+      seedColor: AppColors.primary,
       locale: const Locale('es'),
       decimalDigits: 2,
       fontSizeScale: 1.0,
@@ -130,7 +131,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
     final themeMode = ThemeMode.values[themeIndex];
 
     final seedColorValue = _prefs.getInt('seedColor');
-    final seedColor = seedColorValue != null ? Color(seedColorValue) : Colors.deepPurple;
+    final seedColor = seedColorValue != null ? Color(seedColorValue) : AppColors.primary;
 
     final lang = _prefs.getString('locale') ?? 'es';
     final locale = Locale(lang);
