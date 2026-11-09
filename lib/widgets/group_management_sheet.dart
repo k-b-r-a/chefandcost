@@ -198,6 +198,10 @@ class GroupManagementSheet extends ConsumerWidget {
                       final isSelected = activeGroup?.id == group.id;
                       final groupColor = parseGroupColor(group.colorHex);
                       final iconData = getGroupIconData(group.iconName);
+                      final groupDisplayName = (group.id == 'group_default_principal' &&
+                              (group.name == 'Principal' || group.name == 'Main'))
+                          ? l10n.group_default_name
+                          : group.name;
 
                       return Material(
                         color: isSelected
@@ -216,7 +220,7 @@ class GroupManagementSheet extends ConsumerWidget {
                             if (context.mounted) {
                               GooeyToast.showSuccess(
                                 context,
-                                message: l10n.group_switch_success(group.name),
+                                message: l10n.group_switch_success(groupDisplayName),
                                 duration: const Duration(seconds: 2),
                               );
                               Navigator.of(context).pop();
@@ -266,7 +270,7 @@ class GroupManagementSheet extends ConsumerWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        group.name,
+                                        groupDisplayName,
                                         style: theme.textTheme.titleMedium
                                             ?.copyWith(
                                               fontWeight: isSelected

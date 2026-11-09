@@ -19,9 +19,11 @@ class ActiveGroupChip extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     final allSpaces = ref.watch(activeGroupIdProvider) == kAllGroupsId;
-    final groupName =
-        activeGroup?.name ??
-        (allSpaces ? l10n.group_all_workspaces : l10n.group_default_name);
+    final groupName = (activeGroup?.id == 'group_default_principal' &&
+            (activeGroup?.name == 'Principal' || activeGroup?.name == 'Main'))
+        ? l10n.group_default_name
+        : (activeGroup?.name ??
+            (allSpaces ? l10n.group_all_workspaces : l10n.group_default_name));
     final groupColor = parseGroupColor(activeGroup?.colorHex);
     final groupIcon = allSpaces
         ? Icons.all_inclusive_rounded

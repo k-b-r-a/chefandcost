@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:drift/drift.dart' show Value;
 import '../utils/recipe_utils.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
+import '../database/database.dart';
+import 'database_provider.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError();
@@ -133,7 +137,24 @@ class SettingsNotifier extends Notifier<SettingsState> {
     final seedColorValue = _prefs.getInt('seedColor');
     final seedColor = seedColorValue != null ? Color(seedColorValue) : AppColors.primary;
 
-    final lang = _prefs.getString('locale') ?? 'es';
+    final savedLang = _prefs.getString('locale');
+    final String lang;
+    if (savedLang != null) {
+      lang = savedLang;
+    } else {
+      String detected = 'es';
+      try {
+        final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+        final deviceLang = deviceLocale.languageCode.toLowerCase();
+        final isSupported = AppLocalizations.supportedLocales.any(
+          (l) => l.languageCode.toLowerCase() == deviceLang,
+        );
+        if (isSupported) {
+          detected = deviceLang;
+        }
+      } catch (_) {}
+      lang = detected;
+    }
     final locale = Locale(lang);
 
     final decimalDigits = _prefs.getInt('decimalDigits') ?? 2;
@@ -191,6 +212,29 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setLocale(Locale newLocale) {
     _prefs.setString('locale', newLocale.languageCode);
     state = state.copyWith(locale: newLocale);
+    _updateDefaultGroupName(newLocale);
+  }
+
+  Future<void> _updateDefaultGroupName(Locale locale) async {
+    try {
+      final db = ref.read(databaseProvider);
+      final newName = lookupAppLocalizations(locale).group_default_name;
+      final principal = await (db.select(db.groups)
+            ..where((t) => t.id.equals('group_default_principal')))
+          .getSingleOrNull();
+      if (principal != null &&
+          (principal.name == 'Principal' || principal.name == 'Main') &&
+          principal.name != newName) {
+        await (db.update(db.groups)
+              ..where((t) => t.id.equals('group_default_principal')))
+            .write(
+          GroupsCompanion(
+            name: Value(newName),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+      }
+    } catch (_) {}
   }
 
   void setDecimalDigits(int digits) {

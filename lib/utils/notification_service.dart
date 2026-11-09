@@ -26,9 +26,9 @@ class NotificationService {
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const darwinSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const initSettings = InitializationSettings(
@@ -51,16 +51,47 @@ class NotificationService {
         onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
 
-      final androidImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
-      if (androidImplementation != null) {
-        await androidImplementation.requestNotificationsPermission();
-      }
-
       _initialized = true;
     } catch (e) {
       debugPrint('Error initializing NotificationService: $e');
     }
+  }
+
+  /// Requests notification permission on supported mobile platforms (Android 13+ and iOS).
+  /// Safe to call anywhere after the UI has loaded without freezing or showing a black screen.
+  Future<bool> requestPermission() async {
+    if (kIsWeb) return false;
+    await initialize();
+    try {
+      final androidImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImplementation != null) {
+        final granted = await androidImplementation.requestNotificationsPermission();
+        return granted ?? false;
+      }
+
+      final darwinImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>();
+      if (darwinImplementation != null) {
+        final granted = await darwinImplementation.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        return granted ?? false;
+      }
+    } catch (e) {
+      debugPrint('Error requesting notification permission: $e');
+    }
+    return false;
+  }
+
+  /// Alias for [requestPermission] for backward compatibility.
+  Future<bool?> requestNotificationsPermission() => requestPermission();
+
+  @visibleForTesting
+  void resetForTesting() {
+    _initialized = false;
   }
 
   Future<void> showTimerFinishedNotification({

@@ -342,7 +342,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     _currentRecipePk = widget.recipeId;
     if (widget.recipeId == null) {
       final active = ref.read(activeGroupProvider);
-      if (active != null) _selectedSpaceIds.add(active.id);
+      if (active != null) {
+        _selectedSpaceIds.add(active.id);
+      } else {
+        final groups = ref.read(groupsStreamProvider).asData?.value ?? [];
+        final defaultSpace = groups.where((g) => !g.isDeleted).firstOrNull;
+        if (defaultSpace != null) {
+          _selectedSpaceIds.add(defaultSpace.id);
+        }
+      }
     }
     _tutorialCompletedListener = () {
       if (!mounted) return;
@@ -4358,11 +4366,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: activeSpaces
-                  .map(
-                    (space) => Padding(
+                  .map((space) {
+                    final spaceName = (space.id == 'group_default_principal' &&
+                            (space.name == 'Principal' || space.name == 'Main'))
+                        ? l10n.group_default_name
+                        : space.name;
+                    return Padding(
                       padding: const EdgeInsetsDirectional.only(end: 6),
                       child: FilterChip(
-                        tooltip: space.name,
+                        tooltip: spaceName,
                         visualDensity: VisualDensity.compact,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -4370,7 +4382,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         label: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 160),
                           child: Text(
-                            space.name,
+                            spaceName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -4384,8 +4396,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           }
                         }),
                       ),
-                    ),
-                  )
+                    );
+                  })
                   .toList(),
             ),
           ),
