@@ -269,6 +269,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) async {
+        // Safely request notification permission after the first frame has rendered,
+        // preventing UI lockups and black screens on denied permissions during first open.
+        await NotificationService().requestPermission();
+        if (!mounted) return;
+
         _initTutorialTimer?.cancel();
         _initTutorialTimer = Timer(const Duration(milliseconds: 600), () {
           if (mounted) {
