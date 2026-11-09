@@ -1941,6 +1941,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 cocktail: _selectedCategory == RecipeCategory.cocteleria,
               )
             : null;
+        final isCocktail = _selectedCategory == RecipeCategory.cocteleria;
+        final isVolume = UnitUtils.isVolume(sourceUnit?.category);
         final data = RecipeIngredientData(
           ingredient: effectiveIng,
           initialAmount: RecipeUtils.formatQuantity(
@@ -1948,6 +1950,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           ),
           sourceUnit: sourceUnit,
           targetUnit: targetUnit,
+          maxDecimalDigits: (isCocktail && isVolume) ? 2 : null,
+          preferFraction: isCocktail && isVolume,
         );
         data.amountController.addListener(_calculateSummary);
         _ingredients.add(data);
@@ -3616,10 +3620,27 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                       fontSize: 12.5,
                       color: numberColor,
                     ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
+                    decoration: InputDecoration(
+                      border: const UnderlineInputBorder(),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.outlineVariant
+                              .withValues(alpha: 0.7),
+                        ),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      disabledBorder: InputBorder.none,
+                      filled: false,
                       isDense: true,
-                      contentPadding: EdgeInsets.zero,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 2,
+                        horizontal: 0,
+                      ),
                     ),
                     onTap: () {
                       if (controller.text.isNotEmpty) {
@@ -3757,6 +3778,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         ),
                         decoration: const InputDecoration(
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          filled: false,
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
                         ),
@@ -4280,68 +4305,157 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     );
   }
 
+  void _selectCategory(RecipeCategory category) {
+    if (_selectedCategory == category) return;
+    final previousCategory = _selectedCategory;
+    setState(() {
+      _selectedCategory = category;
+      final units = ref.read(unitsProvider).value ?? [];
+      final settings = ref.read(settingsProvider);
+      final wasCocktail = previousCategory == RecipeCategory.cocteleria;
+      final isCocktail = _selectedCategory == RecipeCategory.cocteleria;
+
+      for (var i = 0; i < _ingredients.length; i++) {
+        final previous = _ingredients[i];
+        final source = previous.sourceUnit;
+        if (source == null) continue;
+        final isVolume = UnitUtils.isVolume(source.category);
+        final targetUnit = UnitUtils.getTargetUnit(
+          source,
+          units,
+          settings,
+          cocktail: isCocktail,
+        );
+        final shouldRoundMax2 = isVolume && (wasCocktail || isCocktail);
+        final replacement = RecipeIngredientData(
+          ingredient: previous.ingredient,
+          initialAmount: shouldRoundMax2
+              ? RecipeUtils.formatQuantity(previous.amount, maxDecimalDigits: 2)
+              : previous.amount.toString(),
+          sourceUnit: source,
+          targetUnit: targetUnit,
+          maxDecimalDigits: shouldRoundMax2 ? 2 : null,
+          preferFraction: isCocktail && isVolume,
+        );
+        previous.amountController.removeListener(_calculateSummary);
+        previous.amountController.dispose();
+        replacement.amountController.addListener(_calculateSummary);
+        _ingredients[i] = replacement;
+      }
+      _calculateSummary();
+    });
+  }
+
   Widget _buildCategorySelectorCard(ThemeData theme, AppLocalizations l10n) {
-    return SingleChildScrollView(
-      key: const ValueKey('recipe_category_scroll'),
-      scrollDirection: Axis.horizontal,
-      child: SegmentedButton<RecipeCategory>(
-        showSelectedIcon: false,
-        style: const ButtonStyle(
-          visualDensity: VisualDensity.compact,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          padding: WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    final isDark = theme.brightness == Brightness.dark;
+    const categories = RecipeCategory.values;
+
+    Widget buildPill(RecipeCategory cat) {
+      final isSelected = _selectedCategory == cat;
+
+      final Color chipBg;
+      final Color chipBorder;
+      final Color chipFg;
+
+      if (isSelected) {
+        chipBg = isDark
+            ? cat.color.withValues(alpha: 0.28)
+            : cat.containerColor;
+        chipBorder = cat.color;
+        chipFg = isDark ? Colors.white : cat.onContainerColor;
+      } else {
+        chipBg = theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.4,
+        );
+        chipBorder = theme.colorScheme.outlineVariant.withValues(
+          alpha: 0.25,
+        );
+        chipFg = theme.colorScheme.onSurfaceVariant;
+      }
+
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: ValueKey('recipe_category_${cat.name}'),
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _selectCategory(cat),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: chipBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: chipBorder,
+                width: isSelected ? 1.5 : 1.0,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: cat.color.withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(cat.icon, size: 18, color: chipFg),
+                    const SizedBox(width: 6),
+                    Text(
+                      cat.localizedName(l10n),
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: chipFg,
+                      ),
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
-        segments: [
-          ButtonSegment<RecipeCategory>(
-            value: RecipeCategory.cocina,
-            label: Text(l10n.category_cocina),
-            icon: Icon(RecipeCategory.cocina.icon, size: 16),
-          ),
-          ButtonSegment<RecipeCategory>(
-            value: RecipeCategory.pasteleria,
-            label: Text(l10n.category_pasteleria),
-            icon: Icon(RecipeCategory.pasteleria.icon, size: 16),
-          ),
-          ButtonSegment<RecipeCategory>(
-            value: RecipeCategory.cocteleria,
-            label: Text(l10n.category_cocteleria),
-            icon: Icon(RecipeCategory.cocteleria.icon, size: 16),
-          ),
-        ],
-        selected: {_selectedCategory},
-        onSelectionChanged: (newSelection) {
-          if (newSelection.isNotEmpty) {
-            setState(() {
-              _selectedCategory = newSelection.first;
-              final units = ref.read(unitsProvider).value ?? [];
-              final settings = ref.read(settingsProvider);
-              for (var i = 0; i < _ingredients.length; i++) {
-                final previous = _ingredients[i];
-                final source = previous.sourceUnit;
-                if (source == null) continue;
-                final replacement = RecipeIngredientData(
-                  ingredient: previous.ingredient,
-                  initialAmount: previous.amount.toString(),
-                  sourceUnit: source,
-                  targetUnit: UnitUtils.getTargetUnit(
-                    source,
-                    units,
-                    settings,
-                    cocktail: _selectedCategory == RecipeCategory.cocteleria,
-                  ),
-                );
-                previous.amountController.removeListener(_calculateSummary);
-                previous.amountController.dispose();
-                replacement.amountController.addListener(_calculateSummary);
-                _ingredients[i] = replacement;
-              }
-              _calculateSummary();
-            });
-          }
-        },
-      ),
+      );
+    }
+
+    return LayoutBuilder(
+      key: const ValueKey('recipe_category_scroll'),
+      builder: (context, constraints) {
+        final useRow = constraints.maxWidth >= 280;
+        if (useRow) {
+          return Row(
+            children: [
+              for (int i = 0; i < categories.length; i++) ...[
+                if (i > 0) const SizedBox(width: 8),
+                Expanded(child: buildPill(categories[i])),
+              ],
+            ],
+          );
+        }
+
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final cat in categories)
+              SizedBox(
+                width: constraints.maxWidth,
+                child: buildPill(cat),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -4460,6 +4574,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 style: theme.textTheme.bodyMedium,
                 decoration: InputDecoration(
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  filled: false,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
                   hintText: l10n.recipe_description_hint,
@@ -5358,6 +5476,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    filled: false,
                   ),
                 ),
               ),
@@ -5686,6 +5808,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   Widget _buildEmptyPlaceholder(String message, IconData icon) {
     final theme = Theme.of(context);
     return Container(
+      width: double.infinity,
+      alignment: Alignment.center,
       padding: const EdgeInsets.all(40.0),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
@@ -5695,6 +5819,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, size: 48, color: theme.colorScheme.outline),
           const SizedBox(height: 12),
@@ -6519,10 +6645,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 4,
+                        runSpacing: 2,
                         children: [
                           SizedBox(
-                            width: 70,
+                            width: 54,
                             child: TextField(
                               controller: data.amountController,
                               onChanged: (_) => _calculateSummary(),
@@ -6534,9 +6663,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                 );
                               },
                               keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                  _selectedCategory == RecipeCategory.cocteleria
+                                      ? TextInputType.text
+                                      : const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
                               textInputAction: TextInputAction.done,
                               onEditingComplete: () {
                                 FocusScope.of(context).unfocus();
@@ -6583,6 +6714,27 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          if (_selectedCategory == RecipeCategory.cocteleria &&
+                              (unitSymbol.toLowerCase() == 'oz' ||
+                                  unitSymbol.toLowerCase() == 'fl oz')) ...[
+                            ListenableBuilder(
+                              listenable: data.amountController,
+                              builder: (context, _) {
+                                final ozVal = RecipeUtils.parseFormattedNumber(
+                                  data.amountController.text,
+                                );
+                                if (ozVal <= 0) return const SizedBox.shrink();
+                                final mlVal = RecipeUtils.cocktailOzToMl(ozVal);
+                                return Text(
+                                  '(${RecipeUtils.formatQuantity(mlVal, maxDecimalDigits: 1)} ml)',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -6841,6 +6993,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               decoration: InputDecoration(
                 hintText: l10n.step_instruction_hint,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                filled: false,
                 contentPadding: const EdgeInsets.only(bottom: 24, top: 4),
               ),
               onChanged: (value) {
@@ -6875,11 +7031,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 )
               : null;
 
+          final isCocktail = _selectedCategory == RecipeCategory.cocteleria;
+          final isVolume = UnitUtils.isVolume(sourceUnit?.category);
           final data = RecipeIngredientData(
             ingredient: ing,
             initialAmount: RecipeUtils.formatQuantity(amountInSource),
             sourceUnit: sourceUnit,
             targetUnit: targetUnit,
+            maxDecimalDigits: (isCocktail && isVolume) ? 2 : null,
+            preferFraction: isCocktail && isVolume,
           );
           data.amountController.addListener(_calculateSummary);
           _ingredients.add(data);
@@ -6998,6 +7158,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 runSpacing: 12,
                 children: _recipeTimers.map((timerData) {
                   return Container(
+                    width: constraints.maxWidth > 500
+                        ? (constraints.maxWidth / 2 - 12)
+                        : constraints.maxWidth,
                     constraints: BoxConstraints(
                       maxWidth: constraints.maxWidth > 500
                           ? (constraints.maxWidth / 2 - 12)

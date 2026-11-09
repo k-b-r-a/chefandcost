@@ -84,7 +84,7 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      SharedPreferences.setMockInitialValues({'navBarSize': 'normal'});
+      SharedPreferences.setMockInitialValues({'locale': 'es', 'navBarSize': 'normal'});
       final prefs = await SharedPreferences.getInstance();
 
       await tester.pumpWidget(

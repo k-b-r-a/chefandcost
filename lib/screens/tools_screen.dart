@@ -27,6 +27,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isWide = MediaQuery.sizeOf(context).width >= 640;
 
     return Scaffold(
       body: CustomScrollView(
@@ -38,7 +39,12 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
             controller: _scrollController,
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding: EdgeInsets.fromLTRB(
+              20.0,
+              16.0,
+              20.0,
+              isWide ? 16.0 : (100.0 + MediaQuery.paddingOf(context).bottom),
+            ),
             sliver: SliverList.separated(
               itemCount: 3,
               separatorBuilder: (context, index) => const SizedBox(height: 12),

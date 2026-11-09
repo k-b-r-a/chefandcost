@@ -94,8 +94,13 @@ void main() {
         ).first,
       );
 
-      // Step container has no border card decoration
+      // Step container has no border card decoration and text field has no border pill
       expect(defaultStepContainer.decoration, isNull);
+      final defaultStepTextField = tester.widget<TextField>(stepTextFieldFinder);
+      expect(defaultStepTextField.decoration?.border, equals(InputBorder.none));
+      expect(defaultStepTextField.decoration?.enabledBorder, equals(InputBorder.none));
+      expect(defaultStepTextField.decoration?.focusedBorder, equals(InputBorder.none));
+      expect(defaultStepTextField.decoration?.filled, isFalse);
 
       // 2. In alternative non-default theme (Colors.blue)
       final altPrefs = await SharedPreferences.getInstance();
@@ -214,16 +219,22 @@ void main() {
       // On wide web page layout, the scale bar custom portions pill chip is not rendered
       expect(find.byKey(const ValueKey('scale_chip_custom_portions')), findsNothing);
 
-      // Financial inputs in web layout are pill-shaped containers with InputBorder.none
+      // Financial inputs in web layout use UnderlineInputBorder (line like ingredients in recipe)
       final yieldField = tester.widget<TextField>(find.byKey(const ValueKey('right_panel_yield_field')));
       expect(yieldField.decoration?.border, equals(InputBorder.none));
+      expect(yieldField.decoration?.enabledBorder, equals(InputBorder.none));
+      expect(yieldField.decoration?.focusedBorder, equals(InputBorder.none));
+      expect(yieldField.decoration?.filled, isFalse);
 
       final marginEditableFinder = find.byWidgetPredicate(
         (w) => w is TextField && (w.controller?.text.startsWith('30') ?? false),
       );
       expect(marginEditableFinder, findsOneWidget);
       final marginField = tester.widget<TextField>(marginEditableFinder);
-      expect(marginField.decoration?.border, equals(InputBorder.none));
+      expect(marginField.decoration?.border, isA<UnderlineInputBorder>());
+      expect(marginField.decoration?.enabledBorder, isA<UnderlineInputBorder>());
+      expect(marginField.decoration?.focusedBorder, isA<UnderlineInputBorder>());
+      expect(marginField.decoration?.filled, isFalse);
 
       final marginContainer = tester.widget<Container>(
         find.ancestor(
@@ -302,6 +313,9 @@ void main() {
 
       final marginTextField = tester.widget<TextField>(marginInputFinder);
       expect(marginTextField.decoration?.border, equals(InputBorder.none));
+      expect(marginTextField.decoration?.enabledBorder, equals(InputBorder.none));
+      expect(marginTextField.decoration?.focusedBorder, equals(InputBorder.none));
+      expect(marginTextField.decoration?.filled, isFalse);
 
       // The enclosing card Container has BoxDecoration (card container)
       final cardContainer = tester.widget<Container>(

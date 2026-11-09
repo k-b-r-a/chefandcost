@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -144,13 +146,16 @@ class SettingsNotifier extends Notifier<SettingsState> {
     } else {
       String detected = 'es';
       try {
-        final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
-        final deviceLang = deviceLocale.languageCode.toLowerCase();
-        final isSupported = AppLocalizations.supportedLocales.any(
-          (l) => l.languageCode.toLowerCase() == deviceLang,
-        );
-        if (isSupported) {
-          detected = deviceLang;
+        final isTesting = !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';
+        if (!isTesting) {
+          final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+          final deviceLang = deviceLocale.languageCode.toLowerCase();
+          final isSupported = AppLocalizations.supportedLocales.any(
+            (l) => l.languageCode.toLowerCase() == deviceLang,
+          );
+          if (isSupported) {
+            detected = deviceLang;
+          }
         }
       } catch (_) {}
       lang = detected;

@@ -21,6 +21,8 @@ class RecipeIngredientData {
     this.targetUnit,
     String? initialTargetAmount,
     TextEditingController? customController,
+    int? maxDecimalDigits,
+    bool preferFraction = false,
   }) : amountController =
            customController ??
            TextEditingController(
@@ -28,14 +30,22 @@ class RecipeIngredientData {
                  ? (initialTargetAmount.isEmpty
                        ? ''
                        : RecipeUtils.cleanTrailingZeros(initialTargetAmount))
-                 : _getInitialAmountText(initialAmount, sourceUnit, targetUnit),
+                 : _getInitialAmountText(
+                     initialAmount,
+                     sourceUnit,
+                     targetUnit,
+                     maxDecimalDigits: maxDecimalDigits,
+                     preferFraction: preferFraction,
+                   ),
            );
 
   static String _getInitialAmountText(
     String initialAmount,
     Unit? source,
-    Unit? target,
-  ) {
+    Unit? target, {
+    int? maxDecimalDigits,
+    bool preferFraction = false,
+  }) {
     final parsed = RecipeUtils.parseFormattedNumber(initialAmount);
     if (parsed == 0.0) return RecipeUtils.cleanTrailingZeros(initialAmount);
     if (source != null &&
@@ -46,8 +56,37 @@ class RecipeIngredientData {
           source.factorToBase != target.factorToBase) {
         final valueInBase = parsed * source.factorToBase;
         final valueInTarget = valueInBase / target.factorToBase;
-        return RecipeUtils.formatQuantity(valueInTarget);
+        final isTargetOz =
+            UnitUtils.isVolume(target.category) &&
+            (target.name == 'unit_fluid_ounces' ||
+                target.symbol.toLowerCase() == 'oz');
+        if (preferFraction && isTargetOz) {
+          return RecipeUtils.formatCocktailOunces(valueInTarget);
+        }
+        final isOzConversion =
+            UnitUtils.isVolume(source.category) &&
+            ((source.name == 'unit_fluid_ounces' ||
+                    source.symbol.toLowerCase() == 'oz') ||
+                isTargetOz);
+        final digits = maxDecimalDigits ?? (isOzConversion ? 2 : 4);
+        return RecipeUtils.formatQuantity(
+          valueInTarget,
+          maxDecimalDigits: digits,
+        );
       }
+    }
+    final isTargetOz =
+        UnitUtils.isVolume(target?.category) &&
+        (target?.name == 'unit_fluid_ounces' ||
+            target?.symbol.toLowerCase() == 'oz');
+    if (preferFraction && isTargetOz) {
+      return RecipeUtils.formatCocktailOunces(parsed);
+    }
+    if (maxDecimalDigits != null) {
+      return RecipeUtils.formatQuantity(
+        parsed,
+        maxDecimalDigits: maxDecimalDigits,
+      );
     }
     return RecipeUtils.cleanTrailingZeros(initialAmount);
   }
@@ -294,6 +333,52 @@ class RecipeUtils {
       }
     }
     return formatQuantity(value);
+  }
+
+  /// Formats cocktail ounce values cleanly into fraction strings (e.g. "1", "1/2", "1/4", "1 1/2", "1 1/4", "1 3/4", "2")
+  /// by rounding to the nearest 1/4 ounce fraction without decimals.
+  static String formatCocktailOunces(num valueInOz) {
+    if (valueInOz <= 0) return '0';
+    final quarters = (valueInOz * 4).round();
+    if (quarters == 0) return '1/4';
+
+    final whole = quarters ~/ 4;
+    final rem = quarters % 4;
+
+    if (rem == 0) {
+      return whole.toString();
+    }
+
+    final String frac;
+    switch (rem) {
+      case 1:
+        frac = '1/4';
+        break;
+      case 2:
+        frac = '1/2';
+        break;
+      case 3:
+        frac = '3/4';
+        break;
+      default:
+        frac = '';
+    }
+
+    if (whole == 0) {
+      return frac;
+    }
+    return '$whole $frac';
+  }
+
+  /// Converts fluid ounces to milliliters using standard cocktail bar measurements
+  /// (1 oz = 30 ml, 1/2 oz = 15 ml, 1/4 oz = 7.5 ml, 3/4 oz = 22.5 ml, etc.).
+  static double cocktailOzToMl(double oz) {
+    if (oz <= 0) return 0.0;
+    final quarters = (oz * 4).round();
+    if ((oz - quarters / 4.0).abs() < 0.01) {
+      return quarters * 7.5;
+    }
+    return oz * 29.5735295625;
   }
 
   /// Strips redundant decimal places and unnecessary trailing zeros from a numeric string.
