@@ -135,24 +135,14 @@ class FirestoreSyncService {
 
   /// Checks if the user has an owner-granted or lifetime entitlement in Firestore.
   /// Looks up:
-  /// 1. [kVipUserIds] and [kVipEmails] defined in constants.dart
-  /// 2. Firestore `entitlements/{uid}` and `entitlements/{email}`
-  /// 3. Firestore `users/{uid}` document (`hasLifetimeSubscription` / `isSubscribed`)
+  /// 1. Firestore `entitlements/{uid}` and `entitlements/{email}`
+  /// 2. Firestore `users/{uid}` document (`hasLifetimeSubscription` / `isSubscribed`)
   Future<({bool isGranted, String plan})> checkRemoteEntitlement({
     String? uid,
     String? email,
   }) async {
     final activeUid = uid ?? await getActiveUserId();
     final activeEmail = email ?? authCurrentUser?.email;
-
-    // 1. Check local VIP constant lists
-    if (activeUid != null && kVipUserIds.contains(activeUid)) {
-      return (isGranted: true, plan: kLifetimeSubscriptionId);
-    }
-    if (activeEmail != null &&
-        kVipEmails.contains(activeEmail.toLowerCase().trim())) {
-      return (isGranted: true, plan: kLifetimeSubscriptionId);
-    }
 
     if (!isConfigured || activeUid == null || activeUid.isEmpty) {
       return (isGranted: false, plan: '');
