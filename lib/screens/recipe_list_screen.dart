@@ -294,7 +294,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                       return Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 860),
-                          child: const InlineAdCard(style: InlineAdCardStyle.recipe),
+                          child: InlineAdCard(
+                            key: ValueKey('ad_recipe_slot_$visualIndex'),
+                            style: InlineAdCardStyle.recipe,
+                          ),
                         ),
                       );
                     }

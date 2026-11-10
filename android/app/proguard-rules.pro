@@ -39,3 +39,10 @@
 -keep class com.google.android.libraries.identity.googleid.** { *; }
 -keep class com.google.android.gms.auth.api.signin.** { *; }
 -keep class com.google.android.gms.common.api.** { *; }
+
+# Drift & SQLite native bindings (prevent stripping during R8 minification)
+-keep class org.sqlite.** { *; }
+-keep class com.simonbinder.sqlite3_flutter_libs.** { *; }
+-keep class androidx.sqlite.db.** { *; }
+-dontwarn org.sqlite.**
+-dontwarn com.simonbinder.sqlite3_flutter_libs.**

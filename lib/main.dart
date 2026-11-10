@@ -41,12 +41,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'utils/notification_service.dart';
+import 'utils/audio_alarm_service.dart';
+
+void _runDeferredInitializations() {
+  // Post-frame non-critical initializations unblock the UI thread and achieve sub-second first-frame paint
+  unawaited(NotificationService().init());
+  unawaited(AdService.initialize());
+  unawaited(AudioAlarmService().init());
+  unawaited(GoogleSignInInitializer.ensureInitialized());
+  unawaited(PlayIntegrityService.prepareTokenProvider());
+}
 
 void main([List<String> args = const []]) async {
   WidgetsFlutterBinding.ensureInitialized();
   final sharedPreferences = await SharedPreferences.getInstance();
-  await NotificationService().initialize();
-  await AdService.initialize();
 
   // If launched with a .chefy file path (e.g. Windows double-click), stage it for import
   for (final arg in args) {
@@ -74,9 +82,10 @@ void main([List<String> args = const []]) async {
     debugPrint('Firebase initialization notice: $e');
   }
 
-  unawaited(GoogleSignInInitializer.ensureInitialized());
-  // Pre-warm Google Play Standard Integrity token provider in background
-  unawaited(PlayIntegrityService.prepareTokenProvider());
+  // Defer heavy native IPC & background warmup until after the initial frame paints
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _runDeferredInitializations();
+  });
 
   runApp(
     ProviderScope(

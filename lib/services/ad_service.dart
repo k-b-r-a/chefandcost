@@ -8,10 +8,14 @@ class AdService {
 
   static bool? debugIsSupportedPlatform;
   static bool _isInitialized = false;
+  static bool _isAppMuted = true;
   static RewardedAd? _preloadedRewardedAd;
   static bool _isPreloadingRewardedAd = false;
   static int _rewardedRetryAttempt = 0;
   static const int _maxRewardedRetryAttempts = 3;
+
+  /// Indicates whether the global ad audio is currently muted (true for banner ads, false only during rewarded ads)
+  static bool get isAppMuted => _isAppMuted;
 
   static final ValueNotifier<bool> rewardedAdReadyNotifier = ValueNotifier<bool>(false);
 
@@ -100,6 +104,30 @@ class AdService {
   /// when using production ad unit IDs.
   static List<String> testDeviceIds = <String>[];
 
+  /// Enforces muted audio for banner and inline ads across the application.
+  static Future<void> muteBannerAds() async {
+    _isAppMuted = true;
+    if (!_canInvokeNativeAdMob) return;
+    try {
+      await MobileAds.instance.setAppMuted(true);
+      await MobileAds.instance.setAppVolume(0.0);
+    } catch (e) {
+      debugPrint('Error muting banner ads: $e');
+    }
+  }
+
+  /// Enables audio specifically for full-screen rewarded video ads.
+  static Future<void> enableRewardedAdAudio() async {
+    _isAppMuted = false;
+    if (!_canInvokeNativeAdMob) return;
+    try {
+      await MobileAds.instance.setAppMuted(false);
+      await MobileAds.instance.setAppVolume(1.0);
+    } catch (e) {
+      debugPrint('Error enabling rewarded ad audio: $e');
+    }
+  }
+
   /// Safe initialization that is guaranteed never to invoke native AdMob channels
   /// on Web, desktop, or Flutter test environments.
   static Future<void> initialize() async {
@@ -111,6 +139,8 @@ class AdService {
           RequestConfiguration(testDeviceIds: testDeviceIds),
         );
       }
+      // Ensure banner ads are never allowed to emit audio (only reward ads unmute)
+      await muteBannerAds();
       _isInitialized = true;
       preloadRewardedAd();
     } catch (e) {
@@ -163,11 +193,13 @@ class AdService {
     required void Function() onUserEarnedReward,
     void Function(String error)? onAdFailed,
     required Completer<bool> completer,
-  }) {
+  }) async {
     bool rewardEarned = false;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (RewardedAd ad) {
         ad.dispose();
+        // Immediately restore muted state so banners and inline ads never play sound
+        unawaited(muteBannerAds());
         preloadRewardedAd();
         if (!completer.isCompleted) {
           completer.complete(rewardEarned);
@@ -175,6 +207,8 @@ class AdService {
       },
       onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
         ad.dispose();
+        // Immediately restore muted state if rewarded ad fails to show
+        unawaited(muteBannerAds());
         preloadRewardedAd();
         onAdFailed?.call(error.message);
         if (!completer.isCompleted) {
@@ -182,6 +216,9 @@ class AdService {
         }
       },
     );
+
+    // Unmute exclusively for the full-screen rewarded video ad
+    await enableRewardedAdAudio();
 
     ad.show(
       onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
@@ -277,6 +314,8 @@ class AdService {
     required void Function() onAdLoaded,
     required void Function(LoadAdError error) onAdFailedToLoad,
   }) {
+    // Strictly guarantee sound is silenced for banner ads
+    unawaited(muteBannerAds());
     if (!_canInvokeNativeAdMob) return null;
     return BannerAd(
       adUnitId: bannerAdUnitId,
@@ -298,11 +337,18 @@ class AdService {
     required void Function(NativeAd ad) onAdLoaded,
     required void Function(LoadAdError error) onAdFailedToLoad,
   }) {
+    // Strictly guarantee sound is silenced for native/banner cards
+    unawaited(muteBannerAds());
     if (!_canInvokeNativeAdMob) return null;
     return NativeAd(
       adUnitId: nativeAdUnitId,
       request: const AdRequest(),
       nativeTemplateStyle: nativeTemplateStyle,
+      nativeAdOptions: NativeAdOptions(
+        videoOptions: VideoOptions(
+          startMuted: true,
+        ),
+      ),
       listener: NativeAdListener(
         onAdLoaded: (ad) => onAdLoaded(ad as NativeAd),
         onAdFailedToLoad: (ad, error) {

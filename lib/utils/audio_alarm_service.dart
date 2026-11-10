@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -14,6 +15,18 @@ class AudioAlarmService {
   bool _isPlaying = false;
 
   bool get isPlaying => _isPlaying;
+
+  /// Warm up player instance in background during deferred startup
+  Future<void> init() async {
+    if (kIsWeb) return;
+    try {
+      // Avoid calling native audio channel when running in flutter test
+      if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+      _player ??= AudioPlayer();
+    } catch (e) {
+      debugPrint('AudioAlarmService init error: $e');
+    }
+  }
 
   Future<void> playAlarm() async {
     if (_isPlaying) return;

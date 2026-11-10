@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'audio_alarm_service.dart';
@@ -17,11 +18,20 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
+  /// Convenience alias for initialize() for uniform deferred init calling
+  Future<void> init() => initialize();
+
   Future<void> initialize() async {
     if (kIsWeb) {
       _initialized = true;
       return;
     }
+    try {
+      if (Platform.environment.containsKey('FLUTTER_TEST')) {
+        _initialized = true;
+        return;
+      }
+    } catch (_) {}
     if (_initialized) return;
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');

@@ -29,10 +29,15 @@ class InlineAdCard extends ConsumerStatefulWidget {
   ConsumerState<InlineAdCard> createState() => _InlineAdCardState();
 }
 
-class _InlineAdCardState extends ConsumerState<InlineAdCard> {
+class _InlineAdCardState extends ConsumerState<InlineAdCard>
+    with AutomaticKeepAliveClientMixin {
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
   bool _isLoading = false;
+  bool _loadFailed = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -45,7 +50,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
     final adState = ref.read(adProvider);
     final monetization = ref.read(monetizationProvider);
     if (adState.isAdFree || monetization.isAdFree) return;
-    if (_bannerAd != null || _isLoading) return;
+    if (_bannerAd != null || _isLoading || _loadFailed) return;
 
     _isLoading = true;
     _bannerAd = AdService.createBannerAd(
@@ -54,6 +59,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
           setState(() {
             _isAdLoaded = true;
             _isLoading = false;
+            _loadFailed = false;
           });
         }
       },
@@ -64,6 +70,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
             _bannerAd = null;
             _isAdLoaded = false;
             _isLoading = false;
+            _loadFailed = true;
           });
         }
       },
@@ -77,6 +84,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
     _bannerAd = null;
     _isAdLoaded = false;
     _isLoading = false;
+    _loadFailed = false;
   }
 
   @override
@@ -87,22 +95,24 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     // Listen for ad-free state updates to dismiss ad immediately
-    ref.listen<AdState>(adProvider, (previous, next) {
-      if (next.isAdFree && _bannerAd != null) {
+    ref.listen<bool>(adProvider.select((s) => s.isAdFree), (previous, next) {
+      if (next && _bannerAd != null) {
         setState(() {
           _disposeAd();
         });
-      } else if (!next.isAdFree && _bannerAd == null && !_isLoading) {
+      } else if (!next && _bannerAd == null && !_isLoading && !_loadFailed) {
         _loadAdIfNeeded();
       }
     });
-    ref.listen<MonetizationState>(monetizationProvider, (previous, next) {
-      if (next.isAdFree && _bannerAd != null) {
+    ref.listen<bool>(monetizationProvider.select((s) => s.isAdFree), (previous, next) {
+      if (next && _bannerAd != null) {
         setState(() {
           _disposeAd();
         });
-      } else if (!next.isAdFree && _bannerAd == null && !_isLoading) {
+      } else if (!next && _bannerAd == null && !_isLoading && !_loadFailed) {
         _loadAdIfNeeded();
       }
     });
@@ -111,15 +121,15 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
       return const SizedBox.shrink();
     }
 
-    final adState = ref.watch(adProvider);
+    final isAdFree = ref.watch(adProvider.select((s) => s.isAdFree));
     final isMonetizationAdFree =
         ref.watch(monetizationProvider.select((s) => s.isAdFree));
-    if (adState.isAdFree || isMonetizationAdFree || !_isAdLoaded || _bannerAd == null) {
+    if (isAdFree || isMonetizationAdFree || _loadFailed) {
       return const SizedBox.shrink();
     }
 
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isRecipe = widget.style == InlineAdCardStyle.recipe;
     final primaryColor = isRecipe ? theme.colorScheme.primary : theme.colorScheme.secondary;
     final borderRadius = BorderRadius.circular(isRecipe ? 16 : 14);
@@ -169,8 +179,8 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
                               Flexible(
                                 child: Text(
                                   isRecipe
-                                      ? l10n.ad_sponsored_recipe
-                                      : l10n.ad_sponsored_ingredient,
+                                      ? (l10n?.ad_sponsored_recipe ?? 'Sponsored Recipe')
+                                      : (l10n?.ad_sponsored_ingredient ?? 'Sponsored Ingredient'),
                                   style: theme.textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
@@ -187,7 +197,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  l10n.ad_sponsored_label,
+                                  l10n?.ad_sponsored_label ?? 'AD',
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700,
@@ -200,7 +210,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            l10n.ad_card_subtitle,
+                            l10n?.ad_card_subtitle ?? 'Chef&Cost • Watch pass to remove',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                               fontSize: 10.5,
@@ -253,10 +263,17 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard> {
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       alignment: Alignment.center,
-                      width: _bannerAd!.size.width.toDouble(),
-                      height: _bannerAd!.size.height.toDouble(),
+                      width: _bannerAd?.size.width.toDouble() ?? 320.0,
+                      height: _bannerAd?.size.height.toDouble() ?? 50.0,
                       color: theme.colorScheme.surface,
-                      child: AdWidget(ad: _bannerAd!),
+                      child: (_isAdLoaded && _bannerAd != null)
+                          ? RepaintBoundary(
+                              child: AdWidget(ad: _bannerAd!),
+                            )
+                          : SizedBox(
+                              width: _bannerAd?.size.width.toDouble() ?? 320.0,
+                              height: _bannerAd?.size.height.toDouble() ?? 50.0,
+                            ),
                     ),
                   ),
                 ),
