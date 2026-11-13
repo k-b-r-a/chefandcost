@@ -103,6 +103,11 @@ android {
 }
 
 dependencies {
+    implementation("androidx.core:core-ktx:1.16.0")
+    implementation("androidx.activity:activity-ktx:1.10.1")
+    implementation("androidx.fragment:fragment-ktx:1.8.6")
+    implementation("androidx.window:window:1.5.0")
+    implementation("androidx.window:window-java:1.5.0")
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 

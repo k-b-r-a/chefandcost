@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
 import 'provider/database_provider.dart';
@@ -54,6 +55,7 @@ void _runDeferredInitializations() {
 
 void main([List<String> args = const []]) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   final sharedPreferences = await SharedPreferences.getInstance();
 
   // If launched with a .chefy file path (e.g. Windows double-click), stage it for import
