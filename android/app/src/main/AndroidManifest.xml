@@ -17,7 +17,8 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:allowBackup="false"
-        android:fullBackupOnly="false">
+        android:fullBackupOnly="false"
+        android:hardwareAccelerated="true">
         <!-- Google AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

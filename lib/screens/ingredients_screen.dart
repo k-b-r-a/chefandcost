@@ -231,7 +231,10 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                           return Center(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 860),
-                              child: const InlineAdCard(style: InlineAdCardStyle.ingredient),
+                              child: InlineAdCard(
+                                key: ValueKey('ad_ingredient_slot_$visualIndex'),
+                                style: InlineAdCardStyle.ingredient,
+                              ),
                             ),
                           );
                         }

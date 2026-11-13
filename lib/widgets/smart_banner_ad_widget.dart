@@ -25,12 +25,17 @@ class SmartBannerAdWidget extends ConsumerStatefulWidget {
   ConsumerState<SmartBannerAdWidget> createState() => _SmartBannerAdWidgetState();
 }
 
-class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
+class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget>
+    with AutomaticKeepAliveClientMixin {
   NativeAd? _nativeAd;
   BannerAd? _bannerAd;
   bool _isNativeLoaded = false;
   bool _isBannerLoaded = false;
   bool _isLoading = false;
+  bool _loadFailed = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -43,7 +48,7 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
     final adState = ref.read(adNotifierProvider);
     final monetization = ref.read(monetizationProvider);
     if (adState.isAdFree || monetization.isAdFree) return;
-    if (_nativeAd != null || _bannerAd != null || _isLoading) return;
+    if (_nativeAd != null || _bannerAd != null || _isLoading || _loadFailed) return;
 
     _isLoading = true;
 
@@ -91,6 +96,7 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
           setState(() {
             _isNativeLoaded = true;
             _isLoading = false;
+            _loadFailed = false;
           });
         }
       },
@@ -118,6 +124,7 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
           setState(() {
             _isBannerLoaded = true;
             _isLoading = false;
+            _loadFailed = false;
           });
         }
       },
@@ -128,6 +135,7 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
             _bannerAd = null;
             _isBannerLoaded = false;
             _isLoading = false;
+            _loadFailed = true;
           });
         }
       },
@@ -144,6 +152,7 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
     _isNativeLoaded = false;
     _isBannerLoaded = false;
     _isLoading = false;
+    _loadFailed = false;
   }
 
   @override
@@ -154,22 +163,24 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     // Listen to changes in ad-free state to dispose ad when unlocked
-    ref.listen<AdState>(adNotifierProvider, (previous, next) {
-      if (next.isAdFree && (_nativeAd != null || _bannerAd != null)) {
+    ref.listen<bool>(adNotifierProvider.select((s) => s.isAdFree), (previous, next) {
+      if (next && (_nativeAd != null || _bannerAd != null)) {
         setState(() {
           _disposeAds();
         });
-      } else if (!next.isAdFree && _nativeAd == null && _bannerAd == null && !_isLoading) {
+      } else if (!next && _nativeAd == null && _bannerAd == null && !_isLoading && !_loadFailed) {
         _loadAdIfNeeded();
       }
     });
-    ref.listen<MonetizationState>(monetizationProvider, (previous, next) {
-      if (next.isAdFree && (_nativeAd != null || _bannerAd != null)) {
+    ref.listen<bool>(monetizationProvider.select((s) => s.isAdFree), (previous, next) {
+      if (next && (_nativeAd != null || _bannerAd != null)) {
         setState(() {
           _disposeAds();
         });
-      } else if (!next.isAdFree && _nativeAd == null && _bannerAd == null && !_isLoading) {
+      } else if (!next && _nativeAd == null && _bannerAd == null && !_isLoading && !_loadFailed) {
         _loadAdIfNeeded();
       }
     });
@@ -178,10 +189,10 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
       return const SizedBox.shrink();
     }
 
-    final adState = ref.watch(adNotifierProvider);
+    final isAdFree = ref.watch(adNotifierProvider.select((s) => s.isAdFree));
     final isMonetizationAdFree =
         ref.watch(monetizationProvider.select((s) => s.isAdFree));
-    if (adState.isAdFree || isMonetizationAdFree) {
+    if (isAdFree || isMonetizationAdFree || _loadFailed) {
       return const SizedBox.shrink();
     }
 
@@ -213,7 +224,9 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
             clipBehavior: Clip.antiAlias,
             child: Stack(
               children: [
-                AdWidget(ad: _nativeAd!),
+                RepaintBoundary(
+                  child: AdWidget(ad: _nativeAd!),
+                ),
                 Positioned(
                   top: 6,
                   right: 6,
@@ -259,7 +272,44 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
       );
     }
 
-    // 2. If Banner Ad is loaded (fallback or standard style)
+    // 2. Standard banner style handling
+    if (widget.style == SmartBannerAdStyle.standard) {
+      if (_isBannerLoaded && _bannerAd != null) {
+        return Container(
+          alignment: Alignment.center,
+          width: _bannerAd!.size.width.toDouble(),
+          height: _bannerAd!.size.height.toDouble(),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              alignment: Alignment.center,
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              color: theme.colorScheme.surface,
+              child: RepaintBoundary(
+                child: AdWidget(ad: _bannerAd!),
+              ),
+            ),
+          ),
+        );
+      }
+      if (!_loadFailed) {
+        final bannerWidth = _bannerAd?.size.width.toDouble() ?? 320.0;
+        final bannerHeight = _bannerAd?.size.height.toDouble() ?? 50.0;
+        return Container(
+          alignment: Alignment.center,
+          width: bannerWidth,
+          height: bannerHeight,
+          child: SizedBox(
+            width: bannerWidth,
+            height: bannerHeight,
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+
+    // 3. If Banner Ad is loaded (fallback for recipe or ingredient style)
     if (_isBannerLoaded && _bannerAd != null) {
       final adWidgetBody = ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -268,18 +318,11 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
           width: _bannerAd!.size.width.toDouble(),
           height: _bannerAd!.size.height.toDouble(),
           color: theme.colorScheme.surface,
-          child: AdWidget(ad: _bannerAd!),
+          child: RepaintBoundary(
+            child: AdWidget(ad: _bannerAd!),
+          ),
         ),
       );
-
-      if (widget.style == SmartBannerAdStyle.standard) {
-        return Container(
-          alignment: Alignment.center,
-          width: _bannerAd!.size.width.toDouble(),
-          height: _bannerAd!.size.height.toDouble(),
-          child: adWidgetBody,
-        );
-      }
 
       final cardBorderRadius = BorderRadius.circular(isRecipeStyle ? 16 : 14);
 
@@ -409,6 +452,34 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget> {
                   Center(child: adWidgetBody),
                 ],
               ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (!_loadFailed) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 860,
+            minHeight: 90,
+            maxHeight: 110,
+          ),
+          child: Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            color: theme.colorScheme.surfaceContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(isRecipeStyle ? 16 : 14),
+              side: BorderSide(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                width: 1.0,
+              ),
+            ),
+            child: const SizedBox(
+              height: 96,
+              width: double.infinity,
             ),
           ),
         ),

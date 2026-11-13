@@ -1,4 +1,36 @@
-# Native startup entry points used by R8 for DEX layout.
+# Native startup entry points used by R8 for DEX layout optimization.
 Lcom/chefandcost/app/MainActivity;
 SLcom/chefandcost/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
 SLcom/chefandcost/app/MainActivity;->configureFlutterEngine(Lio/flutter/embedding/engine/FlutterEngine;)V
+
+# Flutter Activity & Lifecycle
+Lio/flutter/embedding/android/FlutterActivity;
+SLio/flutter/embedding/android/FlutterActivity;->onCreate(Landroid/os/Bundle;)V
+SLio/flutter/embedding/android/FlutterActivity;->onStart()V
+SLio/flutter/embedding/android/FlutterActivity;->onResume()V
+SLio/flutter/embedding/android/FlutterActivity;->provideFlutterEngine(Landroid/content/Context;)Lio/flutter/embedding/engine/FlutterEngine;
+
+# Flutter Engine initialization & Dart VM startup
+Lio/flutter/embedding/engine/FlutterEngine;
+SLio/flutter/embedding/engine/FlutterEngine;-><init>(Landroid/content/Context;)V
+SLio/flutter/embedding/engine/FlutterEngine;-><init>(Landroid/content/Context;Lio/flutter/embedding/engine/loader/FlutterLoader;Lio/flutter/embedding/engine/FlutterJNI;)V
+SLio/flutter/embedding/engine/FlutterEngine;->getDartExecutor()Lio/flutter/embedding/engine/dart/DartExecutor;
+
+Lio/flutter/embedding/engine/loader/FlutterLoader;
+SLio/flutter/embedding/engine/loader/FlutterLoader;->startInitialization(Landroid/content/Context;)V
+SLio/flutter/embedding/engine/loader/FlutterLoader;->ensureInitializationComplete(Landroid/content/Context;[Ljava/lang/String;)V
+
+Lio/flutter/embedding/engine/dart/DartExecutor;
+SLio/flutter/embedding/engine/dart/DartExecutor;->executeDartEntrypoint(Lio/flutter/embedding/engine/dart/DartExecutor$DartEntrypoint;)V
+
+# Plugin Registration & Channels
+Lio/flutter/plugins/GeneratedPluginRegistrant;
+SLio/flutter/plugins/GeneratedPluginRegistrant;->registerWith(Lio/flutter/embedding/engine/FlutterEngine;)V
+
+Lio/flutter/plugin/common/MethodChannel;
+SLio/flutter/plugin/common/MethodChannel;-><init>(Lio/flutter/plugin/common/BinaryMessenger;Ljava/lang/String;)V
+SLio/flutter/plugin/common/MethodChannel;->setMethodCallHandler(Lio/flutter/plugin/common/MethodChannel$MethodCallHandler;)V
+
+# Lifecycle Dispatchers
+Landroidx/lifecycle/ProcessLifecycleOwner;
+Landroidx/lifecycle/LifecycleDispatcher;

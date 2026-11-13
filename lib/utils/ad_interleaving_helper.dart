@@ -30,4 +30,9 @@ class AdInterleavingHelper {
   static int getDataIndex(int visualIndex, {int interval = defaultAdInterval}) {
     return visualIndex - (visualIndex ~/ (interval + 1));
   }
+
+  /// Generates a deterministic slot key for keepalive and platform view reuse.
+  static String getSlotKey(String prefix, int visualIndex) {
+    return '${prefix}_ad_slot_$visualIndex';
+  }
 }

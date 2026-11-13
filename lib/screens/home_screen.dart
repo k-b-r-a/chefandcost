@@ -736,17 +736,78 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               }).toList(),
             );
           },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24.0),
-              child: CircularProgressIndicator(),
-            ),
-          ),
+          loading: () => _buildRecipeSkeletonList(theme),
           error: (e, _) => Center(
             child: Text(l10n.error_prefix(e.toString()), softWrap: true),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRecipeSkeletonList(ThemeData theme) {
+    final shimmerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
+    return Column(
+      children: List.generate(3, (index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14.0),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: shimmerColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: shimmerColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 140,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: shimmerColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                width: 36,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: shimmerColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 

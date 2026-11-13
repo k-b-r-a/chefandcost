@@ -1,4 +1,44 @@
-# Manually selected native startup entry points; expand with device-recorded journeys.
+# ART Baseline Profile: Core startup paths precompiled to eliminate JIT stalls on cold start
 Lcom/chefandcost/app/MainActivity;
 HSPLcom/chefandcost/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
 HSPLcom/chefandcost/app/MainActivity;->configureFlutterEngine(Lio/flutter/embedding/engine/FlutterEngine;)V
+
+# Flutter Activity & Lifecycle
+Lio/flutter/embedding/android/FlutterActivity;
+HSPLio/flutter/embedding/android/FlutterActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLio/flutter/embedding/android/FlutterActivity;->onStart()V
+HSPLio/flutter/embedding/android/FlutterActivity;->onResume()V
+HSPLio/flutter/embedding/android/FlutterActivity;->onPostResume()V
+HSPLio/flutter/embedding/android/FlutterActivity;->provideFlutterEngine(Landroid/content/Context;)Lio/flutter/embedding/engine/FlutterEngine;
+
+# Flutter Engine initialization & Dart VM startup
+Lio/flutter/embedding/engine/FlutterEngine;
+HSPLio/flutter/embedding/engine/FlutterEngine;-><init>(Landroid/content/Context;)V
+HSPLio/flutter/embedding/engine/FlutterEngine;-><init>(Landroid/content/Context;Lio/flutter/embedding/engine/loader/FlutterLoader;Lio/flutter/embedding/engine/FlutterJNI;)V
+HSPLio/flutter/embedding/engine/FlutterEngine;->getDartExecutor()Lio/flutter/embedding/engine/dart/DartExecutor;
+HSPLio/flutter/embedding/engine/FlutterEngine;->getRenderer()Lio/flutter/embedding/engine/renderer/FlutterRenderer;
+
+Lio/flutter/embedding/engine/loader/FlutterLoader;
+HSPLio/flutter/embedding/engine/loader/FlutterLoader;->startInitialization(Landroid/content/Context;)V
+HSPLio/flutter/embedding/engine/loader/FlutterLoader;->ensureInitializationComplete(Landroid/content/Context;[Ljava/lang/String;)V
+
+Lio/flutter/embedding/engine/dart/DartExecutor;
+HSPLio/flutter/embedding/engine/dart/DartExecutor;->executeDartEntrypoint(Lio/flutter/embedding/engine/dart/DartExecutor$DartEntrypoint;)V
+
+# Plugin Registration & Method Channels
+Lio/flutter/plugins/GeneratedPluginRegistrant;
+HSPLio/flutter/plugins/GeneratedPluginRegistrant;->registerWith(Lio/flutter/embedding/engine/FlutterEngine;)V
+
+Lio/flutter/plugin/common/MethodChannel;
+HSPLio/flutter/plugin/common/MethodChannel;-><init>(Lio/flutter/plugin/common/BinaryMessenger;Ljava/lang/String;)V
+HSPLio/flutter/plugin/common/MethodChannel;->setMethodCallHandler(Lio/flutter/plugin/common/MethodChannel$MethodCallHandler;)V
+HSPLio/flutter/plugin/common/MethodChannel;->invokeMethod(Ljava/lang/String;Ljava/lang/Object;Lio/flutter/plugin/common/MethodChannel$Result;)V
+
+Lio/flutter/plugin/common/StandardMethodCodec;
+Lio/flutter/plugin/common/StandardMessageCodec;
+
+# Android Architecture Components & Lifecycle Dispatchers
+Landroidx/lifecycle/ProcessLifecycleOwner;
+Landroidx/lifecycle/LifecycleDispatcher;
+Landroidx/lifecycle/ReportFragment;
+HSPLandroidx/lifecycle/ReportFragment;->injectIfNeededIn(Landroid/app/Activity;)V
