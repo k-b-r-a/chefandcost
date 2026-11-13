@@ -15,7 +15,13 @@ class DeleteAccountScreen extends ConsumerWidget {
     final syncState = ref.watch(cloudSyncProvider);
     final notifier = ref.read(cloudSyncProvider.notifier);
 
-    return Scaffold(
+    return PopScope(
+      canPop: Navigator.canPop(context),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        Navigator.of(context).pushReplacementNamed('/');
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(l10n.cloud_sync_delete_account_title),
         leading: Navigator.canPop(context)
@@ -243,6 +249,7 @@ class DeleteAccountScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

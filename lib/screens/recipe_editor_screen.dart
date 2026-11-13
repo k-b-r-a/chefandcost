@@ -2803,8 +2803,10 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         if (shouldPop && context.mounted) {
           if (widget.onClose != null) {
             widget.onClose!();
-          } else {
+          } else if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
+          } else {
+            Navigator.of(context).pushReplacementNamed('/');
           }
         }
       },

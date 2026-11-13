@@ -146,8 +146,10 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
     _isDismissing = true;
     if (widget.onClose != null) {
       widget.onClose!();
-    } else {
+    } else if (Navigator.of(context).canPop()) {
       Navigator.pop(context);
+    } else {
+      Navigator.of(context).pushReplacementNamed('/');
     }
   }
 

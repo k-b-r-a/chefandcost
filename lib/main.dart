@@ -215,6 +215,22 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   late final List<Widget> _screens;
 
+  void _closeSearch() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _isSearching = false;
+      _showSearchContent = false;
+      _isSearchHovered = false;
+      if (_currentIndex == 1) {
+        _recipeSearchController.clear();
+        ref.read(recipeSearchQueryProvider.notifier).setQuery('');
+      } else if (_currentIndex == 2) {
+        _ingredientSearchController.clear();
+        ref.read(ingredientSearchQueryProvider.notifier).setQuery('');
+      }
+    });
+  }
+
   void _navigateToTab(int index) {
     if (_currentIndex != index) {
       setState(() {
@@ -389,7 +405,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       final webLayout = ref.watch(webLayoutProvider);
       final webNotifier = ref.read(webLayoutProvider.notifier);
 
-      return Scaffold(
+      return PopScope(
+        canPop: webLayout.isHomeActive,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final guard = ref.read(recipeCanLeaveGuardProvider);
+          if (guard != null && !await guard()) return;
+          if (!mounted) return;
+          webNotifier.showHome();
+        },
+        child: Scaffold(
         body: Stack(
           children: [
             Row(
@@ -439,10 +464,23 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               ),
           ],
         ),
+        ),
       );
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: _currentIndex == 0 && !_isSearching,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_isSearching) {
+          _closeSearch();
+          return;
+        }
+        if (_currentIndex != 0) {
+          _navigateToTab(0);
+        }
+      },
+      child: Scaffold(
       extendBody: true,
       body: Stack(
         children: [
@@ -467,6 +505,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           : FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _buildFab(context, settings, isWide: false),
       bottomNavigationBar: _buildFloatingNavBar(context, settings, l10n, theme),
+      ),
     );
   }
 
@@ -1576,29 +1615,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                               Icons.close,
                                               size: 18,
                                             ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _isSearching = false;
-                                                _showSearchContent = false;
-                                                _isSearchHovered = false;
-                                                controller.clear();
-                                                if (isRecipes) {
-                                                  ref
-                                                      .read(
-                                                        recipeSearchQueryProvider
-                                                            .notifier,
-                                                      )
-                                                      .setQuery('');
-                                                } else {
-                                                  ref
-                                                      .read(
-                                                        ingredientSearchQueryProvider
-                                                            .notifier,
-                                                      )
-                                                      .setQuery('');
-                                                }
-                                              });
-                                            },
+                                            onPressed: _closeSearch,
                                           ),
                                         ),
                                       );
