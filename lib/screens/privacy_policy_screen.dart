@@ -44,7 +44,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
       ),
     ];
 
-    return Scaffold(
+    return PopScope(
+      canPop: Navigator.canPop(context),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        Navigator.of(context).pushReplacementNamed('/');
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(l10n.settings_about_privacy_terms),
         leading: Navigator.canPop(context)
@@ -256,6 +262,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
