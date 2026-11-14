@@ -9,6 +9,7 @@ import '../utils/recipe_utils.dart';
 import '../utils/ui_utils.dart';
 import 'compare_ingredients_screen.dart';
 import '../provider/settings_provider.dart';
+import '../services/app_tutorial_service.dart';
 
 class AddIngredientScreen extends ConsumerStatefulWidget {
   final Ingredient? ingredient;
@@ -28,6 +29,9 @@ class AddIngredientScreen extends ConsumerStatefulWidget {
 
 class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
   final _formKey = GlobalKey<FormState>();
+  final IngredientEditorTutorialKeys _tutorialKeys =
+      IngredientEditorTutorialKeys();
+  final ScrollController _scrollController = ScrollController();
   late TextEditingController _nameController;
   late TextEditingController _costController;
   late TextEditingController _quantityController;
@@ -36,6 +40,9 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
   bool _isLoading = false;
   String _searchQuery = '';
   bool _isDismissing = false;
+  bool _tutorialChecked = false;
+  bool _isCheckingTutorial = false;
+  VoidCallback? _tutorialCompletedListener;
 
   @override
   void initState() {
@@ -59,14 +66,65 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
     );
     _selectedUnitPk = widget.ingredient?.unitFk;
     _initialUnitPk = widget.ingredient?.unitFk;
+
+    _tutorialCompletedListener = () {
+      if (!mounted) return;
+      _maybeTriggerTutorial();
+    };
+    AppTutorialService.tutorialStepCompletedNotifier.addListener(
+      _tutorialCompletedListener!,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeTriggerTutorial();
+    });
   }
 
   @override
   void dispose() {
+    if (_tutorialCompletedListener != null) {
+      AppTutorialService.tutorialStepCompletedNotifier.removeListener(
+        _tutorialCompletedListener!,
+      );
+    }
+    _scrollController.dispose();
     _nameController.dispose();
     _costController.dispose();
     _quantityController.dispose();
     super.dispose();
+  }
+
+  void _maybeTriggerTutorial() {
+    if (_tutorialChecked || _isCheckingTutorial || !mounted) return;
+    _isCheckingTutorial = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        _isCheckingTutorial = false;
+        return;
+      }
+      final shown = await AppTutorialService.checkAndShowIngredientEditorTutorial(
+        context,
+        keys: _tutorialKeys,
+        onStepFocus: _handleTutorialStepFocus,
+      );
+      if (shown) {
+        _tutorialChecked = true;
+      }
+      _isCheckingTutorial = false;
+    });
+  }
+
+  Future<void> _handleTutorialStepFocus(String stepId) async {
+    if (stepId == 'step_ingredient_editor_compare') {
+      final ctx = _tutorialKeys.ingredientCompareSectionKey.currentContext;
+      if (ctx != null) {
+        await Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.5,
+        );
+      }
+    }
   }
 
   /// saves the ingredient to the database
@@ -293,6 +351,17 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline_rounded),
+            tooltip: l10n.tutorial_help_tooltip,
+            onPressed: () {
+              AppTutorialService.showIngredientEditorTutorial(
+                context,
+                keys: _tutorialKeys,
+                onStepFocus: _handleTutorialStepFocus,
+              );
+            },
+          ),
           if (!_isLoading)
             IconButton(icon: const Icon(Icons.check), onPressed: _save),
         ],
@@ -303,6 +372,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 680),
                 child: SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16.0),
               child: Form(
                 key: _formKey,
@@ -321,9 +391,11 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                           : null,
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
+                    KeyedSubtree(
+                      key: _tutorialKeys.ingredientFormKey,
+                      child: Row(
+                        children: [
+                          Expanded(
                           child: TextFormField(
                             key: const ValueKey('ingredient_cost_input'),
                             controller: _costController,
@@ -357,6 +429,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                           ),
                         ),
                       ],
+                    ),
                     ),
                     const SizedBox(height: 16),
                     unitsAsync.when(
@@ -431,90 +504,114 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    if (_searchQuery.isNotEmpty) ...[
-                      Text(
-                        l10n.related_ingredients,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ref
-                          .watch(relatedIngredientsProvider(_searchQuery))
-                          .when(
-                            data: (ingredients) {
-                              final filtered = ingredients
-                                  .where(
-                                    (i) =>
-                                        i.ingredientPk !=
-                                        widget.ingredient?.ingredientPk,
-                                  )
-                                  .toList();
-                              if (filtered.isEmpty) {
-                                return Text(l10n.no_similar_ingredients);
-                              }
-                              return ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: filtered.length,
-                                itemBuilder: (context, index) {
-                                  final item = filtered[index];
-                                  return ListTile(
-                                    title: Text(item.name),
-                                    subtitle: Text(
-                                      l10n.ingredient_price_per_quantity(
-                                        RecipeUtils.formatNumber(item.cost),
-                                        RecipeUtils.formatNumber(
-                                          item.quantityForCost,
-                                        ),
-                                        '', // symbol empty for related list now
-                                      ),
-                                    ),
-                                    trailing: OutlinedButton.icon(
-                                      onPressed: () => _compareAndMerge(item),
-                                      style: OutlinedButton.styleFrom(
-                                        side: BorderSide(
-                                          color: theme
-                                              .colorScheme
-                                              .outlineVariant
-                                              .withValues(alpha: 0.5),
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 0,
-                                        ),
-                                        minimumSize: const Size(0, 36),
-                                      ),
-                                      icon: const Icon(
-                                        Icons.compare_arrows,
-                                        size: 18,
-                                      ),
-                                      label: Text(
-                                        l10n.compare_button,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    onTap: () {
-                                      // detail view could be here
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                            error: (e, s) =>
-                                Text(l10n.error_prefix(e.toString())),
+                    KeyedSubtree(
+                      key: _tutorialKeys.ingredientCompareSectionKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.compare_arrows_rounded,
+                                size: 20,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                l10n.related_ingredients,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                    ],
+                          const SizedBox(height: 8),
+                          if (_searchQuery.isEmpty)
+                            Text(
+                              l10n.no_similar_ingredients,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            )
+                          else
+                            ref
+                                .watch(relatedIngredientsProvider(_searchQuery))
+                                .when(
+                                  data: (ingredients) {
+                                    final filtered = ingredients
+                                        .where(
+                                          (i) =>
+                                              i.ingredientPk !=
+                                              widget.ingredient?.ingredientPk,
+                                        )
+                                        .toList();
+                                    if (filtered.isEmpty) {
+                                      return Text(l10n.no_similar_ingredients);
+                                    }
+                                    return ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: filtered.length,
+                                      itemBuilder: (context, index) {
+                                        final item = filtered[index];
+                                        return ListTile(
+                                          title: Text(item.name),
+                                          subtitle: Text(
+                                            l10n.ingredient_price_per_quantity(
+                                              RecipeUtils.formatNumber(item.cost),
+                                              RecipeUtils.formatNumber(
+                                                item.quantityForCost,
+                                              ),
+                                              '', // symbol empty for related list now
+                                            ),
+                                          ),
+                                          trailing: OutlinedButton.icon(
+                                            onPressed: () => _compareAndMerge(item),
+                                            style: OutlinedButton.styleFrom(
+                                              side: BorderSide(
+                                                color: theme
+                                                    .colorScheme
+                                                    .outlineVariant
+                                                    .withValues(alpha: 0.5),
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 0,
+                                              ),
+                                              minimumSize: const Size(0, 36),
+                                            ),
+                                            icon: const Icon(
+                                              Icons.compare_arrows,
+                                              size: 18,
+                                            ),
+                                            label: Text(
+                                              l10n.compare_button,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                          onTap: () {
+                                            // detail view could be here
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                  loading: () => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                  error: (e, s) =>
+                                      Text(l10n.error_prefix(e.toString())),
+                                ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

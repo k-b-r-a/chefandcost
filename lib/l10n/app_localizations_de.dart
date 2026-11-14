@@ -2193,4 +2193,51 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get ad_free_popup_upgrade_divider =>
       'Want permanent ad removal + Cloud Sync?';
+
+  @override
+  String get tutorial_ingredients_filter_title =>
+      'Category Filters & Quick Search';
+
+  @override
+  String get tutorial_ingredients_filter_desc =>
+      'Filter your ingredient catalog between Solids, Liquids, and Pieces to find supplies in seconds.';
+
+  @override
+  String get tutorial_ingredients_filter_hint =>
+      'Tip: Searching for an ingredient that doesn\'t exist yet lets you create it directly from the search results!';
+
+  @override
+  String get tutorial_ingredients_item_title => 'Unit Cost & Global Updates';
+
+  @override
+  String get tutorial_ingredients_item_desc =>
+      'Each ingredient shows its purchase price, base quantity, and unit. Tap any item to edit its details or compare and merge duplicates.';
+
+  @override
+  String get tutorial_ingredients_item_hint =>
+      'Smart costing: Updating an ingredient\'s cost here automatically recalculates the cost and profit of every recipe that uses it.';
+
+  @override
+  String get tutorial_ingredient_editor_form_title =>
+      'Purchase Cost & Base Unit';
+
+  @override
+  String get tutorial_ingredient_editor_form_desc =>
+      'Enter how much you pay for a specific quantity and measurement unit. Saving updates every recipe that uses this ingredient.';
+
+  @override
+  String get tutorial_ingredient_editor_form_hint =>
+      'Tip: If you switch between compatible units (like grams to kilograms), linked recipes convert their amounts automatically.';
+
+  @override
+  String get tutorial_ingredient_editor_compare_title =>
+      'Compare Prices & Merge Duplicates';
+
+  @override
+  String get tutorial_ingredient_editor_compare_desc =>
+      'Similar ingredients in your catalog appear here automatically. Tap Compare to see normalized unit prices side-by-side and find which option is cheaper.';
+
+  @override
+  String get tutorial_ingredient_editor_compare_hint =>
+      'Clean catalog: In the comparison screen, select the best ingredient and tap Merge to unify duplicates across all your recipes.';
 }

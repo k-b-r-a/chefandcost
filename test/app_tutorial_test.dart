@@ -58,15 +58,21 @@ void main() {
       await AppTutorialService.markTutorialCompleted(prefs);
       await AppTutorialService.markRecipeListTutorialCompleted(prefs);
       await AppTutorialService.markRecipeEditorTutorialCompleted(prefs);
+      await AppTutorialService.markIngredientsTutorialCompleted(prefs);
+      await AppTutorialService.markIngredientEditorTutorialCompleted(prefs);
 
       expect(await AppTutorialService.isTutorialCompleted(prefs), isTrue);
       expect(await AppTutorialService.isRecipeListTutorialCompleted(prefs), isTrue);
       expect(await AppTutorialService.isRecipeEditorTutorialCompleted(prefs), isTrue);
+      expect(await AppTutorialService.isIngredientsTutorialCompleted(prefs), isTrue);
+      expect(await AppTutorialService.isIngredientEditorTutorialCompleted(prefs), isTrue);
 
       await AppTutorialService.resetTutorial(prefs);
       expect(await AppTutorialService.isTutorialCompleted(prefs), isFalse);
       expect(await AppTutorialService.isRecipeListTutorialCompleted(prefs), isFalse);
       expect(await AppTutorialService.isRecipeEditorTutorialCompleted(prefs), isFalse);
+      expect(await AppTutorialService.isIngredientsTutorialCompleted(prefs), isFalse);
+      expect(await AppTutorialService.isIngredientEditorTutorialCompleted(prefs), isFalse);
     });
 
     test('RecipeList tutorial persistence flags work correctly', () async {
@@ -89,6 +95,28 @@ void main() {
 
       await AppTutorialService.resetRecipeEditorTutorial(prefs);
       expect(await AppTutorialService.isRecipeEditorTutorialCompleted(prefs), isFalse);
+    });
+
+    test('Ingredients tutorial persistence flags work correctly', () async {
+      final prefs = await SharedPreferences.getInstance();
+      expect(await AppTutorialService.isIngredientsTutorialCompleted(prefs), isFalse);
+
+      await AppTutorialService.markIngredientsTutorialCompleted(prefs);
+      expect(await AppTutorialService.isIngredientsTutorialCompleted(prefs), isTrue);
+
+      await AppTutorialService.resetIngredientsTutorial(prefs);
+      expect(await AppTutorialService.isIngredientsTutorialCompleted(prefs), isFalse);
+    });
+
+    test('IngredientEditor tutorial persistence flags work correctly', () async {
+      final prefs = await SharedPreferences.getInstance();
+      expect(await AppTutorialService.isIngredientEditorTutorialCompleted(prefs), isFalse);
+
+      await AppTutorialService.markIngredientEditorTutorialCompleted(prefs);
+      expect(await AppTutorialService.isIngredientEditorTutorialCompleted(prefs), isTrue);
+
+      await AppTutorialService.resetIngredientEditorTutorial(prefs);
+      expect(await AppTutorialService.isIngredientEditorTutorialCompleted(prefs), isFalse);
     });
 
     test('requestReplay and triggerReplay notify listeners', () {
@@ -789,6 +817,122 @@ void main() {
 
       AppTutorialService.dismissActiveTutorial();
       await tester.pump(const Duration(milliseconds: 500));
+    });
+
+    testWidgets('createIngredientsTargets builds targets when mounted and skips when unmounted', (tester) async {
+      final keys = IngredientsTutorialKeys();
+      late BuildContext capturedContext;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                capturedContext = context;
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Unmounted keys should be skipped gracefully
+      final unmountedTargets = AppTutorialService.createIngredientsTargets(
+        context: capturedContext,
+        keys: keys,
+      );
+      expect(unmountedTargets, isEmpty);
+
+      // Mount both target widgets
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                capturedContext = context;
+                return Column(
+                  children: [
+                    SizedBox(key: keys.ingredientFilterBarKey, width: 100, height: 40),
+                    SizedBox(key: keys.firstIngredientItemKey, width: 100, height: 60),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final mountedTargets = AppTutorialService.createIngredientsTargets(
+        context: capturedContext,
+        keys: keys,
+      );
+      expect(mountedTargets.length, 2);
+      expect(mountedTargets[0].identify, 'step_ingredients_filter');
+      expect(mountedTargets[1].identify, 'step_ingredients_item');
+    });
+
+    testWidgets('createIngredientEditorTargets builds targets when mounted and skips when unmounted', (tester) async {
+      final keys = IngredientEditorTutorialKeys();
+      late BuildContext capturedContext;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                capturedContext = context;
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Unmounted keys should be skipped gracefully
+      final unmountedTargets = AppTutorialService.createIngredientEditorTargets(
+        context: capturedContext,
+        keys: keys,
+      );
+      expect(unmountedTargets, isEmpty);
+
+      // Mount both target widgets
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                capturedContext = context;
+                return Column(
+                  children: [
+                    SizedBox(key: keys.ingredientFormKey, width: 100, height: 120),
+                    SizedBox(key: keys.ingredientCompareSectionKey, width: 100, height: 80),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final mountedTargets = AppTutorialService.createIngredientEditorTargets(
+        context: capturedContext,
+        keys: keys,
+      );
+      expect(mountedTargets.length, 2);
+      expect(mountedTargets[0].identify, 'step_ingredient_editor_form');
+      expect(mountedTargets[1].identify, 'step_ingredient_editor_compare');
     });
   });
 }

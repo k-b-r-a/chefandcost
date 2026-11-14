@@ -4115,6 +4115,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Want permanent ad removal + Cloud Sync?'**
   String get ad_free_popup_upgrade_divider;
+
+  /// No description provided for @tutorial_ingredients_filter_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Category Filters & Quick Search'**
+  String get tutorial_ingredients_filter_title;
+
+  /// No description provided for @tutorial_ingredients_filter_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter your ingredient catalog between Solids, Liquids, and Pieces to find supplies in seconds.'**
+  String get tutorial_ingredients_filter_desc;
+
+  /// No description provided for @tutorial_ingredients_filter_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: Searching for an ingredient that doesn\'t exist yet lets you create it directly from the search results!'**
+  String get tutorial_ingredients_filter_hint;
+
+  /// No description provided for @tutorial_ingredients_item_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit Cost & Global Updates'**
+  String get tutorial_ingredients_item_title;
+
+  /// No description provided for @tutorial_ingredients_item_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Each ingredient shows its purchase price, base quantity, and unit. Tap any item to edit its details or compare and merge duplicates.'**
+  String get tutorial_ingredients_item_desc;
+
+  /// No description provided for @tutorial_ingredients_item_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart costing: Updating an ingredient\'s cost here automatically recalculates the cost and profit of every recipe that uses it.'**
+  String get tutorial_ingredients_item_hint;
+
+  /// No description provided for @tutorial_ingredient_editor_form_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase Cost & Base Unit'**
+  String get tutorial_ingredient_editor_form_title;
+
+  /// No description provided for @tutorial_ingredient_editor_form_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter how much you pay for a specific quantity and measurement unit. Saving updates every recipe that uses this ingredient.'**
+  String get tutorial_ingredient_editor_form_desc;
+
+  /// No description provided for @tutorial_ingredient_editor_form_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: If you switch between compatible units (like grams to kilograms), linked recipes convert their amounts automatically.'**
+  String get tutorial_ingredient_editor_form_hint;
+
+  /// No description provided for @tutorial_ingredient_editor_compare_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Prices & Merge Duplicates'**
+  String get tutorial_ingredient_editor_compare_title;
+
+  /// No description provided for @tutorial_ingredient_editor_compare_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar ingredients in your catalog appear here automatically. Tap Compare to see normalized unit prices side-by-side and find which option is cheaper.'**
+  String get tutorial_ingredient_editor_compare_desc;
+
+  /// No description provided for @tutorial_ingredient_editor_compare_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean catalog: In the comparison screen, select the best ingredient and tap Merge to unify duplicates across all your recipes.'**
+  String get tutorial_ingredient_editor_compare_hint;
 }
 
 class _AppLocalizationsDelegate

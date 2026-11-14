@@ -18,6 +18,7 @@ import '../provider/monetization_provider.dart';
 import '../services/ad_service.dart';
 import '../utils/ad_interleaving_helper.dart';
 import '../widgets/inline_ad_card.dart';
+import '../services/app_tutorial_service.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
   const IngredientsScreen({super.key});
@@ -28,11 +29,51 @@ class IngredientsScreen extends ConsumerStatefulWidget {
 
 class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   final ScrollController _scrollController = ScrollController();
+  final IngredientsTutorialKeys _tutorialKeys = IngredientsTutorialKeys();
+  bool _tutorialChecked = false;
+  bool _isCheckingTutorial = false;
+  VoidCallback? _tutorialCompletedListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _tutorialCompletedListener = () {
+      if (!mounted) return;
+      _maybeTriggerTutorial();
+    };
+    AppTutorialService.tutorialStepCompletedNotifier.addListener(
+      _tutorialCompletedListener!,
+    );
+  }
 
   @override
   void dispose() {
+    if (_tutorialCompletedListener != null) {
+      AppTutorialService.tutorialStepCompletedNotifier.removeListener(
+        _tutorialCompletedListener!,
+      );
+    }
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _maybeTriggerTutorial() {
+    if (_tutorialChecked || _isCheckingTutorial || !mounted) return;
+    _isCheckingTutorial = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        _isCheckingTutorial = false;
+        return;
+      }
+      final shown = await AppTutorialService.checkAndShowIngredientsTutorial(
+        context,
+        keys: _tutorialKeys,
+      );
+      if (shown) {
+        _tutorialChecked = true;
+      }
+      _isCheckingTutorial = false;
+    });
   }
 
   @override
@@ -58,6 +99,18 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                 title: l10n.ingredients_title,
                 controller: _scrollController,
                 leading: const AdFreePassButton(),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.help_outline_rounded),
+                    tooltip: l10n.tutorial_help_tooltip,
+                    onPressed: () {
+                      AppTutorialService.showIngredientsTutorial(
+                        context,
+                        keys: _tutorialKeys,
+                      );
+                    },
+                  ),
+                ],
                 bottom: PreferredSize(
               preferredSize: const Size.fromHeight(52),
               child: SizedBox(
@@ -67,14 +120,17 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     horizontal: 16,
                     vertical: 8,
                   ),
-                  child: IngredientFilterChipsRow(
-                    currentFilter: currentFilter,
-                    onFilterSelected: (filter) {
-                      ref
-                          .read(ingredientFilterProvider.notifier)
-                          .setFilter(filter);
-                    },
-                    isCompact: true,
+                  child: KeyedSubtree(
+                    key: _tutorialKeys.ingredientFilterBarKey,
+                    child: IngredientFilterChipsRow(
+                      currentFilter: currentFilter,
+                      onFilterSelected: (filter) {
+                        ref
+                            .read(ingredientFilterProvider.notifier)
+                            .setFilter(filter);
+                      },
+                      isCompact: true,
+                    ),
                   ),
                 ),
               ),
@@ -91,6 +147,10 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     filter: currentFilter,
                     searchQuery: searchQuery,
                   );
+
+                  if (!_tutorialChecked && filteredIngredients.isNotEmpty) {
+                    _maybeTriggerTutorial();
+                  }
 
                   if (isWide && filteredIngredients.isNotEmpty) {
                     final currentWeb = ref.watch(webLayoutProvider);
@@ -260,7 +320,11 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                           child: Center(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 860),
-                              child: ListTile(
+                              child: KeyedSubtree(
+                                key: dataIndex == 0
+                                    ? _tutorialKeys.firstIngredientItemKey
+                                    : null,
+                                child: ListTile(
                                 selected: isSelected,
                                 selectedTileColor: theme
                                     .colorScheme
@@ -344,6 +408,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                                   onPressed: () =>
                                       _confirmDelete(context, ingredient),
                                 ),
+                              ),
                               ),
                             ),
                           ),
