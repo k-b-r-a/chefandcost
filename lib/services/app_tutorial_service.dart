@@ -55,6 +55,34 @@ class RecipeEditorTutorialKeys {
         recipeEditorIngredientsKey = recipeEditorIngredientsKey ?? GlobalKey(debugLabel: 'tutorial_recipeEditorIngredientsKey');
 }
 
+/// Container for the GlobalKeys used to highlight widgets during the Ingredients walkthrough tutorial.
+class IngredientsTutorialKeys {
+  final GlobalKey ingredientFilterBarKey;
+  final GlobalKey firstIngredientItemKey;
+
+  IngredientsTutorialKeys({
+    GlobalKey? ingredientFilterBarKey,
+    GlobalKey? firstIngredientItemKey,
+  })  : ingredientFilterBarKey =
+            ingredientFilterBarKey ?? GlobalKey(debugLabel: 'tutorial_ingredientFilterBarKey'),
+        firstIngredientItemKey =
+            firstIngredientItemKey ?? GlobalKey(debugLabel: 'tutorial_firstIngredientItemKey');
+}
+
+/// Container for the GlobalKeys used to highlight widgets during the Ingredient Editor walkthrough tutorial.
+class IngredientEditorTutorialKeys {
+  final GlobalKey ingredientFormKey;
+  final GlobalKey ingredientCompareSectionKey;
+
+  IngredientEditorTutorialKeys({
+    GlobalKey? ingredientFormKey,
+    GlobalKey? ingredientCompareSectionKey,
+  })  : ingredientFormKey =
+            ingredientFormKey ?? GlobalKey(debugLabel: 'tutorial_ingredientFormKey'),
+        ingredientCompareSectionKey =
+            ingredientCompareSectionKey ?? GlobalKey(debugLabel: 'tutorial_ingredientCompareSectionKey');
+}
+
 /// Information model describing an individual step in the guided tour.
 class TutorialStepInfo {
   final String id;
@@ -87,6 +115,8 @@ class AppTutorialService {
   static const String kTutorialCompletedKey = 'has_completed_app_walkthrough_tutorial_v2';
   static const String kTutorialRecipeListCompletedKey = 'has_completed_recipe_list_walkthrough_tutorial_v1';
   static const String kTutorialRecipeEditorCompletedKey = 'has_completed_recipe_editor_walkthrough_tutorial_v1';
+  static const String kTutorialIngredientsCompletedKey = 'has_completed_ingredients_walkthrough_tutorial_v1';
+  static const String kTutorialIngredientEditorCompletedKey = 'has_completed_ingredient_editor_walkthrough_tutorial_v1';
 
   /// Global lock tracking whether any walkthrough overlay is actively displayed.
   static bool _isTutorialActive = false;
@@ -157,6 +187,30 @@ class AppTutorialService {
     await p.setBool(kTutorialRecipeEditorCompletedKey, true);
   }
 
+  /// Checks if the ingredients walkthrough has been completed or skipped previously.
+  static Future<bool> isIngredientsTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    return p.getBool(kTutorialIngredientsCompletedKey) ?? false;
+  }
+
+  /// Marks the ingredients walkthrough as completed in persistent storage.
+  static Future<void> markIngredientsTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialIngredientsCompletedKey, true);
+  }
+
+  /// Checks if the ingredient editor walkthrough has been completed or skipped previously.
+  static Future<bool> isIngredientEditorTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    return p.getBool(kTutorialIngredientEditorCompletedKey) ?? false;
+  }
+
+  /// Marks the ingredient editor walkthrough as completed in persistent storage.
+  static Future<void> markIngredientEditorTutorialCompleted([SharedPreferences? prefs]) async {
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialIngredientEditorCompletedKey, true);
+  }
+
   /// Resets all walkthrough tutorials so they will run again.
   static Future<void> resetTutorial([SharedPreferences? prefs]) async {
     dismissActiveTutorial();
@@ -164,6 +218,24 @@ class AppTutorialService {
     await p.setBool(kTutorialCompletedKey, false);
     await p.setBool(kTutorialRecipeListCompletedKey, false);
     await p.setBool(kTutorialRecipeEditorCompletedKey, false);
+    await p.setBool(kTutorialIngredientsCompletedKey, false);
+    await p.setBool(kTutorialIngredientEditorCompletedKey, false);
+    tutorialStepCompletedNotifier.value++;
+  }
+
+  /// Resets specifically the ingredient editor walkthrough status.
+  static Future<void> resetIngredientEditorTutorial([SharedPreferences? prefs]) async {
+    dismissActiveTutorial();
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialIngredientEditorCompletedKey, false);
+    tutorialStepCompletedNotifier.value++;
+  }
+
+  /// Resets specifically the ingredients walkthrough status.
+  static Future<void> resetIngredientsTutorial([SharedPreferences? prefs]) async {
+    dismissActiveTutorial();
+    final p = await _getPrefs(prefs);
+    await p.setBool(kTutorialIngredientsCompletedKey, false);
     tutorialStepCompletedNotifier.value++;
   }
 
@@ -499,6 +571,78 @@ class AppTutorialService {
         description: l10n.tutorial_recipe_list_finance_desc,
         gestureHint: l10n.tutorial_recipe_list_finance_hint,
         radius: 14.0,
+      ),
+    ];
+
+    return _buildTargetFocusList(context, rawSteps, l10n);
+  }
+
+  /// Builds the list of TargetFocus targets for Ingredients screen.
+  static List<TargetFocus> createIngredientsTargets({
+    required BuildContext context,
+    required IngredientsTutorialKeys keys,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return const [];
+
+    final rawSteps = <TutorialStepInfo>[
+      // 1. Category Filters & Quick Search
+      TutorialStepInfo(
+        id: 'step_ingredients_filter',
+        keyTarget: keys.ingredientFilterBarKey,
+        align: ContentAlign.bottom,
+        icon: Icons.filter_list_rounded,
+        title: l10n.tutorial_ingredients_filter_title,
+        description: l10n.tutorial_ingredients_filter_desc,
+        gestureHint: l10n.tutorial_ingredients_filter_hint,
+        radius: 16.0,
+      ),
+      // 2. Ingredient Cost, Edit & Management
+      TutorialStepInfo(
+        id: 'step_ingredients_item',
+        keyTarget: keys.firstIngredientItemKey,
+        align: ContentAlign.bottom,
+        icon: Icons.inventory_2_outlined,
+        title: l10n.tutorial_ingredients_item_title,
+        description: l10n.tutorial_ingredients_item_desc,
+        gestureHint: l10n.tutorial_ingredients_item_hint,
+        radius: 16.0,
+      ),
+    ];
+
+    return _buildTargetFocusList(context, rawSteps, l10n);
+  }
+
+  /// Builds the list of TargetFocus targets for Ingredient Editor screen.
+  static List<TargetFocus> createIngredientEditorTargets({
+    required BuildContext context,
+    required IngredientEditorTutorialKeys keys,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return const [];
+
+    final rawSteps = <TutorialStepInfo>[
+      // 1. Purchase Cost, Base Quantity & Unit Form
+      TutorialStepInfo(
+        id: 'step_ingredient_editor_form',
+        keyTarget: keys.ingredientFormKey,
+        align: ContentAlign.bottom,
+        icon: Icons.sell_outlined,
+        title: l10n.tutorial_ingredient_editor_form_title,
+        description: l10n.tutorial_ingredient_editor_form_desc,
+        gestureHint: l10n.tutorial_ingredient_editor_form_hint,
+        radius: 16.0,
+      ),
+      // 2. Related Ingredients & Price Comparison / Merge
+      TutorialStepInfo(
+        id: 'step_ingredient_editor_compare',
+        keyTarget: keys.ingredientCompareSectionKey,
+        align: ContentAlign.top,
+        icon: Icons.compare_arrows_rounded,
+        title: l10n.tutorial_ingredient_editor_compare_title,
+        description: l10n.tutorial_ingredient_editor_compare_desc,
+        gestureHint: l10n.tutorial_ingredient_editor_compare_hint,
+        radius: 16.0,
       ),
     ];
 
@@ -883,6 +1027,210 @@ class AppTutorialService {
     if (targets.isEmpty) return false;
 
     return showRecipeListTutorial(
+      context,
+      keys: keys,
+      onStepFocus: onStepFocus,
+      onFinish: onFinish,
+      onSkip: onSkip,
+      prefs: prefs,
+      force: force,
+    );
+  }
+
+  /// Shows the Ingredients walkthrough tutorial immediately if valid targets exist.
+  static bool showIngredientsTutorial(
+    BuildContext context, {
+    required IngredientsTutorialKeys keys,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    bool force = false,
+  }) {
+    if (_isTutorialActive) {
+      if (force) {
+        dismissActiveTutorial();
+      } else {
+        return false;
+      }
+    }
+
+    final targets = createIngredientsTargets(context: context, keys: keys);
+    if (targets.isEmpty) return false;
+
+    final tutorial = _createTutorialWithTargets(
+      context: context,
+      targets: targets,
+      onComplete: () => markIngredientsTutorialCompleted(prefs),
+      onStepFocus: onStepFocus,
+      onFinish: onFinish,
+      onSkip: onSkip,
+    );
+    if (tutorial == null) return false;
+
+    _isTutorialActive = true;
+    _activeTutorial = tutorial;
+    tutorial.show(context: context, rootOverlay: true);
+    return true;
+  }
+
+  /// Checks if Ingredients walkthrough should trigger on first launch.
+  static Future<bool> checkAndShowIngredientsTutorial(
+    BuildContext context, {
+    required IngredientsTutorialKeys keys,
+    bool force = false,
+    bool bypassTestCheck = false,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    int maxRetries = 3,
+  }) async {
+    if (!force) {
+      if (!kIsWeb && !bypassTestCheck) {
+        try {
+          if (Platform.environment['FLUTTER_TEST'] == 'true') {
+            return false;
+          }
+        } catch (_) {}
+      }
+      if (_isTutorialActive) return false;
+
+      // On tablet or multi-pane layout, ensure Home walkthrough has completed first
+      final isHomeCompleted = await isTutorialCompleted(prefs);
+      if (!isHomeCompleted) return false;
+
+      final isCompleted = await isIngredientsTutorialCompleted(prefs);
+      if (isCompleted) return false;
+    }
+
+    if (!context.mounted) return false;
+
+    final targets = createIngredientsTargets(context: context, keys: keys);
+    if (targets.isEmpty && maxRetries > 0) {
+      await Future.delayed(const Duration(milliseconds: 350));
+      if (!context.mounted) return false;
+      return checkAndShowIngredientsTutorial(
+        context,
+        keys: keys,
+        force: force,
+        bypassTestCheck: bypassTestCheck,
+        onStepFocus: onStepFocus,
+        onFinish: onFinish,
+        onSkip: onSkip,
+        prefs: prefs,
+        maxRetries: maxRetries - 1,
+      );
+    }
+
+    if (targets.isEmpty) return false;
+
+    return showIngredientsTutorial(
+      context,
+      keys: keys,
+      onStepFocus: onStepFocus,
+      onFinish: onFinish,
+      onSkip: onSkip,
+      prefs: prefs,
+      force: force,
+    );
+  }
+
+  /// Shows the Ingredient Editor walkthrough tutorial immediately if valid targets exist.
+  static bool showIngredientEditorTutorial(
+    BuildContext context, {
+    required IngredientEditorTutorialKeys keys,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    bool force = false,
+  }) {
+    if (_isTutorialActive) {
+      if (force) {
+        dismissActiveTutorial();
+      } else {
+        return false;
+      }
+    }
+
+    final targets = createIngredientEditorTargets(context: context, keys: keys);
+    if (targets.isEmpty) return false;
+
+    final tutorial = _createTutorialWithTargets(
+      context: context,
+      targets: targets,
+      onComplete: () => markIngredientEditorTutorialCompleted(prefs),
+      onStepFocus: onStepFocus,
+      onFinish: onFinish,
+      onSkip: onSkip,
+    );
+    if (tutorial == null) return false;
+
+    _isTutorialActive = true;
+    _activeTutorial = tutorial;
+    tutorial.show(context: context, rootOverlay: true);
+    return true;
+  }
+
+  /// Checks if Ingredient Editor walkthrough should trigger on first launch.
+  static Future<bool> checkAndShowIngredientEditorTutorial(
+    BuildContext context, {
+    required IngredientEditorTutorialKeys keys,
+    bool force = false,
+    bool bypassTestCheck = false,
+    FutureOr<void> Function(String stepId)? onStepFocus,
+    VoidCallback? onFinish,
+    VoidCallback? onSkip,
+    SharedPreferences? prefs,
+    int maxRetries = 3,
+  }) async {
+    if (!force) {
+      if (!kIsWeb && !bypassTestCheck) {
+        try {
+          if (Platform.environment['FLUTTER_TEST'] == 'true') {
+            return false;
+          }
+        } catch (_) {}
+      }
+      if (_isTutorialActive) return false;
+
+      // On tablet or multi-pane layout, ensure Home walkthrough has completed first
+      final isHomeCompleted = await isTutorialCompleted(prefs);
+      if (!isHomeCompleted) return false;
+
+      // On tablet/desktop (wide layout), also ensure Ingredients walkthrough has completed first
+      if (context.mounted && MediaQuery.sizeOf(context).width >= 640) {
+        final isIngredientsCompleted = await isIngredientsTutorialCompleted(prefs);
+        if (!isIngredientsCompleted) return false;
+      }
+
+      final isCompleted = await isIngredientEditorTutorialCompleted(prefs);
+      if (isCompleted) return false;
+    }
+
+    if (!context.mounted) return false;
+
+    final targets = createIngredientEditorTargets(context: context, keys: keys);
+    if (targets.isEmpty && maxRetries > 0) {
+      await Future.delayed(const Duration(milliseconds: 350));
+      if (!context.mounted) return false;
+      return checkAndShowIngredientEditorTutorial(
+        context,
+        keys: keys,
+        force: force,
+        bypassTestCheck: bypassTestCheck,
+        onStepFocus: onStepFocus,
+        onFinish: onFinish,
+        onSkip: onSkip,
+        prefs: prefs,
+        maxRetries: maxRetries - 1,
+      );
+    }
+
+    if (targets.isEmpty) return false;
+
+    return showIngredientEditorTutorial(
       context,
       keys: keys,
       onStepFocus: onStepFocus,

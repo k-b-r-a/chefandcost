@@ -2224,4 +2224,52 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get ad_free_popup_upgrade_divider =>
       '¿Quieres eliminar anuncios para siempre + Cloud Sync?';
+
+  @override
+  String get tutorial_ingredients_filter_title =>
+      'Filtros por Categoría y Búsqueda';
+
+  @override
+  String get tutorial_ingredients_filter_desc =>
+      'Filtra tu catálogo de ingredientes entre Sólidos, Líquidos y Piezas para encontrar insumos en segundos.';
+
+  @override
+  String get tutorial_ingredients_filter_hint =>
+      'Consejo: ¡Si buscas un ingrediente que aún no existe, podrás crearlo directamente desde los resultados!';
+
+  @override
+  String get tutorial_ingredients_item_title =>
+      'Costo Unitario y Actualización Global';
+
+  @override
+  String get tutorial_ingredients_item_desc =>
+      'Cada ingrediente muestra su precio de compra, cantidad base y unidad. Tócalo para editar sus datos o comparar y fusionar duplicados.';
+
+  @override
+  String get tutorial_ingredients_item_hint =>
+      'Costeo inteligente: Al actualizar el precio de un ingrediente aquí, se recalcula automáticamente el costo y margen de todas las recetas que lo usan.';
+
+  @override
+  String get tutorial_ingredient_editor_form_title =>
+      'Costo de Compra y Unidad Base';
+
+  @override
+  String get tutorial_ingredient_editor_form_desc =>
+      'Ingresa cuánto pagas por una cantidad y unidad de medida específica. Al guardar, se actualizarán todas las recetas que usen este ingrediente.';
+
+  @override
+  String get tutorial_ingredient_editor_form_hint =>
+      'Consejo: Si cambias entre unidades compatibles (como gramos a kilogramos), las recetas vinculadas convierten sus cantidades automáticamente.';
+
+  @override
+  String get tutorial_ingredient_editor_compare_title =>
+      'Comparar Precios y Fusionar Duplicados';
+
+  @override
+  String get tutorial_ingredient_editor_compare_desc =>
+      'Los ingredientes similares de tu catálogo aparecen aquí automáticamente. Toca Comparar para ver sus precios normalizados lado a lado y descubrir cuál es más económico.';
+
+  @override
+  String get tutorial_ingredient_editor_compare_hint =>
+      'Catálogo limpio: En la pantalla de comparación, elige el ingrediente que prefieras y toca Fusionar para unificar duplicados en todas tus recetas.';
 }
