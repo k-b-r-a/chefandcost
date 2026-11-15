@@ -9,6 +9,7 @@ class AdService {
   static bool? debugIsSupportedPlatform;
   static bool _isInitialized = false;
   static bool _isAppMuted = true;
+  static bool _hasAppliedNativeMute = false;
   static RewardedAd? _preloadedRewardedAd;
   static bool _isPreloadingRewardedAd = false;
   static int _rewardedRetryAttempt = 0;
@@ -107,11 +108,13 @@ class AdService {
   /// Enforces muted audio for banner and inline ads across the application.
   static Future<void> muteBannerAds() async {
     _isAppMuted = true;
-    if (!_canInvokeNativeAdMob) return;
+    if (!_canInvokeNativeAdMob || _hasAppliedNativeMute) return;
     try {
+      _hasAppliedNativeMute = true;
       await MobileAds.instance.setAppMuted(true);
       await MobileAds.instance.setAppVolume(0.0);
     } catch (e) {
+      _hasAppliedNativeMute = false;
       debugPrint('Error muting banner ads: $e');
     }
   }
@@ -119,6 +122,7 @@ class AdService {
   /// Enables audio specifically for full-screen rewarded video ads.
   static Future<void> enableRewardedAdAudio() async {
     _isAppMuted = false;
+    _hasAppliedNativeMute = false;
     if (!_canInvokeNativeAdMob) return;
     try {
       await MobileAds.instance.setAppMuted(false);

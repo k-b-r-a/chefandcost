@@ -3,19 +3,78 @@ import '../database/database.dart';
 import 'recipe_utils.dart';
 
 class IngredientTextEditingController extends TextEditingController {
-  List<Ingredient> ingredients;
+  List<Ingredient> _ingredients;
   final ColorScheme colorScheme;
+
+  RegExp? _cachedRegex;
+  Map<String, Ingredient> _lookupMap = const {};
+  Map<String, Color> _colorCache = const {};
 
   IngredientTextEditingController({
     super.text,
     List<Ingredient>? ingredients,
     required this.colorScheme,
-  }) : ingredients = ingredients ?? [];
+  }) : _ingredients = List<Ingredient>.unmodifiable(ingredients ?? const []) {
+    _rebuildPatternCache();
+  }
 
-  /// updates the internal list of available ingredients for tagging
+  List<Ingredient> get ingredients => _ingredients;
+
+  @visibleForTesting
+  RegExp? get cachedRegex => _cachedRegex;
+
+  /// Updates the internal list of available ingredients for tagging.
   void updateIngredients(List<Ingredient> newIngredients) {
-    ingredients = newIngredients;
+    if (_areIngredientsEqual(_ingredients, newIngredients)) return;
+    _ingredients = List<Ingredient>.unmodifiable(newIngredients);
+    _rebuildPatternCache();
     notifyListeners();
+  }
+
+  bool _areIngredientsEqual(List<Ingredient> a, List<Ingredient> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].ingredientPk != b[i].ingredientPk || a[i].name != b[i].name) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void _rebuildPatternCache() {
+    final valid = _ingredients
+        .where((ing) => ing.name.trim().isNotEmpty)
+        .toList()
+      ..sort((a, b) => b.name.trim().length.compareTo(a.name.trim().length));
+
+    if (valid.isEmpty) {
+      _cachedRegex = null;
+      _lookupMap = const {};
+      _colorCache = const {};
+      return;
+    }
+
+    final lookup = <String, Ingredient>{};
+    final colors = <String, Color>{};
+    final escapedNames = <String>[];
+
+    for (final ing in valid) {
+      final trimmed = ing.name.trim();
+      final key = trimmed.toLowerCase();
+      lookup.putIfAbsent(key, () => ing);
+      colors[ing.ingredientPk] =
+          RecipeUtils.getIngredientColor(ing.name, colorScheme);
+      escapedNames.add(RegExp.escape(trimmed));
+    }
+
+    final pattern = escapedNames.join('|');
+    _cachedRegex = RegExp(
+      '(?<![a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])($pattern)(?![a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])',
+      caseSensitive: false,
+    );
+    _lookupMap = lookup;
+    _colorCache = colors;
   }
 
   @override
@@ -24,28 +83,26 @@ class IngredientTextEditingController extends TextEditingController {
     TextStyle? style,
     required bool withComposing,
   }) {
-    if (ingredients.isEmpty || text.isEmpty) {
-      return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
+    final regex = _cachedRegex;
+    if (regex == null || text.isEmpty) {
+      return super.buildTextSpan(
+        context: context,
+        style: style,
+        withComposing: withComposing,
+      );
     }
 
     final List<InlineSpan> children = [];
-    
-    // sort ingredients by length descending to match longer phrases first
-    final sortedIngredients = List<Ingredient>.from(ingredients)
-      ..sort((a, b) => b.name.length.compareTo(a.name.length));
 
-    // build regex pattern
-    final pattern = RegExp(
-      sortedIngredients.map((ing) => RegExp.escape(ing.name)).join('|'),
-      caseSensitive: false,
-    );
-    
     text.splitMapJoin(
-      pattern,
+      regex,
       onMatch: (Match match) {
         final matchedText = match[0]!;
-        // get exact color using centralized utility
-        final color = RecipeUtils.getIngredientColor(matchedText, colorScheme);
+        final matchedIng = _lookupMap[matchedText.toLowerCase()];
+        final color = matchedIng != null
+            ? (_colorCache[matchedIng.ingredientPk] ??
+                RecipeUtils.getIngredientColor(matchedIng.name, colorScheme))
+            : RecipeUtils.getIngredientColor(matchedText, colorScheme);
 
         children.add(
           TextSpan(
@@ -59,7 +116,9 @@ class IngredientTextEditingController extends TextEditingController {
         return '';
       },
       onNonMatch: (String nonMatched) {
-        children.add(TextSpan(text: nonMatched, style: style));
+        if (nonMatched.isNotEmpty) {
+          children.add(TextSpan(text: nonMatched, style: style));
+        }
         return '';
       },
     );

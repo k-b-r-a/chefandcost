@@ -381,6 +381,22 @@ class RecipeUtils {
     return oz * 29.5735295625;
   }
 
+  static final RegExp _trailingZerosRegex = RegExp(r'0+$');
+  static final RegExp _mixedFractionRegex = RegExp(r'^(\d+)\s+(\d+)\s*/\s*(\d+)$');
+  static final RegExp _simpleFractionRegex = RegExp(r'^(\d+)\s*/\s*(\d+)$');
+  static final RegExp _numberTokenRegex =
+      RegExp(r'[-+]?(?:[0-9]+(?:[.,][0-9]+)*|[.,][0-9]+)');
+  static final Map<(int, int), NumberFormat> _esNumberFormatCache = {};
+
+  static NumberFormat _getEsNumberFormat(int minDecimals, int maxDecimals) {
+    return _esNumberFormatCache.putIfAbsent(
+      (minDecimals, maxDecimals),
+      () => NumberFormat.decimalPattern('es_ES')
+        ..minimumFractionDigits = minDecimals
+        ..maximumFractionDigits = maxDecimals,
+    );
+  }
+
   /// Strips redundant decimal places and unnecessary trailing zeros from a numeric string.
   /// E.g. "2.0" -> "2", "2.000" -> "2", "2,00" -> "2", "2.50" -> "2.5", "2,50" -> "2,5".
   static String cleanTrailingZeros(String text) {
@@ -395,27 +411,27 @@ class RecipeUtils {
     if (lastDot > -1 && lastComma > -1) {
       if (lastComma > lastDot) {
         // e.g. "1.000,50" -> comma is decimal
-        var s = trimmed.replaceAll(RegExp(r'0+$'), '');
+        var s = trimmed.replaceAll(_trailingZerosRegex, '');
         if (s.endsWith(',')) {
           s = s.substring(0, s.length - 1);
         }
         return s.isEmpty ? '0' : s;
       } else {
         // e.g. "1,000.50" -> dot is decimal
-        var s = trimmed.replaceAll(RegExp(r'0+$'), '');
+        var s = trimmed.replaceAll(_trailingZerosRegex, '');
         if (s.endsWith('.')) {
           s = s.substring(0, s.length - 1);
         }
         return s.isEmpty ? '0' : s;
       }
     } else if (trimmed.contains('.')) {
-      var s = trimmed.replaceAll(RegExp(r'0+$'), '');
+      var s = trimmed.replaceAll(_trailingZerosRegex, '');
       if (s.endsWith('.')) {
         s = s.substring(0, s.length - 1);
       }
       return s.isEmpty ? '0' : s;
     } else if (trimmed.contains(',')) {
-      var s = trimmed.replaceAll(RegExp(r'0+$'), '');
+      var s = trimmed.replaceAll(_trailingZerosRegex, '');
       if (s.endsWith(',')) {
         s = s.substring(0, s.length - 1);
       }
@@ -452,11 +468,7 @@ class RecipeUtils {
     final minDigits = trimTrailingZeros
         ? 0
         : (minDecimalDigits ?? decimalDigits ?? defaultDecimalDigits);
-    final formatter = NumberFormat.decimalPattern(
-      'es_ES',
-    ); // uses dot for thousands
-    formatter.minimumFractionDigits = minDigits;
-    formatter.maximumFractionDigits = maxDigits;
+    final formatter = _getEsNumberFormat(minDigits, maxDigits);
     return formatter.format(maxDigits == 0 ? value.round() : value);
   }
 
@@ -466,9 +478,7 @@ class RecipeUtils {
     final trimmed = text.trim();
 
     // Check for mixed fractions: e.g. "1 1/2"
-    final mixedMatch = RegExp(
-      r'^(\d+)\s+(\d+)\s*/\s*(\d+)$',
-    ).firstMatch(trimmed);
+    final mixedMatch = _mixedFractionRegex.firstMatch(trimmed);
     if (mixedMatch != null) {
       final whole = double.tryParse(mixedMatch.group(1)!) ?? 0.0;
       final num = double.tryParse(mixedMatch.group(2)!) ?? 0.0;
@@ -477,16 +487,14 @@ class RecipeUtils {
     }
 
     // Check for simple fractions: e.g. "1/2", "1/4", "3/4"
-    final fracMatch = RegExp(r'^(\d+)\s*/\s*(\d+)$').firstMatch(trimmed);
+    final fracMatch = _simpleFractionRegex.firstMatch(trimmed);
     if (fracMatch != null) {
       final num = double.tryParse(fracMatch.group(1)!) ?? 0.0;
       final den = double.tryParse(fracMatch.group(2)!) ?? 1.0;
       if (den != 0) return num / den;
     }
 
-    final match = RegExp(
-      r'[-+]?(?:[0-9]+(?:[.,][0-9]+)*|[.,][0-9]+)',
-    ).firstMatch(trimmed);
+    final match = _numberTokenRegex.firstMatch(trimmed);
     if (match == null) return 0.0;
     final numStr = match.group(0)!;
     final hasDot = numStr.contains('.');

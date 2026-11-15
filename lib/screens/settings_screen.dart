@@ -24,26 +24,38 @@ import '../widgets/group_management_sheet.dart';
 import '../widgets/gooey_toast.dart';
 import '../theme/app_theme.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final ScrollController scrollController = ScrollController();
     final settings = ref.watch(settingsProvider);
     final isWide = MediaQuery.sizeOf(context).width >= 640;
     final webLayout = isWide ? ref.watch(webLayoutProvider) : null;
 
     return Scaffold(
       body: CustomScrollView(
-        controller: scrollController,
+        controller: _scrollController,
         slivers: [
           buildFloatingPillAppBar(
             context: context,
             title: l10n.config_button,
-            controller: scrollController,
+            controller: _scrollController,
             actions: [
               const ActiveGroupChip(isCompact: true),
               const SizedBox(width: 8),

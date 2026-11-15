@@ -72,19 +72,26 @@ class KitchenTimersNotifier extends Notifier<List<KitchenTimerModel>> {
   Timer? _ticker;
 
   @override
+  @override
   List<KitchenTimerModel> build() {
     ref.onDispose(() {
       _ticker?.cancel();
+      _ticker = null;
     });
 
-    _startTickerIfNeeded();
     return [];
   }
 
-  void _startTickerIfNeeded() {
-    _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
-      _tick();
-    });
+  void _syncTicker() {
+    final hasRunning = state.any((t) => t.isRunning && t.remainingSeconds > 0);
+    if (hasRunning) {
+      _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+        _tick();
+      });
+    } else {
+      _ticker?.cancel();
+      _ticker = null;
+    }
   }
 
   void _tick() {
@@ -118,6 +125,7 @@ class KitchenTimersNotifier extends Notifier<List<KitchenTimerModel>> {
     if (stateChanged) {
       state = updatedList;
     }
+    _syncTicker();
   }
 
   void addTimer(String name, int seconds, {int colorIndex = 0}) {
@@ -134,7 +142,7 @@ class KitchenTimersNotifier extends Notifier<List<KitchenTimerModel>> {
     );
 
     state = [...state, newTimer];
-    _startTickerIfNeeded();
+    _syncTicker();
   }
 
   void toggleTimer(String id) {
@@ -144,6 +152,7 @@ class KitchenTimersNotifier extends Notifier<List<KitchenTimerModel>> {
       }
       return timer;
     }).toList();
+    _syncTicker();
   }
 
   void resetTimer(String id) {
@@ -157,6 +166,7 @@ class KitchenTimersNotifier extends Notifier<List<KitchenTimerModel>> {
       }
       return timer;
     }).toList();
+    _syncTicker();
   }
 
   void addMinutes(String id, int minutes) {
@@ -174,6 +184,7 @@ class KitchenTimersNotifier extends Notifier<List<KitchenTimerModel>> {
       }
       return timer;
     }).toList();
+    _syncTicker();
   }
 
   void updateTimer(String id, String name, int totalSeconds, int colorIndex) {
@@ -191,14 +202,17 @@ class KitchenTimersNotifier extends Notifier<List<KitchenTimerModel>> {
       }
       return timer;
     }).toList();
+    _syncTicker();
   }
 
   void deleteTimer(String id) {
     state = state.where((timer) => timer.id != id).toList();
+    _syncTicker();
   }
 
   void clearFinished() {
     state = state.where((timer) => !timer.isFinished).toList();
+    _syncTicker();
   }
 }
 

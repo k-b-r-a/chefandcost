@@ -57,7 +57,8 @@ class RecipeCategoryFilterChipsRow extends StatelessWidget {
           ),
         ];
 
-    return SingleChildScrollView(
+    return RepaintBoundary(
+      child: SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.symmetric(
@@ -147,6 +148,7 @@ class RecipeCategoryFilterChipsRow extends StatelessWidget {
             ),
           );
         }).toList(),
+      ),
       ),
     );
   }

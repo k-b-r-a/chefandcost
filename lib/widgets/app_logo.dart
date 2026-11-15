@@ -194,23 +194,33 @@ class AppIconThemePalette {
     return dynamicPalette(hsl, isDark);
   }
 
+  static final Map<(int, int, int, int), String> _svgCache = {};
+
   /// Substitutes the SVG color codes with this palette's colors.
   String applyToSvg(String template) {
-    final baseHex = colorToHex(baseColor);
-    final midHex = colorToHex(midColor);
-    final highlightHex = colorToHex(highlightColor);
+    final key = (
+      identityHashCode(template),
+      baseColor.toARGB32(),
+      midColor.toARGB32(),
+      highlightColor.toARGB32(),
+    );
+    return _svgCache.putIfAbsent(key, () {
+      final baseHex = colorToHex(baseColor);
+      final midHex = colorToHex(midColor);
+      final highlightHex = colorToHex(highlightColor);
 
-    return template
-        .replaceAll('#6a4322', baseHex)
-        .replaceAll('#6A4322', baseHex)
-        .replaceAll('#e9be99', midHex)
-        .replaceAll('#E9BE99', midHex)
-        .replaceAll('#6B3208', baseHex)
-        .replaceAll('#6b3208', baseHex)
-        .replaceAll('#B88A67', midHex)
-        .replaceAll('#b88a67', midHex)
-        .replaceAll('#EACCA6', highlightHex)
-        .replaceAll('#eacca6', highlightHex);
+      return template
+          .replaceAll('#6a4322', baseHex)
+          .replaceAll('#6A4322', baseHex)
+          .replaceAll('#e9be99', midHex)
+          .replaceAll('#E9BE99', midHex)
+          .replaceAll('#6B3208', baseHex)
+          .replaceAll('#6b3208', baseHex)
+          .replaceAll('#B88A67', midHex)
+          .replaceAll('#b88a67', midHex)
+          .replaceAll('#EACCA6', highlightHex)
+          .replaceAll('#eacca6', highlightHex);
+    });
   }
 }
 
@@ -247,11 +257,13 @@ class AppIcon extends StatelessWidget {
 
     final themedSvg = palette.applyToSvg(kAppIconSvgTemplate);
 
-    final iconWidget = SvgPicture.string(
-      themedSvg,
-      width: size,
-      height: size,
-      fit: fit,
+    final iconWidget = RepaintBoundary(
+      child: SvgPicture.string(
+        themedSvg,
+        width: size,
+        height: size,
+        fit: fit,
+      ),
     );
 
     if (borderRadius != null) {
@@ -302,11 +314,13 @@ class AppLogo extends StatelessWidget {
     final effectiveWidth = width ?? size;
     final effectiveHeight = height ?? size;
 
-    final logoWidget = SvgPicture.string(
-      themedSvg,
-      width: effectiveWidth,
-      height: effectiveHeight,
-      fit: fit,
+    final logoWidget = RepaintBoundary(
+      child: SvgPicture.string(
+        themedSvg,
+        width: effectiveWidth,
+        height: effectiveHeight,
+        fit: fit,
+      ),
     );
 
     if (borderRadius != null) {
