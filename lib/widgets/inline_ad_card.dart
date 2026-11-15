@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -31,7 +32,13 @@ class InlineAdCard extends ConsumerStatefulWidget {
 
 class _InlineAdCardState extends ConsumerState<InlineAdCard>
     with AutomaticKeepAliveClientMixin {
+  static const int _maxActiveInlineAds = 3;
+  static final List<_InlineAdCardState> _activePool = [];
+
   BannerAd? _bannerAd;
+  Timer? _loadDebounceTimer;
+  ValueNotifier<bool>? _isScrollingNotifier;
+  bool _isScrolling = false;
   bool _isAdLoaded = false;
   bool _isLoading = false;
   bool _loadFailed = false;
@@ -42,20 +49,85 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
   @override
   void initState() {
     super.initState();
-    _loadAdIfNeeded();
+    _scheduleAdLoad();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextNotifier =
+        Scrollable.maybeOf(context)?.position.isScrollingNotifier;
+    if (_isScrollingNotifier != nextNotifier) {
+      _isScrollingNotifier?.removeListener(_onScrollStateChanged);
+      _isScrollingNotifier = nextNotifier;
+      _isScrolling = _isScrollingNotifier?.value ?? false;
+      _isScrollingNotifier?.addListener(_onScrollStateChanged);
+      if (_isScrolling) {
+        _loadDebounceTimer?.cancel();
+      }
+    }
+  }
+
+  void _onScrollStateChanged() {
+    final scrolling = _isScrollingNotifier?.value ?? false;
+    if (_isScrolling == scrolling) return;
+    if (mounted) {
+      setState(() {
+        _isScrolling = scrolling;
+      });
+    } else {
+      _isScrolling = scrolling;
+    }
+    if (!scrolling && _bannerAd == null && !_isLoading && !_loadFailed) {
+      _scheduleAdLoad();
+    } else if (scrolling) {
+      _loadDebounceTimer?.cancel();
+    }
+  }
+
+  void _scheduleAdLoad() {
+    if (_isScrolling) return;
+    _loadDebounceTimer?.cancel();
+    _loadDebounceTimer = Timer(const Duration(milliseconds: 200), () {
+      if (mounted && !_isScrolling) {
+        _loadAdIfNeeded();
+      }
+    });
+  }
+
+  void _registerInPool() {
+    _activePool.remove(this);
+    while (_activePool.length >= _maxActiveInlineAds) {
+      final oldest = _activePool.removeAt(0);
+      oldest._evictFromPool();
+    }
+    _activePool.add(this);
+  }
+
+  void _evictFromPool() {
+    _loadDebounceTimer?.cancel();
+    _loadDebounceTimer = null;
+    _bannerAd?.dispose();
+    _bannerAd = null;
+    _isAdLoaded = false;
+    _isLoading = false;
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _loadAdIfNeeded() {
-    if (!AdService.isSupportedPlatform) return;
+    if (!AdService.isSupportedPlatform || _isScrolling) return;
     final adState = ref.read(adProvider);
     final monetization = ref.read(monetizationProvider);
     if (adState.isAdFree || monetization.isAdFree) return;
     if (_bannerAd != null || _isLoading || _loadFailed) return;
 
     _isLoading = true;
-    _bannerAd = AdService.createBannerAd(
+    final createdAd = AdService.createBannerAd(
       onAdLoaded: () {
         if (mounted) {
+          _registerInPool();
           setState(() {
             _isAdLoaded = true;
             _isLoading = false;
@@ -64,6 +136,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
         }
       },
       onAdFailedToLoad: (error) {
+        _activePool.remove(this);
         if (mounted) {
           setState(() {
             _bannerAd?.dispose();
@@ -76,10 +149,19 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
       },
     );
 
-    _bannerAd?.load();
+    if (createdAd == null) {
+      _isLoading = false;
+      return;
+    }
+
+    _bannerAd = createdAd;
+    _bannerAd!.load();
   }
 
   void _disposeAd() {
+    _activePool.remove(this);
+    _loadDebounceTimer?.cancel();
+    _loadDebounceTimer = null;
     _bannerAd?.dispose();
     _bannerAd = null;
     _isAdLoaded = false;
@@ -89,6 +171,8 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
 
   @override
   void dispose() {
+    _isScrollingNotifier?.removeListener(_onScrollStateChanged);
+    _isScrollingNotifier = null;
     _disposeAd();
     super.dispose();
   }
@@ -134,8 +218,9 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
     final primaryColor = isRecipe ? theme.colorScheme.primary : theme.colorScheme.secondary;
     final borderRadius = BorderRadius.circular(isRecipe ? 16 : 14);
 
-    return Center(
-      child: ConstrainedBox(
+    return RepaintBoundary(
+      child: Center(
+        child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 860),
         child: Card(
           margin: EdgeInsets.symmetric(
@@ -259,28 +344,53 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
                 ),
                 const SizedBox(height: 6),
                 Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      alignment: Alignment.center,
-                      width: _bannerAd?.size.width.toDouble() ?? 320.0,
-                      height: _bannerAd?.size.height.toDouble() ?? 50.0,
-                      color: theme.colorScheme.surface,
-                      child: (_isAdLoaded && _bannerAd != null)
-                          ? RepaintBoundary(
-                              child: AdWidget(ad: _bannerAd!),
-                            )
-                          : SizedBox(
-                              width: _bannerAd?.size.width.toDouble() ?? 320.0,
-                              height: _bannerAd?.size.height.toDouble() ?? 50.0,
+                  child: Container(
+                    alignment: Alignment.center,
+                    width: _bannerAd?.size.width.toDouble() ?? 320.0,
+                    height: _bannerAd?.size.height.toDouble() ?? 50.0,
+                    color: theme.colorScheme.surface,
+                    child: (!_isScrolling && _isAdLoaded && _bannerAd != null)
+                        ? AdWidget(ad: _bannerAd!)
+                        : SizedBox(
+                            width: _bannerAd?.size.width.toDouble() ?? 320.0,
+                            height: _bannerAd?.size.height.toDouble() ?? 50.0,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.campaign_outlined,
+                                    size: 16,
+                                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    l10n?.ad_sponsored_label ?? 'AD',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.6,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                    ),
+                          ),
                   ),
                 ),
               ],
             ),
           ),
         ),
+      ),
       ),
     );
   }

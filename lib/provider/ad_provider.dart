@@ -95,25 +95,22 @@ class AdState {
 
 class AdNotifier extends Notifier<AdState> {
   static const String adFreeUntilPrefKey = 'ad_free_until';
-  Timer? _periodicTimer;
   SharedPreferences? _prefs;
 
   @override
   AdState build() {
     final isCloudSubscribed =
         ref.watch(cloudSyncProvider.select((s) => s.isSubscribed));
-    final monetization = ref.watch(monetizationProvider);
+    final monetizationAdFreeUntil =
+        ref.watch(monetizationProvider.select((s) => s.adFreeUntil));
+    final monetizationHasSub =
+        ref.watch(monetizationProvider.select((s) => s.hasActiveSubscription));
+    final monetizationLoadingRewarded =
+        ref.watch(monetizationProvider.select((s) => s.isLoadingRewardedAd));
+    final monetizationError =
+        ref.watch(monetizationProvider.select((s) => s.errorMessage));
 
-    _periodicTimer?.cancel();
-    _periodicTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      _tick();
-    });
-
-    ref.onDispose(() {
-      _periodicTimer?.cancel();
-    });
-
-    DateTime? initialUntil = monetization.adFreeUntil;
+    DateTime? initialUntil = monetizationAdFreeUntil;
     try {
       _prefs = ref.watch(sharedPreferencesProvider);
       final raw = _prefs?.getInt(adFreeUntilPrefKey) ??
@@ -130,11 +127,10 @@ class AdNotifier extends Notifier<AdState> {
 
     return AdState(
       adFreeUntil: initialUntil,
-      hasActiveSubscription:
-          isCloudSubscribed || monetization.hasActiveSubscription,
-      isLoadingRewardedAd: monetization.isLoadingRewardedAd,
-      errorMessage: monetization.errorMessage,
-      lastRefreshed: monetization.lastRefreshed ?? DateTime.now(),
+      hasActiveSubscription: isCloudSubscribed || monetizationHasSub,
+      isLoadingRewardedAd: monetizationLoadingRewarded,
+      errorMessage: monetizationError,
+      lastRefreshed: DateTime.now(),
     );
   }
 

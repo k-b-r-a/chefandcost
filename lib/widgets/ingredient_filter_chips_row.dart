@@ -32,7 +32,8 @@ class IngredientFilterChipsRow extends StatelessWidget {
     ];
 
     if (isCompact) {
-      return SingleChildScrollView(
+      return RepaintBoundary(
+        child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         child: Row(
@@ -112,6 +113,7 @@ class IngredientFilterChipsRow extends StatelessWidget {
             );
           }).toList(),
         ),
+      ),
       );
     }
 

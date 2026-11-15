@@ -203,30 +203,28 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget>
 
     // 1. If Native Ad is loaded, render as native card
     if (_isNativeLoaded && _nativeAd != null) {
-      return Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 860,
-            minHeight: 90,
-            maxHeight: 110,
-          ),
-          child: Card(
-            elevation: 2,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            color: theme.colorScheme.surfaceContainer,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(isRecipeStyle ? 16 : 14),
-              side: BorderSide(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
-                width: 1.0,
-              ),
+      return RepaintBoundary(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 860,
+              minHeight: 90,
+              maxHeight: 110,
             ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              children: [
-                RepaintBoundary(
-                  child: AdWidget(ad: _nativeAd!),
+            child: Card(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              color: theme.colorScheme.surfaceContainer,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(isRecipeStyle ? 16 : 14),
+                side: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                  width: 1.0,
                 ),
+              ),
+              child: Stack(
+                children: [
+                  AdWidget(ad: _nativeAd!),
                 Positioned(
                   top: 6,
                   right: 6,
@@ -269,27 +267,20 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget>
             ),
           ),
         ),
+        ),
       );
     }
 
     // 2. Standard banner style handling
     if (widget.style == SmartBannerAdStyle.standard) {
       if (_isBannerLoaded && _bannerAd != null) {
-        return Container(
-          alignment: Alignment.center,
-          width: _bannerAd!.size.width.toDouble(),
-          height: _bannerAd!.size.height.toDouble(),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              alignment: Alignment.center,
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              color: theme.colorScheme.surface,
-              child: RepaintBoundary(
-                child: AdWidget(ad: _bannerAd!),
-              ),
-            ),
+        return RepaintBoundary(
+          child: Container(
+            alignment: Alignment.center,
+            width: _bannerAd!.size.width.toDouble(),
+            height: _bannerAd!.size.height.toDouble(),
+            color: theme.colorScheme.surface,
+            child: AdWidget(ad: _bannerAd!),
           ),
         );
       }
@@ -311,22 +302,18 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget>
 
     // 3. If Banner Ad is loaded (fallback for recipe or ingredient style)
     if (_isBannerLoaded && _bannerAd != null) {
-      final adWidgetBody = ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          alignment: Alignment.center,
-          width: _bannerAd!.size.width.toDouble(),
-          height: _bannerAd!.size.height.toDouble(),
-          color: theme.colorScheme.surface,
-          child: RepaintBoundary(
-            child: AdWidget(ad: _bannerAd!),
-          ),
-        ),
+      final adWidgetBody = Container(
+        alignment: Alignment.center,
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        color: theme.colorScheme.surface,
+        child: AdWidget(ad: _bannerAd!),
       );
 
       final cardBorderRadius = BorderRadius.circular(isRecipeStyle ? 16 : 14);
 
-      return Center(
+      return RepaintBoundary(
+        child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 860),
           child: Card(
@@ -454,6 +441,7 @@ class _SmartBannerAdWidgetState extends ConsumerState<SmartBannerAdWidget>
               ),
             ),
           ),
+        ),
         ),
       );
     }

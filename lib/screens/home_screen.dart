@@ -70,7 +70,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
     final recipesAsync = ref.watch(recipesWithFinancialsStreamProvider);
-    final syncState = ref.watch(cloudSyncProvider);
+    final syncState = ref.watch(
+      cloudSyncProvider.select(
+        (s) => (
+          loading: s.loading,
+          isSyncing: s.isSyncing,
+          storageType: s.storageType,
+          isSubscribed: s.isSubscribed,
+        ),
+      ),
+    );
 
     return Scaffold(
       body: Stack(
@@ -273,7 +282,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BuildContext context,
     ThemeData theme,
     AppLocalizations l10n,
-    CloudSyncState syncState,
+    ({
+      bool loading,
+      bool isSyncing,
+      CloudSyncStorageType storageType,
+      bool isSubscribed,
+    }) syncState,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

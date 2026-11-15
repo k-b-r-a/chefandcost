@@ -29,6 +29,48 @@ class IngredientsScreen extends ConsumerStatefulWidget {
 class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   final ScrollController _scrollController = ScrollController();
 
+  List<Unit>? _lastUnits;
+  Map<String, Unit> _cachedUnitMap = const {};
+
+  List<Ingredient>? _lastIngredients;
+  IngredientFilterType? _lastFilter;
+  String? _lastSearchQuery;
+  List<Ingredient> _cachedFilteredIngredients = const [];
+
+  Map<String, Unit> _getUnitMap(List<Unit> units) {
+    if (identical(_lastUnits, units)) return _cachedUnitMap;
+    _lastUnits = units;
+    _cachedUnitMap = {for (final u in units) u.unitPk: u};
+    return _cachedUnitMap;
+  }
+
+  List<Ingredient> _getFilteredIngredients(
+    List<Ingredient> ingredients,
+    Map<String, Unit> unitMap,
+    IngredientFilterType filter,
+    String searchQuery,
+  ) {
+    if (identical(_lastIngredients, ingredients) &&
+        identical(_lastUnitMapForFilter, unitMap) &&
+        _lastFilter == filter &&
+        _lastSearchQuery == searchQuery) {
+      return _cachedFilteredIngredients;
+    }
+    _lastIngredients = ingredients;
+    _lastUnitMapForFilter = unitMap;
+    _lastFilter = filter;
+    _lastSearchQuery = searchQuery;
+    _cachedFilteredIngredients = UnitUtils.filterIngredients(
+      ingredients: ingredients,
+      unitMap: unitMap,
+      filter: filter,
+      searchQuery: searchQuery,
+    );
+    return _cachedFilteredIngredients;
+  }
+
+  Map<String, Unit>? _lastUnitMapForFilter;
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -45,13 +87,22 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
     final isWide = MediaQuery.sizeOf(context).width >= 640;
-    final webLayout = isWide ? ref.watch(webLayoutProvider) : null;
+    final selectedIngredientPk = isWide
+        ? ref.watch(
+            webLayoutProvider.select(
+              (s) => s.rightPaneView == WebRightPaneView.ingredient
+                  ? s.selectedIngredient?.ingredientPk
+                  : null,
+            ),
+          )
+        : null;
 
     return Scaffold(
       body: Stack(
         children: [
           CustomScrollView(
             controller: _scrollController,
+            cacheExtent: 600,
             slivers: [
               buildFloatingPillAppBar(
                 context: context,
@@ -84,20 +135,24 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
             data: (ingredients) {
               return unitsAsync.when(
                 data: (units) {
-                  final unitMap = {for (var u in units) u.unitPk: u};
-                  final filteredIngredients = UnitUtils.filterIngredients(
-                    ingredients: ingredients,
-                    unitMap: unitMap,
-                    filter: currentFilter,
-                    searchQuery: searchQuery,
+                  final unitMap = _getUnitMap(units);
+                  final filteredIngredients = _getFilteredIngredients(
+                    ingredients,
+                    unitMap,
+                    currentFilter,
+                    searchQuery,
                   );
 
                   if (isWide && filteredIngredients.isNotEmpty) {
-                    final currentWeb = ref.watch(webLayoutProvider);
-                    if (currentWeb.middleTab == WebMiddleTab.ingredients &&
-                        currentWeb.selectedIngredient == null &&
-                        currentWeb.rightPaneView ==
-                            WebRightPaneView.ingredient) {
+                    final shouldAutoOpenFirst = ref.watch(
+                      webLayoutProvider.select(
+                        (s) =>
+                            s.middleTab == WebMiddleTab.ingredients &&
+                            s.selectedIngredient == null &&
+                            s.rightPaneView == WebRightPaneView.ingredient,
+                      ),
+                    );
+                    if (shouldAutoOpenFirst) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted &&
                             ref.read(webLayoutProvider).selectedIngredient ==
@@ -187,16 +242,19 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     );
                   }
 
-                  final adState = ref.watch(adProvider);
+                  final isAdFree =
+                      ref.watch(adProvider.select((s) => s.isAdFree));
                   final isMonetizationAdFree =
                       ref.watch(monetizationProvider.select((s) => s.isAdFree));
-                  final bool showAds = !adState.isAdFree &&
+                  final bool showAds = !isAdFree &&
                       !isMonetizationAdFree &&
                       AdService.isSupportedPlatform;
-                  final int ingredientsVisualCount = AdInterleavingHelper.getVisualCount(
-                    filteredIngredients.length,
-                    showAds,
-                  );
+                  final int ingredientsVisualCount =
+                      AdInterleavingHelper.getVisualCount(
+                        filteredIngredients.length,
+                        showAds,
+                        interval: 10,
+                      );
                   final int totalItemCount =
                       ingredientsVisualCount + (showCreateNewCard ? 1 : 0);
 
@@ -227,7 +285,11 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                           );
                         }
 
-                        if (showAds && AdInterleavingHelper.isAdIndex(visualIndex)) {
+                        if (showAds &&
+                            AdInterleavingHelper.isAdIndex(
+                              visualIndex,
+                              interval: 10,
+                            )) {
                           return Center(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 860),
@@ -240,7 +302,10 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                         }
 
                         final dataIndex = showAds
-                            ? AdInterleavingHelper.getDataIndex(visualIndex)
+                            ? AdInterleavingHelper.getDataIndex(
+                                visualIndex,
+                                interval: 10,
+                              )
                             : visualIndex;
                         if (dataIndex >= filteredIngredients.length) return null;
 
@@ -251,10 +316,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
                         final isSelected =
                             isWide &&
-                            webLayout?.rightPaneView ==
-                                WebRightPaneView.ingredient &&
-                            webLayout?.selectedIngredient?.ingredientPk ==
-                                ingredient.ingredientPk;
+                            selectedIngredientPk == ingredient.ingredientPk;
 
                         return RepaintBoundary(
                           child: Center(
