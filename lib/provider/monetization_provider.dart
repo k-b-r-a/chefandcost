@@ -359,11 +359,14 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
   void _tick() {
     if (_disposed) return;
     final until = state.adFreeUntil;
-    if (until != null && !DateTime.now().isBefore(until)) {
+    if (until == null) return;
+    if (!DateTime.now().isBefore(until)) {
       _onPassExpired();
       return;
     }
-    state = state.copyWith(lastRefreshed: DateTime.now());
+    if (!state.hasActiveSubscription) {
+      state = state.copyWith(lastRefreshed: DateTime.now());
+    }
   }
 
   void refresh() => _tick();

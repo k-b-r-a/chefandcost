@@ -44,6 +44,50 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   bool _isCheckingTutorial = false;
   VoidCallback? _tutorialCompletedListener;
 
+  List<RecipeWithFinancials>? _lastRecipes;
+  RecipeCategory? _lastSelectedCategory;
+  String? _lastSearchQuery;
+  String? _lastSampleTitle;
+  List<RecipeWithFinancials> _cachedFilteredRecipes = const [];
+
+  List<RecipeWithFinancials> _getFilteredRecipes(
+    List<RecipeWithFinancials> recipes,
+    RecipeCategory? selectedCategory,
+    String searchQuery,
+    String sampleTitle,
+  ) {
+    if (identical(_lastRecipes, recipes) &&
+        _lastSelectedCategory == selectedCategory &&
+        _lastSearchQuery == searchQuery &&
+        _lastSampleTitle == sampleTitle) {
+      return _cachedFilteredRecipes;
+    }
+
+    _lastRecipes = recipes;
+    _lastSelectedCategory = selectedCategory;
+    _lastSearchQuery = searchQuery;
+    _lastSampleTitle = sampleTitle;
+
+    _cachedFilteredRecipes = recipes.where((item) {
+      final effectiveName = isSampleManufacturingRecipe(item.recipe.recipePk)
+          ? sampleTitle
+          : item.recipe.name;
+      if (searchQuery.isNotEmpty &&
+          !effectiveName.toLowerCase().contains(searchQuery)) {
+        return false;
+      }
+
+      if (selectedCategory != null) {
+        final cat = RecipeCategory.fromString(item.recipe.category);
+        if (cat != selectedCategory) return false;
+      }
+
+      return true;
+    }).toList();
+
+    return _cachedFilteredRecipes;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -127,13 +171,14 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     final searchQuery = ref.watch(recipeSearchQueryProvider).toLowerCase();
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
-    final syncState = ref.watch(cloudSyncProvider);
+    final isSyncing = ref.watch(cloudSyncProvider.select((s) => s.isSyncing));
 
     return Scaffold(
       body: Stack(
         children: [
           CustomScrollView(
             controller: _scrollController,
+            cacheExtent: 600,
             slivers: [
           buildFloatingPillAppBar(
             context: context,
@@ -219,34 +264,29 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
 
               final selectedCategory = ref.watch(recipeCategoryFilterProvider);
 
-              final filteredRecipes = recipes.where((item) {
-                final effectiveName =
-                    isSampleManufacturingRecipe(item.recipe.recipePk)
-                    ? l10n.sample_manufacturing_recipe_title
-                    : item.recipe.name;
-                final matchesSearch = effectiveName.toLowerCase().contains(
-                  searchQuery,
-                );
-                if (!matchesSearch) return false;
-
-                if (selectedCategory != null) {
-                  final cat = RecipeCategory.fromString(item.recipe.category);
-                  if (cat != selectedCategory) return false;
-                }
-
-                return true;
-              }).toList();
+              final filteredRecipes = _getFilteredRecipes(
+                recipes,
+                selectedCategory,
+                searchQuery,
+                l10n.sample_manufacturing_recipe_title,
+              );
 
               if (!_tutorialChecked && filteredRecipes.isNotEmpty) {
                 _maybeTriggerTutorial();
               }
 
-              final isWideWeb = MediaQuery.sizeOf(context).width >= 640;
+              final screenWidth = MediaQuery.sizeOf(context).width;
+              final isWideWeb = screenWidth >= 640;
               if (isWideWeb && filteredRecipes.isNotEmpty) {
-                final webLayout = ref.watch(webLayoutProvider);
-                if (webLayout.middleTab == WebMiddleTab.recipes &&
-                    webLayout.selectedRecipeId == null &&
-                    webLayout.rightPaneView == WebRightPaneView.recipe) {
+                final shouldAutoOpenFirst = ref.watch(
+                  webLayoutProvider.select(
+                    (s) =>
+                        s.middleTab == WebMiddleTab.recipes &&
+                        s.selectedRecipeId == null &&
+                        s.rightPaneView == WebRightPaneView.recipe,
+                  ),
+                );
+                if (shouldAutoOpenFirst) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted &&
                         ref.read(webLayoutProvider).selectedRecipeId == null &&
@@ -273,16 +313,23 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 );
               }
 
-              final adState = ref.watch(adProvider);
+              final isAdFree = ref.watch(adProvider.select((s) => s.isAdFree));
               final isMonetizationAdFree =
                   ref.watch(monetizationProvider.select((s) => s.isAdFree));
-              final bool showAds = !adState.isAdFree &&
+              final bool showAds = !isAdFree &&
                   !isMonetizationAdFree &&
                   AdService.isSupportedPlatform;
               final int totalVisualCount = AdInterleavingHelper.getVisualCount(
                 filteredRecipes.length,
                 showAds,
+                interval: 10,
               );
+              final isWideWebCard = screenWidth >= 800;
+              final selectedRecipeId = isWideWebCard
+                  ? ref.watch(
+                      webLayoutProvider.select((s) => s.selectedRecipeId),
+                    )
+                  : null;
 
               return SliverPadding(
                 padding: const EdgeInsets.only(bottom: 100),
@@ -290,7 +337,11 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                   delegate: SliverChildBuilderDelegate((context, visualIndex) {
                     if (visualIndex >= totalVisualCount) return null;
 
-                    if (showAds && AdInterleavingHelper.isAdIndex(visualIndex)) {
+                    if (showAds &&
+                        AdInterleavingHelper.isAdIndex(
+                          visualIndex,
+                          interval: 10,
+                        )) {
                       return Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 860),
@@ -303,7 +354,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                     }
 
                     final dataIndex = showAds
-                        ? AdInterleavingHelper.getDataIndex(visualIndex)
+                        ? AdInterleavingHelper.getDataIndex(
+                            visualIndex,
+                            interval: 10,
+                          )
                         : visualIndex;
                     if (dataIndex >= filteredRecipes.length) return null;
 
@@ -317,12 +371,8 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                       fallback: theme.colorScheme.primary,
                     );
 
-                    final isWideWeb = MediaQuery.sizeOf(context).width >= 800;
-                    final selectedRecipeId = isWideWeb
-                        ? ref.watch(webLayoutProvider).selectedRecipeId
-                        : null;
                     final isSelected =
-                        isWideWeb && selectedRecipeId == recipe.recipePk;
+                        isWideWebCard && selectedRecipeId == recipe.recipePk;
 
                     return RepaintBoundary(
                       child: Center(
@@ -794,7 +844,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                         ),
                       ),
                     );
-                  }, childCount: filteredRecipes.length),
+                  }, childCount: totalVisualCount),
                 ),
               );
             },
@@ -807,7 +857,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
           ),
         ],
       ),
-      if (syncState.isSyncing)
+      if (isSyncing)
         const Positioned(
           top: 0,
           left: 0,
