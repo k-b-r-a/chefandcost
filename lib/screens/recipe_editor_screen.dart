@@ -2677,25 +2677,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         _tutorialExpandedIngredientIndex = null;
       });
     }
-    if (isSampleManufacturingRecipe(widget.recipeId)) {
-      await _autoRemoveSampleRecipe();
-    }
-  }
-
-  Future<void> _autoRemoveSampleRecipe() async {
-    final db = ref.read(databaseProvider);
-    final prefs = ref.read(sharedPreferencesProvider);
-    await dismissSampleManufacturingRecipe(db, prefs: prefs);
-    if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    AppSnackBar.showSuccess(context, l10n.sample_manufacturing_auto_removed);
-    if (widget.onClose != null) {
-      widget.onClose!();
-    } else {
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-    }
   }
 
   @visibleForTesting
