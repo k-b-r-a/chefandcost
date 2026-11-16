@@ -7885,9 +7885,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       bool insufficient,
     })>[];
 
-    for (final item in _addedIngredients) {
+    for (final item in _ingredients) {
       final ing = ingMap[item.ingredient.ingredientPk] ?? item.ingredient;
-      final reqUnit = unitMap[item.selectedUnitPk];
+      final reqUnit = unitMap[ing.unitFk];
       final stockUnit = unitMap[ing.stockUnit ?? ing.unitFk];
       final baseAmount = RecipeUtils.parseFormattedNumber(
         item.amountController.text,

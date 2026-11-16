@@ -789,7 +789,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   }
 
   IconData _categoryIconForUnit(Unit? unit) {
-    switch (unit?.unitType) {
+    switch (unit?.category) {
       case 'liquid':
         return Icons.water_drop_outlined;
       case 'solid':
