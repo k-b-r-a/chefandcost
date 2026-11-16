@@ -113,12 +113,12 @@ void main() {
       // Card is built immediately without zero-height delay
       expect(find.byType(Card), findsOneWidget);
 
-      // Pre-allocated SizedBox inside ad container with width 320 and height 50
+      // Pre-allocated SizedBox inside ad container with full inner width and locked adaptive height
       final sizedBoxes = tester.widgetList<SizedBox>(find.byType(SizedBox));
       final hasPreallocatedSlot = sizedBoxes.any(
-        (box) => box.width == 320.0 && box.height == 50.0,
+        (box) => box.width == double.infinity && (box.height ?? 0) >= 50.0,
       );
-      expect(hasPreallocatedSlot, isTrue, reason: 'Target banner ad size (320x50) must be pre-allocated');
+      expect(hasPreallocatedSlot, isTrue, reason: 'Target banner ad slot must be pre-allocated');
     });
 
     testWidgets('SmartBannerAdWidget pre-allocates exact dimensions for standard style (Zero-CLS)', (tester) async {

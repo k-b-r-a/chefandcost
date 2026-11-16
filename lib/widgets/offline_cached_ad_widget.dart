@@ -55,85 +55,98 @@ class OfflineCachedAdWidget extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => AdFreePassDialog.show(context),
-        child: Container(
-          width: width,
-          height: height,
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 10 : 14,
-            vertical: compact ? 4 : 8,
-          ),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                accentColor.withValues(alpha: 0.14),
-                theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
-              ],
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: compact ? 32 : 40,
-                height: compact ? 32 : 40,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  icon,
-                  size: compact ? 18 : 22,
-                  color: accentColor,
-                ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 340;
+            final effectiveCompact = compact || isNarrow;
+            final showIcon = constraints.maxWidth >= 280;
+
+            return Container(
+              width: width,
+              height: height,
+              padding: EdgeInsets.symmetric(
+                horizontal: effectiveCompact ? 10 : 14,
+                vertical: effectiveCompact ? 4 : 8,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: compact ? 12 : 13,
-                      ),
-                    ),
-                    if (!compact || height >= 48)
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: compact ? 10 : 11,
-                        ),
-                      ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    accentColor.withValues(alpha: 0.14),
+                    theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.55),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: accentColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  ctaLabel,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10.5,
+              child: Row(
+                children: [
+                  if (showIcon) ...[
+                    Container(
+                      width: effectiveCompact ? 32 : 40,
+                      height: effectiveCompact ? 32 : 40,
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: effectiveCompact ? 18 : 22,
+                        color: accentColor,
+                      ),
+                    ),
+                    SizedBox(width: isNarrow ? 8 : 10),
+                  ],
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: effectiveCompact ? 12 : 13,
+                          ),
+                        ),
+                        if (!effectiveCompact || height >= 48)
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: effectiveCompact ? 10 : 11,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isNarrow ? 6 : 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      ctaLabel,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isNarrow ? 10 : 10.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 34), // Reserve space for floating 8h button
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
