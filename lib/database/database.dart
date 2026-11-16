@@ -628,6 +628,98 @@ class AppDatabase extends _$AppDatabase {
     return into(ingredients).insert(withTime);
   }
 
+  Future<void> updateIngredientStock({
+    required String ingredientPk,
+    double? currentStock,
+    double? minimumStock,
+    String? stockUnit,
+    double? costPerStockUnit,
+    double? cost,
+    double? quantityForCost,
+  }) async {
+    await transaction(() async {
+      final now = DateTime.now();
+      final clampedStock = currentStock != null
+          ? (currentStock < 0 ? 0.0 : currentStock)
+          : null;
+      await (update(
+        ingredients,
+      )..where((t) => t.ingredientPk.equals(ingredientPk))).write(
+        IngredientsCompanion(
+          currentStock: clampedStock != null
+              ? Value(clampedStock)
+              : const Value.absent(),
+          minimumStock: minimumStock != null
+              ? Value(minimumStock)
+              : const Value.absent(),
+          stockUnit: stockUnit != null
+              ? Value(stockUnit)
+              : const Value.absent(),
+          costPerStockUnit: costPerStockUnit != null
+              ? Value(costPerStockUnit)
+              : const Value.absent(),
+          cost: cost != null ? Value(cost) : const Value.absent(),
+          quantityForCost: quantityForCost != null
+              ? Value(quantityForCost)
+              : const Value.absent(),
+          lastStockUpdate: Value(now),
+          dateTimeModified: Value(now),
+        ),
+      );
+    });
+  }
+
+  Future<void> deductRecipeFromInventory({
+    required String recipePk,
+    double multiplier = 1.0,
+  }) async {
+    await transaction(() async {
+      final rIngs = await (select(
+        recipeIngredients,
+      )..where((t) => t.recipeFk.equals(recipePk))).get();
+      if (rIngs.isEmpty) return;
+
+      final allUnits = await getAllUnits();
+      final unitMap = {for (final u in allUnits) u.unitPk: u};
+      final now = DateTime.now();
+
+      for (final ri in rIngs) {
+        final ing = await getIngredientById(ri.ingredientFk);
+        if (ing == null) continue;
+
+        final riUnit = unitMap[ri.unitFk];
+        final ingUnit = unitMap[ing.unitFk];
+        double deductAmount = ri.amountNeeded * multiplier;
+        if (riUnit != null &&
+            ingUnit != null &&
+            riUnit.category != null &&
+            riUnit.category == ingUnit.category &&
+            riUnit.factorToBase.isFinite &&
+            riUnit.factorToBase > 0 &&
+            ingUnit.factorToBase.isFinite &&
+            ingUnit.factorToBase > 0) {
+          deductAmount =
+              (ri.amountNeeded * multiplier) *
+              (riUnit.factorToBase / ingUnit.factorToBase);
+        }
+
+        final current = ing.currentStock ?? 0.0;
+        final nextStock = (current - deductAmount) < 0
+            ? 0.0
+            : (current - deductAmount);
+        await (update(
+          ingredients,
+        )..where((t) => t.ingredientPk.equals(ing.ingredientPk))).write(
+          IngredientsCompanion(
+            currentStock: Value(nextStock),
+            lastStockUpdate: Value(now),
+            dateTimeModified: Value(now),
+          ),
+        );
+      }
+    });
+  }
+
   Future<bool> updateIngredient(Ingredient ingredient) async {
     return transaction(() async {
       final old = await getIngredientById(
@@ -1064,7 +1156,22 @@ class AppDatabase extends _$AppDatabase {
             .write(RecipesCompanion(dateTimeModified: Value(now)));
       }
 
-      // 3. delete the old ingredient
+      // 3. preserve stock on target before deleting the old ingredient
+      if (source.currentStock != null) {
+        final convertedStock = source.currentStock! * conversion;
+        final nextStock = (target.currentStock ?? 0.0) + convertedStock;
+        await (update(
+          ingredients,
+        )..where((t) => t.ingredientPk.equals(target.ingredientPk))).write(
+          IngredientsCompanion(
+            currentStock: Value(nextStock < 0 ? 0.0 : nextStock),
+            lastStockUpdate: Value(now),
+            dateTimeModified: Value(now),
+          ),
+        );
+      }
+
+      // 4. delete the old ingredient
       await deleteIngredient(source);
     });
   }
@@ -1667,6 +1774,13 @@ class AppDatabase extends _$AppDatabase {
               cost: Value(ri.cost),
               quantityForCost: Value(ri.quantityForCost),
               unitFk: Value(effectiveUnitFk),
+              groupId: Value(ri.groupId),
+              category: Value(ri.category),
+              currentStock: Value(ri.currentStock),
+              minimumStock: Value(ri.minimumStock),
+              stockUnit: Value(ri.stockUnit),
+              costPerStockUnit: Value(ri.costPerStockUnit),
+              lastStockUpdate: Value(ri.lastStockUpdate),
               dateCreated: Value(ri.dateCreated),
               dateTimeModified: Value(ri.dateTimeModified),
               isDeleted: Value(ri.isDeleted),
@@ -1709,6 +1823,13 @@ class AppDatabase extends _$AppDatabase {
                         cost: Value(ri.cost),
                         quantityForCost: Value(ri.quantityForCost),
                         unitFk: Value(effectiveUnitFk),
+                        groupId: Value(ri.groupId),
+                        category: Value(ri.category),
+                        currentStock: Value(ri.currentStock),
+                        minimumStock: Value(ri.minimumStock),
+                        stockUnit: Value(ri.stockUnit),
+                        costPerStockUnit: Value(ri.costPerStockUnit),
+                        lastStockUpdate: Value(ri.lastStockUpdate),
                         isDeleted: const Value(false),
                         deletedAt: const Value(null),
                         dateTimeModified: Value(remoteTime),
@@ -1746,6 +1867,13 @@ class AppDatabase extends _$AppDatabase {
                         cost: Value(ri.cost),
                         quantityForCost: Value(ri.quantityForCost),
                         unitFk: Value(effectiveUnitFk),
+                        groupId: Value(ri.groupId),
+                        category: Value(ri.category),
+                        currentStock: Value(ri.currentStock),
+                        minimumStock: Value(ri.minimumStock),
+                        stockUnit: Value(ri.stockUnit),
+                        costPerStockUnit: Value(ri.costPerStockUnit),
+                        lastStockUpdate: Value(ri.lastStockUpdate),
                         dateTimeModified: Value(
                           ri.dateTimeModified ?? ri.dateCreated,
                         ),

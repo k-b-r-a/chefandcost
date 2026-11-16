@@ -93,6 +93,100 @@ final ingredientFilterProvider =
       IngredientFilterNotifier.new,
     );
 
+/// Active tab in the ingredients section.
+enum IngredientsSectionTab { ingredients, inventory }
+
+/// Notifier for the active ingredients section tab.
+class IngredientsSectionTabNotifier extends Notifier<IngredientsSectionTab> {
+  @override
+  IngredientsSectionTab build() => IngredientsSectionTab.ingredients;
+
+  void setTab(IngredientsSectionTab tab) => state = tab;
+}
+
+/// State provider for the active ingredients section tab.
+final ingredientsSectionTabProvider =
+    NotifierProvider<IngredientsSectionTabNotifier, IngredientsSectionTab>(
+      IngredientsSectionTabNotifier.new,
+    );
+
+/// Filter type for inventory stock status.
+enum InventoryStockFilter { all, lowStock, outOfStock, inStock }
+
+/// Notifier for the inventory stock filter.
+class InventoryStockFilterNotifier extends Notifier<InventoryStockFilter> {
+  @override
+  InventoryStockFilter build() => InventoryStockFilter.all;
+
+  void setFilter(InventoryStockFilter filter) => state = filter;
+}
+
+/// State provider for filtering inventory by stock status.
+final inventoryStockFilterProvider =
+    NotifierProvider<InventoryStockFilterNotifier, InventoryStockFilter>(
+      InventoryStockFilterNotifier.new,
+    );
+
+/// Computed stock status for an ingredient.
+enum InventoryStockStatus { outOfStock, lowStock, inStock }
+
+/// Helper computing inventory metrics for an [Ingredient].
+class IngredientInventoryMetrics {
+  const IngredientInventoryMetrics({
+    required this.currentStock,
+    required this.minimumStock,
+    required this.status,
+    required this.stockValue,
+  });
+
+  final double currentStock;
+  final double? minimumStock;
+  final InventoryStockStatus status;
+  final double stockValue;
+
+  factory IngredientInventoryMetrics.fromIngredient(
+    Ingredient ingredient, {
+    Unit? ingredientUnit,
+    Unit? stockUnit,
+  }) {
+    final current = ingredient.currentStock ?? 0.0;
+    final minimum = ingredient.minimumStock;
+    final InventoryStockStatus status;
+    if (current <= 0) {
+      status = InventoryStockStatus.outOfStock;
+    } else if (minimum != null && current <= minimum) {
+      status = InventoryStockStatus.lowStock;
+    } else {
+      status = InventoryStockStatus.inStock;
+    }
+
+    double stockValue = 0.0;
+    if (ingredient.quantityForCost > 0) {
+      double normalizedStock = current;
+      if (ingredientUnit != null &&
+          stockUnit != null &&
+          ingredientUnit.category != null &&
+          ingredientUnit.category == stockUnit.category &&
+          ingredientUnit.factorToBase.isFinite &&
+          ingredientUnit.factorToBase > 0 &&
+          stockUnit.factorToBase.isFinite &&
+          stockUnit.factorToBase > 0) {
+        normalizedStock =
+            current * (stockUnit.factorToBase / ingredientUnit.factorToBase);
+      }
+      stockValue =
+          (normalizedStock / ingredient.quantityForCost) * ingredient.cost;
+    }
+
+    return IngredientInventoryMetrics(
+      currentStock: current,
+      minimumStock: minimum,
+      status: status,
+      stockValue: stockValue,
+    );
+  }
+}
+
 /// Provides a stream of ingredients that match a search query.
 final relatedIngredientsProvider =
     StreamProvider.family<List<Ingredient>, String>((ref, query) {
