@@ -1,4 +1,4 @@
-import 'dart:async' show FutureOr;
+import 'dart:async' show Completer, FutureOr;
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -1173,6 +1173,32 @@ class AppTutorialService {
     return true;
   }
 
+  /// Waits for any active route transition animation to complete so that
+  /// `RenderBox.localToGlobal` measures target widgets at their final resting
+  /// position rather than mid-transition.
+  static Future<void> _waitForRouteTransition(BuildContext context) async {
+    final route = ModalRoute.of(context);
+    final animation = route?.animation;
+    if (animation == null || animation.isCompleted) return;
+
+    final completer = Completer<void>();
+    void listener(AnimationStatus status) {
+      if (status == AnimationStatus.completed ||
+          status == AnimationStatus.dismissed) {
+        animation.removeStatusListener(listener);
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
+      }
+    }
+
+    animation.addStatusListener(listener);
+    await completer.future;
+    if (context.mounted) {
+      await WidgetsBinding.instance.endOfFrame;
+    }
+  }
+
   /// Checks if Ingredient Editor walkthrough should trigger on first launch.
   static Future<bool> checkAndShowIngredientEditorTutorial(
     BuildContext context, {
@@ -1209,6 +1235,9 @@ class AppTutorialService {
       if (isCompleted) return false;
     }
 
+    if (!context.mounted) return false;
+
+    await _waitForRouteTransition(context);
     if (!context.mounted) return false;
 
     final targets = createIngredientEditorTargets(context: context, keys: keys);
@@ -1314,6 +1343,9 @@ class AppTutorialService {
       if (isCompleted) return false;
     }
 
+    if (!context.mounted) return false;
+
+    await _waitForRouteTransition(context);
     if (!context.mounted) return false;
 
     final targets = createRecipeEditorTargets(context: context, keys: keys);
