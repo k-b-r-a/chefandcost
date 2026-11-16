@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:io' show Platform;
+import 'dart:io' show InternetAddress, Platform;
+import 'dart:ui' show AppLifecycleState;
 import 'package:flutter/foundation.dart' show ValueNotifier, VoidCallback, debugPrint, kIsWeb;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -7,6 +8,20 @@ class AdService {
   AdService._();
 
   static bool? debugIsSupportedPlatform;
+  static bool? debugIsOffline;
+  static bool _isOffline = false;
+  static final ValueNotifier<bool> isOfflineNotifier = ValueNotifier<bool>(false);
+  static bool get isOffline => debugIsOffline ?? _isOffline;
+
+  static void setDebugOffline(bool? value) {
+    debugIsOffline = value;
+    isOfflineNotifier.value = value ?? _isOffline;
+  }
+
+  static const int kMaxPreloadedBanners = 2;
+  static final List<BannerAd> _cachedBannerPool = <BannerAd>[];
+  static bool _isPreloadingBanners = false;
+
   static bool _isInitialized = false;
   static bool _isAppMuted = true;
   static bool _hasAppliedNativeMute = false;
@@ -14,6 +29,19 @@ class AdService {
   static bool _isPreloadingRewardedAd = false;
   static int _rewardedRetryAttempt = 0;
   static const int _maxRewardedRetryAttempts = 3;
+  static DateTime? _rewardedAdLoadedAt;
+  static DateTime? _lastRewardedLoadAttemptAt;
+  static Timer? _periodicRefreshTimer;
+  static AppLifecycleState appLifecycleState = AppLifecycleState.resumed;
+  static bool Function()? isUserAdFreeCallback;
+
+  static const Duration kMinAdRequestCooldown = Duration(seconds: 30);
+  static const Duration kRewardedAdStaleThreshold = Duration(minutes: 45);
+  static const Duration kBannerAdRefreshThreshold = Duration(seconds: 75);
+
+  /// Incremented by periodic/navigation evaluation to let active banner widgets
+  /// check if they are stale or failed past cooldown.
+  static final ValueNotifier<int> adRefreshTickNotifier = ValueNotifier<int>(0);
 
   /// Indicates whether the global ad audio is currently muted (true for banner ads, false only during rewarded ads)
   static bool get isAppMuted => _isAppMuted;
@@ -146,20 +174,236 @@ class AdService {
       // Ensure banner ads are never allowed to emit audio (only reward ads unmute)
       await muteBannerAds();
       _isInitialized = true;
+      startPeriodicRefresh();
       preloadRewardedAd();
+      unawaited(preloadCachedBanners());
     } catch (e) {
       debugPrint('AdService initialization error: $e');
+    }
+  }
+
+  /// Returns true if the currently preloaded rewarded ad has exceeded [kRewardedAdStaleThreshold].
+  static bool isRewardedAdStale({DateTime? now}) {
+    if (_preloadedRewardedAd == null || _rewardedAdLoadedAt == null) {
+      return false;
+    }
+    final current = now ?? DateTime.now();
+    return current.difference(_rewardedAdLoadedAt!) >= kRewardedAdStaleThreshold;
+  }
+
+  /// Evaluates whether a rewarded ad request is necessary and policy-compliant.
+  static bool shouldRequestRewardedAd({
+    required bool isAdFree,
+    DateTime? now,
+  }) {
+    if (isAdFree) return false;
+    if (!isSupportedPlatform) return false;
+    if (appLifecycleState != AppLifecycleState.resumed) return false;
+    if (_isPreloadingRewardedAd) return false;
+
+    final current = now ?? DateTime.now();
+    if (_preloadedRewardedAd != null && !isRewardedAdStale(now: current)) {
+      return false;
+    }
+
+    if (_lastRewardedLoadAttemptAt != null &&
+        current.difference(_lastRewardedLoadAttemptAt!) <
+            kMinAdRequestCooldown) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /// Probes network connectivity and updates [isOfflineNotifier].
+  static Future<bool> checkConnectivity() async {
+    if (debugIsOffline != null) {
+      isOfflineNotifier.value = debugIsOffline!;
+      return !debugIsOffline!;
+    }
+    if (kIsWeb) return true;
+    try {
+      if (Platform.environment.containsKey('FLUTTER_TEST')) {
+        return !isOffline;
+      }
+      final result = await InternetAddress.lookup('google.com')
+          .timeout(const Duration(seconds: 2));
+      final online = result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+      _isOffline = !online;
+      isOfflineNotifier.value = _isOffline;
+      return online;
+    } catch (_) {
+      _isOffline = true;
+      isOfflineNotifier.value = true;
+      return false;
+    }
+  }
+
+  /// Marks the device as offline when an AdMob load error indicates a network failure.
+  static void markOfflineFromAdError(LoadAdError error) {
+    final msg = error.message.toLowerCase();
+    if (error.code == 2 ||
+        msg.contains('network') ||
+        msg.contains('offline') ||
+        msg.contains('unable to resolve host')) {
+      _isOffline = true;
+      isOfflineNotifier.value = true;
+    }
+  }
+
+  /// Preloads standby [BannerAd] instances into [_cachedBannerPool] while online.
+  static Future<void> preloadCachedBanners() async {
+    if (!_canInvokeNativeAdMob || isOffline || _isPreloadingBanners) return;
+    if (appLifecycleState != AppLifecycleState.resumed) return;
+    if (isUserAdFreeCallback?.call() ?? false) return;
+    if (_cachedBannerPool.length >= kMaxPreloadedBanners) return;
+
+    final unitId = bannerAdUnitId;
+    if (unitId.isEmpty) return;
+
+    _isPreloadingBanners = true;
+    try {
+      while (_cachedBannerPool.length < kMaxPreloadedBanners &&
+          !isOffline &&
+          appLifecycleState == AppLifecycleState.resumed &&
+          !(isUserAdFreeCallback?.call() ?? false)) {
+        final completer = Completer<void>();
+        late final BannerAd banner;
+        banner = BannerAd(
+          adUnitId: unitId,
+          size: AdSize.banner,
+          request: const AdRequest(),
+          listener: BannerAdListener(
+            onAdLoaded: (_) {
+              _isOffline = false;
+              isOfflineNotifier.value = false;
+              if (_cachedBannerPool.length < kMaxPreloadedBanners) {
+                _cachedBannerPool.add(banner);
+              } else {
+                banner.dispose();
+              }
+              if (!completer.isCompleted) completer.complete();
+            },
+            onAdFailedToLoad: (ad, error) {
+              ad.dispose();
+              markOfflineFromAdError(error);
+              if (!completer.isCompleted) completer.complete();
+            },
+          ),
+        );
+        await banner.load();
+        await completer.future.timeout(
+          const Duration(seconds: 6),
+          onTimeout: () {},
+        );
+        if (isOffline) break;
+      }
+    } catch (_) {
+    } finally {
+      _isPreloadingBanners = false;
+    }
+  }
+
+  /// Claims a preloaded standby [BannerAd] from [_cachedBannerPool] if available.
+  static BannerAd? takePreloadedBannerAd({AdSize? preferredSize}) {
+    if (_cachedBannerPool.isEmpty) return null;
+    if (preferredSize != null) {
+      for (int i = 0; i < _cachedBannerPool.length; i++) {
+        if (_cachedBannerPool[i].size.width == preferredSize.width &&
+            _cachedBannerPool[i].size.height == preferredSize.height) {
+          final ad = _cachedBannerPool.removeAt(i);
+          if (!isOffline) {
+            unawaited(preloadCachedBanners());
+          }
+          return ad;
+        }
+      }
+    }
+    final ad = _cachedBannerPool.removeAt(0);
+    if (!isOffline) {
+      unawaited(preloadCachedBanners());
+    }
+    return ad;
+  }
+
+  /// Centralized evaluation called by the periodic timer and [AdNavigationObserver].
+  static Future<bool> evaluateAndPreloadAdsIfNeeded({
+    bool? isAdFree,
+    DateTime? now,
+  }) async {
+    final effectiveAdFree = isAdFree ?? (isUserAdFreeCallback?.call() ?? false);
+    if (effectiveAdFree ||
+        !isSupportedPlatform ||
+        appLifecycleState != AppLifecycleState.resumed) {
+      return false;
+    }
+
+    final online = await checkConnectivity();
+    adRefreshTickNotifier.value++;
+
+    // Freeze preloaded ads while offline so they are never disposed.
+    if (!online) {
+      return false;
+    }
+
+    unawaited(preloadCachedBanners());
+
+    if (!shouldRequestRewardedAd(isAdFree: effectiveAdFree, now: now)) {
+      return false;
+    }
+
+    if (isRewardedAdStale(now: now)) {
+      _preloadedRewardedAd?.dispose();
+      _preloadedRewardedAd = null;
+      _rewardedAdLoadedAt = null;
+      rewardedAdReadyNotifier.value = false;
+    }
+
+    await preloadRewardedAd();
+    return true;
+  }
+
+  /// Starts the lifecycle-aware periodic background refresh timer.
+  static void startPeriodicRefresh({
+    Duration interval = const Duration(seconds: 60),
+  }) {
+    _periodicRefreshTimer?.cancel();
+    if (!isSupportedPlatform || appLifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    _periodicRefreshTimer = Timer.periodic(interval, (_) {
+      unawaited(evaluateAndPreloadAdsIfNeeded());
+    });
+  }
+
+  /// Pauses the periodic background refresh timer.
+  static void stopPeriodicRefresh() {
+    _periodicRefreshTimer?.cancel();
+    _periodicRefreshTimer = null;
+  }
+
+  /// Handles app foreground/background transitions.
+  static void onAppLifecycleStateChanged(AppLifecycleState state) {
+    appLifecycleState = state;
+    if (state == AppLifecycleState.resumed) {
+      startPeriodicRefresh();
+      unawaited(evaluateAndPreloadAdsIfNeeded());
+    } else {
+      stopPeriodicRefresh();
     }
   }
 
   /// Preloads a RewardedAd in the background with exponential retry backoff.
   static Future<void> preloadRewardedAd() async {
     if (!_canInvokeNativeAdMob) return;
+    if (appLifecycleState != AppLifecycleState.resumed) return;
+    if (isUserAdFreeCallback?.call() ?? false) return;
     if (_preloadedRewardedAd != null || _isPreloadingRewardedAd) return;
 
     final unitId = rewardedAdUnitId;
     if (unitId.isEmpty) return;
 
+    _lastRewardedLoadAttemptAt = DateTime.now();
     _isPreloadingRewardedAd = true;
     try {
       await RewardedAd.load(
@@ -168,6 +412,7 @@ class AdService {
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (RewardedAd ad) {
             _preloadedRewardedAd = ad;
+            _rewardedAdLoadedAt = DateTime.now();
             _isPreloadingRewardedAd = false;
             _rewardedRetryAttempt = 0;
             rewardedAdReadyNotifier.value = true;
@@ -317,13 +562,14 @@ class AdService {
   static BannerAd? createBannerAd({
     required void Function() onAdLoaded,
     required void Function(LoadAdError error) onAdFailedToLoad,
+    AdSize size = AdSize.banner,
   }) {
     // Strictly guarantee sound is silenced for banner ads
     unawaited(muteBannerAds());
     if (!_canInvokeNativeAdMob) return null;
     return BannerAd(
       adUnitId: bannerAdUnitId,
-      size: AdSize.banner,
+      size: size,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (_) => onAdLoaded(),

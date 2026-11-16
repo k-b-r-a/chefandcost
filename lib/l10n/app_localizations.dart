@@ -4187,6 +4187,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clean catalog: In the comparison screen, select the best ingredient and tap Merge to unify duplicates across all your recipes.'**
   String get tutorial_ingredient_editor_compare_hint;
+
+  /// No description provided for @offline_ad_pro_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Chef&Cost Cloud Sync & Pro'**
+  String get offline_ad_pro_title;
+
+  /// No description provided for @offline_ad_pro_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync recipes across devices & remove all ads permanently'**
+  String get offline_ad_pro_subtitle;
+
+  /// No description provided for @offline_ad_costing_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect Your Kitchen Margins'**
+  String get offline_ad_costing_title;
+
+  /// No description provided for @offline_ad_costing_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Pro for real-time cloud backup & zero ads'**
+  String get offline_ad_costing_subtitle;
+
+  /// No description provided for @offline_ad_pass_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Want 8 Hours Without Ads?'**
+  String get offline_ad_pass_title;
+
+  /// No description provided for @offline_ad_pass_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to watch 1 short video or upgrade to Pro'**
+  String get offline_ad_pass_subtitle;
+
+  /// No description provided for @offline_ad_cta.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Ad-Free'**
+  String get offline_ad_cta;
 }
 
 class _AppLocalizationsDelegate

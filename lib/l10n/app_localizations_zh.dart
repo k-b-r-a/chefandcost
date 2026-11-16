@@ -2240,6 +2240,30 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get tutorial_ingredient_editor_compare_hint =>
       'Clean catalog: In the comparison screen, select the best ingredient and tap Merge to unify duplicates across all your recipes.';
+
+  @override
+  String get offline_ad_pro_title => 'Chef&Cost Cloud Sync & Pro';
+
+  @override
+  String get offline_ad_pro_subtitle =>
+      'Sync recipes across devices & remove all ads permanently';
+
+  @override
+  String get offline_ad_costing_title => 'Protect Your Kitchen Margins';
+
+  @override
+  String get offline_ad_costing_subtitle =>
+      'Upgrade to Pro for real-time cloud backup & zero ads';
+
+  @override
+  String get offline_ad_pass_title => 'Want 8 Hours Without Ads?';
+
+  @override
+  String get offline_ad_pass_subtitle =>
+      'Connect to the internet to watch 1 short video or upgrade to Pro';
+
+  @override
+  String get offline_ad_cta => 'Go Ad-Free';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).

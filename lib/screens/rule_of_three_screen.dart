@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/recipe_utils.dart';
+import '../widgets/ad_free_pass_button.dart';
+import '../widgets/inline_ad_card.dart';
 
 class RuleOfThreeScreen extends StatefulWidget {
   const RuleOfThreeScreen({super.key});
@@ -117,6 +119,7 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
         ),
         centerTitle: true,
         actions: [
+          const AdFreePassButton(),
           TextButton(
             onPressed: _clearAll,
             child: Text(
@@ -137,6 +140,11 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const InlineAdCard(
+              key: ValueKey('ad_rule_of_three_top_static'),
+              style: InlineAdCardStyle.ingredient,
+              margin: EdgeInsets.only(bottom: 16),
+            ),
             Text(
               l10n.rule_of_three_desc,
               style: theme.textTheme.bodyMedium?.copyWith(

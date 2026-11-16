@@ -10,6 +10,12 @@ import '../utils/ui_utils.dart';
 import 'compare_ingredients_screen.dart';
 import '../provider/settings_provider.dart';
 import '../services/app_tutorial_service.dart';
+import '../provider/ad_provider.dart';
+import '../provider/monetization_provider.dart';
+import '../services/ad_service.dart';
+import '../utils/ad_interleaving_helper.dart';
+import '../widgets/ad_free_pass_button.dart';
+import '../widgets/inline_ad_card.dart';
 
 class AddIngredientScreen extends ConsumerStatefulWidget {
   final Ingredient? ingredient;
@@ -325,6 +331,11 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
     final unitsAsync = ref.watch(unitsProvider);
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
+    final isAdFree = ref.watch(adProvider.select((s) => s.isAdFree));
+    final isMonetizationAdFree =
+        ref.watch(monetizationProvider.select((s) => s.isAdFree));
+    final bool showAds =
+        !isAdFree && !isMonetizationAdFree && AdService.isSupportedPlatform;
 
     return PopScope(
       canPop: _isDismissing || !_hasChanges(),
@@ -351,6 +362,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
           ),
         ),
         actions: [
+          const AdFreePassButton(),
           IconButton(
             icon: const Icon(Icons.help_outline_rounded),
             tooltip: l10n.tutorial_help_tooltip,
@@ -379,6 +391,14 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (showAds) ...[
+                      const InlineAdCard(
+                        key: ValueKey('ad_ingredient_edit_top_static'),
+                        style: InlineAdCardStyle.ingredient,
+                        margin: EdgeInsets.zero,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     TextFormField(
                       controller: _nameController,
                       textCapitalization: TextCapitalization.sentences,
@@ -548,12 +568,42 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                                     if (filtered.isEmpty) {
                                       return Text(l10n.no_similar_ingredients);
                                     }
+                                    final int totalVisualCount =
+                                        AdInterleavingHelper.getVisualCount(
+                                      filtered.length,
+                                      showAds,
+                                      interval: 5,
+                                    );
                                     return ListView.builder(
                                       shrinkWrap: true,
                                       physics: const NeverScrollableScrollPhysics(),
-                                      itemCount: filtered.length,
-                                      itemBuilder: (context, index) {
-                                        final item = filtered[index];
+                                      itemCount: totalVisualCount,
+                                      itemBuilder: (context, visualIndex) {
+                                        if (showAds &&
+                                            AdInterleavingHelper.isAdIndex(
+                                              visualIndex,
+                                              interval: 5,
+                                            )) {
+                                          return InlineAdCard(
+                                            key: ValueKey(
+                                              'ad_related_ingredient_slot_$visualIndex',
+                                            ),
+                                            style: InlineAdCardStyle.ingredient,
+                                            margin: const EdgeInsets.symmetric(
+                                              vertical: 6,
+                                            ),
+                                          );
+                                        }
+                                        final dataIndex = showAds
+                                            ? AdInterleavingHelper.getDataIndex(
+                                                visualIndex,
+                                                interval: 5,
+                                              )
+                                            : visualIndex;
+                                        if (dataIndex >= filtered.length) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        final item = filtered[dataIndex];
                                         return ListTile(
                                           title: Text(item.name),
                                           subtitle: Text(

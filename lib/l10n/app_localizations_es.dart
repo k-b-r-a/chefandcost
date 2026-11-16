@@ -2272,4 +2272,28 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get tutorial_ingredient_editor_compare_hint =>
       'Catálogo limpio: En la pantalla de comparación, elige el ingrediente que prefieras y toca Fusionar para unificar duplicados en todas tus recetas.';
+
+  @override
+  String get offline_ad_pro_title => 'Chef&Cost Cloud Sync y Pro';
+
+  @override
+  String get offline_ad_pro_subtitle =>
+      'Sincroniza recetas entre dispositivos y elimina anuncios para siempre';
+
+  @override
+  String get offline_ad_costing_title => 'Protege tus Márgenes de Cocina';
+
+  @override
+  String get offline_ad_costing_subtitle =>
+      'Pásate a Pro para respaldo en la nube y cero anuncios';
+
+  @override
+  String get offline_ad_pass_title => '¿Quieres 8 Horas Sin Anuncios?';
+
+  @override
+  String get offline_ad_pass_subtitle =>
+      'Conéctate a internet para ver 1 video corto o pásate a Pro';
+
+  @override
+  String get offline_ad_cta => 'Sin Anuncios';
 }
