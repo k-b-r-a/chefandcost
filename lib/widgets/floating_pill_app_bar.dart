@@ -169,11 +169,7 @@ Widget buildFloatingPillAppBar({
             builder: (context, constraints) {
               final expandedFont = (constraints.maxWidth / 20).clamp(20.0, 26.0);
               final targetFont = expandedFont + (16 - expandedFont) * progress;
-              final isFullyCollapsed = progress >= 1.0;
-              final fontSize = isFullyCollapsed ? 16.0 : expandedFont;
-              final titleScale = isFullyCollapsed
-                  ? 1.0
-                  : (targetFont / expandedFont);
+              final titleScale = targetFont / expandedFont;
               return Stack(
                 fit: StackFit.expand,
                 children: [
@@ -181,70 +177,71 @@ Widget buildFloatingPillAppBar({
                     progress: progress,
                     surfaceColor: theme.colorScheme.surface,
                   ),
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: bottomHeight + 8,
-                    child: IgnorePointer(
-                      ignoring: hideCollapsedElements,
-                      child: ExcludeSemantics(
-                        excluding: hideCollapsedElements,
-                        child: Opacity(
-                          key: const ValueKey('header_title_fade'),
-                          opacity: opacity,
-                          child: Transform.translate(
-                            offset: Offset(0, filtersOnly ? -12 * progress : 0),
-                            child: GestureDetector(
-                              onTap: () => controller.animateTo(
-                                0,
-                                duration: const Duration(milliseconds: 500),
-                                curve: Curves.easeOut,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Transform.scale(
-                                    scale: titleScale,
-                                    alignment: Alignment.center,
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child:
-                                          titleWidget ??
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                title,
-                                                style: TextStyle(
-                                                  color: theme
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.8),
-                                                  fontWeight: FontWeight.w900,
-                                                  fontSize: fontSize,
+                  if (!hideCollapsedElements)
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: bottomHeight + 8,
+                      child: IgnorePointer(
+                        ignoring: hideCollapsedElements,
+                        child: ExcludeSemantics(
+                          excluding: hideCollapsedElements,
+                          child: Opacity(
+                            key: const ValueKey('header_title_fade'),
+                            opacity: opacity,
+                            child: Transform.translate(
+                              offset: Offset(0, filtersOnly ? -12 * progress : 0),
+                              child: GestureDetector(
+                                onTap: () => controller.animateTo(
+                                  0,
+                                  duration: const Duration(milliseconds: 500),
+                                  curve: Curves.easeOut,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Transform.scale(
+                                      scale: titleScale,
+                                      alignment: Alignment.center,
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child:
+                                            titleWidget ??
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  title,
+                                                  style: TextStyle(
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withValues(alpha: 0.8),
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: expandedFont,
+                                                  ),
                                                 ),
-                                              ),
-                                              if (trailing != null) ...[
-                                                const SizedBox(width: 8),
-                                                trailing,
+                                                if (trailing != null) ...[
+                                                  const SizedBox(width: 8),
+                                                  trailing,
+                                                ],
                                               ],
-                                            ],
-                                          ),
+                                            ),
+                                      ),
                                     ),
-                                  ),
-                                  if (underTitle != null) ...[
-                                    const SizedBox(height: 6),
-                                    underTitle,
+                                    if (underTitle != null) ...[
+                                      const SizedBox(height: 6),
+                                      underTitle,
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  if (filtersOnly && leading != null)
+                  if (filtersOnly && leading != null && !hideCollapsedElements)
                     Positioned(
                       top: MediaQuery.paddingOf(context).top,
                       left: 4,
@@ -262,7 +259,7 @@ Widget buildFloatingPillAppBar({
                         ),
                       ),
                     ),
-                  if (filtersOnly && actions != null)
+                  if (filtersOnly && actions != null && !hideCollapsedElements)
                     Positioned(
                       top: MediaQuery.paddingOf(context).top,
                       right: 0,
