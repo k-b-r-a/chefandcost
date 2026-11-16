@@ -19,6 +19,7 @@ import '../services/ad_service.dart';
 import '../utils/ad_interleaving_helper.dart';
 import '../widgets/inline_ad_card.dart';
 import '../services/app_tutorial_service.dart';
+import '../widgets/inventory_adjustment_sheet.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
   const IngredientsScreen({super.key});
@@ -125,6 +126,8 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final unitsAsync = ref.watch(unitsStreamProvider);
     final searchQuery = ref.watch(ingredientSearchQueryProvider);
     final currentFilter = ref.watch(ingredientFilterProvider);
+    final activeTab = ref.watch(ingredientsSectionTabProvider);
+    final stockFilter = ref.watch(inventoryStockFilterProvider);
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
     final isWide = MediaQuery.sizeOf(context).width >= 640;
@@ -137,6 +140,30 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
             ),
           )
         : null;
+
+    final int alertCount = ingredientsAsync.maybeWhen(
+      data: (ingredients) {
+        final units = unitsAsync.valueOrNull ?? const <Unit>[];
+        final unitMap = _getUnitMap(units);
+        int count = 0;
+        for (final ing in ingredients) {
+          final metrics = IngredientInventoryMetrics.fromIngredient(
+            ing,
+            ingredientUnit: unitMap[ing.unitFk],
+            stockUnit: unitMap[ing.stockUnit ?? ing.unitFk],
+          );
+          if (metrics.status == InventoryStockStatus.lowStock ||
+              metrics.status == InventoryStockStatus.outOfStock) {
+            count++;
+          }
+        }
+        return count;
+      },
+      orElse: () => 0,
+    );
+
+    final double bottomHeight =
+        activeTab == IngredientsSectionTab.inventory ? 148 : 104;
 
     return Scaffold(
       body: Stack(
@@ -163,32 +190,137 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                   ),
                 ],
                 bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(52),
-              child: RepaintBoundary(
-                child: SizedBox(
-                  height: 52,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: KeyedSubtree(
-                      key: _tutorialKeys.ingredientFilterBarKey,
-                      child: IngredientFilterChipsRow(
-                        currentFilter: currentFilter,
-                        onFilterSelected: (filter) {
-                          ref
-                              .read(ingredientFilterProvider.notifier)
-                              .setFilter(filter);
-                        },
-                        isCompact: true,
+                  preferredSize: Size.fromHeight(bottomHeight),
+                  child: RepaintBoundary(
+                    child: SizedBox(
+                      height: bottomHeight,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: SegmentedButton<IngredientsSectionTab>(
+                                showSelectedIcon: false,
+                                segments: [
+                                  ButtonSegment(
+                                    value: IngredientsSectionTab.ingredients,
+                                    label: Text(l10n.ingredients_tab_ingredients),
+                                  ),
+                                  ButtonSegment(
+                                    value: IngredientsSectionTab.inventory,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(l10n.ingredients_tab_inventory),
+                                        if (alertCount > 0) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: theme.colorScheme.error,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              '$alertCount',
+                                              style: theme.textTheme.labelSmall
+                                                  ?.copyWith(
+                                                color:
+                                                    theme.colorScheme.onError,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                selected: {activeTab},
+                                onSelectionChanged: (selection) {
+                                  ref
+                                      .read(
+                                        ingredientsSectionTabProvider.notifier,
+                                      )
+                                      .setTab(selection.first);
+                                },
+                              ),
+                            ),
+                          ),
+                          if (activeTab == IngredientsSectionTab.inventory)
+                            SizedBox(
+                              height: 44,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
+                                children: [
+                                  _buildStockFilterChip(
+                                    context,
+                                    label: l10n.inventory_filter_all,
+                                    filter: InventoryStockFilter.all,
+                                    current: stockFilter,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStockFilterChip(
+                                    context,
+                                    label: l10n.inventory_filter_low_stock,
+                                    filter: InventoryStockFilter.lowStock,
+                                    current: stockFilter,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStockFilterChip(
+                                    context,
+                                    label: l10n.inventory_filter_out_of_stock,
+                                    filter: InventoryStockFilter.outOfStock,
+                                    current: stockFilter,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStockFilterChip(
+                                    context,
+                                    label: l10n.inventory_filter_in_stock,
+                                    filter: InventoryStockFilter.inStock,
+                                    current: stockFilter,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          SizedBox(
+                            height: 52,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              child: KeyedSubtree(
+                                key: _tutorialKeys.ingredientFilterBarKey,
+                                child: IngredientFilterChipsRow(
+                                  currentFilter: currentFilter,
+                                  onFilterSelected: (filter) {
+                                    ref
+                                        .read(ingredientFilterProvider.notifier)
+                                        .setFilter(filter);
+                                  },
+                                  isCompact: true,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
           ingredientsAsync.when(
             data: (ingredients) {
               return unitsAsync.when(
@@ -200,6 +332,18 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                     currentFilter,
                     searchQuery,
                   );
+
+                  if (activeTab == IngredientsSectionTab.inventory) {
+                    return _buildInventorySliver(
+                      context: context,
+                      allIngredients: ingredients,
+                      filteredIngredients: filteredIngredients,
+                      units: units,
+                      unitMap: unitMap,
+                      stockFilter: stockFilter,
+                      currencySymbol: settings.currencySymbol,
+                    );
+                  }
 
                   if (!_tutorialChecked && filteredIngredients.isNotEmpty) {
                     _maybeTriggerTutorial();
@@ -618,5 +762,418 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         ref.read(webLayoutProvider.notifier).closeDetail();
       }
     }
+  }
+
+  Widget _buildStockFilterChip(
+    BuildContext context, {
+    required String label,
+    required InventoryStockFilter filter,
+    required InventoryStockFilter current,
+  }) {
+    final selected = filter == current;
+    return FilterChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) {
+        ref.read(inventoryStockFilterProvider.notifier).setFilter(filter);
+      },
+      visualDensity: VisualDensity.compact,
+    );
+  }
+
+  double _stepSizeForUnit(Unit? unit) {
+    final sym = (unit?.symbol ?? '').toLowerCase();
+    if (sym == 'g' || sym == 'ml') return 100.0;
+    if (sym == 'oz' || sym == 'cup' || sym == 'cups' || sym == 'tz') return 0.5;
+    return 1.0;
+  }
+
+  IconData _categoryIconForUnit(Unit? unit) {
+    switch (unit?.type) {
+      case 'liquid':
+        return Icons.water_drop_outlined;
+      case 'solid':
+        return Icons.grain_outlined;
+      case 'piece':
+        return Icons.egg_alt_outlined;
+      default:
+        return Icons.inventory_2_outlined;
+    }
+  }
+
+  Widget _buildInventorySliver({
+    required BuildContext context,
+    required List<Ingredient> allIngredients,
+    required List<Ingredient> filteredIngredients,
+    required List<Unit> units,
+    required Map<String, Unit> unitMap,
+    required InventoryStockFilter stockFilter,
+    required String currencySymbol,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    double totalValue = 0.0;
+    int inStockCount = 0;
+    int lowStockCount = 0;
+    int outOfStockCount = 0;
+
+    for (final ing in allIngredients) {
+      final m = IngredientInventoryMetrics.fromIngredient(
+        ing,
+        ingredientUnit: unitMap[ing.unitFk],
+        stockUnit: unitMap[ing.stockUnit ?? ing.unitFk],
+      );
+      totalValue += m.stockValue;
+      switch (m.status) {
+        case InventoryStockStatus.inStock:
+          inStockCount++;
+        case InventoryStockStatus.lowStock:
+          lowStockCount++;
+        case InventoryStockStatus.outOfStock:
+          outOfStockCount++;
+      }
+    }
+
+    final displayItems = <({Ingredient ingredient, IngredientInventoryMetrics metrics})>[];
+    for (final ing in filteredIngredients) {
+      final m = IngredientInventoryMetrics.fromIngredient(
+        ing,
+        ingredientUnit: unitMap[ing.unitFk],
+        stockUnit: unitMap[ing.stockUnit ?? ing.unitFk],
+      );
+      final matches = switch (stockFilter) {
+        InventoryStockFilter.all => true,
+        InventoryStockFilter.inStock => m.status == InventoryStockStatus.inStock,
+        InventoryStockFilter.lowStock => m.status == InventoryStockStatus.lowStock,
+        InventoryStockFilter.outOfStock =>
+          m.status == InventoryStockStatus.outOfStock,
+      };
+      if (matches) {
+        displayItems.add((ingredient: ing, metrics: m));
+      }
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == 0) {
+              return _buildInventoryKpiBanner(
+                context: context,
+                totalValue: totalValue,
+                inStockCount: inStockCount,
+                lowStockCount: lowStockCount,
+                outOfStockCount: outOfStockCount,
+                currencySymbol: currencySymbol,
+              );
+            }
+            if (displayItems.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 48,
+                        color: theme.colorScheme.outline,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.inventory_empty_title,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            final item = displayItems[index - 1];
+            return _buildInventoryCard(
+              context: context,
+              ingredient: item.ingredient,
+              metrics: item.metrics,
+              units: units,
+              unitMap: unitMap,
+              currencySymbol: currencySymbol,
+            );
+          },
+          childCount: displayItems.isEmpty ? 2 : displayItems.length + 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInventoryKpiBanner({
+    required BuildContext context,
+    required double totalValue,
+    required int inStockCount,
+    required int lowStockCount,
+    required int outOfStockCount,
+    required String currencySymbol,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.inventory_kpi_total_value,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$currencySymbol${RecipeUtils.formatNumber(totalValue)}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _kpiCountPill(
+              context,
+              label: l10n.inventory_kpi_in_stock,
+              count: inStockCount,
+              color: Colors.green,
+            ),
+            const SizedBox(width: 6),
+            _kpiCountPill(
+              context,
+              label: l10n.inventory_kpi_low_stock,
+              count: lowStockCount,
+              color: Colors.orange,
+            ),
+            const SizedBox(width: 6),
+            _kpiCountPill(
+              context,
+              label: l10n.inventory_kpi_out_of_stock,
+              count: outOfStockCount,
+              color: theme.colorScheme.error,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _kpiCountPill(
+    BuildContext context, {
+    required String label,
+    required int count,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '$count',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 10,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInventoryCard({
+    required BuildContext context,
+    required Ingredient ingredient,
+    required IngredientInventoryMetrics metrics,
+    required List<Unit> units,
+    required Map<String, Unit> unitMap,
+    required String currencySymbol,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final stockUnit = unitMap[ingredient.stockUnit ?? ingredient.unitFk];
+    final stockSymbol = stockUnit?.symbol ?? '';
+    final step = _stepSizeForUnit(stockUnit);
+
+    final (statusLabel, statusColor) = switch (metrics.status) {
+      InventoryStockStatus.inStock => (l10n.inventory_status_in_stock, Colors.green),
+      InventoryStockStatus.lowStock => (l10n.inventory_status_low_stock, Colors.orange),
+      InventoryStockStatus.outOfStock => (
+        l10n.inventory_status_out_of_stock,
+        theme.colorScheme.error,
+      ),
+    };
+
+    final double? minStock = metrics.minimumStock;
+    final double progress = (minStock != null && minStock > 0)
+        ? (metrics.currentStock / minStock).clamp(0.0, 1.0)
+        : (metrics.currentStock > 0 ? 1.0 : 0.0);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => showInventoryAdjustmentSheet(
+          context: context,
+          ingredient: ingredient,
+          units: units,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    child: Icon(
+                      _categoryIconForUnit(stockUnit),
+                      size: 18,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ingredient.name,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '$currencySymbol${RecipeUtils.formatNumber(metrics.stockValue)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${RecipeUtils.formatNumber(metrics.currentStock)} $stockSymbol',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (minStock != null)
+                          Text(
+                            l10n.inventory_par_level(
+                              RecipeUtils.formatNumber(minStock),
+                              stockSymbol,
+                            ),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  IconButton.filledTonal(
+                    icon: const Icon(Icons.remove_rounded, size: 18),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () async {
+                      final next = (metrics.currentStock - step)
+                          .clamp(0.0, double.infinity)
+                          .toDouble();
+                      await ref.read(databaseProvider).updateIngredientStock(
+                        ingredientPk: ingredient.ingredientPk,
+                        currentStock: next,
+                      );
+                      ref.invalidate(ingredientsStreamProvider);
+                    },
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton.filledTonal(
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () async {
+                      final next = metrics.currentStock + step;
+                      await ref.read(databaseProvider).updateIngredientStock(
+                        ingredientPk: ingredient.ingredientPk,
+                        currentStock: next,
+                      );
+                      ref.invalidate(ingredientsStreamProvider);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor:
+                      theme.colorScheme.surfaceContainerHighest,
+                  valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

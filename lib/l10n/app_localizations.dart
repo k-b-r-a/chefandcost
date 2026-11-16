@@ -4229,6 +4229,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go Ad-Free'**
   String get offline_ad_cta;
+
+  /// No description provided for @ingredients_tab_ingredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients'**
+  String get ingredients_tab_ingredients;
+
+  /// No description provided for @ingredients_tab_inventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get ingredients_tab_inventory;
+
+  /// No description provided for @inventory_filter_all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get inventory_filter_all;
+
+  /// No description provided for @inventory_filter_low_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Stock'**
+  String get inventory_filter_low_stock;
+
+  /// No description provided for @inventory_filter_out_of_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of Stock'**
+  String get inventory_filter_out_of_stock;
+
+  /// No description provided for @inventory_filter_in_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'In Stock'**
+  String get inventory_filter_in_stock;
+
+  /// No description provided for @inventory_status_low_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Stock'**
+  String get inventory_status_low_stock;
+
+  /// No description provided for @inventory_status_out_of_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of Stock'**
+  String get inventory_status_out_of_stock;
+
+  /// No description provided for @inventory_status_in_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'In Stock'**
+  String get inventory_status_in_stock;
+
+  /// No description provided for @inventory_kpi_total_value.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Value'**
+  String get inventory_kpi_total_value;
+
+  /// No description provided for @inventory_kpi_in_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'In Stock'**
+  String get inventory_kpi_in_stock;
+
+  /// No description provided for @inventory_kpi_low_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Stock'**
+  String get inventory_kpi_low_stock;
+
+  /// No description provided for @inventory_kpi_out_of_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of Stock'**
+  String get inventory_kpi_out_of_stock;
+
+  /// No description provided for @inventory_par_level.
+  ///
+  /// In en, this message translates to:
+  /// **'Min: {amount} {unit}'**
+  String inventory_par_level(String amount, String unit);
+
+  /// No description provided for @inventory_empty_title.
+  ///
+  /// In en, this message translates to:
+  /// **'No inventory items match your filter'**
+  String get inventory_empty_title;
+
+  /// No description provided for @inventory_adjust_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust Inventory'**
+  String get inventory_adjust_title;
+
+  /// No description provided for @inventory_mode_restock.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock'**
+  String get inventory_mode_restock;
+
+  /// No description provided for @inventory_mode_consume.
+  ///
+  /// In en, this message translates to:
+  /// **'Consume / Waste'**
+  String get inventory_mode_consume;
+
+  /// No description provided for @inventory_mode_exact.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact Count'**
+  String get inventory_mode_exact;
+
+  /// No description provided for @inventory_current_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Stock'**
+  String get inventory_current_stock;
+
+  /// No description provided for @inventory_new_stock_preview.
+  ///
+  /// In en, this message translates to:
+  /// **'New Stock: {amount} {unit}'**
+  String inventory_new_stock_preview(String amount, String unit);
+
+  /// No description provided for @inventory_amount_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get inventory_amount_label;
+
+  /// No description provided for @inventory_unit_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get inventory_unit_label;
+
+  /// No description provided for @inventory_update_price_toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update purchase price'**
+  String get inventory_update_price_toggle;
+
+  /// No description provided for @inventory_new_cost_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase Cost'**
+  String get inventory_new_cost_label;
+
+  /// No description provided for @inventory_new_qty_label.
+  ///
+  /// In en, this message translates to:
+  /// **'For Quantity'**
+  String get inventory_new_qty_label;
+
+  /// No description provided for @inventory_min_stock_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum Stock Alert'**
+  String get inventory_min_stock_label;
+
+  /// No description provided for @inventory_save_adjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Adjustment'**
+  String get inventory_save_adjustment;
+
+  /// No description provided for @inventory_adjusted_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory updated'**
+  String get inventory_adjusted_toast;
+
+  /// No description provided for @ingredient_inventory_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory & Stock'**
+  String get ingredient_inventory_section;
+
+  /// No description provided for @ingredient_current_stock_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Stock'**
+  String get ingredient_current_stock_label;
+
+  /// No description provided for @ingredient_min_stock_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum Stock Alert (Optional)'**
+  String get ingredient_min_stock_label;
+
+  /// No description provided for @recipe_deduct_inventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Deduct from Inventory'**
+  String get recipe_deduct_inventory;
+
+  /// No description provided for @recipe_deduct_preview_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Deduct Recipe from Inventory'**
+  String get recipe_deduct_preview_title;
+
+  /// No description provided for @recipe_deduct_preview_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch multiplier: {multiplier}x'**
+  String recipe_deduct_preview_subtitle(String multiplier);
+
+  /// No description provided for @recipe_deduct_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get recipe_deduct_required;
+
+  /// No description provided for @recipe_deduct_available.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get recipe_deduct_available;
+
+  /// No description provided for @recipe_deduct_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Deduct Stock'**
+  String get recipe_deduct_confirm;
+
+  /// No description provided for @recipe_deduct_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients deducted from inventory'**
+  String get recipe_deduct_success;
+
+  /// No description provided for @recipe_deduct_insufficient_warning.
+  ///
+  /// In en, this message translates to:
+  /// **'Some ingredients have insufficient stock and will be set to 0.'**
+  String get recipe_deduct_insufficient_warning;
 }
 
 class _AppLocalizationsDelegate

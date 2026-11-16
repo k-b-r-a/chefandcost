@@ -869,5 +869,72 @@
   "offline_ad_costing_subtitle": "Pásate a Pro para respaldo en la nube y cero anuncios",
   "offline_ad_pass_title": "¿Quieres 8 Horas Sin Anuncios?",
   "offline_ad_pass_subtitle": "Conéctate a internet para ver 1 video corto o pásate a Pro",
-  "offline_ad_cta": "Sin Anuncios"
+  "offline_ad_cta": "Sin Anuncios",
+  "ingredients_tab_ingredients": "Ingredientes",
+  "ingredients_tab_inventory": "Inventario",
+  "inventory_filter_all": "Todos",
+  "inventory_filter_low_stock": "Stock Bajo",
+  "inventory_filter_out_of_stock": "Sin Stock",
+  "inventory_filter_in_stock": "En Stock",
+  "inventory_status_low_stock": "Stock Bajo",
+  "inventory_status_out_of_stock": "Sin Stock",
+  "inventory_status_in_stock": "En Stock",
+  "inventory_kpi_total_value": "Valor Total",
+  "inventory_kpi_in_stock": "En Stock",
+  "inventory_kpi_low_stock": "Stock Bajo",
+  "inventory_kpi_out_of_stock": "Sin Stock",
+  "inventory_par_level": "Mín: {amount} {unit}",
+  "@inventory_par_level": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "inventory_empty_title": "Ningún ingrediente coincide con el filtro",
+  "inventory_adjust_title": "Ajustar Inventario",
+  "inventory_mode_restock": "Reponer",
+  "inventory_mode_consume": "Consumir / Merma",
+  "inventory_mode_exact": "Conteo Exacto",
+  "inventory_current_stock": "Stock Actual",
+  "inventory_new_stock_preview": "Nuevo Stock: {amount} {unit}",
+  "@inventory_new_stock_preview": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "inventory_amount_label": "Cantidad",
+  "inventory_unit_label": "Unidad",
+  "inventory_update_price_toggle": "Actualizar precio de compra",
+  "inventory_new_cost_label": "Costo de Compra",
+  "inventory_new_qty_label": "Por Cantidad",
+  "inventory_min_stock_label": "Alerta de Stock Mínimo",
+  "inventory_save_adjustment": "Guardar Ajuste",
+  "inventory_adjusted_toast": "Inventario actualizado",
+  "ingredient_inventory_section": "Inventario y Stock",
+  "ingredient_current_stock_label": "Stock Actual",
+  "ingredient_min_stock_label": "Alerta de Stock Mínimo (Opcional)",
+  "recipe_deduct_inventory": "Descontar de Inventario",
+  "recipe_deduct_preview_title": "Descontar Receta de Inventario",
+  "recipe_deduct_preview_subtitle": "Multiplicador de lote: {multiplier}x",
+  "@recipe_deduct_preview_subtitle": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "recipe_deduct_required": "Requerido",
+  "recipe_deduct_available": "Disponible",
+  "recipe_deduct_confirm": "Descontar Stock",
+  "recipe_deduct_success": "Ingredientes descontados del inventario",
+  "recipe_deduct_insufficient_warning": "Algunos ingredientes no tienen stock suficiente y quedarán en 0."
 }

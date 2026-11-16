@@ -2296,4 +2296,132 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get offline_ad_cta => 'Sin Anuncios';
+
+  @override
+  String get ingredients_tab_ingredients => 'Ingredientes';
+
+  @override
+  String get ingredients_tab_inventory => 'Inventario';
+
+  @override
+  String get inventory_filter_all => 'Todos';
+
+  @override
+  String get inventory_filter_low_stock => 'Stock Bajo';
+
+  @override
+  String get inventory_filter_out_of_stock => 'Sin Stock';
+
+  @override
+  String get inventory_filter_in_stock => 'En Stock';
+
+  @override
+  String get inventory_status_low_stock => 'Stock Bajo';
+
+  @override
+  String get inventory_status_out_of_stock => 'Sin Stock';
+
+  @override
+  String get inventory_status_in_stock => 'En Stock';
+
+  @override
+  String get inventory_kpi_total_value => 'Valor Total';
+
+  @override
+  String get inventory_kpi_in_stock => 'En Stock';
+
+  @override
+  String get inventory_kpi_low_stock => 'Stock Bajo';
+
+  @override
+  String get inventory_kpi_out_of_stock => 'Sin Stock';
+
+  @override
+  String inventory_par_level(String amount, String unit) {
+    return 'Mín: $amount $unit';
+  }
+
+  @override
+  String get inventory_empty_title =>
+      'Ningún ingrediente coincide con el filtro';
+
+  @override
+  String get inventory_adjust_title => 'Ajustar Inventario';
+
+  @override
+  String get inventory_mode_restock => 'Reponer';
+
+  @override
+  String get inventory_mode_consume => 'Consumir / Merma';
+
+  @override
+  String get inventory_mode_exact => 'Conteo Exacto';
+
+  @override
+  String get inventory_current_stock => 'Stock Actual';
+
+  @override
+  String inventory_new_stock_preview(String amount, String unit) {
+    return 'Nuevo Stock: $amount $unit';
+  }
+
+  @override
+  String get inventory_amount_label => 'Cantidad';
+
+  @override
+  String get inventory_unit_label => 'Unidad';
+
+  @override
+  String get inventory_update_price_toggle => 'Actualizar precio de compra';
+
+  @override
+  String get inventory_new_cost_label => 'Costo de Compra';
+
+  @override
+  String get inventory_new_qty_label => 'Por Cantidad';
+
+  @override
+  String get inventory_min_stock_label => 'Alerta de Stock Mínimo';
+
+  @override
+  String get inventory_save_adjustment => 'Guardar Ajuste';
+
+  @override
+  String get inventory_adjusted_toast => 'Inventario actualizado';
+
+  @override
+  String get ingredient_inventory_section => 'Inventario y Stock';
+
+  @override
+  String get ingredient_current_stock_label => 'Stock Actual';
+
+  @override
+  String get ingredient_min_stock_label => 'Alerta de Stock Mínimo (Opcional)';
+
+  @override
+  String get recipe_deduct_inventory => 'Descontar de Inventario';
+
+  @override
+  String get recipe_deduct_preview_title => 'Descontar Receta de Inventario';
+
+  @override
+  String recipe_deduct_preview_subtitle(String multiplier) {
+    return 'Multiplicador de lote: ${multiplier}x';
+  }
+
+  @override
+  String get recipe_deduct_required => 'Requerido';
+
+  @override
+  String get recipe_deduct_available => 'Disponible';
+
+  @override
+  String get recipe_deduct_confirm => 'Descontar Stock';
+
+  @override
+  String get recipe_deduct_success => 'Ingredientes descontados del inventario';
+
+  @override
+  String get recipe_deduct_insufficient_warning =>
+      'Algunos ingredientes no tienen stock suficiente y quedarán en 0.';
 }

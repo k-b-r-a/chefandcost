@@ -3190,6 +3190,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           );
         } else if (value == 'add_timer') {
           _showAddRecipeTimerDialog(theme, l10n);
+        } else if (value == 'deduct_inventory') {
+          _showDeductInventoryDialog(l10n, theme);
         } else if (value.startsWith('start_timer_')) {
           _startTimerFromMenu(value, l10n);
         }
@@ -3229,6 +3231,24 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             ],
           ),
         ),
+        if (widget.recipe != null)
+          PopupMenuItem<String>(
+            value: 'deduct_inventory',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.inventory_2_outlined,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  l10n.recipe_deduct_inventory,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
         if (_recipeTimers.isNotEmpty) ...[
           const PopupMenuDivider(),
           ..._recipeTimers.asMap().entries.map((entry) {
@@ -3283,6 +3303,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           );
         } else if (value == 'add_timer') {
           _showAddRecipeTimerDialog(theme, l10n);
+        } else if (value == 'deduct_inventory') {
+          _showDeductInventoryDialog(l10n, theme);
         } else if (value.startsWith('start_timer_')) {
           _startTimerFromMenu(value, l10n);
         }
@@ -7836,6 +7858,166 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _showDeductInventoryDialog(
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) async {
+    final recipe = widget.recipe;
+    if (recipe == null) return;
+
+    final multiplier = _activeScaleMultiplier ?? widget.multiplier;
+    final db = ref.read(databaseProvider);
+    final recipeIngredients = await db.getRecipeIngredients(recipe.recipePk);
+    final allIngredients = await ref.read(ingredientsStreamProvider.future);
+    final allUnits = await ref.read(unitsStreamProvider.future);
+
+    final ingMap = {for (final i in allIngredients) i.ingredientPk: i};
+    final unitMap = {for (final u in allUnits) u.unitPk: u};
+
+    bool hasInsufficient = false;
+    final previewRows = <({
+      String name,
+      double requiredAmount,
+      double availableAmount,
+      String symbol,
+      bool insufficient,
+    })>[];
+
+    for (final ri in recipeIngredients) {
+      final ing = ingMap[ri.ingredientFk];
+      if (ing == null) continue;
+      final reqUnit = unitMap[ri.unitFk];
+      final stockUnit = unitMap[ing.stockUnit ?? ing.unitFk];
+      double requiredInStock = ri.amountNeeded * multiplier;
+      if (reqUnit != null &&
+          stockUnit != null &&
+          stockUnit.factorToBase != 0 &&
+          reqUnit.unitPk != stockUnit.unitPk) {
+        requiredInStock =
+            requiredInStock * (reqUnit.factorToBase / stockUnit.factorToBase);
+      }
+      final available = ing.currentStock ?? 0.0;
+      final insufficient = available < requiredInStock;
+      if (insufficient) hasInsufficient = true;
+      previewRows.add((
+        name: ing.name,
+        requiredAmount: requiredInStock,
+        availableAmount: available,
+        symbol: stockUnit?.symbol ?? reqUnit?.symbol ?? '',
+        insufficient: insufficient,
+      ));
+    }
+
+    if (!mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.recipe_deduct_preview_title),
+        content: SizedBox(
+          width: 420,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.recipe_deduct_preview_subtitle(
+                    RecipeUtils.formatNumber(multiplier),
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                if (hasInsufficient) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.errorContainer.withValues(
+                        alpha: 0.5,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      l10n.recipe_deduct_insufficient_warning,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                ...previewRows.map(
+                  (row) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            row.name,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${l10n.recipe_deduct_required}: ${RecipeUtils.formatNumber(row.requiredAmount)} ${row.symbol}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: row.insufficient
+                                    ? theme.colorScheme.error
+                                    : theme.colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              '${l10n.recipe_deduct_available}: ${RecipeUtils.formatNumber(row.availableAmount)} ${row.symbol}',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel_button),
+          ),
+          FilledButton(
+            onPressed: previewRows.isEmpty
+                ? null
+                : () => Navigator.pop(ctx, true),
+            child: Text(l10n.recipe_deduct_confirm),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await db.deductRecipeFromInventory(
+        recipePk: recipe.recipePk,
+        multiplier: multiplier,
+      );
+      if (mounted) {
+        ref.invalidate(ingredientsStreamProvider);
+        AppSnackBar.showSuccess(context, l10n.recipe_deduct_success);
+      }
     }
   }
 }

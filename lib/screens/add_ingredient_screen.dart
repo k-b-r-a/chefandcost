@@ -41,6 +41,8 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
   late TextEditingController _nameController;
   late TextEditingController _costController;
   late TextEditingController _quantityController;
+  late TextEditingController _currentStockController;
+  late TextEditingController _minStockController;
   String? _selectedUnitPk;
   String? _initialUnitPk;
   bool _isLoading = false;
@@ -70,6 +72,16 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
     _quantityController = TextEditingController(
       text: widget.ingredient != null ? RecipeUtils.formatNumber(widget.ingredient!.quantityForCost) : '',
     );
+    _currentStockController = TextEditingController(
+      text: widget.ingredient?.currentStock != null
+          ? RecipeUtils.formatNumber(widget.ingredient!.currentStock!)
+          : '',
+    );
+    _minStockController = TextEditingController(
+      text: widget.ingredient?.minimumStock != null
+          ? RecipeUtils.formatNumber(widget.ingredient!.minimumStock!)
+          : '',
+    );
     _selectedUnitPk = widget.ingredient?.unitFk;
     _initialUnitPk = widget.ingredient?.unitFk;
 
@@ -96,6 +108,8 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
     _nameController.dispose();
     _costController.dispose();
     _quantityController.dispose();
+    _currentStockController.dispose();
+    _minStockController.dispose();
     super.dispose();
   }
 
@@ -143,6 +157,14 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
         final name = _nameController.text.trim();
         final cost = RecipeUtils.parseFormattedNumber(_costController.text);
         final quantity = RecipeUtils.parseFormattedNumber(_quantityController.text);
+        final currentStockText = _currentStockController.text.trim();
+        final double? currentStock = currentStockText.isEmpty
+            ? null
+            : RecipeUtils.parseFormattedNumber(currentStockText).clamp(0.0, double.infinity).toDouble();
+        final minStockText = _minStockController.text.trim();
+        final double? minimumStock = minStockText.isEmpty
+            ? null
+            : RecipeUtils.parseFormattedNumber(minStockText).clamp(0.0, double.infinity).toDouble();
 
         if (widget.ingredient == null) {
           await db.insertIngredient(
@@ -151,6 +173,10 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
               cost: cost,
               quantityForCost: quantity,
               unitFk: _selectedUnitPk!,
+              currentStock: drift.Value(currentStock),
+              minimumStock: drift.Value(minimumStock),
+              stockUnit: drift.Value(_selectedUnitPk!),
+              lastStockUpdate: drift.Value(currentStock != null ? DateTime.now() : null),
             ),
           );
         } else {
@@ -160,6 +186,14 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
               cost: cost,
               quantityForCost: quantity,
               unitFk: _selectedUnitPk!,
+              currentStock: drift.Value(currentStock),
+              minimumStock: drift.Value(minimumStock),
+              stockUnit: drift.Value(widget.ingredient!.stockUnit ?? _selectedUnitPk!),
+              lastStockUpdate: drift.Value(
+                currentStock != widget.ingredient!.currentStock
+                    ? DateTime.now()
+                    : widget.ingredient!.lastStockUpdate,
+              ),
               dateTimeModified: drift.Value(DateTime.now()),
             ),
           );
@@ -508,6 +542,40 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                       },
                       loading: () => const CircularProgressIndicator(),
                       error: (e, s) => Text(l10n.error_prefix(e.toString())),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n.ingredient_inventory_section,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _currentStockController,
+                            decoration: InputDecoration(
+                              labelText: l10n.ingredient_current_stock_label,
+                              border: const OutlineInputBorder(),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _minStockController,
+                            decoration: InputDecoration(
+                              labelText: l10n.ingredient_min_stock_label,
+                              border: const OutlineInputBorder(),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 32),
                     SizedBox(

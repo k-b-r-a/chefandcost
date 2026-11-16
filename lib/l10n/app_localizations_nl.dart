@@ -2264,4 +2264,131 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get offline_ad_cta => 'Go Ad-Free';
+
+  @override
+  String get ingredients_tab_ingredients => 'Ingredients';
+
+  @override
+  String get ingredients_tab_inventory => 'Inventory';
+
+  @override
+  String get inventory_filter_all => 'All';
+
+  @override
+  String get inventory_filter_low_stock => 'Low Stock';
+
+  @override
+  String get inventory_filter_out_of_stock => 'Out of Stock';
+
+  @override
+  String get inventory_filter_in_stock => 'In Stock';
+
+  @override
+  String get inventory_status_low_stock => 'Low Stock';
+
+  @override
+  String get inventory_status_out_of_stock => 'Out of Stock';
+
+  @override
+  String get inventory_status_in_stock => 'In Stock';
+
+  @override
+  String get inventory_kpi_total_value => 'Total Value';
+
+  @override
+  String get inventory_kpi_in_stock => 'In Stock';
+
+  @override
+  String get inventory_kpi_low_stock => 'Low Stock';
+
+  @override
+  String get inventory_kpi_out_of_stock => 'Out of Stock';
+
+  @override
+  String inventory_par_level(String amount, String unit) {
+    return 'Min: $amount $unit';
+  }
+
+  @override
+  String get inventory_empty_title => 'No inventory items match your filter';
+
+  @override
+  String get inventory_adjust_title => 'Adjust Inventory';
+
+  @override
+  String get inventory_mode_restock => 'Restock';
+
+  @override
+  String get inventory_mode_consume => 'Consume / Waste';
+
+  @override
+  String get inventory_mode_exact => 'Exact Count';
+
+  @override
+  String get inventory_current_stock => 'Current Stock';
+
+  @override
+  String inventory_new_stock_preview(String amount, String unit) {
+    return 'New Stock: $amount $unit';
+  }
+
+  @override
+  String get inventory_amount_label => 'Amount';
+
+  @override
+  String get inventory_unit_label => 'Unit';
+
+  @override
+  String get inventory_update_price_toggle => 'Update purchase price';
+
+  @override
+  String get inventory_new_cost_label => 'Purchase Cost';
+
+  @override
+  String get inventory_new_qty_label => 'For Quantity';
+
+  @override
+  String get inventory_min_stock_label => 'Minimum Stock Alert';
+
+  @override
+  String get inventory_save_adjustment => 'Save Adjustment';
+
+  @override
+  String get inventory_adjusted_toast => 'Inventory updated';
+
+  @override
+  String get ingredient_inventory_section => 'Inventory & Stock';
+
+  @override
+  String get ingredient_current_stock_label => 'Current Stock';
+
+  @override
+  String get ingredient_min_stock_label => 'Minimum Stock Alert (Optional)';
+
+  @override
+  String get recipe_deduct_inventory => 'Deduct from Inventory';
+
+  @override
+  String get recipe_deduct_preview_title => 'Deduct Recipe from Inventory';
+
+  @override
+  String recipe_deduct_preview_subtitle(String multiplier) {
+    return 'Batch multiplier: ${multiplier}x';
+  }
+
+  @override
+  String get recipe_deduct_required => 'Required';
+
+  @override
+  String get recipe_deduct_available => 'Available';
+
+  @override
+  String get recipe_deduct_confirm => 'Deduct Stock';
+
+  @override
+  String get recipe_deduct_success => 'Ingredients deducted from inventory';
+
+  @override
+  String get recipe_deduct_insufficient_warning =>
+      'Some ingredients have insufficient stock and will be set to 0.';
 }

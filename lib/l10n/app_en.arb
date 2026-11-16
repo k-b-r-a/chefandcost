@@ -941,5 +941,72 @@
   "offline_ad_costing_subtitle": "Upgrade to Pro for real-time cloud backup & zero ads",
   "offline_ad_pass_title": "Want 8 Hours Without Ads?",
   "offline_ad_pass_subtitle": "Connect to the internet to watch 1 short video or upgrade to Pro",
-  "offline_ad_cta": "Go Ad-Free"
+  "offline_ad_cta": "Go Ad-Free",
+  "ingredients_tab_ingredients": "Ingredients",
+  "ingredients_tab_inventory": "Inventory",
+  "inventory_filter_all": "All",
+  "inventory_filter_low_stock": "Low Stock",
+  "inventory_filter_out_of_stock": "Out of Stock",
+  "inventory_filter_in_stock": "In Stock",
+  "inventory_status_low_stock": "Low Stock",
+  "inventory_status_out_of_stock": "Out of Stock",
+  "inventory_status_in_stock": "In Stock",
+  "inventory_kpi_total_value": "Total Value",
+  "inventory_kpi_in_stock": "In Stock",
+  "inventory_kpi_low_stock": "Low Stock",
+  "inventory_kpi_out_of_stock": "Out of Stock",
+  "inventory_par_level": "Min: {amount} {unit}",
+  "@inventory_par_level": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "inventory_empty_title": "No inventory items match your filter",
+  "inventory_adjust_title": "Adjust Inventory",
+  "inventory_mode_restock": "Restock",
+  "inventory_mode_consume": "Consume / Waste",
+  "inventory_mode_exact": "Exact Count",
+  "inventory_current_stock": "Current Stock",
+  "inventory_new_stock_preview": "New Stock: {amount} {unit}",
+  "@inventory_new_stock_preview": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "inventory_amount_label": "Amount",
+  "inventory_unit_label": "Unit",
+  "inventory_update_price_toggle": "Update purchase price",
+  "inventory_new_cost_label": "Purchase Cost",
+  "inventory_new_qty_label": "For Quantity",
+  "inventory_min_stock_label": "Minimum Stock Alert",
+  "inventory_save_adjustment": "Save Adjustment",
+  "inventory_adjusted_toast": "Inventory updated",
+  "ingredient_inventory_section": "Inventory & Stock",
+  "ingredient_current_stock_label": "Current Stock",
+  "ingredient_min_stock_label": "Minimum Stock Alert (Optional)",
+  "recipe_deduct_inventory": "Deduct from Inventory",
+  "recipe_deduct_preview_title": "Deduct Recipe from Inventory",
+  "recipe_deduct_preview_subtitle": "Batch multiplier: {multiplier}x",
+  "@recipe_deduct_preview_subtitle": {
+    "placeholders": {
+      "multiplier": {
+        "type": "String"
+      }
+    }
+  },
+  "recipe_deduct_required": "Required",
+  "recipe_deduct_available": "Available",
+  "recipe_deduct_confirm": "Deduct Stock",
+  "recipe_deduct_success": "Ingredients deducted from inventory",
+  "recipe_deduct_insufficient_warning": "Some ingredients have insufficient stock and will be set to 0."
 }
