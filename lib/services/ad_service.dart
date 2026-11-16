@@ -20,6 +20,8 @@ class AdService {
 
   static const int kMaxPreloadedBanners = 2;
   static final List<BannerAd> _cachedBannerPool = <BannerAd>[];
+  static final Map<int, AdSize> _adaptiveSizeCache = <int, AdSize>{};
+  static int? _lastBannerWidth;
   static bool _isPreloadingBanners = false;
 
   static bool _isInitialized = false;
@@ -251,8 +253,37 @@ class AdService {
     }
   }
 
+  /// Synchronously returns a cached adaptive [AdSize] for [availableWidth] if known.
+  static AdSize? getCachedAdaptiveBannerSize(int availableWidth) {
+    return _adaptiveSizeCache[availableWidth];
+  }
+
+  /// Resolves and caches the anchored adaptive [AdSize] for [availableWidth].
+  static Future<AdSize> resolveAdaptiveBannerSize(int availableWidth) async {
+    final cached = _adaptiveSizeCache[availableWidth];
+    if (cached != null) return cached;
+
+    if (availableWidth <= 0 || !_canInvokeNativeAdMob) {
+      return AdSize.banner;
+    }
+
+    try {
+      final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(
+        availableWidth,
+      );
+      final resolved = size ?? AdSize.banner;
+      _adaptiveSizeCache[availableWidth] = resolved;
+      return resolved;
+    } catch (_) {
+      return AdSize.banner;
+    }
+  }
+
   /// Preloads standby [BannerAd] instances into [_cachedBannerPool] while online.
-  static Future<void> preloadCachedBanners() async {
+  static Future<void> preloadCachedBanners({int? width}) async {
+    if (width != null && width > 0) {
+      _lastBannerWidth = width;
+    }
     if (!_canInvokeNativeAdMob || isOffline || _isPreloadingBanners) return;
     if (appLifecycleState != AppLifecycleState.resumed) return;
     if (isUserAdFreeCallback?.call() ?? false) return;
@@ -260,6 +291,10 @@ class AdService {
 
     final unitId = bannerAdUnitId;
     if (unitId.isEmpty) return;
+
+    final targetSize = _lastBannerWidth != null
+        ? await resolveAdaptiveBannerSize(_lastBannerWidth!)
+        : AdSize.banner;
 
     _isPreloadingBanners = true;
     try {
@@ -271,7 +306,7 @@ class AdService {
         late final BannerAd banner;
         banner = BannerAd(
           adUnitId: unitId,
-          size: AdSize.banner,
+          size: targetSize,
           request: const AdRequest(),
           listener: BannerAdListener(
             onAdLoaded: (_) {
@@ -304,26 +339,30 @@ class AdService {
     }
   }
 
-  /// Claims a preloaded standby [BannerAd] from [_cachedBannerPool] if available.
-  static BannerAd? takePreloadedBannerAd({AdSize? preferredSize}) {
+  /// Claims a preloaded standby [BannerAd] from [_cachedBannerPool] if available
+  /// and matching [preferredSize] / [maxWidth].
+  static BannerAd? takePreloadedBannerAd({
+    AdSize? preferredSize,
+    int? maxWidth,
+  }) {
     if (_cachedBannerPool.isEmpty) return null;
-    if (preferredSize != null) {
-      for (int i = 0; i < _cachedBannerPool.length; i++) {
-        if (_cachedBannerPool[i].size.width == preferredSize.width &&
-            _cachedBannerPool[i].size.height == preferredSize.height) {
-          final ad = _cachedBannerPool.removeAt(i);
-          if (!isOffline) {
-            unawaited(preloadCachedBanners());
-          }
-          return ad;
-        }
+    for (int i = 0; i < _cachedBannerPool.length; i++) {
+      final candidate = _cachedBannerPool[i];
+      if (maxWidth != null && candidate.size.width > maxWidth) {
+        continue;
       }
+      if (preferredSize != null &&
+          (candidate.size.width != preferredSize.width ||
+              candidate.size.height != preferredSize.height)) {
+        continue;
+      }
+      final ad = _cachedBannerPool.removeAt(i);
+      if (!isOffline) {
+        unawaited(preloadCachedBanners(width: maxWidth));
+      }
+      return ad;
     }
-    final ad = _cachedBannerPool.removeAt(0);
-    if (!isOffline) {
-      unawaited(preloadCachedBanners());
-    }
-    return ad;
+    return null;
   }
 
   /// Centralized evaluation called by the periodic timer and [AdNavigationObserver].

@@ -41,6 +41,8 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
 
   BannerAd? _bannerAd;
   BannerAd? _stagingBannerAd;
+  AdSize? _targetAdSize;
+  int? _lastMeasuredInnerWidth;
   CachedOfflineAdPayload? _cachedOfflinePayload;
   Timer? _loadDebounceTimer;
   ValueNotifier<bool>? _isScrollingNotifier;
@@ -174,7 +176,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
       return;
     }
     _isLoading = true;
-    final targetSize = _bannerAd?.size ?? AdSize.banner;
+    final targetSize = _bannerAd?.size ?? _targetAdSize ?? AdSize.banner;
     final nextAd = AdService.createBannerAd(
       size: targetSize,
       onAdLoaded: () {
@@ -229,8 +231,27 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
     if (adState.isAdFree || monetization.isAdFree) return;
     if (_bannerAd != null || _isLoading || _loadFailed) return;
 
-    // 1. Try claiming a standby preloaded banner from AdService's in-memory pool
-    final pooled = AdService.takePreloadedBannerAd();
+    final innerWidth = _lastMeasuredInnerWidth;
+    if (innerWidth == null || innerWidth < 280) {
+      return;
+    }
+
+    // Resolve and lock the target adaptive size before claiming/loading
+    final targetSize = AdService.getCachedAdaptiveBannerSize(innerWidth) ??
+        await AdService.resolveAdaptiveBannerSize(innerWidth);
+    if (!mounted) return;
+
+    if (_targetAdSize != targetSize) {
+      setState(() {
+        _targetAdSize = targetSize;
+      });
+    }
+
+    // 1. Try claiming a size-matched standby preloaded banner from AdService
+    final pooled = AdService.takePreloadedBannerAd(
+      preferredSize: targetSize,
+      maxWidth: innerWidth,
+    );
     if (pooled != null) {
       _registerInPool();
       unawaited(
@@ -243,6 +264,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
       if (mounted) {
         setState(() {
           _bannerAd = pooled;
+          _targetAdSize = pooled.size;
           _adLoadedAt = DateTime.now();
           _isAdLoaded = true;
           _isLoading = false;
@@ -267,26 +289,6 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
 
     _lastLoadAttemptAt = DateTime.now();
     _isLoading = true;
-    AdSize targetSize = AdSize.banner;
-    if (mounted) {
-      final screenWidth = MediaQuery.sizeOf(context).width;
-      final horizontalMargin = widget.margin != null ? 32.0 : 32.0;
-      final availableWidth =
-          (screenWidth - horizontalMargin).clamp(320.0, 860.0).truncate();
-      try {
-        final adaptiveSize =
-            await AdSize.getLargeAnchoredAdaptiveBannerAdSize(
-          availableWidth,
-        );
-        if (adaptiveSize != null) {
-          targetSize = adaptiveSize;
-        }
-      } catch (_) {}
-    }
-    if (!mounted) {
-      _isLoading = false;
-      return;
-    }
 
     final createdAd = AdService.createBannerAd(
       size: targetSize,
@@ -396,8 +398,6 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
     final primaryColor =
         isRecipe ? theme.colorScheme.primary : theme.colorScheme.secondary;
     final borderRadius = BorderRadius.circular(isRecipe ? 16 : 14);
-    final adWidth = _bannerAd?.size.width.toDouble() ?? 320.0;
-    final adHeight = _bannerAd?.size.height.toDouble() ?? 50.0;
 
     return RepaintBoundary(
       child: Center(
@@ -419,111 +419,189 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
                 width: 1.0,
               ),
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: adHeight,
-                  alignment: Alignment.center,
-                  color: theme.colorScheme.surface,
-                  child: (!_isScrolling && _isAdLoaded && _bannerAd != null)
-                      ? FittedBox(
-                          fit: BoxFit.contain,
-                          child: SizedBox(
-                            width: adWidth,
-                            height: adHeight,
-                            child: AdWidget(ad: _bannerAd!),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final innerWidth = (constraints.maxWidth - 2.0)
+                    .floor()
+                    .clamp(0, 860);
+                if (innerWidth >= 280 &&
+                    _lastMeasuredInnerWidth != innerWidth) {
+                  _lastMeasuredInnerWidth = innerWidth;
+                  final cachedSize =
+                      AdService.getCachedAdaptiveBannerSize(innerWidth);
+                  if (cachedSize != null && _targetAdSize == null) {
+                    _targetAdSize = cachedSize;
+                  }
+                  if (_bannerAd == null && !_isLoading && !_loadFailed) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) _scheduleAdLoad();
+                    });
+                  }
+                }
+
+                final effectiveSize = _bannerAd?.size ??
+                    _targetAdSize ??
+                    AdService.getCachedAdaptiveBannerSize(innerWidth) ??
+                    const AdSize(width: 320, height: 60);
+                final adHeight = effectiveSize.height.toDouble();
+                final adWidth = effectiveSize.width
+                    .toDouble()
+                    .clamp(0.0, innerWidth.toDouble());
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.35),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: theme.colorScheme.outlineVariant
+                                .withValues(alpha: 0.25),
+                            width: 0.5,
                           ),
-                        )
-                      : (_loadFailed || AdService.isOffline)
-                          ? OfflineCachedAdWidget(
-                              payload: _cachedOfflinePayload ??
-                                  OfflineAdCacheService.getNextCachedAdSync(
-                                    style: widget.style.name,
-                                  ),
-                              width: double.infinity,
-                              height: adHeight,
-                              accentColor: primaryColor,
-                              compact: adHeight < 60,
-                            )
-                          : SizedBox(
-                          width: adWidth,
-                          height: adHeight,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.45),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.campaign_outlined,
-                                  size: 16,
-                                  color: theme.colorScheme.onSurfaceVariant
-                                      .withValues(alpha: 0.7),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  l10n?.ad_badge_label ?? 'AD',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.75),
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.6,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                ),
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => AdFreePassDialog.show(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface.withValues(alpha: 0.92),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.45),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.play_circle_outline_rounded,
-                              size: 12,
-                              color: primaryColor,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              '8h',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.campaign_outlined,
+                                size: 13,
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.75),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                l10n?.ad_badge_label ?? 'AD',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.75),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap: () => AdFreePassDialog.show(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface
+                                      .withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color:
+                                        primaryColor.withValues(alpha: 0.45),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.play_circle_outline_rounded,
+                                      size: 12,
+                                      color: primaryColor,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      '8h',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                    Container(
+                      width: double.infinity,
+                      height: adHeight,
+                      alignment: Alignment.center,
+                      color: theme.colorScheme.surface,
+                      child: (!_isScrolling &&
+                              _isAdLoaded &&
+                              _bannerAd != null)
+                          ? SizedBox(
+                              width: adWidth,
+                              height: adHeight,
+                              child: AdWidget(ad: _bannerAd!),
+                            )
+                          : (_loadFailed || AdService.isOffline)
+                              ? OfflineCachedAdWidget(
+                                  payload: _cachedOfflinePayload ??
+                                      OfflineAdCacheService.getNextCachedAdSync(
+                                        style: widget.style.name,
+                                      ),
+                                  width: double.infinity,
+                                  height: adHeight,
+                                  accentColor: primaryColor,
+                                  compact: adHeight < 60,
+                                )
+                              : SizedBox(
+                                  width: double.infinity,
+                                  height: adHeight,
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: theme
+                                          .colorScheme.surfaceContainerHighest
+                                          .withValues(alpha: 0.45),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.campaign_outlined,
+                                          size: 16,
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant
+                                              .withValues(alpha: 0.7),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          l10n?.ad_badge_label ?? 'AD',
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant
+                                                .withValues(alpha: 0.75),
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 0.6,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
