@@ -89,7 +89,7 @@ class _InventoryAdjustmentSheetState
     final stockUnit = _unitMap[_stockUnitPk];
     if (stockUnit == null) return widget.units;
     final compatible = widget.units
-        .where((u) => u.type == stockUnit.type)
+        .where((u) => u.unitType == stockUnit.unitType)
         .toList();
     return compatible.isNotEmpty ? compatible : widget.units;
   }
@@ -256,7 +256,7 @@ class _InventoryAdjustmentSheetState
               Expanded(
                 flex: 2,
                 child: DropdownButtonFormField<String>(
-                  value: compatibleUnits.any(
+                  initialValue: compatibleUnits.any(
                           (u) => u.unitPk == _selectedInputUnitPk)
                       ? _selectedInputUnitPk
                       : compatibleUnits.firstOrNull?.unitPk,

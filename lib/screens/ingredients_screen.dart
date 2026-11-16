@@ -143,7 +143,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
 
     final int alertCount = ingredientsAsync.maybeWhen(
       data: (ingredients) {
-        final units = unitsAsync.valueOrNull ?? const <Unit>[];
+        final units = unitsAsync.value ?? const <Unit>[];
         final unitMap = _getUnitMap(units);
         int count = 0;
         for (final ing in ingredients) {
@@ -789,7 +789,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
   }
 
   IconData _categoryIconForUnit(Unit? unit) {
-    switch (unit?.type) {
+    switch (unit?.unitType) {
       case 'liquid':
         return Icons.water_drop_outlined;
       case 'solid':

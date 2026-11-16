@@ -3231,7 +3231,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             ],
           ),
         ),
-        if (widget.recipe != null)
+        if (widget.recipeId != null)
           PopupMenuItem<String>(
             value: 'deduct_inventory',
             child: Row(
@@ -7865,12 +7865,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     AppLocalizations l10n,
     ThemeData theme,
   ) async {
-    final recipe = widget.recipe;
-    if (recipe == null) return;
+    final recipeId = widget.recipeId;
+    if (recipeId == null) return;
 
     final multiplier = _activeScaleMultiplier ?? widget.multiplier;
     final db = ref.read(databaseProvider);
-    final recipeIngredients = await db.getRecipeIngredients(recipe.recipePk);
     final allIngredients = await ref.read(ingredientsStreamProvider.future);
     final allUnits = await ref.read(unitsStreamProvider.future);
 
@@ -7886,12 +7885,14 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       bool insufficient,
     })>[];
 
-    for (final ri in recipeIngredients) {
-      final ing = ingMap[ri.ingredientFk];
-      if (ing == null) continue;
-      final reqUnit = unitMap[ri.unitFk];
+    for (final item in _addedIngredients) {
+      final ing = ingMap[item.ingredient.ingredientPk] ?? item.ingredient;
+      final reqUnit = unitMap[item.selectedUnitPk];
       final stockUnit = unitMap[ing.stockUnit ?? ing.unitFk];
-      double requiredInStock = ri.amountNeeded * multiplier;
+      final baseAmount = RecipeUtils.parseFormattedNumber(
+        item.amountController.text,
+      );
+      double requiredInStock = baseAmount * multiplier;
       if (reqUnit != null &&
           stockUnit != null &&
           stockUnit.factorToBase != 0 &&
@@ -8011,7 +8012,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
 
     if (confirmed == true && mounted) {
       await db.deductRecipeFromInventory(
-        recipePk: recipe.recipePk,
+        recipePk: recipeId,
         multiplier: multiplier,
       );
       if (mounted) {
