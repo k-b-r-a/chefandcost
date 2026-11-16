@@ -687,20 +687,26 @@ class AppDatabase extends _$AppDatabase {
         final ing = await getIngredientById(ri.ingredientFk);
         if (ing == null) continue;
 
-        final riUnit = unitMap[ri.unitFk];
         final ingUnit = unitMap[ing.unitFk];
+        final stockUnit = ing.stockUnit != null
+            ? allUnits
+                  .where(
+                    (u) => u.unitPk == ing.stockUnit || u.symbol == ing.stockUnit,
+                  )
+                  .firstOrNull
+            : null;
         double deductAmount = ri.amountNeeded * multiplier;
-        if (riUnit != null &&
-            ingUnit != null &&
-            riUnit.category != null &&
-            riUnit.category == ingUnit.category &&
-            riUnit.factorToBase.isFinite &&
-            riUnit.factorToBase > 0 &&
+        if (ingUnit != null &&
+            stockUnit != null &&
+            ingUnit.category != null &&
+            ingUnit.category == stockUnit.category &&
             ingUnit.factorToBase.isFinite &&
-            ingUnit.factorToBase > 0) {
+            ingUnit.factorToBase > 0 &&
+            stockUnit.factorToBase.isFinite &&
+            stockUnit.factorToBase > 0) {
           deductAmount =
               (ri.amountNeeded * multiplier) *
-              (riUnit.factorToBase / ingUnit.factorToBase);
+              (ingUnit.factorToBase / stockUnit.factorToBase);
         }
 
         final current = ing.currentStock ?? 0.0;
