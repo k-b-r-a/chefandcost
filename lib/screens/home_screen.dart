@@ -37,6 +37,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
+  String? _cachedDateLocale;
+  int? _cachedDateYear;
+  int? _cachedDateMonth;
+  int? _cachedDateDay;
+  String _cachedFormattedDate = '';
 
   @override
   void dispose() {
@@ -57,11 +62,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String _getFormattedDate(String locale) {
     final now = DateTime.now();
-    try {
-      return DateFormat('EEEE, d MMMM', locale).format(now);
-    } catch (_) {
-      return DateFormat('EEEE, d MMMM', 'en').format(now);
+    if (_cachedDateLocale == locale &&
+        _cachedDateYear == now.year &&
+        _cachedDateMonth == now.month &&
+        _cachedDateDay == now.day &&
+        _cachedFormattedDate.isNotEmpty) {
+      return _cachedFormattedDate;
     }
+    _cachedDateLocale = locale;
+    _cachedDateYear = now.year;
+    _cachedDateMonth = now.month;
+    _cachedDateDay = now.day;
+    try {
+      _cachedFormattedDate = DateFormat('EEEE, d MMMM', locale).format(now);
+    } catch (_) {
+      _cachedFormattedDate = DateFormat('EEEE, d MMMM', 'en').format(now);
+    }
+    return _cachedFormattedDate;
   }
 
   @override
@@ -128,36 +145,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 1. Hero Greeting Banner
-                      _buildGreetingCard(context, theme, l10n, settings),
+                      RepaintBoundary(
+                        child: _buildGreetingCard(
+                          context,
+                          theme,
+                          l10n,
+                          settings,
+                        ),
+                      ),
                       const SizedBox(height: 16),
 
                       // 2. Active Timers Banner (Live countdown card if running)
                       const _LiveActiveTimersBanner(),
 
                       // 3. Quick Actions
-                      KeyedSubtree(
-                        key: widget.tutorialKeys?.quickActionsKey,
-                        child: _buildQuickActionsSection(
-                          context,
-                          theme,
-                          l10n,
-                          syncState,
+                      RepaintBoundary(
+                        child: KeyedSubtree(
+                          key: widget.tutorialKeys?.quickActionsKey,
+                          child: _buildQuickActionsSection(
+                            context,
+                            theme,
+                            l10n,
+                            syncState,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
 
                       // 5. Recent Recipes
-                      _buildRecentRecipesSection(
-                        context: context,
-                        theme: theme,
-                        l10n: l10n,
-                        settings: settings,
-                        recipesAsync: recipesAsync,
+                      RepaintBoundary(
+                        child: _buildRecentRecipesSection(
+                          context: context,
+                          theme: theme,
+                          l10n: l10n,
+                          settings: settings,
+                          recipesAsync: recipesAsync,
+                        ),
                       ),
                       const SizedBox(height: 20),
 
                       // 6. Kitchen Tools Quick Launch
-                      _buildKitchenToolsSection(context, theme, l10n),
+                      RepaintBoundary(
+                        child: _buildKitchenToolsSection(context, theme, l10n),
+                      ),
                     ],
                   ),
                 ),

@@ -267,22 +267,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
 
     _lastLoadAttemptAt = DateTime.now();
     _isLoading = true;
-    AdSize targetSize = AdSize.banner;
-    if (mounted) {
-      final screenWidth = MediaQuery.sizeOf(context).width;
-      final horizontalMargin = widget.margin != null ? 32.0 : 32.0;
-      final availableWidth =
-          (screenWidth - horizontalMargin).clamp(320.0, 860.0).truncate();
-      try {
-        final adaptiveSize =
-            await AdSize.getLargeAnchoredAdaptiveBannerAdSize(
-          availableWidth,
-        );
-        if (adaptiveSize != null) {
-          targetSize = adaptiveSize;
-        }
-      } catch (_) {}
-    }
+    const AdSize targetSize = AdSize.banner;
     if (!mounted) {
       _isLoading = false;
       return;
@@ -428,13 +413,10 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
                   alignment: Alignment.center,
                   color: theme.colorScheme.surface,
                   child: (!_isScrolling && _isAdLoaded && _bannerAd != null)
-                      ? FittedBox(
-                          fit: BoxFit.contain,
-                          child: SizedBox(
-                            width: adWidth,
-                            height: adHeight,
-                            child: AdWidget(ad: _bannerAd!),
-                          ),
+                      ? SizedBox(
+                          width: adWidth,
+                          height: adHeight,
+                          child: AdWidget(ad: _bannerAd!),
                         )
                       : (_loadFailed || AdService.isOffline)
                           ? OfflineCachedAdWidget(

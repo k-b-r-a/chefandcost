@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
 class ProgressiveBlurBackground extends StatelessWidget {
@@ -19,43 +17,23 @@ class ProgressiveBlurBackground extends StatelessWidget {
     final amount = progress.clamp(0.0, 1.0).toDouble();
     if (amount <= 0.01) return const SizedBox.expand();
 
-    final reduceMotion =
-        !animationsEnabled || (MediaQuery.maybeDisableAnimationsOf(context) ?? false);
-
-    return ClipRect(
-      child: RepaintBoundary(
-        child: IgnorePointer(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (!reduceMotion)
-                BackdropFilter(
-                  filter: ui.ImageFilter.blur(
-                    sigmaX: 8 * amount,
-                    sigmaY: 8 * amount,
-                  ),
-                  child: const SizedBox.expand(
-                    child: ColoredBox(color: Color(0x01000000)),
-                  ),
-                ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: const [0.0, 0.6, 0.78, 0.91, 1.0],
-                    colors: [
-                      surfaceColor.withValues(alpha: 0.76 * amount),
-                      surfaceColor.withValues(alpha: 0.74 * amount),
-                      surfaceColor.withValues(alpha: 0.48 * amount),
-                      surfaceColor.withValues(alpha: 0.16 * amount),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ],
+    return RepaintBoundary(
+      child: IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: const [0.0, 0.72, 0.88, 1.0],
+              colors: [
+                surfaceColor.withValues(alpha: 0.96 * amount),
+                surfaceColor.withValues(alpha: 0.96 * amount),
+                surfaceColor.withValues(alpha: 0.82 * amount),
+                surfaceColor.withValues(alpha: 0.0),
+              ],
+            ),
           ),
+          child: const SizedBox.expand(),
         ),
       ),
     );
@@ -86,11 +64,22 @@ class _HeaderScrollProgressBuilderState
     if (!widget.controller.hasClients || widget.scrollExtent <= 0) {
       return 0.0;
     }
-    final raw = (widget.controller.offset / widget.scrollExtent).clamp(0.0, 1.0);
-    return ((raw * 100).round() / 100.0).clamp(0.0, 1.0).toDouble();
+    final offset = widget.controller.offset;
+    if (offset <= 0.0) return 0.0;
+    if (offset >= widget.scrollExtent) return 1.0;
+    final raw = (offset / widget.scrollExtent).clamp(0.0, 1.0);
+    return ((raw * 50).round() / 50.0).clamp(0.0, 1.0).toDouble();
   }
 
   void _onScroll() {
+    if (!widget.controller.hasClients || widget.scrollExtent <= 0) return;
+    final offset = widget.controller.offset;
+    if (_progress == 1.0 && offset >= widget.scrollExtent) {
+      return;
+    }
+    if (_progress == 0.0 && offset <= 0.0) {
+      return;
+    }
     final next = _computeProgress();
     if (next != _progress) {
       setState(() {
@@ -148,6 +137,12 @@ Widget buildFloatingPillAppBar({
   final expandedTitleHeight = filtersOnly ? 96.0 : 88.0;
   final collapsedTitleHeight = filtersOnly ? 0.0 : 48.0;
   final extra = underTitle != null ? 30.0 : 0.0;
+  final wrappedBottom = bottom != null
+      ? PreferredSize(
+          preferredSize: bottom.preferredSize,
+          child: RepaintBoundary(child: bottom),
+        )
+      : null;
   return SliverAppBar(
     pinned: true,
     leading: leading,
@@ -159,127 +154,141 @@ Widget buildFloatingPillAppBar({
     surfaceTintColor: Colors.transparent,
     elevation: 0,
     actions: filtersOnly ? null : actions,
-    bottom: bottom,
-    flexibleSpace: _HeaderScrollProgressBuilder(
-      controller: controller,
-      scrollExtent: expandedTitleHeight - collapsedTitleHeight,
-      builder: (context, progress) {
-        final opacity = filtersOnly
-            ? 1 - Curves.easeOut.transform(progress)
-            : 1.0;
-        final hideCollapsedElements = opacity < 0.05;
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final expandedFont = (constraints.maxWidth / 20).clamp(20.0, 26.0);
-            final fontSize = expandedFont + (16 - expandedFont) * progress;
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                ProgressiveBlurBackground(
-                  progress: progress,
-                  surfaceColor: theme.colorScheme.surface,
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: bottomHeight + 8,
-                  child: IgnorePointer(
-                    ignoring: hideCollapsedElements,
-                    child: ExcludeSemantics(
-                      excluding: hideCollapsedElements,
-                      child: Opacity(
-                        key: const ValueKey('header_title_fade'),
-                        opacity: opacity,
-                        child: Transform.translate(
-                          offset: Offset(0, filtersOnly ? -12 * progress : 0),
-                          child: GestureDetector(
-                            onTap: () => controller.animateTo(
-                              0,
-                              duration: const Duration(milliseconds: 500),
-                              curve: Curves.easeOut,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child:
-                                      titleWidget ??
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            title,
-                                            style: TextStyle(
-                                              color: theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.8),
-                                              fontWeight: FontWeight.w900,
-                                              fontSize: fontSize,
-                                            ),
+    bottom: wrappedBottom,
+    flexibleSpace: RepaintBoundary(
+      child: _HeaderScrollProgressBuilder(
+        controller: controller,
+        scrollExtent: expandedTitleHeight - collapsedTitleHeight,
+        builder: (context, progress) {
+          final rawOpacity = filtersOnly
+              ? 1 - Curves.easeOut.transform(progress)
+              : 1.0;
+          final hideCollapsedElements = filtersOnly && rawOpacity < 0.05;
+          final opacity = hideCollapsedElements ? 0.0 : rawOpacity;
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final expandedFont = (constraints.maxWidth / 20).clamp(20.0, 26.0);
+              final targetFont = expandedFont + (16 - expandedFont) * progress;
+              final isFullyCollapsed = progress >= 1.0;
+              final fontSize = isFullyCollapsed ? 16.0 : expandedFont;
+              final titleScale = isFullyCollapsed
+                  ? 1.0
+                  : (targetFont / expandedFont);
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  ProgressiveBlurBackground(
+                    progress: progress,
+                    surfaceColor: theme.colorScheme.surface,
+                  ),
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: bottomHeight + 8,
+                    child: IgnorePointer(
+                      ignoring: hideCollapsedElements,
+                      child: ExcludeSemantics(
+                        excluding: hideCollapsedElements,
+                        child: Opacity(
+                          key: const ValueKey('header_title_fade'),
+                          opacity: opacity,
+                          child: Transform.translate(
+                            offset: Offset(0, filtersOnly ? -12 * progress : 0),
+                            child: GestureDetector(
+                              onTap: () => controller.animateTo(
+                                0,
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeOut,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Transform.scale(
+                                    scale: titleScale,
+                                    alignment: Alignment.center,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child:
+                                          titleWidget ??
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                title,
+                                                style: TextStyle(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.8),
+                                                  fontWeight: FontWeight.w900,
+                                                  fontSize: fontSize,
+                                                ),
+                                              ),
+                                              if (trailing != null) ...[
+                                                const SizedBox(width: 8),
+                                                trailing,
+                                              ],
+                                            ],
                                           ),
-                                          if (trailing != null) ...[
-                                            const SizedBox(width: 8),
-                                            trailing,
-                                          ],
-                                        ],
-                                      ),
-                                ),
-                                if (underTitle != null) ...[
-                                  const SizedBox(height: 6),
-                                  underTitle,
+                                    ),
+                                  ),
+                                  if (underTitle != null) ...[
+                                    const SizedBox(height: 6),
+                                    underTitle,
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                if (filtersOnly && leading != null)
-                  Positioned(
-                    top: MediaQuery.paddingOf(context).top,
-                    left: 4,
-                    child: IgnorePointer(
-                      ignoring: hideCollapsedElements,
-                      child: ExcludeSemantics(
-                        excluding: hideCollapsedElements,
-                        child: Opacity(
-                          opacity: opacity,
-                          child: Transform.translate(
-                            offset: Offset(0, -12 * progress),
-                            child: leading,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (filtersOnly && actions != null)
-                  Positioned(
-                    top: MediaQuery.paddingOf(context).top,
-                    right: 0,
-                    child: IgnorePointer(
-                      ignoring: hideCollapsedElements,
-                      child: ExcludeSemantics(
-                        excluding: hideCollapsedElements,
-                        child: Opacity(
-                          opacity: opacity,
-                          child: Transform.translate(
-                            offset: Offset(0, -12 * progress),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: actions,
+                  if (filtersOnly && leading != null)
+                    Positioned(
+                      top: MediaQuery.paddingOf(context).top,
+                      left: 4,
+                      child: IgnorePointer(
+                        ignoring: hideCollapsedElements,
+                        child: ExcludeSemantics(
+                          excluding: hideCollapsedElements,
+                          child: Opacity(
+                            opacity: opacity,
+                            child: Transform.translate(
+                              offset: Offset(0, -12 * progress),
+                              child: leading,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            );
-          },
-        );
-      },
+                  if (filtersOnly && actions != null)
+                    Positioned(
+                      top: MediaQuery.paddingOf(context).top,
+                      right: 0,
+                      child: IgnorePointer(
+                        ignoring: hideCollapsedElements,
+                        child: ExcludeSemantics(
+                          excluding: hideCollapsedElements,
+                          child: Opacity(
+                            opacity: opacity,
+                            child: Transform.translate(
+                              offset: Offset(0, -12 * progress),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: actions,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          );
+        },
+      ),
     ),
   );
 }

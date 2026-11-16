@@ -159,11 +159,13 @@ void main() {
         scrollController.jumpTo(200);
         await tester.pump();
         final buildsAt200 = titleBuildCount;
+        expect(find.byType(BackdropFilter), findsNothing);
 
         // Scroll further from 200px to 2000px in multiple steps
         for (double offset = 400; offset <= 2000; offset += 200) {
           scrollController.jumpTo(offset);
           await tester.pump();
+          expect(find.byType(BackdropFilter), findsNothing);
         }
 
         expect(titleBuildCount, equals(buildsAt200));
