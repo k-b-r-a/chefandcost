@@ -125,13 +125,16 @@ class AdNotifier extends Notifier<AdState> {
       _initAsyncPrefs();
     }
 
-    return AdState(
+    final initialState = AdState(
       adFreeUntil: initialUntil,
       hasActiveSubscription: isCloudSubscribed || monetizationHasSub,
       isLoadingRewardedAd: monetizationLoadingRewarded,
       errorMessage: monetizationError,
       lastRefreshed: DateTime.now(),
     );
+
+    AdService.isUserAdFreeCallback = () => initialState.isAdFree;
+    return initialState;
   }
 
   Future<void> _initAsyncPrefs() async {

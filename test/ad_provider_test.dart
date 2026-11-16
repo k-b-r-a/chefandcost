@@ -10,9 +10,13 @@ import 'package:recipetools/provider/cloud_sync_provider.dart';
 import 'package:recipetools/provider/monetization_provider.dart';
 import 'package:recipetools/provider/settings_provider.dart';
 import 'package:recipetools/services/ad_service.dart';
+import 'package:recipetools/services/offline_ad_cache_service.dart';
 import 'package:recipetools/utils/ad_interleaving_helper.dart';
+import 'package:recipetools/utils/ad_navigation_observer.dart';
 import 'package:recipetools/widgets/ad_free_pass_button.dart';
 import 'package:recipetools/widgets/inline_ad_card.dart';
+import 'package:recipetools/widgets/offline_cached_ad_widget.dart';
+import 'package:recipetools/widgets/smart_banner_ad_widget.dart';
 import 'package:recipetools/widgets/subscription_paywall_card.dart';
 
 void main() {
@@ -553,6 +557,215 @@ void main() {
       expect(find.byKey(const ValueKey('subscription_active_card')), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
+    });
+  });
+
+  group('Smart Periodic & Navigation-Aware Ad Refresh Tests', () {
+    tearDown(() {
+      AdService.debugIsSupportedPlatform = null;
+      AdService.appLifecycleState = AppLifecycleState.resumed;
+      AdService.stopPeriodicRefresh();
+    });
+
+    test('AdService.shouldRequestRewardedAd blocks requests when ad-free or backgrounded', () {
+      AdService.debugIsSupportedPlatform = true;
+      AdService.appLifecycleState = AppLifecycleState.resumed;
+
+      // Eligible when not ad-free and resumed
+      expect(AdService.shouldRequestRewardedAd(isAdFree: false), isTrue);
+
+      // Blocked when subscribed / 8h ad-free pass active
+      expect(AdService.shouldRequestRewardedAd(isAdFree: true), isFalse);
+
+      // Blocked when app is backgrounded
+      AdService.appLifecycleState = AppLifecycleState.paused;
+      expect(AdService.shouldRequestRewardedAd(isAdFree: false), isFalse);
+
+      AdService.appLifecycleState = AppLifecycleState.inactive;
+      expect(AdService.shouldRequestRewardedAd(isAdFree: false), isFalse);
+    });
+
+    test('AdService.onAppLifecycleStateChanged updates lifecycle state and pauses background refresh', () {
+      AdService.debugIsSupportedPlatform = true;
+      AdService.onAppLifecycleStateChanged(AppLifecycleState.paused);
+      expect(AdService.appLifecycleState, AppLifecycleState.paused);
+      expect(AdService.shouldRequestRewardedAd(isAdFree: false), isFalse);
+
+      AdService.onAppLifecycleStateChanged(AppLifecycleState.resumed);
+      expect(AdService.appLifecycleState, AppLifecycleState.resumed);
+      expect(AdService.shouldRequestRewardedAd(isAdFree: false), isTrue);
+    });
+
+    testWidgets('AdNavigationObserver.didPop waits for transition delay before evaluating ads', (tester) async {
+      int evaluateCount = 0;
+      final observer = AdNavigationObserver(
+        transitionDelay: const Duration(milliseconds: 350),
+        onEvaluateAds: () async {
+          evaluateCount++;
+          return true;
+        },
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorObservers: [observer],
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const Scaffold(body: Text('Second')),
+                    ),
+                  );
+                },
+                child: const Text('Push'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Push'));
+      await tester.pumpAndSettle();
+      expect(find.text('Second'), findsOneWidget);
+
+      // Pop the pushed route
+      Navigator.of(tester.element(find.text('Second'))).pop();
+      await tester.pump();
+
+      // Should NOT have fired immediately during transition
+      expect(evaluateCount, 0);
+
+      // Wait past the 350ms transition delay
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(evaluateCount, 1);
+
+      await tester.pumpAndSettle();
+    });
+  });
+
+  group('Offline Cached Ads & Anti-Airplane-Mode Tests', () {
+    tearDown(() {
+      AdService.debugIsSupportedPlatform = null;
+      AdService.setDebugOffline(null);
+      AdService.appLifecycleState = AppLifecycleState.resumed;
+      OfflineAdCacheService.resetForTesting();
+    });
+
+    test('OfflineAdCacheService persists metadata and rotates creatives', () async {
+      await OfflineAdCacheService.recordLiveAdLoaded(
+        width: 360,
+        height: 60,
+        style: 'recipe',
+        prefs: prefs,
+      );
+
+      expect(prefs.getString(OfflineAdCacheService.cachePrefKey), isNotNull);
+
+      final first = await OfflineAdCacheService.getNextCachedAd(
+        style: 'recipe',
+        prefs: prefs,
+      );
+      final second = await OfflineAdCacheService.getNextCachedAd(
+        style: 'recipe',
+        prefs: prefs,
+      );
+
+      expect(first.width, 360);
+      expect(first.height, 60);
+      expect(first.creativeIndex, isNot(equals(second.creativeIndex)));
+    });
+
+    test('AdService.evaluateAndPreloadAdsIfNeeded freezes preloaded ads when offline', () async {
+      AdService.debugIsSupportedPlatform = true;
+      AdService.appLifecycleState = AppLifecycleState.resumed;
+      AdService.setDebugOffline(true);
+
+      final result = await AdService.evaluateAndPreloadAdsIfNeeded(isAdFree: false);
+      expect(result, isFalse);
+      expect(AdService.isOffline, isTrue);
+    });
+
+    test('AdService.setDebugOffline updates isOfflineNotifier on reconnect', () {
+      AdService.setDebugOffline(true);
+      expect(AdService.isOfflineNotifier.value, isTrue);
+
+      AdService.setDebugOffline(false);
+      expect(AdService.isOfflineNotifier.value, isFalse);
+    });
+
+    testWidgets('InlineAdCard and SmartBannerAdWidget render OfflineCachedAdWidget when offline', (tester) async {
+      AdService.debugIsSupportedPlatform = true;
+      AdService.setDebugOffline(true);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('en'),
+            home: Scaffold(
+              body: Column(
+                children: [
+                  InlineAdCard(style: InlineAdCardStyle.recipe),
+                  SmartBannerAdWidget(style: SmartBannerAdStyle.standard),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.byType(OfflineCachedAdWidget), findsNWidgets(2));
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('Ad-Free pass hides OfflineCachedAdWidget even when offline', (tester) async {
+      AdService.debugIsSupportedPlatform = true;
+      AdService.setDebugOffline(true);
+
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+
+      try {
+        await container.read(adNotifierProvider.notifier).unlockAdFreeFor8Hours();
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: Locale('en'),
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    InlineAdCard(style: InlineAdCardStyle.recipe),
+                    SmartBannerAdWidget(style: SmartBannerAdStyle.standard),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 250));
+
+        expect(find.byType(OfflineCachedAdWidget), findsNothing);
+      } finally {
+        await tester.pumpWidget(const SizedBox());
+        container.dispose();
+      }
     });
   });
 }

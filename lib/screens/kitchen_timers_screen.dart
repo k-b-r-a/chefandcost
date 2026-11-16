@@ -5,6 +5,12 @@ import '../provider/timers_provider.dart';
 import '../widgets/floating_pill_app_bar.dart';
 import '../utils/audio_alarm_service.dart';
 import '../utils/notification_service.dart';
+import '../provider/ad_provider.dart';
+import '../provider/monetization_provider.dart';
+import '../services/ad_service.dart';
+import '../utils/ad_interleaving_helper.dart';
+import '../widgets/ad_free_pass_button.dart';
+import '../widgets/inline_ad_card.dart';
 
 class KitchenTimersScreen extends ConsumerStatefulWidget {
   const KitchenTimersScreen({super.key});
@@ -47,6 +53,11 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
     final theme = Theme.of(context);
     final timers = ref.watch(kitchenTimersProvider);
     final notifier = ref.read(kitchenTimersProvider.notifier);
+    final isAdFree = ref.watch(adProvider.select((s) => s.isAdFree));
+    final isMonetizationAdFree =
+        ref.watch(monetizationProvider.select((s) => s.isAdFree));
+    final bool showAds =
+        !isAdFree && !isMonetizationAdFree && AdService.isSupportedPlatform;
 
     return Scaffold(
       body: Stack(
@@ -58,6 +69,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                 context: context,
                 title: l10n.timers_title,
                 controller: _scrollController,
+                actions: const [AdFreePassButton()],
                 trailing: InkWell(
                   onTap: () => _showAddTimerDialog(context, notifier, l10n),
                   borderRadius: BorderRadius.circular(16),
@@ -99,9 +111,28 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 860),
-                      child: timers.isEmpty
-                          ? _buildEmptyState(theme, notifier, l10n)
-                          : _buildTimersList(timers, notifier, theme, l10n),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (showAds) ...[
+                            const InlineAdCard(
+                              key: ValueKey('ad_timers_top_static'),
+                              style: InlineAdCardStyle.ingredient,
+                              margin: EdgeInsets.zero,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          timers.isEmpty
+                              ? _buildEmptyState(theme, notifier, l10n)
+                              : _buildTimersList(
+                                  timers,
+                                  notifier,
+                                  theme,
+                                  l10n,
+                                  showAds: showAds,
+                                ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -267,18 +298,34 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
     List<KitchenTimerModel> timers,
     KitchenTimersNotifier notifier,
     ThemeData theme,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    required bool showAds,
+  }) {
+    final int visualTimersCount = AdInterleavingHelper.getVisualCount(
+      timers.length,
+      showAds,
+      interval: 5,
+    );
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: timers.length + 1,
+      itemCount: visualTimersCount + 1,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        if (index == timers.length) {
+        if (index == visualTimersCount) {
           return _buildAddTimerSquare(theme, notifier, l10n);
         }
-        final timer = timers[index];
+        if (showAds && AdInterleavingHelper.isAdIndex(index, interval: 5)) {
+          return InlineAdCard(
+            key: ValueKey('ad_timer_slot_$index'),
+            style: InlineAdCardStyle.ingredient,
+            margin: EdgeInsets.zero,
+          );
+        }
+        final dataIndex = showAds
+            ? AdInterleavingHelper.getDataIndex(index, interval: 5)
+            : index;
+        final timer = timers[dataIndex];
         final accentColor = _accentColors[timer.colorIndex % _accentColors.length];
 
         return Card(

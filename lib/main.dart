@@ -30,6 +30,7 @@ import 'widgets/app_logo.dart';
 import 'theme/app_theme.dart';
 import 'services/app_tutorial_service.dart';
 import 'services/ad_service.dart';
+import 'utils/ad_navigation_observer.dart';
 import 'services/play_integrity_service.dart';
 import 'services/recipe_file_intent_service.dart';
 import 'services/windows_registry_helper.dart';
@@ -147,6 +148,7 @@ class ChefAndCostApp extends ConsumerWidget {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
+      navigatorObservers: [AdNavigationObserver()],
       title: 'Chef&Cost',
       onGenerateTitle: (context) => 'Chef&Cost',
       locale: settings.locale,
@@ -214,6 +216,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   Timer? _initTutorialTimer;
   Timer? _replayTutorialTimer;
   StreamSubscription<Map<String, String>>? _fileIntentSubscription;
+  AppLifecycleListener? _appLifecycleListener;
 
   late final List<Widget> _screens;
 
@@ -249,12 +252,20 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       } else {
         _pageController.jumpToPage(index);
       }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(AdService.evaluateAndPreloadAdsIfNeeded());
+        }
+      });
     }
   }
 
   @override
   void initState() {
     super.initState();
+    _appLifecycleListener = AppLifecycleListener(
+      onStateChange: AdService.onAppLifecycleStateChanged,
+    );
     _screens = [
       HomeScreen(onNavigateToTab: _navigateToTab, tutorialKeys: _tutorialKeys),
       const RecipeListScreen(),
@@ -348,6 +359,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   @override
   void dispose() {
     _fileIntentSubscription?.cancel();
+    _appLifecycleListener?.dispose();
     _initTutorialTimer?.cancel();
     _replayTutorialTimer?.cancel();
     if (_replayListener != null) {

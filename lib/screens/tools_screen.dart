@@ -7,6 +7,11 @@ import 'rule_of_three_screen.dart';
 import 'unit_converter_screen.dart';
 import 'kitchen_timers_screen.dart';
 import '../provider/web_layout_provider.dart';
+import '../provider/ad_provider.dart';
+import '../provider/monetization_provider.dart';
+import '../services/ad_service.dart';
+import '../widgets/ad_free_pass_button.dart';
+import '../widgets/inline_ad_card.dart';
 
 class ToolsScreen extends ConsumerStatefulWidget {
   const ToolsScreen({super.key});
@@ -28,6 +33,11 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isWide = MediaQuery.sizeOf(context).width >= 640;
+    final isAdFree = ref.watch(adProvider.select((s) => s.isAdFree));
+    final isMonetizationAdFree =
+        ref.watch(monetizationProvider.select((s) => s.isAdFree));
+    final bool showAds =
+        !isAdFree && !isMonetizationAdFree && AdService.isSupportedPlatform;
 
     return Scaffold(
       body: CustomScrollView(
@@ -37,7 +47,24 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
             context: context,
             title: l10n.tools_title,
             controller: _scrollController,
+            leading: const AdFreePassButton(),
           ),
+          if (showAds)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20.0, 12.0, 20.0, 0.0),
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 820),
+                    child: const InlineAdCard(
+                      key: ValueKey('ad_tools_top_static'),
+                      style: InlineAdCardStyle.ingredient,
+                      margin: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               20.0,

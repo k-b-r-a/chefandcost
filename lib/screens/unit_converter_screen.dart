@@ -4,6 +4,8 @@ import '../l10n/app_localizations.dart';
 import '../provider/database_provider.dart';
 import '../database/database.dart';
 import '../utils/recipe_utils.dart';
+import '../widgets/ad_free_pass_button.dart';
+import '../widgets/inline_ad_card.dart';
 
 class UnitConverterScreen extends ConsumerStatefulWidget {
   const UnitConverterScreen({super.key});
@@ -95,6 +97,9 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
           ),
         ),
         centerTitle: true,
+        actions: const [
+          AdFreePassButton(),
+        ],
       ),
       body: unitsAsync.when(
         data: (allUnits) {
@@ -151,6 +156,11 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                 child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const InlineAdCard(
+                  key: ValueKey('ad_unit_converter_top_static'),
+                  style: InlineAdCardStyle.ingredient,
+                  margin: EdgeInsets.only(bottom: 16),
+                ),
                 Text(
                   l10n.unit_converter_desc,
                   style: theme.textTheme.bodyMedium?.copyWith(
