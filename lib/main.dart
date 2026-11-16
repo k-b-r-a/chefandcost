@@ -1546,129 +1546,135 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                       borderRadius: BorderRadius.circular(
                         _isSearching ? 20 : 12,
                       ),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: _isSearching ? 8 : 0,
-                          sigmaY: _isSearching ? 8 : 0,
-                        ),
-                        child: AnimatedSwitcher(
-                          duration: anim200,
-                          child: _isSearching
-                              ? AnimatedOpacity(
-                                  duration: anim200,
-                                  opacity: _showSearchContent ? 1.0 : 0.0,
-                                  child: Builder(
-                                    builder: (context) {
-                                      final isRecipes = _currentIndex == 1;
-                                      final controller = isRecipes
-                                          ? _recipeSearchController
-                                          : _ingredientSearchController;
-                                      final hintText = isRecipes
-                                          ? l10n.search_recipes_hint
-                                          : l10n.search_ingredients_hint;
+                      child: Builder(
+                        builder: (context) {
+                          final searchSwitcher = AnimatedSwitcher(
+                            duration: anim200,
+                            child: _isSearching
+                                ? AnimatedOpacity(
+                                    duration: anim200,
+                                    opacity: _showSearchContent ? 1.0 : 0.0,
+                                    child: Builder(
+                                      builder: (context) {
+                                        final isRecipes = _currentIndex == 1;
+                                        final controller = isRecipes
+                                            ? _recipeSearchController
+                                            : _ingredientSearchController;
+                                        final hintText = isRecipes
+                                            ? l10n.search_recipes_hint
+                                            : l10n.search_ingredients_hint;
 
-                                      return TextField(
-                                        key: ValueKey(
-                                          'search_field_$_currentIndex',
-                                        ),
-                                        controller: controller,
-                                        autofocus: true,
-                                        textCapitalization:
-                                            TextCapitalization.sentences,
-                                        onChanged: (value) {
-                                          if (isRecipes) {
-                                            ref
-                                                .read(
-                                                  recipeSearchQueryProvider
-                                                      .notifier,
-                                                )
-                                                .setQuery(value);
-                                          } else {
-                                            ref
-                                                .read(
-                                                  ingredientSearchQueryProvider
-                                                      .notifier,
-                                                )
-                                                .setQuery(value);
+                                        return TextField(
+                                          key: ValueKey(
+                                            'search_field_$_currentIndex',
+                                          ),
+                                          controller: controller,
+                                          autofocus: true,
+                                          textCapitalization:
+                                              TextCapitalization.sentences,
+                                          onChanged: (value) {
+                                            if (isRecipes) {
+                                              ref
+                                                  .read(
+                                                    recipeSearchQueryProvider
+                                                        .notifier,
+                                                  )
+                                                  .setQuery(value);
+                                            } else {
+                                              ref
+                                                  .read(
+                                                    ingredientSearchQueryProvider
+                                                        .notifier,
+                                                  )
+                                                  .setQuery(value);
+                                            }
+                                          },
+                                          style: theme.textTheme.bodyLarge,
+                                          textAlignVertical:
+                                              TextAlignVertical.center,
+                                          decoration: InputDecoration(
+                                            hintText: hintText,
+                                            hintStyle: theme.textTheme.bodyLarge
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.5),
+                                                ),
+                                            border: InputBorder.none,
+                                            contentPadding:
+                                                const EdgeInsets.only(
+                                                  left: 16,
+                                                  right: 8,
+                                                  bottom: 4,
+                                                ),
+                                            prefixIconConstraints:
+                                                const BoxConstraints(
+                                                  minWidth: 40,
+                                                ),
+                                            prefixIcon: Icon(
+                                              Icons.search,
+                                              size: 18,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                            suffixIconConstraints:
+                                                const BoxConstraints(
+                                                  minWidth: 40,
+                                                ),
+                                            suffixIcon: IconButton(
+                                              padding: EdgeInsets.zero,
+                                              icon: const Icon(
+                                                Icons.close,
+                                                size: 18,
+                                              ),
+                                              onPressed: _closeSearch,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : InkWell(
+                                    key: const ValueKey('search_button'),
+                                    onTap: () {
+                                      setState(() {
+                                        _isSearching = true;
+                                        _isSearchHovered = false;
+                                      });
+                                      Future.delayed(
+                                        const Duration(milliseconds: 360),
+                                        () {
+                                          if (mounted && _isSearching) {
+                                            setState(
+                                              () => _showSearchContent = true,
+                                            );
                                           }
                                         },
-                                        style: theme.textTheme.bodyLarge,
-                                        textAlignVertical:
-                                            TextAlignVertical.center,
-                                        decoration: InputDecoration(
-                                          hintText: hintText,
-                                          hintStyle: theme.textTheme.bodyLarge
-                                              ?.copyWith(
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.5),
-                                              ),
-                                          border: InputBorder.none,
-                                          contentPadding: const EdgeInsets.only(
-                                            left: 16,
-                                            right: 8,
-                                            bottom: 4,
-                                          ),
-                                          prefixIconConstraints:
-                                              const BoxConstraints(
-                                                minWidth: 40,
-                                              ),
-                                          prefixIcon: Icon(
-                                            Icons.search,
-                                            size: 18,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                          suffixIconConstraints:
-                                              const BoxConstraints(
-                                                minWidth: 40,
-                                              ),
-                                          suffixIcon: IconButton(
-                                            padding: EdgeInsets.zero,
-                                            icon: const Icon(
-                                              Icons.close,
-                                              size: 18,
-                                            ),
-                                            onPressed: _closeSearch,
-                                          ),
-                                        ),
                                       );
                                     },
-                                  ),
-                                )
-                              : InkWell(
-                                  key: const ValueKey('search_button'),
-                                  onTap: () {
-                                    setState(() {
-                                      _isSearching = true;
-                                      _isSearchHovered = false;
-                                    });
-                                    Future.delayed(
-                                      const Duration(milliseconds: 360),
-                                      () {
-                                        if (mounted && _isSearching) {
-                                          setState(
-                                            () => _showSearchContent = true,
-                                          );
-                                        }
-                                      },
-                                    );
-                                  },
-                                  onHover: (hovering) => setState(
-                                    () => _isSearchHovered = hovering,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.search,
-                                      size: 20,
-                                      color: theme
-                                          .colorScheme
-                                          .onSecondaryContainer,
+                                    onHover: (hovering) => setState(
+                                      () => _isSearchHovered = hovering,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.search,
+                                        size: 20,
+                                        color: theme
+                                            .colorScheme
+                                            .onSecondaryContainer,
+                                      ),
                                     ),
                                   ),
-                                ),
-                        ),
+                          );
+                          if (_isSearching && settings.animationsEnabled) {
+                            return BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                              child: searchSwitcher,
+                            );
+                          }
+                          return searchSwitcher;
+                        },
                       ),
                     ),
                   ),

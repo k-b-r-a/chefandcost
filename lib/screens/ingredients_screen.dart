@@ -164,23 +164,25 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                 ],
                 bottom: PreferredSize(
               preferredSize: const Size.fromHeight(52),
-              child: SizedBox(
-                height: 52,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: KeyedSubtree(
-                    key: _tutorialKeys.ingredientFilterBarKey,
-                    child: IngredientFilterChipsRow(
-                      currentFilter: currentFilter,
-                      onFilterSelected: (filter) {
-                        ref
-                            .read(ingredientFilterProvider.notifier)
-                            .setFilter(filter);
-                      },
-                      isCompact: true,
+              child: RepaintBoundary(
+                child: SizedBox(
+                  height: 52,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: KeyedSubtree(
+                      key: _tutorialKeys.ingredientFilterBarKey,
+                      child: IngredientFilterChipsRow(
+                        currentFilter: currentFilter,
+                        onFilterSelected: (filter) {
+                          ref
+                              .read(ingredientFilterProvider.notifier)
+                              .setFilter(filter);
+                        },
+                        isCompact: true,
+                      ),
                     ),
                   ),
                 ),

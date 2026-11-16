@@ -40,6 +40,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   final ScrollController _scrollController = ScrollController();
   final RecipeListTutorialKeys _tutorialKeys = RecipeListTutorialKeys();
   String? _expandedRecipeId;
+  String? _animatingRecipeId;
   bool _tutorialChecked = false;
   bool _isCheckingTutorial = false;
   VoidCallback? _tutorialCompletedListener;
@@ -146,6 +147,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         if (_expandedRecipeId != firstPk) {
           if (mounted) {
             setState(() {
+              _animatingRecipeId = firstPk;
               _expandedRecipeId = firstPk;
             });
           }
@@ -159,6 +161,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   void _handleTutorialEnd() {
     if (mounted && _expandedRecipeId != null) {
       setState(() {
+        _animatingRecipeId = _expandedRecipeId;
         _expandedRecipeId = null;
       });
     }
@@ -188,19 +191,27 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
             leading: const AdFreePassButton(),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(52),
-              child: SizedBox(
-                height: 52,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: RecipeCategoryFilterChipsRow(
-                    isCompact: true,
-                    selectedCategory: ref.watch(recipeCategoryFilterProvider),
-                    onCategorySelected: (category) => ref
-                        .read(recipeCategoryFilterProvider.notifier)
-                        .setCategory(category),
+              child: RepaintBoundary(
+                child: SizedBox(
+                  height: 52,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        return RecipeCategoryFilterChipsRow(
+                          isCompact: true,
+                          selectedCategory: ref.watch(
+                            recipeCategoryFilterProvider,
+                          ),
+                          onCategorySelected: (category) => ref
+                              .read(recipeCategoryFilterProvider.notifier)
+                              .setCategory(category),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -407,6 +418,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                 onTap: () async {
                                   if (isExpanded) {
                                     setState(() {
+                                      _animatingRecipeId = recipe.recipePk;
                                       _expandedRecipeId = null;
                                     });
                                   } else {
@@ -444,6 +456,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                 },
                                 onLongPress: () {
                                   setState(() {
+                                    _animatingRecipeId = recipe.recipePk;
                                     _expandedRecipeId = isExpanded
                                         ? null
                                         : recipe.recipePk;
@@ -680,161 +693,177 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                           ],
                                         ),
                                       ),
-                                      AnimatedSize(
-                                        duration: settings.animationsEnabled
-                                            ? const Duration(milliseconds: 200)
-                                            : Duration.zero,
-                                        curve: Curves.easeInOut,
-                                        child: isExpanded
-                                            ? Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const SizedBox(height: 12),
-                                                  Divider(
-                                                    height: 1,
-                                                    color: theme
-                                                        .colorScheme
-                                                        .outlineVariant
-                                                        .withValues(alpha: 0.5),
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: _buildMenuButton(
-                                                          context: context,
-                                                          icon: Icons
-                                                              .edit_outlined,
-                                                          label:
-                                                              l10n.edit_button,
-                                                          onTap: () async {
-                                                            if (isWideWeb) {
-                                                              if (ref
-                                                                      .read(
-                                                                        webLayoutProvider,
-                                                                      )
-                                                                      .selectedRecipeId !=
-                                                                  recipe
-                                                                      .recipePk) {
-                                                                final guard =
-                                                                    ref.read(
-                                                                      recipeCanLeaveGuardProvider,
-                                                                    );
-                                                                if (guard !=
-                                                                        null &&
-                                                                    !await guard()) {
-                                                                  return;
-                                                                }
-                                                              }
-                                                              ref
-                                                                  .read(
-                                                                    webLayoutProvider
-                                                                        .notifier,
-                                                                  )
-                                                                  .openRecipe(
+                                      if (isExpanded ||
+                                          _animatingRecipeId == recipe.recipePk)
+                                        AnimatedSize(
+                                          duration: settings.animationsEnabled
+                                              ? const Duration(
+                                                  milliseconds: 200,
+                                                )
+                                              : Duration.zero,
+                                          curve: Curves.easeInOut,
+                                          child: isExpanded
+                                              ? Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    const SizedBox(height: 12),
+                                                    Divider(
+                                                      height: 1,
+                                                      color: theme
+                                                          .colorScheme
+                                                          .outlineVariant
+                                                          .withValues(
+                                                            alpha: 0.5,
+                                                          ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: _buildMenuButton(
+                                                            context: context,
+                                                            icon: Icons
+                                                                .edit_outlined,
+                                                            label: l10n
+                                                                .edit_button,
+                                                            onTap: () async {
+                                                              if (isWideWeb) {
+                                                                if (ref
+                                                                        .read(
+                                                                          webLayoutProvider,
+                                                                        )
+                                                                        .selectedRecipeId !=
                                                                     recipe
-                                                                        .recipePk,
+                                                                        .recipePk) {
+                                                                  final guard = ref.read(
+                                                                    recipeCanLeaveGuardProvider,
                                                                   );
-                                                              setState(() {
-                                                                _expandedRecipeId =
-                                                                    null;
-                                                              });
-                                                            } else {
-                                                              Navigator.of(
-                                                                    context,
-                                                                  )
-                                                                  .push(
-                                                                    MaterialPageRoute(
-                                                                      builder: (context) => RecipeEditorScreen(
-                                                                        recipeId:
-                                                                            recipe.recipePk,
-                                                                        isTemporary: isSampleManufacturingRecipe(
-                                                                          recipe
-                                                                              .recipePk,
+                                                                  if (guard !=
+                                                                          null &&
+                                                                      !await guard()) {
+                                                                    return;
+                                                                  }
+                                                                }
+                                                                ref
+                                                                    .read(
+                                                                      webLayoutProvider
+                                                                          .notifier,
+                                                                    )
+                                                                    .openRecipe(
+                                                                      recipe
+                                                                          .recipePk,
+                                                                    );
+                                                                setState(() {
+                                                                  _animatingRecipeId =
+                                                                      recipe
+                                                                          .recipePk;
+                                                                  _expandedRecipeId =
+                                                                      null;
+                                                                });
+                                                              } else {
+                                                                Navigator.of(
+                                                                      context,
+                                                                    )
+                                                                    .push(
+                                                                      MaterialPageRoute(
+                                                                        builder: (context) => RecipeEditorScreen(
+                                                                          recipeId:
+                                                                              recipe.recipePk,
+                                                                          isTemporary: isSampleManufacturingRecipe(
+                                                                            recipe
+                                                                                .recipePk,
+                                                                          ),
                                                                         ),
                                                                       ),
-                                                                    ),
-                                                                  )
-                                                                  .then((_) {
-                                                                    setState(() {
-                                                                      _expandedRecipeId =
-                                                                          null;
+                                                                    )
+                                                                    .then((_) {
+                                                                      setState(() {
+                                                                        _animatingRecipeId =
+                                                                            recipe.recipePk;
+                                                                        _expandedRecipeId =
+                                                                            null;
+                                                                      });
                                                                     });
-                                                                  });
-                                                            }
-                                                          },
+                                                              }
+                                                            },
+                                                          ),
                                                         ),
-                                                      ),
-                                                      Expanded(
-                                                        child: _buildMenuButton(
-                                                          context: context,
-                                                          icon: Icons
-                                                              .scale_outlined,
-                                                          label:
-                                                              l10n.scale_button,
-                                                          onTap: () {
-                                                            _showScalePickerFromList(
-                                                              context,
-                                                              recipe,
-                                                            );
-                                                          },
+                                                        Expanded(
+                                                          child:
+                                                              _buildMenuButton(
+                                                                context:
+                                                                    context,
+                                                                icon: Icons
+                                                                    .scale_outlined,
+                                                                label: l10n
+                                                                    .scale_button,
+                                                                onTap: () {
+                                                                  _showScalePickerFromList(
+                                                                    context,
+                                                                    recipe,
+                                                                  );
+                                                                },
+                                                              ),
                                                         ),
-                                                      ),
-                                                      Expanded(
-                                                        child: _buildMenuButton(
-                                                          context: context,
-                                                          icon: Icons
-                                                              .copy_rounded,
-                                                          label: l10n
-                                                              .duplicate_button,
-                                                          onTap: () {
-                                                            _duplicateRecipeFromList(
-                                                              context,
-                                                              recipe,
-                                                            );
-                                                          },
+                                                        Expanded(
+                                                          child:
+                                                              _buildMenuButton(
+                                                                context:
+                                                                    context,
+                                                                icon: Icons
+                                                                    .copy_rounded,
+                                                                label: l10n
+                                                                    .duplicate_button,
+                                                                onTap: () {
+                                                                  _duplicateRecipeFromList(
+                                                                    context,
+                                                                    recipe,
+                                                                  );
+                                                                },
+                                                              ),
                                                         ),
-                                                      ),
-                                                      Expanded(
-                                                        child: _buildMenuButton(
-                                                          context: context,
-                                                          icon: Icons
-                                                              .share_rounded,
-                                                          label: l10n
-                                                              .share_recipe_menu_title,
-                                                          onTap: () {
-                                                            _shareRecipeFromList(
-                                                              context,
-                                                              recipe,
-                                                            );
-                                                          },
+                                                        Expanded(
+                                                          child: _buildMenuButton(
+                                                            context: context,
+                                                            icon: Icons
+                                                                .share_rounded,
+                                                            label: l10n
+                                                                .share_recipe_menu_title,
+                                                            onTap: () {
+                                                              _shareRecipeFromList(
+                                                                context,
+                                                                recipe,
+                                                              );
+                                                            },
+                                                          ),
                                                         ),
-                                                      ),
-                                                      Expanded(
-                                                        child: _buildMenuButton(
-                                                          context: context,
-                                                          icon: Icons
-                                                              .delete_outline_rounded,
-                                                          label: l10n
-                                                              .delete_button,
-                                                          color: theme
-                                                              .colorScheme
-                                                              .error,
-                                                          onTap: () {
-                                                            _deleteRecipeFromList(
-                                                              context,
-                                                              recipe,
-                                                            );
-                                                          },
+                                                        Expanded(
+                                                          child:
+                                                              _buildMenuButton(
+                                                                context:
+                                                                    context,
+                                                                icon: Icons
+                                                                    .delete_outline_rounded,
+                                                                label: l10n
+                                                                    .delete_button,
+                                                                color: theme
+                                                                    .colorScheme
+                                                                    .error,
+                                                                onTap: () {
+                                                                  _deleteRecipeFromList(
+                                                                    context,
+                                                                    recipe,
+                                                                  );
+                                                                },
+                                                              ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              )
-                                            : const SizedBox.shrink(),
-                                      ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                )
+                                              : const SizedBox.shrink(),
+                                        ),
                                     ],
                                   ),
                                 ),
