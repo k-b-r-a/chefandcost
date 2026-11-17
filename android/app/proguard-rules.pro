@@ -23,5 +23,19 @@
 -keepattributes InnerClasses
 -dontwarn sun.misc.**
 -keep class com.google.gson.reflect.TypeToken { *; }
--keep class * extends com.google.gson.reflect.TypeToken
+-keep class * extends com.google.gson.reflect.TypeToken { *; }
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
+
+# R8 Full Mode: add constructor/member retention where third-party AAR consumer rules omit { ... }
+-keep class okhttp3.** { *; }
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+-keep class androidx.work.WorkerParameters
+-keep public class androidx.versionedparcelable.ParcelImpl { *; }
+-keep class * extends androidx.room.RoomDatabase {
+    <init>();
+}
