@@ -62,6 +62,18 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
 
+            optimization {
+                keepRules {
+                    // firebase-auth ships `-keep class com.google.android.gms.internal.** { *; }`
+                    // which accidentally disables R8 shrinking/optimization for AdMob (gms.internal.ads)
+                    // and other Play Services libraries. We replace it with scoped rules in proguard-rules.pro.
+                    ignoreFrom(
+                        "com.google.firebase:firebase-auth",
+                        "com.google.android.recaptcha:recaptcha"
+                    )
+                }
+            }
+
             val releaseSigning = signingConfigs.getByName("release")
             val hasValidReleaseKeystore = releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()
 
@@ -105,17 +117,11 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.activity:activity-ktx:1.10.1")
-    implementation("androidx.fragment:fragment-ktx:1.8.6")
-    implementation("androidx.window:window:1.5.0")
-    implementation("androidx.window:window-java:1.5.0")
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     // Google Play Integrity API (StandardIntegrityManager & Classic Integrity)
     implementation("com.google.android.play:integrity:1.4.0")
-
-    // Google Play Billing Library
-    implementation("com.android.billingclient:billing-ktx:8.0.0")
 
     // Kotlin Coroutines for asynchronous Task handling
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
