@@ -62,18 +62,6 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
 
-            optimization {
-                keepRules {
-                    // firebase-auth ships `-keep class com.google.android.gms.internal.** { *; }`
-                    // which accidentally disables R8 shrinking/optimization for AdMob (gms.internal.ads)
-                    // and other Play Services libraries. We replace it with scoped rules in proguard-rules.pro.
-                    ignoreFrom(
-                        "com.google.firebase:firebase-auth",
-                        "com.google.android.recaptcha:recaptcha"
-                    )
-                }
-            }
-
             val releaseSigning = signingConfigs.getByName("release")
             val hasValidReleaseKeystore = releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()
 

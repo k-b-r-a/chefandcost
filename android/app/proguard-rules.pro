@@ -1,63 +1,41 @@
-# SDK consumer rules and @Keep annotations preserve Flutter JNI and SDK entry points.
-# Repackage obfuscated classes into a single flat package to reduce DEX size.
--repackageclasses
-# Flutter loads this generated entry point by name through reflection.
--keep class io.flutter.plugins.GeneratedPluginRegistrant {
-    public static void registerWith(io.flutter.embedding.engine.FlutterEngine);
-}
+## Flutter wrapper & engine rules (critico para JNI y GeneratedPluginRegistrant)
+-keep class io.flutter.app.** { *; }
+-keep class io.flutter.plugin.** { *; }
+-keep class io.flutter.util.** { *; }
+-keep class io.flutter.view.** { *; }
+-keep class io.flutter.** { *; }
+-keep class io.flutter.plugins.** { *; }
+-keep class com.chefandcost.app.** { *; }
 
-# Native method names must remain stable for JNI registration.
--keepclasseswithmembernames,includedescriptorclasses class * {
-    native <methods>;
-}
+# Play Core (compatibilidad con dependencias divididas)
+-dontwarn com.google.android.play.core.**
 
-# flutter_local_notifications 18.x persists these models using Gson reflection.
-# Allow unused classes/methods to be shrunk while preserving fields and constructors of used models.
--keep,allowshrinking class com.dexterous.flutterlocalnotifications.models.** {
-    <fields>;
-    <init>(...);
-}
--keep,allowshrinking,allowobfuscation class com.google.gson.reflect.TypeToken { *; }
--keep,allowshrinking,allowobfuscation class * extends com.google.gson.reflect.TypeToken { *; }
--keepclassmembers,allowobfuscation class * {
+# Play Integrity API (usado en PlayIntegrityHandler.kt)
+-keep class com.google.android.play.core.integrity.** { *; }
+
+# Desugaring
+-dontwarn java.lang.invoke.StringConcatFactory
+
+# Prevencion de fallos con Gson y flutter_local_notifications en modo Release (R8)
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
+-dontwarn sun.misc.**
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken { *; }
+-keepclassmembers class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
 
-# Scoped replacement for firebase-auth consumer rules (fixes upstream bug where
-# `-keep class com.google.android.gms.internal.** { *; }` prevented shrinking AdMob/GMS):
--dontwarn com.google.appengine.api.**
--dontwarn okio.**
--dontwarn org.apache.**
--dontwarn retrofit.android.**
--dontwarn retrofit.appengine.**
--dontwarn retrofit.client.**
--dontwarn rx.**
--keepclasseswithmembernames interface * {
-    @retrofit.http.* <methods>;
+# R8 Full Mode: add constructor/member retention where third-party AAR consumer rules omit { ... }
+-keep class okhttp3.** { *; }
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
--keep,allowshrinking class com.google.android.gms.internal.firebase-auth-api.** {
-    <fields>;
-    <methods>;
+-keep class androidx.work.WorkerParameters
+-keep public class androidx.versionedparcelable.ParcelImpl { *; }
+-keep class * extends androidx.room.RoomDatabase {
+    <init>();
 }
--keepclassmembers class * extends com.google.android.gms.internal.firebase-auth-api.zzalf {
-    <fields>;
-}
-
-# Scoped replacement for recaptcha consumer rules:
--dontwarn kotlinx.coroutines.internal.ClassValueCtorCache
--dontwarn java.lang.ClassValue
--dontwarn kotlinx.coroutines.flow.**
--dontwarn com.squareup.okhttp3.**
--dontwarn okhttp3.**
--keepclassmembers class * extends com.google.android.recaptcha.internal.zznd {
-    <fields>;
-}
--keep,allowshrinking,allowobfuscation class com.google.android.recaptcha.** { *; }
-
-# Optional Play Core APIs referenced by Flutter; this app has no deferred components.
--dontwarn com.google.android.play.core.splitcompat.**
--dontwarn com.google.android.play.core.splitinstall.**
--dontwarn com.google.android.play.core.tasks.**
--dontwarn com.google.android.play.core.integrity.**
--dontwarn org.sqlite.**
--dontwarn com.simonbinder.sqlite3_flutter_libs.**
