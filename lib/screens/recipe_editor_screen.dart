@@ -23,6 +23,7 @@ import '../database/sample_manufacturing_recipe.dart';
 import '../database/recipe_category.dart';
 import '../widgets/share_recipe_sheet.dart';
 import '../widgets/gooey_toast.dart';
+import '../widgets/make_recipe_sheet.dart';
 
 enum WebRecipeRightPanelMode {
   financials,
@@ -3161,7 +3162,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   }
 
   Widget _buildTimersMenu(ThemeData theme, AppLocalizations l10n) {
-    if (_recipeTimers.isEmpty) {
+    if (_recipeTimers.isEmpty && widget.recipeId == null) {
       return IconButton(
         key: const ValueKey('recipe_timers_button'),
         icon: const Icon(Icons.timer_outlined),
@@ -3245,6 +3246,26 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 Text(
                   l10n.recipe_deduct_inventory,
                   style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+        if (widget.recipeId != null)
+          PopupMenuItem<String>(
+            value: 'deduct_inventory',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.restaurant_menu_rounded,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l10n.make_recipe_title,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),
@@ -3386,6 +3407,26 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             ],
           ),
         ),
+        if (widget.recipeId != null)
+          PopupMenuItem<String>(
+            value: 'deduct_inventory',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.restaurant_menu_rounded,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l10n.make_recipe_title,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
         if (_recipeTimers.isNotEmpty) ...[
           const PopupMenuDivider(),
           ..._recipeTimers.asMap().entries.map((entry) {
@@ -4251,6 +4292,25 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if ((widget.recipeId != null || _currentRecipePk != null) &&
+                    _ingredients.isNotEmpty) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.tonalIcon(
+                      key: const ValueKey('web_finance_make_recipe_button'),
+                      icon: const Icon(Icons.restaurant_menu_rounded, size: 17),
+                      label: Text(l10n.make_recipe_title),
+                      onPressed: () => _showDeductInventoryDialog(l10n, theme),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 if (!widget.isTemporary)
                   SizedBox(
                     width: double.infinity,
@@ -5248,36 +5308,45 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          InkWell(
-            onTap: () => setState(() => _showBottomFinancials = false),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 4.0,
-                horizontal: 12.0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.hide_financial_summary,
-                    softWrap: true,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _showBottomFinancials = false),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4.0,
+                      horizontal: 8.0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.hide_financial_summary,
+                          softWrap: true,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          color: theme.colorScheme.primary,
+                          size: 20,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    color: theme.colorScheme.primary,
-                    size: 20,
-                  ),
-                ],
+                ),
               ),
-            ),
+              if ((widget.recipeId != null || _currentRecipePk != null) &&
+                  _ingredients.isNotEmpty)
+                _buildMakeRecipeFinancePill(theme, l10n),
+            ],
           ),
           const SizedBox(height: 8),
 
@@ -5629,23 +5698,32 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  l10n.show_financial_summary,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        l10n.show_financial_summary,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                        softWrap: true,
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.keyboard_arrow_up,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
+                    ],
                   ),
-                  softWrap: true,
                 ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.keyboard_arrow_up,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
+                if ((widget.recipeId != null || _currentRecipePk != null) &&
+                    _ingredients.isNotEmpty)
+                  _buildMakeRecipeFinancePill(theme, l10n),
               ],
             ),
             const SizedBox(height: 2),
@@ -5675,6 +5753,59 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMakeRecipeFinancePill(ThemeData theme, AppLocalizations l10n) {
+    final hasAllStock = _ingredients.every((item) {
+      final stock = item.ingredient.currentStock ?? 0.0;
+      return stock > 0;
+    });
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const ValueKey('finance_make_recipe_pill'),
+        onTap: () => _showDeductInventoryDialog(l10n, theme),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: hasAllStock ? Colors.green : Colors.orange,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.restaurant_menu_rounded,
+                size: 13,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                l10n.make_recipe_button,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -7865,160 +7996,14 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     AppLocalizations l10n,
     ThemeData theme,
   ) async {
-    final recipeId = widget.recipeId;
+    final recipeId = widget.recipeId ?? _currentRecipePk;
     if (recipeId == null) return;
 
     final multiplier = _activeScaleMultiplier ?? widget.multiplier;
-    final db = ref.read(databaseProvider);
-    final allIngredients = await ref.read(ingredientsStreamProvider.future);
-    final allUnits = await ref.read(unitsStreamProvider.future);
-
-    final ingMap = {for (final i in allIngredients) i.ingredientPk: i};
-    final unitMap = {for (final u in allUnits) u.unitPk: u};
-
-    bool hasInsufficient = false;
-    final previewRows = <({
-      String name,
-      double requiredAmount,
-      double availableAmount,
-      String symbol,
-      bool insufficient,
-    })>[];
-
-    for (final item in _ingredients) {
-      final ing = ingMap[item.ingredient.ingredientPk] ?? item.ingredient;
-      final reqUnit = unitMap[ing.unitFk];
-      final stockUnit = unitMap[ing.stockUnit ?? ing.unitFk];
-      final baseAmount = RecipeUtils.parseFormattedNumber(
-        item.amountController.text,
-      );
-      double requiredInStock = baseAmount * multiplier;
-      if (reqUnit != null &&
-          stockUnit != null &&
-          stockUnit.factorToBase != 0 &&
-          reqUnit.unitPk != stockUnit.unitPk) {
-        requiredInStock =
-            requiredInStock * (reqUnit.factorToBase / stockUnit.factorToBase);
-      }
-      final available = ing.currentStock ?? 0.0;
-      final insufficient = available < requiredInStock;
-      if (insufficient) hasInsufficient = true;
-      previewRows.add((
-        name: ing.name,
-        requiredAmount: requiredInStock,
-        availableAmount: available,
-        symbol: stockUnit?.symbol ?? reqUnit?.symbol ?? '',
-        insufficient: insufficient,
-      ));
-    }
-
-    if (!mounted) return;
-
-    final confirmed = await showDialog<bool>(
+    await showMakeRecipeSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.recipe_deduct_preview_title),
-        content: SizedBox(
-          width: 420,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.recipe_deduct_preview_subtitle(
-                    RecipeUtils.formatNumber(multiplier),
-                  ),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                if (hasInsufficient) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.errorContainer.withValues(
-                        alpha: 0.5,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      l10n.recipe_deduct_insufficient_warning,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onErrorContainer,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                ...previewRows.map(
-                  (row) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            row.name,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${l10n.recipe_deduct_required}: ${RecipeUtils.formatNumber(row.requiredAmount)} ${row.symbol}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: row.insufficient
-                                    ? theme.colorScheme.error
-                                    : theme.colorScheme.onSurface,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              '${l10n.recipe_deduct_available}: ${RecipeUtils.formatNumber(row.availableAmount)} ${row.symbol}',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel_button),
-          ),
-          FilledButton(
-            onPressed: previewRows.isEmpty
-                ? null
-                : () => Navigator.pop(ctx, true),
-            child: Text(l10n.recipe_deduct_confirm),
-          ),
-        ],
-      ),
+      recipePk: recipeId,
+      initialMultiplier: multiplier,
     );
-
-    if (confirmed == true && mounted) {
-      await db.deductRecipeFromInventory(
-        recipePk: recipeId,
-        multiplier: multiplier,
-      );
-      if (mounted) {
-        ref.invalidate(ingredientsStreamProvider);
-        AppSnackBar.showSuccess(context, l10n.recipe_deduct_success);
-      }
-    }
   }
 }

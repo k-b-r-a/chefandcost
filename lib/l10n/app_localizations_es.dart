@@ -2424,4 +2424,74 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get recipe_deduct_insufficient_warning =>
       'Algunos ingredientes no tienen stock suficiente y quedarán en 0.';
+
+  @override
+  String get make_recipe_title => 'Preparar Receta';
+
+  @override
+  String get make_recipe_button => 'Preparar';
+
+  @override
+  String get make_recipe_batches_label => 'Tandas';
+
+  @override
+  String get make_recipe_portions_label => 'Porciones';
+
+  @override
+  String make_recipe_max_makeable(
+    String batches,
+    String portions,
+    String yieldName,
+  ) {
+    return 'Stock para hasta ${batches}x ($portions $yieldName)';
+  }
+
+  @override
+  String make_recipe_bottleneck(String ingredient) {
+    return 'Limitado por $ingredient';
+  }
+
+  @override
+  String make_recipe_after_stock(String amount, String unit) {
+    return 'Queda: $amount $unit';
+  }
+
+  @override
+  String get make_recipe_undo_action => 'Deshacer';
+
+  @override
+  String get make_recipe_reverted_toast =>
+      'Producción revertida y stock restaurado';
+
+  @override
+  String make_recipe_low_stock_alert(String ingredients) {
+    return 'Alerta de stock bajo: $ingredients';
+  }
+
+  @override
+  String get inventory_recent_activity => 'Actividad Reciente';
+
+  @override
+  String get inventory_no_recent_activity =>
+      'Sin movimientos recientes de stock';
+
+  @override
+  String inventory_movement_production(String recipe) {
+    return 'Preparó $recipe';
+  }
+
+  @override
+  String get inventory_movement_restock => 'Reposición';
+
+  @override
+  String get inventory_movement_waste => 'Consumo / Merma';
+
+  @override
+  String get inventory_movement_exact => 'Conteo Exacto';
+
+  @override
+  String get inventory_movement_revert => 'Revertido';
+
+  @override
+  String get share_button => 'Compartir';
 }

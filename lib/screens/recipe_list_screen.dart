@@ -18,6 +18,7 @@ import '../widgets/share_recipe_sheet.dart';
 import '../widgets/recipe_category_filter_chips_row.dart';
 import '../widgets/recipe_category_badge.dart';
 import '../widgets/active_group_chip.dart';
+import '../widgets/inventory_workspace_chip.dart';
 import '../utils/recipe_import_helper.dart';
 import '../widgets/ad_free_pass_button.dart';
 import '../provider/ad_provider.dart';
@@ -25,6 +26,8 @@ import '../provider/monetization_provider.dart';
 import '../services/ad_service.dart';
 import '../utils/ad_interleaving_helper.dart';
 import '../widgets/inline_ad_card.dart';
+import '../widgets/make_recipe_sheet.dart';
+import '../widgets/recipe_inventory_adjustment_sheet.dart';
 import 'recipe_editor_screen.dart';
 
 class RecipeListScreen extends ConsumerStatefulWidget {
@@ -175,6 +178,8 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
     final isSyncing = ref.watch(cloudSyncProvider.select((s) => s.isSyncing));
+    final activeRecipesTab = ref.watch(recipesSectionTabProvider);
+    final recipeStockFilter = ref.watch(recipeInventoryStockFilterProvider);
 
     return Scaffold(
       body: Stack(
@@ -190,28 +195,57 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
             showCollapsedTitlePill: false,
             leading: const AdFreePassButton(),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(52),
+              preferredSize: Size.fromHeight(widget.isWebWorkspace ? 52 : 96),
               child: RepaintBoundary(
                 child: SizedBox(
-                  height: 52,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Consumer(
-                      builder: (context, ref, _) {
-                        return RecipeCategoryFilterChipsRow(
-                          isCompact: true,
-                          selectedCategory: ref.watch(
-                            recipeCategoryFilterProvider,
+                  height: widget.isWebWorkspace ? 52 : 96,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (!widget.isWebWorkspace)
+                        const SizedBox(
+                          height: 44,
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(16, 6, 16, 2),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  ActiveGroupChip(isCompact: true),
+                                  SizedBox(width: 8),
+                                  InventoryWorkspaceChip(
+                                    isCompact: true,
+                                    isRecipesContext: true,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          onCategorySelected: (category) => ref
-                              .read(recipeCategoryFilterProvider.notifier)
-                              .setCategory(category),
-                        );
-                      },
-                    ),
+                        ),
+                      SizedBox(
+                        height: 52,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Consumer(
+                            builder: (context, ref, _) {
+                              return RecipeCategoryFilterChipsRow(
+                                isCompact: true,
+                                selectedCategory: ref.watch(
+                                  recipeCategoryFilterProvider,
+                                ),
+                                onCategorySelected: (category) => ref
+                                    .read(recipeCategoryFilterProvider.notifier)
+                                    .setCategory(category),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -238,21 +272,6 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
               const SizedBox(width: 8),
             ],
           ),
-          if (!widget.isWebWorkspace)
-            SliverToBoxAdapter(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 860),
-                  child: const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: ActiveGroupChip(isCompact: true),
-                    ),
-                  ),
-                ),
-              ),
-            ),
           recipesAsync.when(
             data: (recipes) {
               final hasSample = recipes.any(
@@ -281,6 +300,28 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 searchQuery,
                 l10n.sample_manufacturing_recipe_title,
               );
+
+              if (activeRecipesTab == RecipesSectionTab.inventory) {
+                return TweenAnimationBuilder<double>(
+                  key: const ValueKey('recipes_inventory_tab_anim'),
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: settings.animationsEnabled
+                      ? const Duration(milliseconds: 220)
+                      : Duration.zero,
+                  curve: Curves.easeOutCubic,
+                  builder: (context, opacity, child) => SliverOpacity(
+                    opacity: opacity,
+                    sliver: child!,
+                  ),
+                  child: _buildRecipeInventorySliver(
+                    context: context,
+                    allRecipes: recipes,
+                    filteredRecipes: filteredRecipes,
+                    stockFilter: recipeStockFilter,
+                    currencySymbol: settings.currencySymbol,
+                  ),
+                );
+              }
 
               if (!_tutorialChecked && filteredRecipes.isNotEmpty) {
                 _maybeTriggerTutorial();
@@ -724,68 +765,22 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                                           child: _buildMenuButton(
                                                             context: context,
                                                             icon: Icons
-                                                                .edit_outlined,
+                                                                .inventory_2_outlined,
                                                             label: l10n
-                                                                .edit_button,
-                                                            onTap: () async {
-                                                              if (isWideWeb) {
-                                                                if (ref
-                                                                        .read(
-                                                                          webLayoutProvider,
-                                                                        )
-                                                                        .selectedRecipeId !=
-                                                                    recipe
-                                                                        .recipePk) {
-                                                                  final guard = ref.read(
-                                                                    recipeCanLeaveGuardProvider,
-                                                                  );
-                                                                  if (guard !=
-                                                                          null &&
-                                                                      !await guard()) {
-                                                                    return;
-                                                                  }
-                                                                }
-                                                                ref
-                                                                    .read(
-                                                                      webLayoutProvider
-                                                                          .notifier,
-                                                                    )
-                                                                    .openRecipe(
+                                                                .ingredients_tab_inventory,
+                                                            badgeText:
+                                                                RecipeUtils.formatQuantity(
+                                                                  (recipe.currentStock ??
+                                                                          0.0) *
                                                                       recipe
-                                                                          .recipePk,
-                                                                    );
-                                                                setState(() {
-                                                                  _animatingRecipeId =
-                                                                      recipe
-                                                                          .recipePk;
-                                                                  _expandedRecipeId =
-                                                                      null;
-                                                                });
-                                                              } else {
-                                                                Navigator.of(
-                                                                      context,
-                                                                    )
-                                                                    .push(
-                                                                      MaterialPageRoute(
-                                                                        builder: (context) => RecipeEditorScreen(
-                                                                          recipeId:
-                                                                              recipe.recipePk,
-                                                                          isTemporary: isSampleManufacturingRecipe(
-                                                                            recipe
-                                                                                .recipePk,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    )
-                                                                    .then((_) {
-                                                                      setState(() {
-                                                                        _animatingRecipeId =
-                                                                            recipe.recipePk;
-                                                                        _expandedRecipeId =
-                                                                            null;
-                                                                      });
-                                                                    });
-                                                              }
+                                                                          .defaultYield,
+                                                                ),
+                                                            onTap: () {
+                                                              showRecipeInventoryAdjustmentSheet(
+                                                                context:
+                                                                    context,
+                                                                item: item,
+                                                              );
                                                             },
                                                           ),
                                                         ),
@@ -829,7 +824,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                                             icon: Icons
                                                                 .share_rounded,
                                                             label: l10n
-                                                                .share_recipe_menu_title,
+                                                                .share_button,
                                                             onTap: () {
                                                               _shareRecipeFromList(
                                                                 context,
@@ -988,9 +983,19 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     required String label,
     required VoidCallback onTap,
     Color? color,
+    String? badgeText,
   }) {
     final theme = Theme.of(context);
     final buttonColor = color ?? theme.colorScheme.primary;
+    final iconWidget = badgeText != null
+        ? Badge(
+            label: Text(
+              badgeText,
+              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+            ),
+            child: Icon(icon, color: buttonColor, size: 22),
+          )
+        : Icon(icon, color: buttonColor, size: 22);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -1000,7 +1005,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: buttonColor, size: 22),
+            iconWidget,
             const SizedBox(height: 4),
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -1208,6 +1213,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
           .push(
             MaterialPageRoute(
               builder: (context) => RecipeEditorScreen(
+                recipeId: recipe.recipePk,
                 isTemporary: true,
                 multiplier: multiplier,
                 initialName: l10n.scaled_recipe_name(
@@ -1239,5 +1245,430 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         AppSnackBar.showError(context, "Error scaling recipe: $e");
       }
     }
+  }
+
+  Widget _buildRecipeInventorySliver({
+    required BuildContext context,
+    required List<RecipeWithFinancials> allRecipes,
+    required List<RecipeWithFinancials> filteredRecipes,
+    required InventoryStockFilter stockFilter,
+    required String currencySymbol,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    double totalValue = 0.0;
+    int inStockCount = 0;
+    int lowStockCount = 0;
+    int outOfStockCount = 0;
+
+    for (final item in allRecipes) {
+      final m = RecipeInventoryMetrics.fromRecipeWithFinancials(item);
+      totalValue += m.stockCostValue;
+      switch (m.status) {
+        case InventoryStockStatus.inStock:
+          inStockCount++;
+        case InventoryStockStatus.lowStock:
+          lowStockCount++;
+        case InventoryStockStatus.outOfStock:
+          outOfStockCount++;
+      }
+    }
+
+    final displayItems =
+        <({RecipeWithFinancials item, RecipeInventoryMetrics metrics})>[];
+    for (final item in filteredRecipes) {
+      final m = RecipeInventoryMetrics.fromRecipeWithFinancials(item);
+      final matches = switch (stockFilter) {
+        InventoryStockFilter.all => true,
+        InventoryStockFilter.inStock => m.status == InventoryStockStatus.inStock,
+        InventoryStockFilter.lowStock =>
+          m.status == InventoryStockStatus.lowStock,
+        InventoryStockFilter.outOfStock =>
+          m.status == InventoryStockStatus.outOfStock,
+      };
+      if (matches) {
+        displayItems.add((item: item, metrics: m));
+      }
+    }
+
+    final isAdFree = ref.watch(adProvider.select((s) => s.isAdFree));
+    final isMonetizationAdFree =
+        ref.watch(monetizationProvider.select((s) => s.isAdFree));
+    final bool showAds =
+        !isAdFree && !isMonetizationAdFree && AdService.isSupportedPlatform;
+    final int visualCount = AdInterleavingHelper.getVisualCount(
+      displayItems.length,
+      showAds,
+      interval: 10,
+    );
+
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == 0) {
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                elevation: 0,
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.45,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.inventory_kpi_total_value,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '$currencySymbol${RecipeUtils.formatNumber(totalValue)}',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _recipeKpiPill(
+                        context,
+                        label: l10n.inventory_kpi_in_stock,
+                        count: inStockCount,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 6),
+                      _recipeKpiPill(
+                        context,
+                        label: l10n.inventory_kpi_low_stock,
+                        count: lowStockCount,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(width: 6),
+                      _recipeKpiPill(
+                        context,
+                        label: l10n.inventory_kpi_out_of_stock,
+                        count: outOfStockCount,
+                        color: theme.colorScheme.error,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            if (displayItems.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 48,
+                        color: theme.colorScheme.outline,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.inventory_empty_title,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            final visualIndex = index - 1;
+            if (showAds &&
+                AdInterleavingHelper.isAdIndex(visualIndex, interval: 10)) {
+              return InlineAdCard(
+                key: ValueKey('ad_recipe_inventory_slot_$visualIndex'),
+                style: InlineAdCardStyle.recipe,
+              );
+            }
+            final dataIndex = showAds
+                ? AdInterleavingHelper.getDataIndex(visualIndex, interval: 10)
+                : visualIndex;
+            if (dataIndex >= displayItems.length) return null;
+            final entry = displayItems[dataIndex];
+            return _buildRecipeInventoryCard(
+              context: context,
+              item: entry.item,
+              metrics: entry.metrics,
+              currencySymbol: currencySymbol,
+            );
+          },
+          childCount: displayItems.isEmpty ? 2 : visualCount + 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _recipeKpiPill(
+    BuildContext context, {
+    required String label,
+    required int count,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '$count',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 10,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecipeInventoryCard({
+    required BuildContext context,
+    required RecipeWithFinancials item,
+    required RecipeInventoryMetrics metrics,
+    required String currencySymbol,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final recipe = item.recipe;
+
+    final (statusLabel, statusColor) = switch (metrics.status) {
+      InventoryStockStatus.inStock => (
+        l10n.inventory_status_in_stock,
+        Colors.green,
+      ),
+      InventoryStockStatus.lowStock => (
+        l10n.inventory_status_low_stock,
+        Colors.orange,
+      ),
+      InventoryStockStatus.outOfStock => (
+        l10n.inventory_status_out_of_stock,
+        theme.colorScheme.error,
+      ),
+    };
+
+    final double? minStock = metrics.minimumStock;
+    final double progress = (minStock != null && minStock > 0)
+        ? (metrics.currentStock / minStock).clamp(0.0, 1.0)
+        : (metrics.currentStock > 0 ? 1.0 : 0.0);
+
+    final portionsTotal = metrics.currentStock * recipe.defaultYield;
+    final yieldName = recipe.yieldName.isNotEmpty
+        ? recipe.yieldName
+        : l10n.unit_portions.toLowerCase();
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => showRecipeInventoryAdjustmentSheet(
+          context: context,
+          item: item,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: RecipeUtils.parseColor(
+                      recipe.colour,
+                      fallback: theme.colorScheme.primary,
+                    ),
+                    child: const Icon(
+                      Icons.restaurant_menu_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          recipe.name,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '$currencySymbol${RecipeUtils.formatNumber(metrics.stockCostValue)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '${RecipeUtils.formatQuantity(portionsTotal)} $yieldName',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (minStock != null)
+                Text(
+                  l10n.inventory_par_level(
+                    RecipeUtils.formatQuantity(minStock),
+                    '',
+                  ).trim(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              const SizedBox(height: 8),
+              _QuickRecipeStockBar(
+                onMake: () => showMakeRecipeSheet(
+                  context: context,
+                  recipePk: recipe.recipePk,
+                ),
+                onAdjust: (delta) async {
+                  final next = (metrics.currentStock + delta)
+                      .clamp(0.0, double.infinity)
+                      .toDouble();
+                  await ref.read(databaseProvider).updateRecipeStock(
+                    recipePk: recipe.recipePk,
+                    currentStock: next,
+                    movementType: delta >= 0 ? 'manual_restock' : 'sale_consume',
+                    unitCostSnapshot: item.financials.totalCost,
+                    unitPriceSnapshot: item.financials.totalRevenue,
+                  );
+                  ref.invalidate(recipesWithFinancialsStreamProvider);
+                },
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickRecipeStockBar extends StatefulWidget {
+  final VoidCallback onMake;
+  final Future<void> Function(double delta) onAdjust;
+
+  const _QuickRecipeStockBar({
+    required this.onMake,
+    required this.onAdjust,
+  });
+
+  @override
+  State<_QuickRecipeStockBar> createState() => _QuickRecipeStockBarState();
+}
+
+class _QuickRecipeStockBarState extends State<_QuickRecipeStockBar> {
+  bool _isSubtract = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final sign = _isSubtract ? '-' : '+';
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        ActionChip(
+          avatar: Icon(
+            Icons.restaurant_menu_rounded,
+            size: 16,
+            color: theme.colorScheme.primary,
+          ),
+          label: Text(l10n.make_recipe_button),
+          visualDensity: VisualDensity.compact,
+          onPressed: widget.onMake,
+        ),
+        ActionChip(
+          avatar: Icon(
+            _isSubtract ? Icons.remove_rounded : Icons.add_rounded,
+            size: 16,
+            color: _isSubtract
+                ? theme.colorScheme.error
+                : theme.colorScheme.primary,
+          ),
+          label: Text(sign),
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          onPressed: () => setState(() => _isSubtract = !_isSubtract),
+        ),
+        for (final amt in const [1.0, 2.0, 5.0, 10.0])
+          ActionChip(
+            label: Text('$sign${amt.toInt()}'),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            onPressed: () => widget.onAdjust(_isSubtract ? -amt : amt),
+          ),
+      ],
+    );
   }
 }

@@ -38,6 +38,7 @@ import 'utils/recipe_import_helper.dart';
 import 'widgets/gooey_toast.dart';
 import 'database/sample_manufacturing_recipe.dart';
 import 'widgets/active_group_chip.dart';
+import 'widgets/inventory_workspace_chip.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -381,6 +382,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final double middleWidth = screenWidth < 900
         ? 300.0
         : (screenWidth < 1200 ? 340.0 : 380.0);
+
+    ref.listen<int?>(mobileTabRequestProvider, (previous, next) {
+      if (next != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _navigateToTab(next);
+            ref.read(mobileTabRequestProvider.notifier).clear();
+          }
+        });
+      }
+    });
 
     ref.listen<CloudSyncState>(cloudSyncProvider, (previous, next) {
       final isRouteCurrent = ModalRoute.of(context)?.isCurrent ?? true;
@@ -828,6 +840,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       case WebMiddleTab.ingredients:
         listWidget = const IngredientsScreen(
           key: ValueKey('web_ingredients_list'),
+          isWebWorkspace: true,
         );
         break;
       case WebMiddleTab.tools:
@@ -951,12 +964,25 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     ],
                   ),
                 ),
-                if (webLayout.middleTab == WebMiddleTab.recipes)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 4, bottom: 4),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: ActiveGroupChip(isCompact: true),
+                if (webLayout.middleTab == WebMiddleTab.recipes ||
+                    webLayout.middleTab == WebMiddleTab.ingredients)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          if (webLayout.middleTab == WebMiddleTab.recipes) ...[
+                            const ActiveGroupChip(isCompact: true),
+                            const SizedBox(width: 8),
+                          ],
+                          InventoryWorkspaceChip(
+                            isCompact: true,
+                            isRecipesContext:
+                                webLayout.middleTab == WebMiddleTab.recipes,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 if (webLayout.middleTab != WebMiddleTab.tools) ...[

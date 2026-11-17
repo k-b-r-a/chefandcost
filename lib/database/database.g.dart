@@ -687,6 +687,41 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
     requiredDuringInsert: false,
     defaultValue: const Constant('cocina'),
   );
+  static const VerificationMeta _currentStockMeta = const VerificationMeta(
+    'currentStock',
+  );
+  @override
+  late final GeneratedColumn<double> currentStock = GeneratedColumn<double>(
+    'current_stock',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _minimumStockMeta = const VerificationMeta(
+    'minimumStock',
+  );
+  @override
+  late final GeneratedColumn<double> minimumStock = GeneratedColumn<double>(
+    'minimum_stock',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastStockUpdateMeta = const VerificationMeta(
+    'lastStockUpdate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastStockUpdate =
+      GeneratedColumn<DateTime>(
+        'last_stock_update',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     recipePk,
@@ -703,6 +738,9 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
     archived,
     groupId,
     category,
+    currentStock,
+    minimumStock,
+    lastStockUpdate,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -827,6 +865,33 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
         category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
       );
     }
+    if (data.containsKey('current_stock')) {
+      context.handle(
+        _currentStockMeta,
+        currentStock.isAcceptableOrUnknown(
+          data['current_stock']!,
+          _currentStockMeta,
+        ),
+      );
+    }
+    if (data.containsKey('minimum_stock')) {
+      context.handle(
+        _minimumStockMeta,
+        minimumStock.isAcceptableOrUnknown(
+          data['minimum_stock']!,
+          _minimumStockMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_stock_update')) {
+      context.handle(
+        _lastStockUpdateMeta,
+        lastStockUpdate.isAcceptableOrUnknown(
+          data['last_stock_update']!,
+          _lastStockUpdateMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -892,6 +957,18 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
         DriftSqlType.string,
         data['${effectivePrefix}category'],
       ),
+      currentStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}current_stock'],
+      ),
+      minimumStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}minimum_stock'],
+      ),
+      lastStockUpdate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_stock_update'],
+      ),
     );
   }
 
@@ -916,6 +993,9 @@ class Recipe extends DataClass implements Insertable<Recipe> {
   final bool archived;
   final String? groupId;
   final String? category;
+  final double? currentStock;
+  final double? minimumStock;
+  final DateTime? lastStockUpdate;
   const Recipe({
     required this.recipePk,
     required this.name,
@@ -931,6 +1011,9 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     required this.archived,
     this.groupId,
     this.category,
+    this.currentStock,
+    this.minimumStock,
+    this.lastStockUpdate,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -958,6 +1041,15 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     }
     if (!nullToAbsent || category != null) {
       map['category'] = Variable<String>(category);
+    }
+    if (!nullToAbsent || currentStock != null) {
+      map['current_stock'] = Variable<double>(currentStock);
+    }
+    if (!nullToAbsent || minimumStock != null) {
+      map['minimum_stock'] = Variable<double>(minimumStock);
+    }
+    if (!nullToAbsent || lastStockUpdate != null) {
+      map['last_stock_update'] = Variable<DateTime>(lastStockUpdate);
     }
     return map;
   }
@@ -988,6 +1080,15 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       category: category == null && nullToAbsent
           ? const Value.absent()
           : Value(category),
+      currentStock: currentStock == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentStock),
+      minimumStock: minimumStock == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minimumStock),
+      lastStockUpdate: lastStockUpdate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastStockUpdate),
     );
   }
 
@@ -1017,6 +1118,9 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       archived: serializer.fromJson<bool>(json['archived']),
       groupId: serializer.fromJson<String?>(json['groupId']),
       category: serializer.fromJson<String?>(json['category']),
+      currentStock: serializer.fromJson<double?>(json['currentStock']),
+      minimumStock: serializer.fromJson<double?>(json['minimumStock']),
+      lastStockUpdate: serializer.fromJson<DateTime?>(json['lastStockUpdate']),
     );
   }
   @override
@@ -1037,6 +1141,9 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       'archived': serializer.toJson<bool>(archived),
       'groupId': serializer.toJson<String?>(groupId),
       'category': serializer.toJson<String?>(category),
+      'currentStock': serializer.toJson<double?>(currentStock),
+      'minimumStock': serializer.toJson<double?>(minimumStock),
+      'lastStockUpdate': serializer.toJson<DateTime?>(lastStockUpdate),
     };
   }
 
@@ -1055,6 +1162,9 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     bool? archived,
     Value<String?> groupId = const Value.absent(),
     Value<String?> category = const Value.absent(),
+    Value<double?> currentStock = const Value.absent(),
+    Value<double?> minimumStock = const Value.absent(),
+    Value<DateTime?> lastStockUpdate = const Value.absent(),
   }) => Recipe(
     recipePk: recipePk ?? this.recipePk,
     name: name ?? this.name,
@@ -1072,6 +1182,11 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     archived: archived ?? this.archived,
     groupId: groupId.present ? groupId.value : this.groupId,
     category: category.present ? category.value : this.category,
+    currentStock: currentStock.present ? currentStock.value : this.currentStock,
+    minimumStock: minimumStock.present ? minimumStock.value : this.minimumStock,
+    lastStockUpdate: lastStockUpdate.present
+        ? lastStockUpdate.value
+        : this.lastStockUpdate,
   );
   Recipe copyWithCompanion(RecipesCompanion data) {
     return Recipe(
@@ -1103,6 +1218,15 @@ class Recipe extends DataClass implements Insertable<Recipe> {
       archived: data.archived.present ? data.archived.value : this.archived,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       category: data.category.present ? data.category.value : this.category,
+      currentStock: data.currentStock.present
+          ? data.currentStock.value
+          : this.currentStock,
+      minimumStock: data.minimumStock.present
+          ? data.minimumStock.value
+          : this.minimumStock,
+      lastStockUpdate: data.lastStockUpdate.present
+          ? data.lastStockUpdate.value
+          : this.lastStockUpdate,
     );
   }
 
@@ -1122,7 +1246,10 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           ..write('dateTimeModified: $dateTimeModified, ')
           ..write('archived: $archived, ')
           ..write('groupId: $groupId, ')
-          ..write('category: $category')
+          ..write('category: $category, ')
+          ..write('currentStock: $currentStock, ')
+          ..write('minimumStock: $minimumStock, ')
+          ..write('lastStockUpdate: $lastStockUpdate')
           ..write(')'))
         .toString();
   }
@@ -1143,6 +1270,9 @@ class Recipe extends DataClass implements Insertable<Recipe> {
     archived,
     groupId,
     category,
+    currentStock,
+    minimumStock,
+    lastStockUpdate,
   );
   @override
   bool operator ==(Object other) =>
@@ -1161,7 +1291,10 @@ class Recipe extends DataClass implements Insertable<Recipe> {
           other.dateTimeModified == this.dateTimeModified &&
           other.archived == this.archived &&
           other.groupId == this.groupId &&
-          other.category == this.category);
+          other.category == this.category &&
+          other.currentStock == this.currentStock &&
+          other.minimumStock == this.minimumStock &&
+          other.lastStockUpdate == this.lastStockUpdate);
 }
 
 class RecipesCompanion extends UpdateCompanion<Recipe> {
@@ -1179,6 +1312,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
   final Value<bool> archived;
   final Value<String?> groupId;
   final Value<String?> category;
+  final Value<double?> currentStock;
+  final Value<double?> minimumStock;
+  final Value<DateTime?> lastStockUpdate;
   final Value<int> rowid;
   const RecipesCompanion({
     this.recipePk = const Value.absent(),
@@ -1195,6 +1331,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     this.archived = const Value.absent(),
     this.groupId = const Value.absent(),
     this.category = const Value.absent(),
+    this.currentStock = const Value.absent(),
+    this.minimumStock = const Value.absent(),
+    this.lastStockUpdate = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   RecipesCompanion.insert({
@@ -1212,6 +1351,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     this.archived = const Value.absent(),
     this.groupId = const Value.absent(),
     this.category = const Value.absent(),
+    this.currentStock = const Value.absent(),
+    this.minimumStock = const Value.absent(),
+    this.lastStockUpdate = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : name = Value(name),
        defaultYield = Value(defaultYield),
@@ -1231,6 +1373,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     Expression<bool>? archived,
     Expression<String>? groupId,
     Expression<String>? category,
+    Expression<double>? currentStock,
+    Expression<double>? minimumStock,
+    Expression<DateTime>? lastStockUpdate,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1250,6 +1395,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
       if (archived != null) 'archived': archived,
       if (groupId != null) 'group_id': groupId,
       if (category != null) 'category': category,
+      if (currentStock != null) 'current_stock': currentStock,
+      if (minimumStock != null) 'minimum_stock': minimumStock,
+      if (lastStockUpdate != null) 'last_stock_update': lastStockUpdate,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1269,6 +1417,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     Value<bool>? archived,
     Value<String?>? groupId,
     Value<String?>? category,
+    Value<double?>? currentStock,
+    Value<double?>? minimumStock,
+    Value<DateTime?>? lastStockUpdate,
     Value<int>? rowid,
   }) {
     return RecipesCompanion(
@@ -1287,6 +1438,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
       archived: archived ?? this.archived,
       groupId: groupId ?? this.groupId,
       category: category ?? this.category,
+      currentStock: currentStock ?? this.currentStock,
+      minimumStock: minimumStock ?? this.minimumStock,
+      lastStockUpdate: lastStockUpdate ?? this.lastStockUpdate,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1338,6 +1492,15 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
     if (category.present) {
       map['category'] = Variable<String>(category.value);
     }
+    if (currentStock.present) {
+      map['current_stock'] = Variable<double>(currentStock.value);
+    }
+    if (minimumStock.present) {
+      map['minimum_stock'] = Variable<double>(minimumStock.value);
+    }
+    if (lastStockUpdate.present) {
+      map['last_stock_update'] = Variable<DateTime>(lastStockUpdate.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1361,6 +1524,9 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
           ..write('archived: $archived, ')
           ..write('groupId: $groupId, ')
           ..write('category: $category, ')
+          ..write('currentStock: $currentStock, ')
+          ..write('minimumStock: $minimumStock, ')
+          ..write('lastStockUpdate: $lastStockUpdate, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4392,6 +4558,2840 @@ class DeletedRecordsCompanion extends UpdateCompanion<DeletedRecord> {
   }
 }
 
+class $RecipeProductionsTable extends RecipeProductions
+    with TableInfo<$RecipeProductionsTable, RecipeProduction> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecipeProductionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _productionPkMeta = const VerificationMeta(
+    'productionPk',
+  );
+  @override
+  late final GeneratedColumn<String> productionPk = GeneratedColumn<String>(
+    'production_pk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: () => uuid.v4(),
+  );
+  static const VerificationMeta _recipeFkMeta = const VerificationMeta(
+    'recipeFk',
+  );
+  @override
+  late final GeneratedColumn<String> recipeFk = GeneratedColumn<String>(
+    'recipe_fk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recipeNameSnapshotMeta =
+      const VerificationMeta('recipeNameSnapshot');
+  @override
+  late final GeneratedColumn<String> recipeNameSnapshot =
+      GeneratedColumn<String>(
+        'recipe_name_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _categorySnapshotMeta = const VerificationMeta(
+    'categorySnapshot',
+  );
+  @override
+  late final GeneratedColumn<String> categorySnapshot = GeneratedColumn<String>(
+    'category_snapshot',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _multiplierMeta = const VerificationMeta(
+    'multiplier',
+  );
+  @override
+  late final GeneratedColumn<double> multiplier = GeneratedColumn<double>(
+    'multiplier',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1.0),
+  );
+  static const VerificationMeta _portionsProducedMeta = const VerificationMeta(
+    'portionsProduced',
+  );
+  @override
+  late final GeneratedColumn<double> portionsProduced = GeneratedColumn<double>(
+    'portions_produced',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _yieldNameSnapshotMeta = const VerificationMeta(
+    'yieldNameSnapshot',
+  );
+  @override
+  late final GeneratedColumn<String> yieldNameSnapshot =
+      GeneratedColumn<String>(
+        'yield_name_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _totalCostSnapshotMeta = const VerificationMeta(
+    'totalCostSnapshot',
+  );
+  @override
+  late final GeneratedColumn<double> totalCostSnapshot =
+      GeneratedColumn<double>(
+        'total_cost_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _unitPriceSnapshotMeta = const VerificationMeta(
+    'unitPriceSnapshot',
+  );
+  @override
+  late final GeneratedColumn<double> unitPriceSnapshot =
+      GeneratedColumn<double>(
+        'unit_price_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _totalRevenueSnapshotMeta =
+      const VerificationMeta('totalRevenueSnapshot');
+  @override
+  late final GeneratedColumn<double> totalRevenueSnapshot =
+      GeneratedColumn<double>(
+        'total_revenue_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _totalProfitSnapshotMeta =
+      const VerificationMeta('totalProfitSnapshot');
+  @override
+  late final GeneratedColumn<double> totalProfitSnapshot =
+      GeneratedColumn<double>(
+        'total_profit_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _producedAtMeta = const VerificationMeta(
+    'producedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> producedAt = GeneratedColumn<DateTime>(
+    'produced_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  static const VerificationMeta _isRevertedMeta = const VerificationMeta(
+    'isReverted',
+  );
+  @override
+  late final GeneratedColumn<bool> isReverted = GeneratedColumn<bool>(
+    'is_reverted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_reverted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _revertedAtMeta = const VerificationMeta(
+    'revertedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> revertedAt = GeneratedColumn<DateTime>(
+    'reverted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    productionPk,
+    recipeFk,
+    recipeNameSnapshot,
+    categorySnapshot,
+    spaceId,
+    multiplier,
+    portionsProduced,
+    yieldNameSnapshot,
+    totalCostSnapshot,
+    unitPriceSnapshot,
+    totalRevenueSnapshot,
+    totalProfitSnapshot,
+    notes,
+    producedAt,
+    isReverted,
+    revertedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recipe_productions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecipeProduction> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('production_pk')) {
+      context.handle(
+        _productionPkMeta,
+        productionPk.isAcceptableOrUnknown(
+          data['production_pk']!,
+          _productionPkMeta,
+        ),
+      );
+    }
+    if (data.containsKey('recipe_fk')) {
+      context.handle(
+        _recipeFkMeta,
+        recipeFk.isAcceptableOrUnknown(data['recipe_fk']!, _recipeFkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recipeFkMeta);
+    }
+    if (data.containsKey('recipe_name_snapshot')) {
+      context.handle(
+        _recipeNameSnapshotMeta,
+        recipeNameSnapshot.isAcceptableOrUnknown(
+          data['recipe_name_snapshot']!,
+          _recipeNameSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recipeNameSnapshotMeta);
+    }
+    if (data.containsKey('category_snapshot')) {
+      context.handle(
+        _categorySnapshotMeta,
+        categorySnapshot.isAcceptableOrUnknown(
+          data['category_snapshot']!,
+          _categorySnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    }
+    if (data.containsKey('multiplier')) {
+      context.handle(
+        _multiplierMeta,
+        multiplier.isAcceptableOrUnknown(data['multiplier']!, _multiplierMeta),
+      );
+    }
+    if (data.containsKey('portions_produced')) {
+      context.handle(
+        _portionsProducedMeta,
+        portionsProduced.isAcceptableOrUnknown(
+          data['portions_produced']!,
+          _portionsProducedMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_portionsProducedMeta);
+    }
+    if (data.containsKey('yield_name_snapshot')) {
+      context.handle(
+        _yieldNameSnapshotMeta,
+        yieldNameSnapshot.isAcceptableOrUnknown(
+          data['yield_name_snapshot']!,
+          _yieldNameSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_yieldNameSnapshotMeta);
+    }
+    if (data.containsKey('total_cost_snapshot')) {
+      context.handle(
+        _totalCostSnapshotMeta,
+        totalCostSnapshot.isAcceptableOrUnknown(
+          data['total_cost_snapshot']!,
+          _totalCostSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalCostSnapshotMeta);
+    }
+    if (data.containsKey('unit_price_snapshot')) {
+      context.handle(
+        _unitPriceSnapshotMeta,
+        unitPriceSnapshot.isAcceptableOrUnknown(
+          data['unit_price_snapshot']!,
+          _unitPriceSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_unitPriceSnapshotMeta);
+    }
+    if (data.containsKey('total_revenue_snapshot')) {
+      context.handle(
+        _totalRevenueSnapshotMeta,
+        totalRevenueSnapshot.isAcceptableOrUnknown(
+          data['total_revenue_snapshot']!,
+          _totalRevenueSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalRevenueSnapshotMeta);
+    }
+    if (data.containsKey('total_profit_snapshot')) {
+      context.handle(
+        _totalProfitSnapshotMeta,
+        totalProfitSnapshot.isAcceptableOrUnknown(
+          data['total_profit_snapshot']!,
+          _totalProfitSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalProfitSnapshotMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('produced_at')) {
+      context.handle(
+        _producedAtMeta,
+        producedAt.isAcceptableOrUnknown(data['produced_at']!, _producedAtMeta),
+      );
+    }
+    if (data.containsKey('is_reverted')) {
+      context.handle(
+        _isRevertedMeta,
+        isReverted.isAcceptableOrUnknown(data['is_reverted']!, _isRevertedMeta),
+      );
+    }
+    if (data.containsKey('reverted_at')) {
+      context.handle(
+        _revertedAtMeta,
+        revertedAt.isAcceptableOrUnknown(data['reverted_at']!, _revertedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {productionPk};
+  @override
+  RecipeProduction map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecipeProduction(
+      productionPk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}production_pk'],
+      )!,
+      recipeFk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recipe_fk'],
+      )!,
+      recipeNameSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recipe_name_snapshot'],
+      )!,
+      categorySnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_snapshot'],
+      ),
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      ),
+      multiplier: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}multiplier'],
+      )!,
+      portionsProduced: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}portions_produced'],
+      )!,
+      yieldNameSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}yield_name_snapshot'],
+      )!,
+      totalCostSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_cost_snapshot'],
+      )!,
+      unitPriceSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_price_snapshot'],
+      )!,
+      totalRevenueSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_revenue_snapshot'],
+      )!,
+      totalProfitSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_profit_snapshot'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      producedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}produced_at'],
+      )!,
+      isReverted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_reverted'],
+      )!,
+      revertedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}reverted_at'],
+      ),
+    );
+  }
+
+  @override
+  $RecipeProductionsTable createAlias(String alias) {
+    return $RecipeProductionsTable(attachedDatabase, alias);
+  }
+}
+
+class RecipeProduction extends DataClass
+    implements Insertable<RecipeProduction> {
+  final String productionPk;
+  final String recipeFk;
+  final String recipeNameSnapshot;
+  final String? categorySnapshot;
+  final String? spaceId;
+  final double multiplier;
+  final double portionsProduced;
+  final String yieldNameSnapshot;
+  final double totalCostSnapshot;
+  final double unitPriceSnapshot;
+  final double totalRevenueSnapshot;
+  final double totalProfitSnapshot;
+  final String? notes;
+  final DateTime producedAt;
+  final bool isReverted;
+  final DateTime? revertedAt;
+  const RecipeProduction({
+    required this.productionPk,
+    required this.recipeFk,
+    required this.recipeNameSnapshot,
+    this.categorySnapshot,
+    this.spaceId,
+    required this.multiplier,
+    required this.portionsProduced,
+    required this.yieldNameSnapshot,
+    required this.totalCostSnapshot,
+    required this.unitPriceSnapshot,
+    required this.totalRevenueSnapshot,
+    required this.totalProfitSnapshot,
+    this.notes,
+    required this.producedAt,
+    required this.isReverted,
+    this.revertedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['production_pk'] = Variable<String>(productionPk);
+    map['recipe_fk'] = Variable<String>(recipeFk);
+    map['recipe_name_snapshot'] = Variable<String>(recipeNameSnapshot);
+    if (!nullToAbsent || categorySnapshot != null) {
+      map['category_snapshot'] = Variable<String>(categorySnapshot);
+    }
+    if (!nullToAbsent || spaceId != null) {
+      map['space_id'] = Variable<String>(spaceId);
+    }
+    map['multiplier'] = Variable<double>(multiplier);
+    map['portions_produced'] = Variable<double>(portionsProduced);
+    map['yield_name_snapshot'] = Variable<String>(yieldNameSnapshot);
+    map['total_cost_snapshot'] = Variable<double>(totalCostSnapshot);
+    map['unit_price_snapshot'] = Variable<double>(unitPriceSnapshot);
+    map['total_revenue_snapshot'] = Variable<double>(totalRevenueSnapshot);
+    map['total_profit_snapshot'] = Variable<double>(totalProfitSnapshot);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['produced_at'] = Variable<DateTime>(producedAt);
+    map['is_reverted'] = Variable<bool>(isReverted);
+    if (!nullToAbsent || revertedAt != null) {
+      map['reverted_at'] = Variable<DateTime>(revertedAt);
+    }
+    return map;
+  }
+
+  RecipeProductionsCompanion toCompanion(bool nullToAbsent) {
+    return RecipeProductionsCompanion(
+      productionPk: Value(productionPk),
+      recipeFk: Value(recipeFk),
+      recipeNameSnapshot: Value(recipeNameSnapshot),
+      categorySnapshot: categorySnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categorySnapshot),
+      spaceId: spaceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(spaceId),
+      multiplier: Value(multiplier),
+      portionsProduced: Value(portionsProduced),
+      yieldNameSnapshot: Value(yieldNameSnapshot),
+      totalCostSnapshot: Value(totalCostSnapshot),
+      unitPriceSnapshot: Value(unitPriceSnapshot),
+      totalRevenueSnapshot: Value(totalRevenueSnapshot),
+      totalProfitSnapshot: Value(totalProfitSnapshot),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      producedAt: Value(producedAt),
+      isReverted: Value(isReverted),
+      revertedAt: revertedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(revertedAt),
+    );
+  }
+
+  factory RecipeProduction.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecipeProduction(
+      productionPk: serializer.fromJson<String>(json['productionPk']),
+      recipeFk: serializer.fromJson<String>(json['recipeFk']),
+      recipeNameSnapshot: serializer.fromJson<String>(
+        json['recipeNameSnapshot'],
+      ),
+      categorySnapshot: serializer.fromJson<String?>(json['categorySnapshot']),
+      spaceId: serializer.fromJson<String?>(json['spaceId']),
+      multiplier: serializer.fromJson<double>(json['multiplier']),
+      portionsProduced: serializer.fromJson<double>(json['portionsProduced']),
+      yieldNameSnapshot: serializer.fromJson<String>(json['yieldNameSnapshot']),
+      totalCostSnapshot: serializer.fromJson<double>(json['totalCostSnapshot']),
+      unitPriceSnapshot: serializer.fromJson<double>(json['unitPriceSnapshot']),
+      totalRevenueSnapshot: serializer.fromJson<double>(
+        json['totalRevenueSnapshot'],
+      ),
+      totalProfitSnapshot: serializer.fromJson<double>(
+        json['totalProfitSnapshot'],
+      ),
+      notes: serializer.fromJson<String?>(json['notes']),
+      producedAt: serializer.fromJson<DateTime>(json['producedAt']),
+      isReverted: serializer.fromJson<bool>(json['isReverted']),
+      revertedAt: serializer.fromJson<DateTime?>(json['revertedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'productionPk': serializer.toJson<String>(productionPk),
+      'recipeFk': serializer.toJson<String>(recipeFk),
+      'recipeNameSnapshot': serializer.toJson<String>(recipeNameSnapshot),
+      'categorySnapshot': serializer.toJson<String?>(categorySnapshot),
+      'spaceId': serializer.toJson<String?>(spaceId),
+      'multiplier': serializer.toJson<double>(multiplier),
+      'portionsProduced': serializer.toJson<double>(portionsProduced),
+      'yieldNameSnapshot': serializer.toJson<String>(yieldNameSnapshot),
+      'totalCostSnapshot': serializer.toJson<double>(totalCostSnapshot),
+      'unitPriceSnapshot': serializer.toJson<double>(unitPriceSnapshot),
+      'totalRevenueSnapshot': serializer.toJson<double>(totalRevenueSnapshot),
+      'totalProfitSnapshot': serializer.toJson<double>(totalProfitSnapshot),
+      'notes': serializer.toJson<String?>(notes),
+      'producedAt': serializer.toJson<DateTime>(producedAt),
+      'isReverted': serializer.toJson<bool>(isReverted),
+      'revertedAt': serializer.toJson<DateTime?>(revertedAt),
+    };
+  }
+
+  RecipeProduction copyWith({
+    String? productionPk,
+    String? recipeFk,
+    String? recipeNameSnapshot,
+    Value<String?> categorySnapshot = const Value.absent(),
+    Value<String?> spaceId = const Value.absent(),
+    double? multiplier,
+    double? portionsProduced,
+    String? yieldNameSnapshot,
+    double? totalCostSnapshot,
+    double? unitPriceSnapshot,
+    double? totalRevenueSnapshot,
+    double? totalProfitSnapshot,
+    Value<String?> notes = const Value.absent(),
+    DateTime? producedAt,
+    bool? isReverted,
+    Value<DateTime?> revertedAt = const Value.absent(),
+  }) => RecipeProduction(
+    productionPk: productionPk ?? this.productionPk,
+    recipeFk: recipeFk ?? this.recipeFk,
+    recipeNameSnapshot: recipeNameSnapshot ?? this.recipeNameSnapshot,
+    categorySnapshot: categorySnapshot.present
+        ? categorySnapshot.value
+        : this.categorySnapshot,
+    spaceId: spaceId.present ? spaceId.value : this.spaceId,
+    multiplier: multiplier ?? this.multiplier,
+    portionsProduced: portionsProduced ?? this.portionsProduced,
+    yieldNameSnapshot: yieldNameSnapshot ?? this.yieldNameSnapshot,
+    totalCostSnapshot: totalCostSnapshot ?? this.totalCostSnapshot,
+    unitPriceSnapshot: unitPriceSnapshot ?? this.unitPriceSnapshot,
+    totalRevenueSnapshot: totalRevenueSnapshot ?? this.totalRevenueSnapshot,
+    totalProfitSnapshot: totalProfitSnapshot ?? this.totalProfitSnapshot,
+    notes: notes.present ? notes.value : this.notes,
+    producedAt: producedAt ?? this.producedAt,
+    isReverted: isReverted ?? this.isReverted,
+    revertedAt: revertedAt.present ? revertedAt.value : this.revertedAt,
+  );
+  RecipeProduction copyWithCompanion(RecipeProductionsCompanion data) {
+    return RecipeProduction(
+      productionPk: data.productionPk.present
+          ? data.productionPk.value
+          : this.productionPk,
+      recipeFk: data.recipeFk.present ? data.recipeFk.value : this.recipeFk,
+      recipeNameSnapshot: data.recipeNameSnapshot.present
+          ? data.recipeNameSnapshot.value
+          : this.recipeNameSnapshot,
+      categorySnapshot: data.categorySnapshot.present
+          ? data.categorySnapshot.value
+          : this.categorySnapshot,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      multiplier: data.multiplier.present
+          ? data.multiplier.value
+          : this.multiplier,
+      portionsProduced: data.portionsProduced.present
+          ? data.portionsProduced.value
+          : this.portionsProduced,
+      yieldNameSnapshot: data.yieldNameSnapshot.present
+          ? data.yieldNameSnapshot.value
+          : this.yieldNameSnapshot,
+      totalCostSnapshot: data.totalCostSnapshot.present
+          ? data.totalCostSnapshot.value
+          : this.totalCostSnapshot,
+      unitPriceSnapshot: data.unitPriceSnapshot.present
+          ? data.unitPriceSnapshot.value
+          : this.unitPriceSnapshot,
+      totalRevenueSnapshot: data.totalRevenueSnapshot.present
+          ? data.totalRevenueSnapshot.value
+          : this.totalRevenueSnapshot,
+      totalProfitSnapshot: data.totalProfitSnapshot.present
+          ? data.totalProfitSnapshot.value
+          : this.totalProfitSnapshot,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      producedAt: data.producedAt.present
+          ? data.producedAt.value
+          : this.producedAt,
+      isReverted: data.isReverted.present
+          ? data.isReverted.value
+          : this.isReverted,
+      revertedAt: data.revertedAt.present
+          ? data.revertedAt.value
+          : this.revertedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecipeProduction(')
+          ..write('productionPk: $productionPk, ')
+          ..write('recipeFk: $recipeFk, ')
+          ..write('recipeNameSnapshot: $recipeNameSnapshot, ')
+          ..write('categorySnapshot: $categorySnapshot, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('multiplier: $multiplier, ')
+          ..write('portionsProduced: $portionsProduced, ')
+          ..write('yieldNameSnapshot: $yieldNameSnapshot, ')
+          ..write('totalCostSnapshot: $totalCostSnapshot, ')
+          ..write('unitPriceSnapshot: $unitPriceSnapshot, ')
+          ..write('totalRevenueSnapshot: $totalRevenueSnapshot, ')
+          ..write('totalProfitSnapshot: $totalProfitSnapshot, ')
+          ..write('notes: $notes, ')
+          ..write('producedAt: $producedAt, ')
+          ..write('isReverted: $isReverted, ')
+          ..write('revertedAt: $revertedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    productionPk,
+    recipeFk,
+    recipeNameSnapshot,
+    categorySnapshot,
+    spaceId,
+    multiplier,
+    portionsProduced,
+    yieldNameSnapshot,
+    totalCostSnapshot,
+    unitPriceSnapshot,
+    totalRevenueSnapshot,
+    totalProfitSnapshot,
+    notes,
+    producedAt,
+    isReverted,
+    revertedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecipeProduction &&
+          other.productionPk == this.productionPk &&
+          other.recipeFk == this.recipeFk &&
+          other.recipeNameSnapshot == this.recipeNameSnapshot &&
+          other.categorySnapshot == this.categorySnapshot &&
+          other.spaceId == this.spaceId &&
+          other.multiplier == this.multiplier &&
+          other.portionsProduced == this.portionsProduced &&
+          other.yieldNameSnapshot == this.yieldNameSnapshot &&
+          other.totalCostSnapshot == this.totalCostSnapshot &&
+          other.unitPriceSnapshot == this.unitPriceSnapshot &&
+          other.totalRevenueSnapshot == this.totalRevenueSnapshot &&
+          other.totalProfitSnapshot == this.totalProfitSnapshot &&
+          other.notes == this.notes &&
+          other.producedAt == this.producedAt &&
+          other.isReverted == this.isReverted &&
+          other.revertedAt == this.revertedAt);
+}
+
+class RecipeProductionsCompanion extends UpdateCompanion<RecipeProduction> {
+  final Value<String> productionPk;
+  final Value<String> recipeFk;
+  final Value<String> recipeNameSnapshot;
+  final Value<String?> categorySnapshot;
+  final Value<String?> spaceId;
+  final Value<double> multiplier;
+  final Value<double> portionsProduced;
+  final Value<String> yieldNameSnapshot;
+  final Value<double> totalCostSnapshot;
+  final Value<double> unitPriceSnapshot;
+  final Value<double> totalRevenueSnapshot;
+  final Value<double> totalProfitSnapshot;
+  final Value<String?> notes;
+  final Value<DateTime> producedAt;
+  final Value<bool> isReverted;
+  final Value<DateTime?> revertedAt;
+  final Value<int> rowid;
+  const RecipeProductionsCompanion({
+    this.productionPk = const Value.absent(),
+    this.recipeFk = const Value.absent(),
+    this.recipeNameSnapshot = const Value.absent(),
+    this.categorySnapshot = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.multiplier = const Value.absent(),
+    this.portionsProduced = const Value.absent(),
+    this.yieldNameSnapshot = const Value.absent(),
+    this.totalCostSnapshot = const Value.absent(),
+    this.unitPriceSnapshot = const Value.absent(),
+    this.totalRevenueSnapshot = const Value.absent(),
+    this.totalProfitSnapshot = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.producedAt = const Value.absent(),
+    this.isReverted = const Value.absent(),
+    this.revertedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecipeProductionsCompanion.insert({
+    this.productionPk = const Value.absent(),
+    required String recipeFk,
+    required String recipeNameSnapshot,
+    this.categorySnapshot = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.multiplier = const Value.absent(),
+    required double portionsProduced,
+    required String yieldNameSnapshot,
+    required double totalCostSnapshot,
+    required double unitPriceSnapshot,
+    required double totalRevenueSnapshot,
+    required double totalProfitSnapshot,
+    this.notes = const Value.absent(),
+    this.producedAt = const Value.absent(),
+    this.isReverted = const Value.absent(),
+    this.revertedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : recipeFk = Value(recipeFk),
+       recipeNameSnapshot = Value(recipeNameSnapshot),
+       portionsProduced = Value(portionsProduced),
+       yieldNameSnapshot = Value(yieldNameSnapshot),
+       totalCostSnapshot = Value(totalCostSnapshot),
+       unitPriceSnapshot = Value(unitPriceSnapshot),
+       totalRevenueSnapshot = Value(totalRevenueSnapshot),
+       totalProfitSnapshot = Value(totalProfitSnapshot);
+  static Insertable<RecipeProduction> custom({
+    Expression<String>? productionPk,
+    Expression<String>? recipeFk,
+    Expression<String>? recipeNameSnapshot,
+    Expression<String>? categorySnapshot,
+    Expression<String>? spaceId,
+    Expression<double>? multiplier,
+    Expression<double>? portionsProduced,
+    Expression<String>? yieldNameSnapshot,
+    Expression<double>? totalCostSnapshot,
+    Expression<double>? unitPriceSnapshot,
+    Expression<double>? totalRevenueSnapshot,
+    Expression<double>? totalProfitSnapshot,
+    Expression<String>? notes,
+    Expression<DateTime>? producedAt,
+    Expression<bool>? isReverted,
+    Expression<DateTime>? revertedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (productionPk != null) 'production_pk': productionPk,
+      if (recipeFk != null) 'recipe_fk': recipeFk,
+      if (recipeNameSnapshot != null)
+        'recipe_name_snapshot': recipeNameSnapshot,
+      if (categorySnapshot != null) 'category_snapshot': categorySnapshot,
+      if (spaceId != null) 'space_id': spaceId,
+      if (multiplier != null) 'multiplier': multiplier,
+      if (portionsProduced != null) 'portions_produced': portionsProduced,
+      if (yieldNameSnapshot != null) 'yield_name_snapshot': yieldNameSnapshot,
+      if (totalCostSnapshot != null) 'total_cost_snapshot': totalCostSnapshot,
+      if (unitPriceSnapshot != null) 'unit_price_snapshot': unitPriceSnapshot,
+      if (totalRevenueSnapshot != null)
+        'total_revenue_snapshot': totalRevenueSnapshot,
+      if (totalProfitSnapshot != null)
+        'total_profit_snapshot': totalProfitSnapshot,
+      if (notes != null) 'notes': notes,
+      if (producedAt != null) 'produced_at': producedAt,
+      if (isReverted != null) 'is_reverted': isReverted,
+      if (revertedAt != null) 'reverted_at': revertedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecipeProductionsCompanion copyWith({
+    Value<String>? productionPk,
+    Value<String>? recipeFk,
+    Value<String>? recipeNameSnapshot,
+    Value<String?>? categorySnapshot,
+    Value<String?>? spaceId,
+    Value<double>? multiplier,
+    Value<double>? portionsProduced,
+    Value<String>? yieldNameSnapshot,
+    Value<double>? totalCostSnapshot,
+    Value<double>? unitPriceSnapshot,
+    Value<double>? totalRevenueSnapshot,
+    Value<double>? totalProfitSnapshot,
+    Value<String?>? notes,
+    Value<DateTime>? producedAt,
+    Value<bool>? isReverted,
+    Value<DateTime?>? revertedAt,
+    Value<int>? rowid,
+  }) {
+    return RecipeProductionsCompanion(
+      productionPk: productionPk ?? this.productionPk,
+      recipeFk: recipeFk ?? this.recipeFk,
+      recipeNameSnapshot: recipeNameSnapshot ?? this.recipeNameSnapshot,
+      categorySnapshot: categorySnapshot ?? this.categorySnapshot,
+      spaceId: spaceId ?? this.spaceId,
+      multiplier: multiplier ?? this.multiplier,
+      portionsProduced: portionsProduced ?? this.portionsProduced,
+      yieldNameSnapshot: yieldNameSnapshot ?? this.yieldNameSnapshot,
+      totalCostSnapshot: totalCostSnapshot ?? this.totalCostSnapshot,
+      unitPriceSnapshot: unitPriceSnapshot ?? this.unitPriceSnapshot,
+      totalRevenueSnapshot: totalRevenueSnapshot ?? this.totalRevenueSnapshot,
+      totalProfitSnapshot: totalProfitSnapshot ?? this.totalProfitSnapshot,
+      notes: notes ?? this.notes,
+      producedAt: producedAt ?? this.producedAt,
+      isReverted: isReverted ?? this.isReverted,
+      revertedAt: revertedAt ?? this.revertedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (productionPk.present) {
+      map['production_pk'] = Variable<String>(productionPk.value);
+    }
+    if (recipeFk.present) {
+      map['recipe_fk'] = Variable<String>(recipeFk.value);
+    }
+    if (recipeNameSnapshot.present) {
+      map['recipe_name_snapshot'] = Variable<String>(recipeNameSnapshot.value);
+    }
+    if (categorySnapshot.present) {
+      map['category_snapshot'] = Variable<String>(categorySnapshot.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (multiplier.present) {
+      map['multiplier'] = Variable<double>(multiplier.value);
+    }
+    if (portionsProduced.present) {
+      map['portions_produced'] = Variable<double>(portionsProduced.value);
+    }
+    if (yieldNameSnapshot.present) {
+      map['yield_name_snapshot'] = Variable<String>(yieldNameSnapshot.value);
+    }
+    if (totalCostSnapshot.present) {
+      map['total_cost_snapshot'] = Variable<double>(totalCostSnapshot.value);
+    }
+    if (unitPriceSnapshot.present) {
+      map['unit_price_snapshot'] = Variable<double>(unitPriceSnapshot.value);
+    }
+    if (totalRevenueSnapshot.present) {
+      map['total_revenue_snapshot'] = Variable<double>(
+        totalRevenueSnapshot.value,
+      );
+    }
+    if (totalProfitSnapshot.present) {
+      map['total_profit_snapshot'] = Variable<double>(
+        totalProfitSnapshot.value,
+      );
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (producedAt.present) {
+      map['produced_at'] = Variable<DateTime>(producedAt.value);
+    }
+    if (isReverted.present) {
+      map['is_reverted'] = Variable<bool>(isReverted.value);
+    }
+    if (revertedAt.present) {
+      map['reverted_at'] = Variable<DateTime>(revertedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecipeProductionsCompanion(')
+          ..write('productionPk: $productionPk, ')
+          ..write('recipeFk: $recipeFk, ')
+          ..write('recipeNameSnapshot: $recipeNameSnapshot, ')
+          ..write('categorySnapshot: $categorySnapshot, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('multiplier: $multiplier, ')
+          ..write('portionsProduced: $portionsProduced, ')
+          ..write('yieldNameSnapshot: $yieldNameSnapshot, ')
+          ..write('totalCostSnapshot: $totalCostSnapshot, ')
+          ..write('unitPriceSnapshot: $unitPriceSnapshot, ')
+          ..write('totalRevenueSnapshot: $totalRevenueSnapshot, ')
+          ..write('totalProfitSnapshot: $totalProfitSnapshot, ')
+          ..write('notes: $notes, ')
+          ..write('producedAt: $producedAt, ')
+          ..write('isReverted: $isReverted, ')
+          ..write('revertedAt: $revertedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $InventoryMovementsTable extends InventoryMovements
+    with TableInfo<$InventoryMovementsTable, InventoryMovement> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $InventoryMovementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _movementPkMeta = const VerificationMeta(
+    'movementPk',
+  );
+  @override
+  late final GeneratedColumn<String> movementPk = GeneratedColumn<String>(
+    'movement_pk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: () => uuid.v4(),
+  );
+  static const VerificationMeta _ingredientFkMeta = const VerificationMeta(
+    'ingredientFk',
+  );
+  @override
+  late final GeneratedColumn<String> ingredientFk = GeneratedColumn<String>(
+    'ingredient_fk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ingredientNameSnapshotMeta =
+      const VerificationMeta('ingredientNameSnapshot');
+  @override
+  late final GeneratedColumn<String> ingredientNameSnapshot =
+      GeneratedColumn<String>(
+        'ingredient_name_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _movementTypeMeta = const VerificationMeta(
+    'movementType',
+  );
+  @override
+  late final GeneratedColumn<String> movementType = GeneratedColumn<String>(
+    'movement_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recipeProductionFkMeta =
+      const VerificationMeta('recipeProductionFk');
+  @override
+  late final GeneratedColumn<String> recipeProductionFk =
+      GeneratedColumn<String>(
+        'recipe_production_fk',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _recipeFkMeta = const VerificationMeta(
+    'recipeFk',
+  );
+  @override
+  late final GeneratedColumn<String> recipeFk = GeneratedColumn<String>(
+    'recipe_fk',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _previousStockMeta = const VerificationMeta(
+    'previousStock',
+  );
+  @override
+  late final GeneratedColumn<double> previousStock = GeneratedColumn<double>(
+    'previous_stock',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deltaStockMeta = const VerificationMeta(
+    'deltaStock',
+  );
+  @override
+  late final GeneratedColumn<double> deltaStock = GeneratedColumn<double>(
+    'delta_stock',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _newStockMeta = const VerificationMeta(
+    'newStock',
+  );
+  @override
+  late final GeneratedColumn<double> newStock = GeneratedColumn<double>(
+    'new_stock',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stockUnitPkMeta = const VerificationMeta(
+    'stockUnitPk',
+  );
+  @override
+  late final GeneratedColumn<String> stockUnitPk = GeneratedColumn<String>(
+    'stock_unit_pk',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _unitCostInStockUnitSnapshotMeta =
+      const VerificationMeta('unitCostInStockUnitSnapshot');
+  @override
+  late final GeneratedColumn<double> unitCostInStockUnitSnapshot =
+      GeneratedColumn<double>(
+        'unit_cost_in_stock_unit_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _totalValueDeltaSnapshotMeta =
+      const VerificationMeta('totalValueDeltaSnapshot');
+  @override
+  late final GeneratedColumn<double> totalValueDeltaSnapshot =
+      GeneratedColumn<double>(
+        'total_value_delta_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    movementPk,
+    ingredientFk,
+    ingredientNameSnapshot,
+    groupId,
+    movementType,
+    recipeProductionFk,
+    recipeFk,
+    previousStock,
+    deltaStock,
+    newStock,
+    stockUnitPk,
+    unitCostInStockUnitSnapshot,
+    totalValueDeltaSnapshot,
+    reason,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'inventory_movements';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<InventoryMovement> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('movement_pk')) {
+      context.handle(
+        _movementPkMeta,
+        movementPk.isAcceptableOrUnknown(data['movement_pk']!, _movementPkMeta),
+      );
+    }
+    if (data.containsKey('ingredient_fk')) {
+      context.handle(
+        _ingredientFkMeta,
+        ingredientFk.isAcceptableOrUnknown(
+          data['ingredient_fk']!,
+          _ingredientFkMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ingredientFkMeta);
+    }
+    if (data.containsKey('ingredient_name_snapshot')) {
+      context.handle(
+        _ingredientNameSnapshotMeta,
+        ingredientNameSnapshot.isAcceptableOrUnknown(
+          data['ingredient_name_snapshot']!,
+          _ingredientNameSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ingredientNameSnapshotMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('movement_type')) {
+      context.handle(
+        _movementTypeMeta,
+        movementType.isAcceptableOrUnknown(
+          data['movement_type']!,
+          _movementTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_movementTypeMeta);
+    }
+    if (data.containsKey('recipe_production_fk')) {
+      context.handle(
+        _recipeProductionFkMeta,
+        recipeProductionFk.isAcceptableOrUnknown(
+          data['recipe_production_fk']!,
+          _recipeProductionFkMeta,
+        ),
+      );
+    }
+    if (data.containsKey('recipe_fk')) {
+      context.handle(
+        _recipeFkMeta,
+        recipeFk.isAcceptableOrUnknown(data['recipe_fk']!, _recipeFkMeta),
+      );
+    }
+    if (data.containsKey('previous_stock')) {
+      context.handle(
+        _previousStockMeta,
+        previousStock.isAcceptableOrUnknown(
+          data['previous_stock']!,
+          _previousStockMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_previousStockMeta);
+    }
+    if (data.containsKey('delta_stock')) {
+      context.handle(
+        _deltaStockMeta,
+        deltaStock.isAcceptableOrUnknown(data['delta_stock']!, _deltaStockMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deltaStockMeta);
+    }
+    if (data.containsKey('new_stock')) {
+      context.handle(
+        _newStockMeta,
+        newStock.isAcceptableOrUnknown(data['new_stock']!, _newStockMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_newStockMeta);
+    }
+    if (data.containsKey('stock_unit_pk')) {
+      context.handle(
+        _stockUnitPkMeta,
+        stockUnitPk.isAcceptableOrUnknown(
+          data['stock_unit_pk']!,
+          _stockUnitPkMeta,
+        ),
+      );
+    }
+    if (data.containsKey('unit_cost_in_stock_unit_snapshot')) {
+      context.handle(
+        _unitCostInStockUnitSnapshotMeta,
+        unitCostInStockUnitSnapshot.isAcceptableOrUnknown(
+          data['unit_cost_in_stock_unit_snapshot']!,
+          _unitCostInStockUnitSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_unitCostInStockUnitSnapshotMeta);
+    }
+    if (data.containsKey('total_value_delta_snapshot')) {
+      context.handle(
+        _totalValueDeltaSnapshotMeta,
+        totalValueDeltaSnapshot.isAcceptableOrUnknown(
+          data['total_value_delta_snapshot']!,
+          _totalValueDeltaSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalValueDeltaSnapshotMeta);
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {movementPk};
+  @override
+  InventoryMovement map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return InventoryMovement(
+      movementPk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}movement_pk'],
+      )!,
+      ingredientFk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ingredient_fk'],
+      )!,
+      ingredientNameSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ingredient_name_snapshot'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      movementType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}movement_type'],
+      )!,
+      recipeProductionFk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recipe_production_fk'],
+      ),
+      recipeFk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recipe_fk'],
+      ),
+      previousStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}previous_stock'],
+      )!,
+      deltaStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}delta_stock'],
+      )!,
+      newStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}new_stock'],
+      )!,
+      stockUnitPk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stock_unit_pk'],
+      ),
+      unitCostInStockUnitSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_cost_in_stock_unit_snapshot'],
+      )!,
+      totalValueDeltaSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_value_delta_snapshot'],
+      )!,
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $InventoryMovementsTable createAlias(String alias) {
+    return $InventoryMovementsTable(attachedDatabase, alias);
+  }
+}
+
+class InventoryMovement extends DataClass
+    implements Insertable<InventoryMovement> {
+  final String movementPk;
+  final String ingredientFk;
+  final String ingredientNameSnapshot;
+  final String? groupId;
+  final String movementType;
+  final String? recipeProductionFk;
+  final String? recipeFk;
+  final double previousStock;
+  final double deltaStock;
+  final double newStock;
+  final String? stockUnitPk;
+  final double unitCostInStockUnitSnapshot;
+  final double totalValueDeltaSnapshot;
+  final String? reason;
+  final DateTime createdAt;
+  const InventoryMovement({
+    required this.movementPk,
+    required this.ingredientFk,
+    required this.ingredientNameSnapshot,
+    this.groupId,
+    required this.movementType,
+    this.recipeProductionFk,
+    this.recipeFk,
+    required this.previousStock,
+    required this.deltaStock,
+    required this.newStock,
+    this.stockUnitPk,
+    required this.unitCostInStockUnitSnapshot,
+    required this.totalValueDeltaSnapshot,
+    this.reason,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['movement_pk'] = Variable<String>(movementPk);
+    map['ingredient_fk'] = Variable<String>(ingredientFk);
+    map['ingredient_name_snapshot'] = Variable<String>(ingredientNameSnapshot);
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    map['movement_type'] = Variable<String>(movementType);
+    if (!nullToAbsent || recipeProductionFk != null) {
+      map['recipe_production_fk'] = Variable<String>(recipeProductionFk);
+    }
+    if (!nullToAbsent || recipeFk != null) {
+      map['recipe_fk'] = Variable<String>(recipeFk);
+    }
+    map['previous_stock'] = Variable<double>(previousStock);
+    map['delta_stock'] = Variable<double>(deltaStock);
+    map['new_stock'] = Variable<double>(newStock);
+    if (!nullToAbsent || stockUnitPk != null) {
+      map['stock_unit_pk'] = Variable<String>(stockUnitPk);
+    }
+    map['unit_cost_in_stock_unit_snapshot'] = Variable<double>(
+      unitCostInStockUnitSnapshot,
+    );
+    map['total_value_delta_snapshot'] = Variable<double>(
+      totalValueDeltaSnapshot,
+    );
+    if (!nullToAbsent || reason != null) {
+      map['reason'] = Variable<String>(reason);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  InventoryMovementsCompanion toCompanion(bool nullToAbsent) {
+    return InventoryMovementsCompanion(
+      movementPk: Value(movementPk),
+      ingredientFk: Value(ingredientFk),
+      ingredientNameSnapshot: Value(ingredientNameSnapshot),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      movementType: Value(movementType),
+      recipeProductionFk: recipeProductionFk == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recipeProductionFk),
+      recipeFk: recipeFk == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recipeFk),
+      previousStock: Value(previousStock),
+      deltaStock: Value(deltaStock),
+      newStock: Value(newStock),
+      stockUnitPk: stockUnitPk == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stockUnitPk),
+      unitCostInStockUnitSnapshot: Value(unitCostInStockUnitSnapshot),
+      totalValueDeltaSnapshot: Value(totalValueDeltaSnapshot),
+      reason: reason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reason),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory InventoryMovement.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return InventoryMovement(
+      movementPk: serializer.fromJson<String>(json['movementPk']),
+      ingredientFk: serializer.fromJson<String>(json['ingredientFk']),
+      ingredientNameSnapshot: serializer.fromJson<String>(
+        json['ingredientNameSnapshot'],
+      ),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      movementType: serializer.fromJson<String>(json['movementType']),
+      recipeProductionFk: serializer.fromJson<String?>(
+        json['recipeProductionFk'],
+      ),
+      recipeFk: serializer.fromJson<String?>(json['recipeFk']),
+      previousStock: serializer.fromJson<double>(json['previousStock']),
+      deltaStock: serializer.fromJson<double>(json['deltaStock']),
+      newStock: serializer.fromJson<double>(json['newStock']),
+      stockUnitPk: serializer.fromJson<String?>(json['stockUnitPk']),
+      unitCostInStockUnitSnapshot: serializer.fromJson<double>(
+        json['unitCostInStockUnitSnapshot'],
+      ),
+      totalValueDeltaSnapshot: serializer.fromJson<double>(
+        json['totalValueDeltaSnapshot'],
+      ),
+      reason: serializer.fromJson<String?>(json['reason']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'movementPk': serializer.toJson<String>(movementPk),
+      'ingredientFk': serializer.toJson<String>(ingredientFk),
+      'ingredientNameSnapshot': serializer.toJson<String>(
+        ingredientNameSnapshot,
+      ),
+      'groupId': serializer.toJson<String?>(groupId),
+      'movementType': serializer.toJson<String>(movementType),
+      'recipeProductionFk': serializer.toJson<String?>(recipeProductionFk),
+      'recipeFk': serializer.toJson<String?>(recipeFk),
+      'previousStock': serializer.toJson<double>(previousStock),
+      'deltaStock': serializer.toJson<double>(deltaStock),
+      'newStock': serializer.toJson<double>(newStock),
+      'stockUnitPk': serializer.toJson<String?>(stockUnitPk),
+      'unitCostInStockUnitSnapshot': serializer.toJson<double>(
+        unitCostInStockUnitSnapshot,
+      ),
+      'totalValueDeltaSnapshot': serializer.toJson<double>(
+        totalValueDeltaSnapshot,
+      ),
+      'reason': serializer.toJson<String?>(reason),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  InventoryMovement copyWith({
+    String? movementPk,
+    String? ingredientFk,
+    String? ingredientNameSnapshot,
+    Value<String?> groupId = const Value.absent(),
+    String? movementType,
+    Value<String?> recipeProductionFk = const Value.absent(),
+    Value<String?> recipeFk = const Value.absent(),
+    double? previousStock,
+    double? deltaStock,
+    double? newStock,
+    Value<String?> stockUnitPk = const Value.absent(),
+    double? unitCostInStockUnitSnapshot,
+    double? totalValueDeltaSnapshot,
+    Value<String?> reason = const Value.absent(),
+    DateTime? createdAt,
+  }) => InventoryMovement(
+    movementPk: movementPk ?? this.movementPk,
+    ingredientFk: ingredientFk ?? this.ingredientFk,
+    ingredientNameSnapshot:
+        ingredientNameSnapshot ?? this.ingredientNameSnapshot,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    movementType: movementType ?? this.movementType,
+    recipeProductionFk: recipeProductionFk.present
+        ? recipeProductionFk.value
+        : this.recipeProductionFk,
+    recipeFk: recipeFk.present ? recipeFk.value : this.recipeFk,
+    previousStock: previousStock ?? this.previousStock,
+    deltaStock: deltaStock ?? this.deltaStock,
+    newStock: newStock ?? this.newStock,
+    stockUnitPk: stockUnitPk.present ? stockUnitPk.value : this.stockUnitPk,
+    unitCostInStockUnitSnapshot:
+        unitCostInStockUnitSnapshot ?? this.unitCostInStockUnitSnapshot,
+    totalValueDeltaSnapshot:
+        totalValueDeltaSnapshot ?? this.totalValueDeltaSnapshot,
+    reason: reason.present ? reason.value : this.reason,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  InventoryMovement copyWithCompanion(InventoryMovementsCompanion data) {
+    return InventoryMovement(
+      movementPk: data.movementPk.present
+          ? data.movementPk.value
+          : this.movementPk,
+      ingredientFk: data.ingredientFk.present
+          ? data.ingredientFk.value
+          : this.ingredientFk,
+      ingredientNameSnapshot: data.ingredientNameSnapshot.present
+          ? data.ingredientNameSnapshot.value
+          : this.ingredientNameSnapshot,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      movementType: data.movementType.present
+          ? data.movementType.value
+          : this.movementType,
+      recipeProductionFk: data.recipeProductionFk.present
+          ? data.recipeProductionFk.value
+          : this.recipeProductionFk,
+      recipeFk: data.recipeFk.present ? data.recipeFk.value : this.recipeFk,
+      previousStock: data.previousStock.present
+          ? data.previousStock.value
+          : this.previousStock,
+      deltaStock: data.deltaStock.present
+          ? data.deltaStock.value
+          : this.deltaStock,
+      newStock: data.newStock.present ? data.newStock.value : this.newStock,
+      stockUnitPk: data.stockUnitPk.present
+          ? data.stockUnitPk.value
+          : this.stockUnitPk,
+      unitCostInStockUnitSnapshot: data.unitCostInStockUnitSnapshot.present
+          ? data.unitCostInStockUnitSnapshot.value
+          : this.unitCostInStockUnitSnapshot,
+      totalValueDeltaSnapshot: data.totalValueDeltaSnapshot.present
+          ? data.totalValueDeltaSnapshot.value
+          : this.totalValueDeltaSnapshot,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InventoryMovement(')
+          ..write('movementPk: $movementPk, ')
+          ..write('ingredientFk: $ingredientFk, ')
+          ..write('ingredientNameSnapshot: $ingredientNameSnapshot, ')
+          ..write('groupId: $groupId, ')
+          ..write('movementType: $movementType, ')
+          ..write('recipeProductionFk: $recipeProductionFk, ')
+          ..write('recipeFk: $recipeFk, ')
+          ..write('previousStock: $previousStock, ')
+          ..write('deltaStock: $deltaStock, ')
+          ..write('newStock: $newStock, ')
+          ..write('stockUnitPk: $stockUnitPk, ')
+          ..write('unitCostInStockUnitSnapshot: $unitCostInStockUnitSnapshot, ')
+          ..write('totalValueDeltaSnapshot: $totalValueDeltaSnapshot, ')
+          ..write('reason: $reason, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    movementPk,
+    ingredientFk,
+    ingredientNameSnapshot,
+    groupId,
+    movementType,
+    recipeProductionFk,
+    recipeFk,
+    previousStock,
+    deltaStock,
+    newStock,
+    stockUnitPk,
+    unitCostInStockUnitSnapshot,
+    totalValueDeltaSnapshot,
+    reason,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is InventoryMovement &&
+          other.movementPk == this.movementPk &&
+          other.ingredientFk == this.ingredientFk &&
+          other.ingredientNameSnapshot == this.ingredientNameSnapshot &&
+          other.groupId == this.groupId &&
+          other.movementType == this.movementType &&
+          other.recipeProductionFk == this.recipeProductionFk &&
+          other.recipeFk == this.recipeFk &&
+          other.previousStock == this.previousStock &&
+          other.deltaStock == this.deltaStock &&
+          other.newStock == this.newStock &&
+          other.stockUnitPk == this.stockUnitPk &&
+          other.unitCostInStockUnitSnapshot ==
+              this.unitCostInStockUnitSnapshot &&
+          other.totalValueDeltaSnapshot == this.totalValueDeltaSnapshot &&
+          other.reason == this.reason &&
+          other.createdAt == this.createdAt);
+}
+
+class InventoryMovementsCompanion extends UpdateCompanion<InventoryMovement> {
+  final Value<String> movementPk;
+  final Value<String> ingredientFk;
+  final Value<String> ingredientNameSnapshot;
+  final Value<String?> groupId;
+  final Value<String> movementType;
+  final Value<String?> recipeProductionFk;
+  final Value<String?> recipeFk;
+  final Value<double> previousStock;
+  final Value<double> deltaStock;
+  final Value<double> newStock;
+  final Value<String?> stockUnitPk;
+  final Value<double> unitCostInStockUnitSnapshot;
+  final Value<double> totalValueDeltaSnapshot;
+  final Value<String?> reason;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const InventoryMovementsCompanion({
+    this.movementPk = const Value.absent(),
+    this.ingredientFk = const Value.absent(),
+    this.ingredientNameSnapshot = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.movementType = const Value.absent(),
+    this.recipeProductionFk = const Value.absent(),
+    this.recipeFk = const Value.absent(),
+    this.previousStock = const Value.absent(),
+    this.deltaStock = const Value.absent(),
+    this.newStock = const Value.absent(),
+    this.stockUnitPk = const Value.absent(),
+    this.unitCostInStockUnitSnapshot = const Value.absent(),
+    this.totalValueDeltaSnapshot = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  InventoryMovementsCompanion.insert({
+    this.movementPk = const Value.absent(),
+    required String ingredientFk,
+    required String ingredientNameSnapshot,
+    this.groupId = const Value.absent(),
+    required String movementType,
+    this.recipeProductionFk = const Value.absent(),
+    this.recipeFk = const Value.absent(),
+    required double previousStock,
+    required double deltaStock,
+    required double newStock,
+    this.stockUnitPk = const Value.absent(),
+    required double unitCostInStockUnitSnapshot,
+    required double totalValueDeltaSnapshot,
+    this.reason = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ingredientFk = Value(ingredientFk),
+       ingredientNameSnapshot = Value(ingredientNameSnapshot),
+       movementType = Value(movementType),
+       previousStock = Value(previousStock),
+       deltaStock = Value(deltaStock),
+       newStock = Value(newStock),
+       unitCostInStockUnitSnapshot = Value(unitCostInStockUnitSnapshot),
+       totalValueDeltaSnapshot = Value(totalValueDeltaSnapshot);
+  static Insertable<InventoryMovement> custom({
+    Expression<String>? movementPk,
+    Expression<String>? ingredientFk,
+    Expression<String>? ingredientNameSnapshot,
+    Expression<String>? groupId,
+    Expression<String>? movementType,
+    Expression<String>? recipeProductionFk,
+    Expression<String>? recipeFk,
+    Expression<double>? previousStock,
+    Expression<double>? deltaStock,
+    Expression<double>? newStock,
+    Expression<String>? stockUnitPk,
+    Expression<double>? unitCostInStockUnitSnapshot,
+    Expression<double>? totalValueDeltaSnapshot,
+    Expression<String>? reason,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (movementPk != null) 'movement_pk': movementPk,
+      if (ingredientFk != null) 'ingredient_fk': ingredientFk,
+      if (ingredientNameSnapshot != null)
+        'ingredient_name_snapshot': ingredientNameSnapshot,
+      if (groupId != null) 'group_id': groupId,
+      if (movementType != null) 'movement_type': movementType,
+      if (recipeProductionFk != null)
+        'recipe_production_fk': recipeProductionFk,
+      if (recipeFk != null) 'recipe_fk': recipeFk,
+      if (previousStock != null) 'previous_stock': previousStock,
+      if (deltaStock != null) 'delta_stock': deltaStock,
+      if (newStock != null) 'new_stock': newStock,
+      if (stockUnitPk != null) 'stock_unit_pk': stockUnitPk,
+      if (unitCostInStockUnitSnapshot != null)
+        'unit_cost_in_stock_unit_snapshot': unitCostInStockUnitSnapshot,
+      if (totalValueDeltaSnapshot != null)
+        'total_value_delta_snapshot': totalValueDeltaSnapshot,
+      if (reason != null) 'reason': reason,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  InventoryMovementsCompanion copyWith({
+    Value<String>? movementPk,
+    Value<String>? ingredientFk,
+    Value<String>? ingredientNameSnapshot,
+    Value<String?>? groupId,
+    Value<String>? movementType,
+    Value<String?>? recipeProductionFk,
+    Value<String?>? recipeFk,
+    Value<double>? previousStock,
+    Value<double>? deltaStock,
+    Value<double>? newStock,
+    Value<String?>? stockUnitPk,
+    Value<double>? unitCostInStockUnitSnapshot,
+    Value<double>? totalValueDeltaSnapshot,
+    Value<String?>? reason,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return InventoryMovementsCompanion(
+      movementPk: movementPk ?? this.movementPk,
+      ingredientFk: ingredientFk ?? this.ingredientFk,
+      ingredientNameSnapshot:
+          ingredientNameSnapshot ?? this.ingredientNameSnapshot,
+      groupId: groupId ?? this.groupId,
+      movementType: movementType ?? this.movementType,
+      recipeProductionFk: recipeProductionFk ?? this.recipeProductionFk,
+      recipeFk: recipeFk ?? this.recipeFk,
+      previousStock: previousStock ?? this.previousStock,
+      deltaStock: deltaStock ?? this.deltaStock,
+      newStock: newStock ?? this.newStock,
+      stockUnitPk: stockUnitPk ?? this.stockUnitPk,
+      unitCostInStockUnitSnapshot:
+          unitCostInStockUnitSnapshot ?? this.unitCostInStockUnitSnapshot,
+      totalValueDeltaSnapshot:
+          totalValueDeltaSnapshot ?? this.totalValueDeltaSnapshot,
+      reason: reason ?? this.reason,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (movementPk.present) {
+      map['movement_pk'] = Variable<String>(movementPk.value);
+    }
+    if (ingredientFk.present) {
+      map['ingredient_fk'] = Variable<String>(ingredientFk.value);
+    }
+    if (ingredientNameSnapshot.present) {
+      map['ingredient_name_snapshot'] = Variable<String>(
+        ingredientNameSnapshot.value,
+      );
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (movementType.present) {
+      map['movement_type'] = Variable<String>(movementType.value);
+    }
+    if (recipeProductionFk.present) {
+      map['recipe_production_fk'] = Variable<String>(recipeProductionFk.value);
+    }
+    if (recipeFk.present) {
+      map['recipe_fk'] = Variable<String>(recipeFk.value);
+    }
+    if (previousStock.present) {
+      map['previous_stock'] = Variable<double>(previousStock.value);
+    }
+    if (deltaStock.present) {
+      map['delta_stock'] = Variable<double>(deltaStock.value);
+    }
+    if (newStock.present) {
+      map['new_stock'] = Variable<double>(newStock.value);
+    }
+    if (stockUnitPk.present) {
+      map['stock_unit_pk'] = Variable<String>(stockUnitPk.value);
+    }
+    if (unitCostInStockUnitSnapshot.present) {
+      map['unit_cost_in_stock_unit_snapshot'] = Variable<double>(
+        unitCostInStockUnitSnapshot.value,
+      );
+    }
+    if (totalValueDeltaSnapshot.present) {
+      map['total_value_delta_snapshot'] = Variable<double>(
+        totalValueDeltaSnapshot.value,
+      );
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InventoryMovementsCompanion(')
+          ..write('movementPk: $movementPk, ')
+          ..write('ingredientFk: $ingredientFk, ')
+          ..write('ingredientNameSnapshot: $ingredientNameSnapshot, ')
+          ..write('groupId: $groupId, ')
+          ..write('movementType: $movementType, ')
+          ..write('recipeProductionFk: $recipeProductionFk, ')
+          ..write('recipeFk: $recipeFk, ')
+          ..write('previousStock: $previousStock, ')
+          ..write('deltaStock: $deltaStock, ')
+          ..write('newStock: $newStock, ')
+          ..write('stockUnitPk: $stockUnitPk, ')
+          ..write('unitCostInStockUnitSnapshot: $unitCostInStockUnitSnapshot, ')
+          ..write('totalValueDeltaSnapshot: $totalValueDeltaSnapshot, ')
+          ..write('reason: $reason, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecipeInventoryMovementsTable extends RecipeInventoryMovements
+    with TableInfo<$RecipeInventoryMovementsTable, RecipeInventoryMovement> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecipeInventoryMovementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _movementPkMeta = const VerificationMeta(
+    'movementPk',
+  );
+  @override
+  late final GeneratedColumn<String> movementPk = GeneratedColumn<String>(
+    'movement_pk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    clientDefault: () => uuid.v4(),
+  );
+  static const VerificationMeta _recipeFkMeta = const VerificationMeta(
+    'recipeFk',
+  );
+  @override
+  late final GeneratedColumn<String> recipeFk = GeneratedColumn<String>(
+    'recipe_fk',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recipeNameSnapshotMeta =
+      const VerificationMeta('recipeNameSnapshot');
+  @override
+  late final GeneratedColumn<String> recipeNameSnapshot =
+      GeneratedColumn<String>(
+        'recipe_name_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _movementTypeMeta = const VerificationMeta(
+    'movementType',
+  );
+  @override
+  late final GeneratedColumn<String> movementType = GeneratedColumn<String>(
+    'movement_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recipeProductionFkMeta =
+      const VerificationMeta('recipeProductionFk');
+  @override
+  late final GeneratedColumn<String> recipeProductionFk =
+      GeneratedColumn<String>(
+        'recipe_production_fk',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _previousStockMeta = const VerificationMeta(
+    'previousStock',
+  );
+  @override
+  late final GeneratedColumn<double> previousStock = GeneratedColumn<double>(
+    'previous_stock',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deltaStockMeta = const VerificationMeta(
+    'deltaStock',
+  );
+  @override
+  late final GeneratedColumn<double> deltaStock = GeneratedColumn<double>(
+    'delta_stock',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _newStockMeta = const VerificationMeta(
+    'newStock',
+  );
+  @override
+  late final GeneratedColumn<double> newStock = GeneratedColumn<double>(
+    'new_stock',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitCostSnapshotMeta = const VerificationMeta(
+    'unitCostSnapshot',
+  );
+  @override
+  late final GeneratedColumn<double> unitCostSnapshot = GeneratedColumn<double>(
+    'unit_cost_snapshot',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitPriceSnapshotMeta = const VerificationMeta(
+    'unitPriceSnapshot',
+  );
+  @override
+  late final GeneratedColumn<double> unitPriceSnapshot =
+      GeneratedColumn<double>(
+        'unit_price_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _totalCostDeltaSnapshotMeta =
+      const VerificationMeta('totalCostDeltaSnapshot');
+  @override
+  late final GeneratedColumn<double> totalCostDeltaSnapshot =
+      GeneratedColumn<double>(
+        'total_cost_delta_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _totalRevenueDeltaSnapshotMeta =
+      const VerificationMeta('totalRevenueDeltaSnapshot');
+  @override
+  late final GeneratedColumn<double> totalRevenueDeltaSnapshot =
+      GeneratedColumn<double>(
+        'total_revenue_delta_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    clientDefault: () => DateTime.now(),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    movementPk,
+    recipeFk,
+    recipeNameSnapshot,
+    spaceId,
+    movementType,
+    recipeProductionFk,
+    previousStock,
+    deltaStock,
+    newStock,
+    unitCostSnapshot,
+    unitPriceSnapshot,
+    totalCostDeltaSnapshot,
+    totalRevenueDeltaSnapshot,
+    reason,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recipe_inventory_movements';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecipeInventoryMovement> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('movement_pk')) {
+      context.handle(
+        _movementPkMeta,
+        movementPk.isAcceptableOrUnknown(data['movement_pk']!, _movementPkMeta),
+      );
+    }
+    if (data.containsKey('recipe_fk')) {
+      context.handle(
+        _recipeFkMeta,
+        recipeFk.isAcceptableOrUnknown(data['recipe_fk']!, _recipeFkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recipeFkMeta);
+    }
+    if (data.containsKey('recipe_name_snapshot')) {
+      context.handle(
+        _recipeNameSnapshotMeta,
+        recipeNameSnapshot.isAcceptableOrUnknown(
+          data['recipe_name_snapshot']!,
+          _recipeNameSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recipeNameSnapshotMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    }
+    if (data.containsKey('movement_type')) {
+      context.handle(
+        _movementTypeMeta,
+        movementType.isAcceptableOrUnknown(
+          data['movement_type']!,
+          _movementTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_movementTypeMeta);
+    }
+    if (data.containsKey('recipe_production_fk')) {
+      context.handle(
+        _recipeProductionFkMeta,
+        recipeProductionFk.isAcceptableOrUnknown(
+          data['recipe_production_fk']!,
+          _recipeProductionFkMeta,
+        ),
+      );
+    }
+    if (data.containsKey('previous_stock')) {
+      context.handle(
+        _previousStockMeta,
+        previousStock.isAcceptableOrUnknown(
+          data['previous_stock']!,
+          _previousStockMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_previousStockMeta);
+    }
+    if (data.containsKey('delta_stock')) {
+      context.handle(
+        _deltaStockMeta,
+        deltaStock.isAcceptableOrUnknown(data['delta_stock']!, _deltaStockMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deltaStockMeta);
+    }
+    if (data.containsKey('new_stock')) {
+      context.handle(
+        _newStockMeta,
+        newStock.isAcceptableOrUnknown(data['new_stock']!, _newStockMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_newStockMeta);
+    }
+    if (data.containsKey('unit_cost_snapshot')) {
+      context.handle(
+        _unitCostSnapshotMeta,
+        unitCostSnapshot.isAcceptableOrUnknown(
+          data['unit_cost_snapshot']!,
+          _unitCostSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_unitCostSnapshotMeta);
+    }
+    if (data.containsKey('unit_price_snapshot')) {
+      context.handle(
+        _unitPriceSnapshotMeta,
+        unitPriceSnapshot.isAcceptableOrUnknown(
+          data['unit_price_snapshot']!,
+          _unitPriceSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_unitPriceSnapshotMeta);
+    }
+    if (data.containsKey('total_cost_delta_snapshot')) {
+      context.handle(
+        _totalCostDeltaSnapshotMeta,
+        totalCostDeltaSnapshot.isAcceptableOrUnknown(
+          data['total_cost_delta_snapshot']!,
+          _totalCostDeltaSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalCostDeltaSnapshotMeta);
+    }
+    if (data.containsKey('total_revenue_delta_snapshot')) {
+      context.handle(
+        _totalRevenueDeltaSnapshotMeta,
+        totalRevenueDeltaSnapshot.isAcceptableOrUnknown(
+          data['total_revenue_delta_snapshot']!,
+          _totalRevenueDeltaSnapshotMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalRevenueDeltaSnapshotMeta);
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {movementPk};
+  @override
+  RecipeInventoryMovement map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecipeInventoryMovement(
+      movementPk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}movement_pk'],
+      )!,
+      recipeFk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recipe_fk'],
+      )!,
+      recipeNameSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recipe_name_snapshot'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      ),
+      movementType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}movement_type'],
+      )!,
+      recipeProductionFk: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recipe_production_fk'],
+      ),
+      previousStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}previous_stock'],
+      )!,
+      deltaStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}delta_stock'],
+      )!,
+      newStock: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}new_stock'],
+      )!,
+      unitCostSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_cost_snapshot'],
+      )!,
+      unitPriceSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}unit_price_snapshot'],
+      )!,
+      totalCostDeltaSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_cost_delta_snapshot'],
+      )!,
+      totalRevenueDeltaSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}total_revenue_delta_snapshot'],
+      )!,
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RecipeInventoryMovementsTable createAlias(String alias) {
+    return $RecipeInventoryMovementsTable(attachedDatabase, alias);
+  }
+}
+
+class RecipeInventoryMovement extends DataClass
+    implements Insertable<RecipeInventoryMovement> {
+  final String movementPk;
+  final String recipeFk;
+  final String recipeNameSnapshot;
+  final String? spaceId;
+  final String movementType;
+  final String? recipeProductionFk;
+  final double previousStock;
+  final double deltaStock;
+  final double newStock;
+  final double unitCostSnapshot;
+  final double unitPriceSnapshot;
+  final double totalCostDeltaSnapshot;
+  final double totalRevenueDeltaSnapshot;
+  final String? reason;
+  final DateTime createdAt;
+  const RecipeInventoryMovement({
+    required this.movementPk,
+    required this.recipeFk,
+    required this.recipeNameSnapshot,
+    this.spaceId,
+    required this.movementType,
+    this.recipeProductionFk,
+    required this.previousStock,
+    required this.deltaStock,
+    required this.newStock,
+    required this.unitCostSnapshot,
+    required this.unitPriceSnapshot,
+    required this.totalCostDeltaSnapshot,
+    required this.totalRevenueDeltaSnapshot,
+    this.reason,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['movement_pk'] = Variable<String>(movementPk);
+    map['recipe_fk'] = Variable<String>(recipeFk);
+    map['recipe_name_snapshot'] = Variable<String>(recipeNameSnapshot);
+    if (!nullToAbsent || spaceId != null) {
+      map['space_id'] = Variable<String>(spaceId);
+    }
+    map['movement_type'] = Variable<String>(movementType);
+    if (!nullToAbsent || recipeProductionFk != null) {
+      map['recipe_production_fk'] = Variable<String>(recipeProductionFk);
+    }
+    map['previous_stock'] = Variable<double>(previousStock);
+    map['delta_stock'] = Variable<double>(deltaStock);
+    map['new_stock'] = Variable<double>(newStock);
+    map['unit_cost_snapshot'] = Variable<double>(unitCostSnapshot);
+    map['unit_price_snapshot'] = Variable<double>(unitPriceSnapshot);
+    map['total_cost_delta_snapshot'] = Variable<double>(totalCostDeltaSnapshot);
+    map['total_revenue_delta_snapshot'] = Variable<double>(
+      totalRevenueDeltaSnapshot,
+    );
+    if (!nullToAbsent || reason != null) {
+      map['reason'] = Variable<String>(reason);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  RecipeInventoryMovementsCompanion toCompanion(bool nullToAbsent) {
+    return RecipeInventoryMovementsCompanion(
+      movementPk: Value(movementPk),
+      recipeFk: Value(recipeFk),
+      recipeNameSnapshot: Value(recipeNameSnapshot),
+      spaceId: spaceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(spaceId),
+      movementType: Value(movementType),
+      recipeProductionFk: recipeProductionFk == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recipeProductionFk),
+      previousStock: Value(previousStock),
+      deltaStock: Value(deltaStock),
+      newStock: Value(newStock),
+      unitCostSnapshot: Value(unitCostSnapshot),
+      unitPriceSnapshot: Value(unitPriceSnapshot),
+      totalCostDeltaSnapshot: Value(totalCostDeltaSnapshot),
+      totalRevenueDeltaSnapshot: Value(totalRevenueDeltaSnapshot),
+      reason: reason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reason),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory RecipeInventoryMovement.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecipeInventoryMovement(
+      movementPk: serializer.fromJson<String>(json['movementPk']),
+      recipeFk: serializer.fromJson<String>(json['recipeFk']),
+      recipeNameSnapshot: serializer.fromJson<String>(
+        json['recipeNameSnapshot'],
+      ),
+      spaceId: serializer.fromJson<String?>(json['spaceId']),
+      movementType: serializer.fromJson<String>(json['movementType']),
+      recipeProductionFk: serializer.fromJson<String?>(
+        json['recipeProductionFk'],
+      ),
+      previousStock: serializer.fromJson<double>(json['previousStock']),
+      deltaStock: serializer.fromJson<double>(json['deltaStock']),
+      newStock: serializer.fromJson<double>(json['newStock']),
+      unitCostSnapshot: serializer.fromJson<double>(json['unitCostSnapshot']),
+      unitPriceSnapshot: serializer.fromJson<double>(json['unitPriceSnapshot']),
+      totalCostDeltaSnapshot: serializer.fromJson<double>(
+        json['totalCostDeltaSnapshot'],
+      ),
+      totalRevenueDeltaSnapshot: serializer.fromJson<double>(
+        json['totalRevenueDeltaSnapshot'],
+      ),
+      reason: serializer.fromJson<String?>(json['reason']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'movementPk': serializer.toJson<String>(movementPk),
+      'recipeFk': serializer.toJson<String>(recipeFk),
+      'recipeNameSnapshot': serializer.toJson<String>(recipeNameSnapshot),
+      'spaceId': serializer.toJson<String?>(spaceId),
+      'movementType': serializer.toJson<String>(movementType),
+      'recipeProductionFk': serializer.toJson<String?>(recipeProductionFk),
+      'previousStock': serializer.toJson<double>(previousStock),
+      'deltaStock': serializer.toJson<double>(deltaStock),
+      'newStock': serializer.toJson<double>(newStock),
+      'unitCostSnapshot': serializer.toJson<double>(unitCostSnapshot),
+      'unitPriceSnapshot': serializer.toJson<double>(unitPriceSnapshot),
+      'totalCostDeltaSnapshot': serializer.toJson<double>(
+        totalCostDeltaSnapshot,
+      ),
+      'totalRevenueDeltaSnapshot': serializer.toJson<double>(
+        totalRevenueDeltaSnapshot,
+      ),
+      'reason': serializer.toJson<String?>(reason),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  RecipeInventoryMovement copyWith({
+    String? movementPk,
+    String? recipeFk,
+    String? recipeNameSnapshot,
+    Value<String?> spaceId = const Value.absent(),
+    String? movementType,
+    Value<String?> recipeProductionFk = const Value.absent(),
+    double? previousStock,
+    double? deltaStock,
+    double? newStock,
+    double? unitCostSnapshot,
+    double? unitPriceSnapshot,
+    double? totalCostDeltaSnapshot,
+    double? totalRevenueDeltaSnapshot,
+    Value<String?> reason = const Value.absent(),
+    DateTime? createdAt,
+  }) => RecipeInventoryMovement(
+    movementPk: movementPk ?? this.movementPk,
+    recipeFk: recipeFk ?? this.recipeFk,
+    recipeNameSnapshot: recipeNameSnapshot ?? this.recipeNameSnapshot,
+    spaceId: spaceId.present ? spaceId.value : this.spaceId,
+    movementType: movementType ?? this.movementType,
+    recipeProductionFk: recipeProductionFk.present
+        ? recipeProductionFk.value
+        : this.recipeProductionFk,
+    previousStock: previousStock ?? this.previousStock,
+    deltaStock: deltaStock ?? this.deltaStock,
+    newStock: newStock ?? this.newStock,
+    unitCostSnapshot: unitCostSnapshot ?? this.unitCostSnapshot,
+    unitPriceSnapshot: unitPriceSnapshot ?? this.unitPriceSnapshot,
+    totalCostDeltaSnapshot:
+        totalCostDeltaSnapshot ?? this.totalCostDeltaSnapshot,
+    totalRevenueDeltaSnapshot:
+        totalRevenueDeltaSnapshot ?? this.totalRevenueDeltaSnapshot,
+    reason: reason.present ? reason.value : this.reason,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  RecipeInventoryMovement copyWithCompanion(
+    RecipeInventoryMovementsCompanion data,
+  ) {
+    return RecipeInventoryMovement(
+      movementPk: data.movementPk.present
+          ? data.movementPk.value
+          : this.movementPk,
+      recipeFk: data.recipeFk.present ? data.recipeFk.value : this.recipeFk,
+      recipeNameSnapshot: data.recipeNameSnapshot.present
+          ? data.recipeNameSnapshot.value
+          : this.recipeNameSnapshot,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      movementType: data.movementType.present
+          ? data.movementType.value
+          : this.movementType,
+      recipeProductionFk: data.recipeProductionFk.present
+          ? data.recipeProductionFk.value
+          : this.recipeProductionFk,
+      previousStock: data.previousStock.present
+          ? data.previousStock.value
+          : this.previousStock,
+      deltaStock: data.deltaStock.present
+          ? data.deltaStock.value
+          : this.deltaStock,
+      newStock: data.newStock.present ? data.newStock.value : this.newStock,
+      unitCostSnapshot: data.unitCostSnapshot.present
+          ? data.unitCostSnapshot.value
+          : this.unitCostSnapshot,
+      unitPriceSnapshot: data.unitPriceSnapshot.present
+          ? data.unitPriceSnapshot.value
+          : this.unitPriceSnapshot,
+      totalCostDeltaSnapshot: data.totalCostDeltaSnapshot.present
+          ? data.totalCostDeltaSnapshot.value
+          : this.totalCostDeltaSnapshot,
+      totalRevenueDeltaSnapshot: data.totalRevenueDeltaSnapshot.present
+          ? data.totalRevenueDeltaSnapshot.value
+          : this.totalRevenueDeltaSnapshot,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecipeInventoryMovement(')
+          ..write('movementPk: $movementPk, ')
+          ..write('recipeFk: $recipeFk, ')
+          ..write('recipeNameSnapshot: $recipeNameSnapshot, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('movementType: $movementType, ')
+          ..write('recipeProductionFk: $recipeProductionFk, ')
+          ..write('previousStock: $previousStock, ')
+          ..write('deltaStock: $deltaStock, ')
+          ..write('newStock: $newStock, ')
+          ..write('unitCostSnapshot: $unitCostSnapshot, ')
+          ..write('unitPriceSnapshot: $unitPriceSnapshot, ')
+          ..write('totalCostDeltaSnapshot: $totalCostDeltaSnapshot, ')
+          ..write('totalRevenueDeltaSnapshot: $totalRevenueDeltaSnapshot, ')
+          ..write('reason: $reason, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    movementPk,
+    recipeFk,
+    recipeNameSnapshot,
+    spaceId,
+    movementType,
+    recipeProductionFk,
+    previousStock,
+    deltaStock,
+    newStock,
+    unitCostSnapshot,
+    unitPriceSnapshot,
+    totalCostDeltaSnapshot,
+    totalRevenueDeltaSnapshot,
+    reason,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecipeInventoryMovement &&
+          other.movementPk == this.movementPk &&
+          other.recipeFk == this.recipeFk &&
+          other.recipeNameSnapshot == this.recipeNameSnapshot &&
+          other.spaceId == this.spaceId &&
+          other.movementType == this.movementType &&
+          other.recipeProductionFk == this.recipeProductionFk &&
+          other.previousStock == this.previousStock &&
+          other.deltaStock == this.deltaStock &&
+          other.newStock == this.newStock &&
+          other.unitCostSnapshot == this.unitCostSnapshot &&
+          other.unitPriceSnapshot == this.unitPriceSnapshot &&
+          other.totalCostDeltaSnapshot == this.totalCostDeltaSnapshot &&
+          other.totalRevenueDeltaSnapshot == this.totalRevenueDeltaSnapshot &&
+          other.reason == this.reason &&
+          other.createdAt == this.createdAt);
+}
+
+class RecipeInventoryMovementsCompanion
+    extends UpdateCompanion<RecipeInventoryMovement> {
+  final Value<String> movementPk;
+  final Value<String> recipeFk;
+  final Value<String> recipeNameSnapshot;
+  final Value<String?> spaceId;
+  final Value<String> movementType;
+  final Value<String?> recipeProductionFk;
+  final Value<double> previousStock;
+  final Value<double> deltaStock;
+  final Value<double> newStock;
+  final Value<double> unitCostSnapshot;
+  final Value<double> unitPriceSnapshot;
+  final Value<double> totalCostDeltaSnapshot;
+  final Value<double> totalRevenueDeltaSnapshot;
+  final Value<String?> reason;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const RecipeInventoryMovementsCompanion({
+    this.movementPk = const Value.absent(),
+    this.recipeFk = const Value.absent(),
+    this.recipeNameSnapshot = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.movementType = const Value.absent(),
+    this.recipeProductionFk = const Value.absent(),
+    this.previousStock = const Value.absent(),
+    this.deltaStock = const Value.absent(),
+    this.newStock = const Value.absent(),
+    this.unitCostSnapshot = const Value.absent(),
+    this.unitPriceSnapshot = const Value.absent(),
+    this.totalCostDeltaSnapshot = const Value.absent(),
+    this.totalRevenueDeltaSnapshot = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecipeInventoryMovementsCompanion.insert({
+    this.movementPk = const Value.absent(),
+    required String recipeFk,
+    required String recipeNameSnapshot,
+    this.spaceId = const Value.absent(),
+    required String movementType,
+    this.recipeProductionFk = const Value.absent(),
+    required double previousStock,
+    required double deltaStock,
+    required double newStock,
+    required double unitCostSnapshot,
+    required double unitPriceSnapshot,
+    required double totalCostDeltaSnapshot,
+    required double totalRevenueDeltaSnapshot,
+    this.reason = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : recipeFk = Value(recipeFk),
+       recipeNameSnapshot = Value(recipeNameSnapshot),
+       movementType = Value(movementType),
+       previousStock = Value(previousStock),
+       deltaStock = Value(deltaStock),
+       newStock = Value(newStock),
+       unitCostSnapshot = Value(unitCostSnapshot),
+       unitPriceSnapshot = Value(unitPriceSnapshot),
+       totalCostDeltaSnapshot = Value(totalCostDeltaSnapshot),
+       totalRevenueDeltaSnapshot = Value(totalRevenueDeltaSnapshot);
+  static Insertable<RecipeInventoryMovement> custom({
+    Expression<String>? movementPk,
+    Expression<String>? recipeFk,
+    Expression<String>? recipeNameSnapshot,
+    Expression<String>? spaceId,
+    Expression<String>? movementType,
+    Expression<String>? recipeProductionFk,
+    Expression<double>? previousStock,
+    Expression<double>? deltaStock,
+    Expression<double>? newStock,
+    Expression<double>? unitCostSnapshot,
+    Expression<double>? unitPriceSnapshot,
+    Expression<double>? totalCostDeltaSnapshot,
+    Expression<double>? totalRevenueDeltaSnapshot,
+    Expression<String>? reason,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (movementPk != null) 'movement_pk': movementPk,
+      if (recipeFk != null) 'recipe_fk': recipeFk,
+      if (recipeNameSnapshot != null)
+        'recipe_name_snapshot': recipeNameSnapshot,
+      if (spaceId != null) 'space_id': spaceId,
+      if (movementType != null) 'movement_type': movementType,
+      if (recipeProductionFk != null)
+        'recipe_production_fk': recipeProductionFk,
+      if (previousStock != null) 'previous_stock': previousStock,
+      if (deltaStock != null) 'delta_stock': deltaStock,
+      if (newStock != null) 'new_stock': newStock,
+      if (unitCostSnapshot != null) 'unit_cost_snapshot': unitCostSnapshot,
+      if (unitPriceSnapshot != null) 'unit_price_snapshot': unitPriceSnapshot,
+      if (totalCostDeltaSnapshot != null)
+        'total_cost_delta_snapshot': totalCostDeltaSnapshot,
+      if (totalRevenueDeltaSnapshot != null)
+        'total_revenue_delta_snapshot': totalRevenueDeltaSnapshot,
+      if (reason != null) 'reason': reason,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecipeInventoryMovementsCompanion copyWith({
+    Value<String>? movementPk,
+    Value<String>? recipeFk,
+    Value<String>? recipeNameSnapshot,
+    Value<String?>? spaceId,
+    Value<String>? movementType,
+    Value<String?>? recipeProductionFk,
+    Value<double>? previousStock,
+    Value<double>? deltaStock,
+    Value<double>? newStock,
+    Value<double>? unitCostSnapshot,
+    Value<double>? unitPriceSnapshot,
+    Value<double>? totalCostDeltaSnapshot,
+    Value<double>? totalRevenueDeltaSnapshot,
+    Value<String?>? reason,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return RecipeInventoryMovementsCompanion(
+      movementPk: movementPk ?? this.movementPk,
+      recipeFk: recipeFk ?? this.recipeFk,
+      recipeNameSnapshot: recipeNameSnapshot ?? this.recipeNameSnapshot,
+      spaceId: spaceId ?? this.spaceId,
+      movementType: movementType ?? this.movementType,
+      recipeProductionFk: recipeProductionFk ?? this.recipeProductionFk,
+      previousStock: previousStock ?? this.previousStock,
+      deltaStock: deltaStock ?? this.deltaStock,
+      newStock: newStock ?? this.newStock,
+      unitCostSnapshot: unitCostSnapshot ?? this.unitCostSnapshot,
+      unitPriceSnapshot: unitPriceSnapshot ?? this.unitPriceSnapshot,
+      totalCostDeltaSnapshot:
+          totalCostDeltaSnapshot ?? this.totalCostDeltaSnapshot,
+      totalRevenueDeltaSnapshot:
+          totalRevenueDeltaSnapshot ?? this.totalRevenueDeltaSnapshot,
+      reason: reason ?? this.reason,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (movementPk.present) {
+      map['movement_pk'] = Variable<String>(movementPk.value);
+    }
+    if (recipeFk.present) {
+      map['recipe_fk'] = Variable<String>(recipeFk.value);
+    }
+    if (recipeNameSnapshot.present) {
+      map['recipe_name_snapshot'] = Variable<String>(recipeNameSnapshot.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (movementType.present) {
+      map['movement_type'] = Variable<String>(movementType.value);
+    }
+    if (recipeProductionFk.present) {
+      map['recipe_production_fk'] = Variable<String>(recipeProductionFk.value);
+    }
+    if (previousStock.present) {
+      map['previous_stock'] = Variable<double>(previousStock.value);
+    }
+    if (deltaStock.present) {
+      map['delta_stock'] = Variable<double>(deltaStock.value);
+    }
+    if (newStock.present) {
+      map['new_stock'] = Variable<double>(newStock.value);
+    }
+    if (unitCostSnapshot.present) {
+      map['unit_cost_snapshot'] = Variable<double>(unitCostSnapshot.value);
+    }
+    if (unitPriceSnapshot.present) {
+      map['unit_price_snapshot'] = Variable<double>(unitPriceSnapshot.value);
+    }
+    if (totalCostDeltaSnapshot.present) {
+      map['total_cost_delta_snapshot'] = Variable<double>(
+        totalCostDeltaSnapshot.value,
+      );
+    }
+    if (totalRevenueDeltaSnapshot.present) {
+      map['total_revenue_delta_snapshot'] = Variable<double>(
+        totalRevenueDeltaSnapshot.value,
+      );
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecipeInventoryMovementsCompanion(')
+          ..write('movementPk: $movementPk, ')
+          ..write('recipeFk: $recipeFk, ')
+          ..write('recipeNameSnapshot: $recipeNameSnapshot, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('movementType: $movementType, ')
+          ..write('recipeProductionFk: $recipeProductionFk, ')
+          ..write('previousStock: $previousStock, ')
+          ..write('deltaStock: $deltaStock, ')
+          ..write('newStock: $newStock, ')
+          ..write('unitCostSnapshot: $unitCostSnapshot, ')
+          ..write('unitPriceSnapshot: $unitPriceSnapshot, ')
+          ..write('totalCostDeltaSnapshot: $totalCostDeltaSnapshot, ')
+          ..write('totalRevenueDeltaSnapshot: $totalRevenueDeltaSnapshot, ')
+          ..write('reason: $reason, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4405,6 +7405,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CategoriesTable categories = $CategoriesTable(this);
   late final $RecipeSpacesTable recipeSpaces = $RecipeSpacesTable(this);
   late final $DeletedRecordsTable deletedRecords = $DeletedRecordsTable(this);
+  late final $RecipeProductionsTable recipeProductions =
+      $RecipeProductionsTable(this);
+  late final $InventoryMovementsTable inventoryMovements =
+      $InventoryMovementsTable(this);
+  late final $RecipeInventoryMovementsTable recipeInventoryMovements =
+      $RecipeInventoryMovementsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4419,6 +7425,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     categories,
     recipeSpaces,
     deletedRecords,
+    recipeProductions,
+    inventoryMovements,
+    recipeInventoryMovements,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -5005,6 +8014,9 @@ typedef $$RecipesTableCreateCompanionBuilder =
       Value<bool> archived,
       Value<String?> groupId,
       Value<String?> category,
+      Value<double?> currentStock,
+      Value<double?> minimumStock,
+      Value<DateTime?> lastStockUpdate,
       Value<int> rowid,
     });
 typedef $$RecipesTableUpdateCompanionBuilder =
@@ -5023,6 +8035,9 @@ typedef $$RecipesTableUpdateCompanionBuilder =
       Value<bool> archived,
       Value<String?> groupId,
       Value<String?> category,
+      Value<double?> currentStock,
+      Value<double?> minimumStock,
+      Value<DateTime?> lastStockUpdate,
       Value<int> rowid,
     });
 
@@ -5192,6 +8207,21 @@ class $$RecipesTableFilterComposer
 
   ColumnFilters<String> get category => $composableBuilder(
     column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get currentStock => $composableBuilder(
+    column: $table.currentStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get minimumStock => $composableBuilder(
+    column: $table.minimumStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastStockUpdate => $composableBuilder(
+    column: $table.lastStockUpdate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5368,6 +8398,21 @@ class $$RecipesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get currentStock => $composableBuilder(
+    column: $table.currentStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get minimumStock => $composableBuilder(
+    column: $table.minimumStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastStockUpdate => $composableBuilder(
+    column: $table.lastStockUpdate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$GroupsTableOrderingComposer get groupId {
     final $$GroupsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5453,6 +8498,21 @@ class $$RecipesTableAnnotationComposer
 
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<double> get currentStock => $composableBuilder(
+    column: $table.currentStock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get minimumStock => $composableBuilder(
+    column: $table.minimumStock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastStockUpdate => $composableBuilder(
+    column: $table.lastStockUpdate,
+    builder: (column) => column,
+  );
 
   $$GroupsTableAnnotationComposer get groupId {
     final $$GroupsTableAnnotationComposer composer = $composerBuilder(
@@ -5601,6 +8661,9 @@ class $$RecipesTableTableManager
                 Value<bool> archived = const Value.absent(),
                 Value<String?> groupId = const Value.absent(),
                 Value<String?> category = const Value.absent(),
+                Value<double?> currentStock = const Value.absent(),
+                Value<double?> minimumStock = const Value.absent(),
+                Value<DateTime?> lastStockUpdate = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RecipesCompanion(
                 recipePk: recipePk,
@@ -5617,6 +8680,9 @@ class $$RecipesTableTableManager
                 archived: archived,
                 groupId: groupId,
                 category: category,
+                currentStock: currentStock,
+                minimumStock: minimumStock,
+                lastStockUpdate: lastStockUpdate,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5635,6 +8701,9 @@ class $$RecipesTableTableManager
                 Value<bool> archived = const Value.absent(),
                 Value<String?> groupId = const Value.absent(),
                 Value<String?> category = const Value.absent(),
+                Value<double?> currentStock = const Value.absent(),
+                Value<double?> minimumStock = const Value.absent(),
+                Value<DateTime?> lastStockUpdate = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RecipesCompanion.insert(
                 recipePk: recipePk,
@@ -5651,6 +8720,9 @@ class $$RecipesTableTableManager
                 archived: archived,
                 groupId: groupId,
                 category: category,
+                currentStock: currentStock,
+                minimumStock: minimumStock,
+                lastStockUpdate: lastStockUpdate,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -8332,6 +11404,1307 @@ typedef $$DeletedRecordsTableProcessedTableManager =
       DeletedRecord,
       PrefetchHooks Function()
     >;
+typedef $$RecipeProductionsTableCreateCompanionBuilder =
+    RecipeProductionsCompanion Function({
+      Value<String> productionPk,
+      required String recipeFk,
+      required String recipeNameSnapshot,
+      Value<String?> categorySnapshot,
+      Value<String?> spaceId,
+      Value<double> multiplier,
+      required double portionsProduced,
+      required String yieldNameSnapshot,
+      required double totalCostSnapshot,
+      required double unitPriceSnapshot,
+      required double totalRevenueSnapshot,
+      required double totalProfitSnapshot,
+      Value<String?> notes,
+      Value<DateTime> producedAt,
+      Value<bool> isReverted,
+      Value<DateTime?> revertedAt,
+      Value<int> rowid,
+    });
+typedef $$RecipeProductionsTableUpdateCompanionBuilder =
+    RecipeProductionsCompanion Function({
+      Value<String> productionPk,
+      Value<String> recipeFk,
+      Value<String> recipeNameSnapshot,
+      Value<String?> categorySnapshot,
+      Value<String?> spaceId,
+      Value<double> multiplier,
+      Value<double> portionsProduced,
+      Value<String> yieldNameSnapshot,
+      Value<double> totalCostSnapshot,
+      Value<double> unitPriceSnapshot,
+      Value<double> totalRevenueSnapshot,
+      Value<double> totalProfitSnapshot,
+      Value<String?> notes,
+      Value<DateTime> producedAt,
+      Value<bool> isReverted,
+      Value<DateTime?> revertedAt,
+      Value<int> rowid,
+    });
+
+class $$RecipeProductionsTableFilterComposer
+    extends Composer<_$AppDatabase, $RecipeProductionsTable> {
+  $$RecipeProductionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get productionPk => $composableBuilder(
+    column: $table.productionPk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recipeFk => $composableBuilder(
+    column: $table.recipeFk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recipeNameSnapshot => $composableBuilder(
+    column: $table.recipeNameSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categorySnapshot => $composableBuilder(
+    column: $table.categorySnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get multiplier => $composableBuilder(
+    column: $table.multiplier,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get portionsProduced => $composableBuilder(
+    column: $table.portionsProduced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get yieldNameSnapshot => $composableBuilder(
+    column: $table.yieldNameSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get totalCostSnapshot => $composableBuilder(
+    column: $table.totalCostSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get unitPriceSnapshot => $composableBuilder(
+    column: $table.unitPriceSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get totalRevenueSnapshot => $composableBuilder(
+    column: $table.totalRevenueSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get totalProfitSnapshot => $composableBuilder(
+    column: $table.totalProfitSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get producedAt => $composableBuilder(
+    column: $table.producedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isReverted => $composableBuilder(
+    column: $table.isReverted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get revertedAt => $composableBuilder(
+    column: $table.revertedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecipeProductionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecipeProductionsTable> {
+  $$RecipeProductionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get productionPk => $composableBuilder(
+    column: $table.productionPk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recipeFk => $composableBuilder(
+    column: $table.recipeFk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recipeNameSnapshot => $composableBuilder(
+    column: $table.recipeNameSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get categorySnapshot => $composableBuilder(
+    column: $table.categorySnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get multiplier => $composableBuilder(
+    column: $table.multiplier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get portionsProduced => $composableBuilder(
+    column: $table.portionsProduced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get yieldNameSnapshot => $composableBuilder(
+    column: $table.yieldNameSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get totalCostSnapshot => $composableBuilder(
+    column: $table.totalCostSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get unitPriceSnapshot => $composableBuilder(
+    column: $table.unitPriceSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get totalRevenueSnapshot => $composableBuilder(
+    column: $table.totalRevenueSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get totalProfitSnapshot => $composableBuilder(
+    column: $table.totalProfitSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get producedAt => $composableBuilder(
+    column: $table.producedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isReverted => $composableBuilder(
+    column: $table.isReverted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get revertedAt => $composableBuilder(
+    column: $table.revertedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecipeProductionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecipeProductionsTable> {
+  $$RecipeProductionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get productionPk => $composableBuilder(
+    column: $table.productionPk,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recipeFk =>
+      $composableBuilder(column: $table.recipeFk, builder: (column) => column);
+
+  GeneratedColumn<String> get recipeNameSnapshot => $composableBuilder(
+    column: $table.recipeNameSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get categorySnapshot => $composableBuilder(
+    column: $table.categorySnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<double> get multiplier => $composableBuilder(
+    column: $table.multiplier,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get portionsProduced => $composableBuilder(
+    column: $table.portionsProduced,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get yieldNameSnapshot => $composableBuilder(
+    column: $table.yieldNameSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get totalCostSnapshot => $composableBuilder(
+    column: $table.totalCostSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get unitPriceSnapshot => $composableBuilder(
+    column: $table.unitPriceSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get totalRevenueSnapshot => $composableBuilder(
+    column: $table.totalRevenueSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get totalProfitSnapshot => $composableBuilder(
+    column: $table.totalProfitSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get producedAt => $composableBuilder(
+    column: $table.producedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isReverted => $composableBuilder(
+    column: $table.isReverted,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get revertedAt => $composableBuilder(
+    column: $table.revertedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$RecipeProductionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RecipeProductionsTable,
+          RecipeProduction,
+          $$RecipeProductionsTableFilterComposer,
+          $$RecipeProductionsTableOrderingComposer,
+          $$RecipeProductionsTableAnnotationComposer,
+          $$RecipeProductionsTableCreateCompanionBuilder,
+          $$RecipeProductionsTableUpdateCompanionBuilder,
+          (
+            RecipeProduction,
+            BaseReferences<
+              _$AppDatabase,
+              $RecipeProductionsTable,
+              RecipeProduction
+            >,
+          ),
+          RecipeProduction,
+          PrefetchHooks Function()
+        > {
+  $$RecipeProductionsTableTableManager(
+    _$AppDatabase db,
+    $RecipeProductionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecipeProductionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecipeProductionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecipeProductionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> productionPk = const Value.absent(),
+                Value<String> recipeFk = const Value.absent(),
+                Value<String> recipeNameSnapshot = const Value.absent(),
+                Value<String?> categorySnapshot = const Value.absent(),
+                Value<String?> spaceId = const Value.absent(),
+                Value<double> multiplier = const Value.absent(),
+                Value<double> portionsProduced = const Value.absent(),
+                Value<String> yieldNameSnapshot = const Value.absent(),
+                Value<double> totalCostSnapshot = const Value.absent(),
+                Value<double> unitPriceSnapshot = const Value.absent(),
+                Value<double> totalRevenueSnapshot = const Value.absent(),
+                Value<double> totalProfitSnapshot = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> producedAt = const Value.absent(),
+                Value<bool> isReverted = const Value.absent(),
+                Value<DateTime?> revertedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecipeProductionsCompanion(
+                productionPk: productionPk,
+                recipeFk: recipeFk,
+                recipeNameSnapshot: recipeNameSnapshot,
+                categorySnapshot: categorySnapshot,
+                spaceId: spaceId,
+                multiplier: multiplier,
+                portionsProduced: portionsProduced,
+                yieldNameSnapshot: yieldNameSnapshot,
+                totalCostSnapshot: totalCostSnapshot,
+                unitPriceSnapshot: unitPriceSnapshot,
+                totalRevenueSnapshot: totalRevenueSnapshot,
+                totalProfitSnapshot: totalProfitSnapshot,
+                notes: notes,
+                producedAt: producedAt,
+                isReverted: isReverted,
+                revertedAt: revertedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> productionPk = const Value.absent(),
+                required String recipeFk,
+                required String recipeNameSnapshot,
+                Value<String?> categorySnapshot = const Value.absent(),
+                Value<String?> spaceId = const Value.absent(),
+                Value<double> multiplier = const Value.absent(),
+                required double portionsProduced,
+                required String yieldNameSnapshot,
+                required double totalCostSnapshot,
+                required double unitPriceSnapshot,
+                required double totalRevenueSnapshot,
+                required double totalProfitSnapshot,
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> producedAt = const Value.absent(),
+                Value<bool> isReverted = const Value.absent(),
+                Value<DateTime?> revertedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecipeProductionsCompanion.insert(
+                productionPk: productionPk,
+                recipeFk: recipeFk,
+                recipeNameSnapshot: recipeNameSnapshot,
+                categorySnapshot: categorySnapshot,
+                spaceId: spaceId,
+                multiplier: multiplier,
+                portionsProduced: portionsProduced,
+                yieldNameSnapshot: yieldNameSnapshot,
+                totalCostSnapshot: totalCostSnapshot,
+                unitPriceSnapshot: unitPriceSnapshot,
+                totalRevenueSnapshot: totalRevenueSnapshot,
+                totalProfitSnapshot: totalProfitSnapshot,
+                notes: notes,
+                producedAt: producedAt,
+                isReverted: isReverted,
+                revertedAt: revertedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecipeProductionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RecipeProductionsTable,
+      RecipeProduction,
+      $$RecipeProductionsTableFilterComposer,
+      $$RecipeProductionsTableOrderingComposer,
+      $$RecipeProductionsTableAnnotationComposer,
+      $$RecipeProductionsTableCreateCompanionBuilder,
+      $$RecipeProductionsTableUpdateCompanionBuilder,
+      (
+        RecipeProduction,
+        BaseReferences<
+          _$AppDatabase,
+          $RecipeProductionsTable,
+          RecipeProduction
+        >,
+      ),
+      RecipeProduction,
+      PrefetchHooks Function()
+    >;
+typedef $$InventoryMovementsTableCreateCompanionBuilder =
+    InventoryMovementsCompanion Function({
+      Value<String> movementPk,
+      required String ingredientFk,
+      required String ingredientNameSnapshot,
+      Value<String?> groupId,
+      required String movementType,
+      Value<String?> recipeProductionFk,
+      Value<String?> recipeFk,
+      required double previousStock,
+      required double deltaStock,
+      required double newStock,
+      Value<String?> stockUnitPk,
+      required double unitCostInStockUnitSnapshot,
+      required double totalValueDeltaSnapshot,
+      Value<String?> reason,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$InventoryMovementsTableUpdateCompanionBuilder =
+    InventoryMovementsCompanion Function({
+      Value<String> movementPk,
+      Value<String> ingredientFk,
+      Value<String> ingredientNameSnapshot,
+      Value<String?> groupId,
+      Value<String> movementType,
+      Value<String?> recipeProductionFk,
+      Value<String?> recipeFk,
+      Value<double> previousStock,
+      Value<double> deltaStock,
+      Value<double> newStock,
+      Value<String?> stockUnitPk,
+      Value<double> unitCostInStockUnitSnapshot,
+      Value<double> totalValueDeltaSnapshot,
+      Value<String?> reason,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$InventoryMovementsTableFilterComposer
+    extends Composer<_$AppDatabase, $InventoryMovementsTable> {
+  $$InventoryMovementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get movementPk => $composableBuilder(
+    column: $table.movementPk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ingredientFk => $composableBuilder(
+    column: $table.ingredientFk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ingredientNameSnapshot => $composableBuilder(
+    column: $table.ingredientNameSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get movementType => $composableBuilder(
+    column: $table.movementType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recipeProductionFk => $composableBuilder(
+    column: $table.recipeProductionFk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recipeFk => $composableBuilder(
+    column: $table.recipeFk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get previousStock => $composableBuilder(
+    column: $table.previousStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get deltaStock => $composableBuilder(
+    column: $table.deltaStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get newStock => $composableBuilder(
+    column: $table.newStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stockUnitPk => $composableBuilder(
+    column: $table.stockUnitPk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get unitCostInStockUnitSnapshot => $composableBuilder(
+    column: $table.unitCostInStockUnitSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get totalValueDeltaSnapshot => $composableBuilder(
+    column: $table.totalValueDeltaSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$InventoryMovementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $InventoryMovementsTable> {
+  $$InventoryMovementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get movementPk => $composableBuilder(
+    column: $table.movementPk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ingredientFk => $composableBuilder(
+    column: $table.ingredientFk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ingredientNameSnapshot => $composableBuilder(
+    column: $table.ingredientNameSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get movementType => $composableBuilder(
+    column: $table.movementType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recipeProductionFk => $composableBuilder(
+    column: $table.recipeProductionFk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recipeFk => $composableBuilder(
+    column: $table.recipeFk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get previousStock => $composableBuilder(
+    column: $table.previousStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get deltaStock => $composableBuilder(
+    column: $table.deltaStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get newStock => $composableBuilder(
+    column: $table.newStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stockUnitPk => $composableBuilder(
+    column: $table.stockUnitPk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get unitCostInStockUnitSnapshot => $composableBuilder(
+    column: $table.unitCostInStockUnitSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get totalValueDeltaSnapshot => $composableBuilder(
+    column: $table.totalValueDeltaSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$InventoryMovementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $InventoryMovementsTable> {
+  $$InventoryMovementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get movementPk => $composableBuilder(
+    column: $table.movementPk,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ingredientFk => $composableBuilder(
+    column: $table.ingredientFk,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ingredientNameSnapshot => $composableBuilder(
+    column: $table.ingredientNameSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get movementType => $composableBuilder(
+    column: $table.movementType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recipeProductionFk => $composableBuilder(
+    column: $table.recipeProductionFk,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recipeFk =>
+      $composableBuilder(column: $table.recipeFk, builder: (column) => column);
+
+  GeneratedColumn<double> get previousStock => $composableBuilder(
+    column: $table.previousStock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get deltaStock => $composableBuilder(
+    column: $table.deltaStock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get newStock =>
+      $composableBuilder(column: $table.newStock, builder: (column) => column);
+
+  GeneratedColumn<String> get stockUnitPk => $composableBuilder(
+    column: $table.stockUnitPk,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get unitCostInStockUnitSnapshot => $composableBuilder(
+    column: $table.unitCostInStockUnitSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get totalValueDeltaSnapshot => $composableBuilder(
+    column: $table.totalValueDeltaSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$InventoryMovementsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $InventoryMovementsTable,
+          InventoryMovement,
+          $$InventoryMovementsTableFilterComposer,
+          $$InventoryMovementsTableOrderingComposer,
+          $$InventoryMovementsTableAnnotationComposer,
+          $$InventoryMovementsTableCreateCompanionBuilder,
+          $$InventoryMovementsTableUpdateCompanionBuilder,
+          (
+            InventoryMovement,
+            BaseReferences<
+              _$AppDatabase,
+              $InventoryMovementsTable,
+              InventoryMovement
+            >,
+          ),
+          InventoryMovement,
+          PrefetchHooks Function()
+        > {
+  $$InventoryMovementsTableTableManager(
+    _$AppDatabase db,
+    $InventoryMovementsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$InventoryMovementsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$InventoryMovementsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$InventoryMovementsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> movementPk = const Value.absent(),
+                Value<String> ingredientFk = const Value.absent(),
+                Value<String> ingredientNameSnapshot = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String> movementType = const Value.absent(),
+                Value<String?> recipeProductionFk = const Value.absent(),
+                Value<String?> recipeFk = const Value.absent(),
+                Value<double> previousStock = const Value.absent(),
+                Value<double> deltaStock = const Value.absent(),
+                Value<double> newStock = const Value.absent(),
+                Value<String?> stockUnitPk = const Value.absent(),
+                Value<double> unitCostInStockUnitSnapshot =
+                    const Value.absent(),
+                Value<double> totalValueDeltaSnapshot = const Value.absent(),
+                Value<String?> reason = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => InventoryMovementsCompanion(
+                movementPk: movementPk,
+                ingredientFk: ingredientFk,
+                ingredientNameSnapshot: ingredientNameSnapshot,
+                groupId: groupId,
+                movementType: movementType,
+                recipeProductionFk: recipeProductionFk,
+                recipeFk: recipeFk,
+                previousStock: previousStock,
+                deltaStock: deltaStock,
+                newStock: newStock,
+                stockUnitPk: stockUnitPk,
+                unitCostInStockUnitSnapshot: unitCostInStockUnitSnapshot,
+                totalValueDeltaSnapshot: totalValueDeltaSnapshot,
+                reason: reason,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> movementPk = const Value.absent(),
+                required String ingredientFk,
+                required String ingredientNameSnapshot,
+                Value<String?> groupId = const Value.absent(),
+                required String movementType,
+                Value<String?> recipeProductionFk = const Value.absent(),
+                Value<String?> recipeFk = const Value.absent(),
+                required double previousStock,
+                required double deltaStock,
+                required double newStock,
+                Value<String?> stockUnitPk = const Value.absent(),
+                required double unitCostInStockUnitSnapshot,
+                required double totalValueDeltaSnapshot,
+                Value<String?> reason = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => InventoryMovementsCompanion.insert(
+                movementPk: movementPk,
+                ingredientFk: ingredientFk,
+                ingredientNameSnapshot: ingredientNameSnapshot,
+                groupId: groupId,
+                movementType: movementType,
+                recipeProductionFk: recipeProductionFk,
+                recipeFk: recipeFk,
+                previousStock: previousStock,
+                deltaStock: deltaStock,
+                newStock: newStock,
+                stockUnitPk: stockUnitPk,
+                unitCostInStockUnitSnapshot: unitCostInStockUnitSnapshot,
+                totalValueDeltaSnapshot: totalValueDeltaSnapshot,
+                reason: reason,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$InventoryMovementsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $InventoryMovementsTable,
+      InventoryMovement,
+      $$InventoryMovementsTableFilterComposer,
+      $$InventoryMovementsTableOrderingComposer,
+      $$InventoryMovementsTableAnnotationComposer,
+      $$InventoryMovementsTableCreateCompanionBuilder,
+      $$InventoryMovementsTableUpdateCompanionBuilder,
+      (
+        InventoryMovement,
+        BaseReferences<
+          _$AppDatabase,
+          $InventoryMovementsTable,
+          InventoryMovement
+        >,
+      ),
+      InventoryMovement,
+      PrefetchHooks Function()
+    >;
+typedef $$RecipeInventoryMovementsTableCreateCompanionBuilder =
+    RecipeInventoryMovementsCompanion Function({
+      Value<String> movementPk,
+      required String recipeFk,
+      required String recipeNameSnapshot,
+      Value<String?> spaceId,
+      required String movementType,
+      Value<String?> recipeProductionFk,
+      required double previousStock,
+      required double deltaStock,
+      required double newStock,
+      required double unitCostSnapshot,
+      required double unitPriceSnapshot,
+      required double totalCostDeltaSnapshot,
+      required double totalRevenueDeltaSnapshot,
+      Value<String?> reason,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$RecipeInventoryMovementsTableUpdateCompanionBuilder =
+    RecipeInventoryMovementsCompanion Function({
+      Value<String> movementPk,
+      Value<String> recipeFk,
+      Value<String> recipeNameSnapshot,
+      Value<String?> spaceId,
+      Value<String> movementType,
+      Value<String?> recipeProductionFk,
+      Value<double> previousStock,
+      Value<double> deltaStock,
+      Value<double> newStock,
+      Value<double> unitCostSnapshot,
+      Value<double> unitPriceSnapshot,
+      Value<double> totalCostDeltaSnapshot,
+      Value<double> totalRevenueDeltaSnapshot,
+      Value<String?> reason,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$RecipeInventoryMovementsTableFilterComposer
+    extends Composer<_$AppDatabase, $RecipeInventoryMovementsTable> {
+  $$RecipeInventoryMovementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get movementPk => $composableBuilder(
+    column: $table.movementPk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recipeFk => $composableBuilder(
+    column: $table.recipeFk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recipeNameSnapshot => $composableBuilder(
+    column: $table.recipeNameSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get movementType => $composableBuilder(
+    column: $table.movementType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recipeProductionFk => $composableBuilder(
+    column: $table.recipeProductionFk,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get previousStock => $composableBuilder(
+    column: $table.previousStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get deltaStock => $composableBuilder(
+    column: $table.deltaStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get newStock => $composableBuilder(
+    column: $table.newStock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get unitCostSnapshot => $composableBuilder(
+    column: $table.unitCostSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get unitPriceSnapshot => $composableBuilder(
+    column: $table.unitPriceSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get totalCostDeltaSnapshot => $composableBuilder(
+    column: $table.totalCostDeltaSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get totalRevenueDeltaSnapshot => $composableBuilder(
+    column: $table.totalRevenueDeltaSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecipeInventoryMovementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecipeInventoryMovementsTable> {
+  $$RecipeInventoryMovementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get movementPk => $composableBuilder(
+    column: $table.movementPk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recipeFk => $composableBuilder(
+    column: $table.recipeFk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recipeNameSnapshot => $composableBuilder(
+    column: $table.recipeNameSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get movementType => $composableBuilder(
+    column: $table.movementType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recipeProductionFk => $composableBuilder(
+    column: $table.recipeProductionFk,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get previousStock => $composableBuilder(
+    column: $table.previousStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get deltaStock => $composableBuilder(
+    column: $table.deltaStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get newStock => $composableBuilder(
+    column: $table.newStock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get unitCostSnapshot => $composableBuilder(
+    column: $table.unitCostSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get unitPriceSnapshot => $composableBuilder(
+    column: $table.unitPriceSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get totalCostDeltaSnapshot => $composableBuilder(
+    column: $table.totalCostDeltaSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get totalRevenueDeltaSnapshot => $composableBuilder(
+    column: $table.totalRevenueDeltaSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecipeInventoryMovementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecipeInventoryMovementsTable> {
+  $$RecipeInventoryMovementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get movementPk => $composableBuilder(
+    column: $table.movementPk,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recipeFk =>
+      $composableBuilder(column: $table.recipeFk, builder: (column) => column);
+
+  GeneratedColumn<String> get recipeNameSnapshot => $composableBuilder(
+    column: $table.recipeNameSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get movementType => $composableBuilder(
+    column: $table.movementType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recipeProductionFk => $composableBuilder(
+    column: $table.recipeProductionFk,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get previousStock => $composableBuilder(
+    column: $table.previousStock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get deltaStock => $composableBuilder(
+    column: $table.deltaStock,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get newStock =>
+      $composableBuilder(column: $table.newStock, builder: (column) => column);
+
+  GeneratedColumn<double> get unitCostSnapshot => $composableBuilder(
+    column: $table.unitCostSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get unitPriceSnapshot => $composableBuilder(
+    column: $table.unitPriceSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get totalCostDeltaSnapshot => $composableBuilder(
+    column: $table.totalCostDeltaSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get totalRevenueDeltaSnapshot => $composableBuilder(
+    column: $table.totalRevenueDeltaSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$RecipeInventoryMovementsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RecipeInventoryMovementsTable,
+          RecipeInventoryMovement,
+          $$RecipeInventoryMovementsTableFilterComposer,
+          $$RecipeInventoryMovementsTableOrderingComposer,
+          $$RecipeInventoryMovementsTableAnnotationComposer,
+          $$RecipeInventoryMovementsTableCreateCompanionBuilder,
+          $$RecipeInventoryMovementsTableUpdateCompanionBuilder,
+          (
+            RecipeInventoryMovement,
+            BaseReferences<
+              _$AppDatabase,
+              $RecipeInventoryMovementsTable,
+              RecipeInventoryMovement
+            >,
+          ),
+          RecipeInventoryMovement,
+          PrefetchHooks Function()
+        > {
+  $$RecipeInventoryMovementsTableTableManager(
+    _$AppDatabase db,
+    $RecipeInventoryMovementsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecipeInventoryMovementsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RecipeInventoryMovementsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecipeInventoryMovementsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> movementPk = const Value.absent(),
+                Value<String> recipeFk = const Value.absent(),
+                Value<String> recipeNameSnapshot = const Value.absent(),
+                Value<String?> spaceId = const Value.absent(),
+                Value<String> movementType = const Value.absent(),
+                Value<String?> recipeProductionFk = const Value.absent(),
+                Value<double> previousStock = const Value.absent(),
+                Value<double> deltaStock = const Value.absent(),
+                Value<double> newStock = const Value.absent(),
+                Value<double> unitCostSnapshot = const Value.absent(),
+                Value<double> unitPriceSnapshot = const Value.absent(),
+                Value<double> totalCostDeltaSnapshot = const Value.absent(),
+                Value<double> totalRevenueDeltaSnapshot = const Value.absent(),
+                Value<String?> reason = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecipeInventoryMovementsCompanion(
+                movementPk: movementPk,
+                recipeFk: recipeFk,
+                recipeNameSnapshot: recipeNameSnapshot,
+                spaceId: spaceId,
+                movementType: movementType,
+                recipeProductionFk: recipeProductionFk,
+                previousStock: previousStock,
+                deltaStock: deltaStock,
+                newStock: newStock,
+                unitCostSnapshot: unitCostSnapshot,
+                unitPriceSnapshot: unitPriceSnapshot,
+                totalCostDeltaSnapshot: totalCostDeltaSnapshot,
+                totalRevenueDeltaSnapshot: totalRevenueDeltaSnapshot,
+                reason: reason,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String> movementPk = const Value.absent(),
+                required String recipeFk,
+                required String recipeNameSnapshot,
+                Value<String?> spaceId = const Value.absent(),
+                required String movementType,
+                Value<String?> recipeProductionFk = const Value.absent(),
+                required double previousStock,
+                required double deltaStock,
+                required double newStock,
+                required double unitCostSnapshot,
+                required double unitPriceSnapshot,
+                required double totalCostDeltaSnapshot,
+                required double totalRevenueDeltaSnapshot,
+                Value<String?> reason = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecipeInventoryMovementsCompanion.insert(
+                movementPk: movementPk,
+                recipeFk: recipeFk,
+                recipeNameSnapshot: recipeNameSnapshot,
+                spaceId: spaceId,
+                movementType: movementType,
+                recipeProductionFk: recipeProductionFk,
+                previousStock: previousStock,
+                deltaStock: deltaStock,
+                newStock: newStock,
+                unitCostSnapshot: unitCostSnapshot,
+                unitPriceSnapshot: unitPriceSnapshot,
+                totalCostDeltaSnapshot: totalCostDeltaSnapshot,
+                totalRevenueDeltaSnapshot: totalRevenueDeltaSnapshot,
+                reason: reason,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecipeInventoryMovementsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RecipeInventoryMovementsTable,
+      RecipeInventoryMovement,
+      $$RecipeInventoryMovementsTableFilterComposer,
+      $$RecipeInventoryMovementsTableOrderingComposer,
+      $$RecipeInventoryMovementsTableAnnotationComposer,
+      $$RecipeInventoryMovementsTableCreateCompanionBuilder,
+      $$RecipeInventoryMovementsTableUpdateCompanionBuilder,
+      (
+        RecipeInventoryMovement,
+        BaseReferences<
+          _$AppDatabase,
+          $RecipeInventoryMovementsTable,
+          RecipeInventoryMovement
+        >,
+      ),
+      RecipeInventoryMovement,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8354,4 +12727,13 @@ class $AppDatabaseManager {
       $$RecipeSpacesTableTableManager(_db, _db.recipeSpaces);
   $$DeletedRecordsTableTableManager get deletedRecords =>
       $$DeletedRecordsTableTableManager(_db, _db.deletedRecords);
+  $$RecipeProductionsTableTableManager get recipeProductions =>
+      $$RecipeProductionsTableTableManager(_db, _db.recipeProductions);
+  $$InventoryMovementsTableTableManager get inventoryMovements =>
+      $$InventoryMovementsTableTableManager(_db, _db.inventoryMovements);
+  $$RecipeInventoryMovementsTableTableManager get recipeInventoryMovements =>
+      $$RecipeInventoryMovementsTableTableManager(
+        _db,
+        _db.recipeInventoryMovements,
+      );
 }

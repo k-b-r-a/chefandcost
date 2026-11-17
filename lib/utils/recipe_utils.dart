@@ -903,3 +903,174 @@ class CurrencyText extends StatelessWidget {
     );
   }
 }
+
+enum IngredientProductionStatus { ok, lowStock, insufficient }
+
+class IngredientProductionCheck {
+  final Ingredient ingredient;
+  final double requiredPerBatchInStockUnit;
+  final double requiredInStockUnit;
+  final double availableInStockUnit;
+  final double remainingAfterStockUnit;
+  final double shortfallInStockUnit;
+  final double? maxMakeableBatches;
+  final String stockUnitSymbol;
+  final IngredientProductionStatus status;
+  final double estimatedCost;
+
+  const IngredientProductionCheck({
+    required this.ingredient,
+    required this.requiredPerBatchInStockUnit,
+    required this.requiredInStockUnit,
+    required this.availableInStockUnit,
+    required this.remainingAfterStockUnit,
+    required this.shortfallInStockUnit,
+    required this.maxMakeableBatches,
+    required this.stockUnitSymbol,
+    required this.status,
+    required this.estimatedCost,
+  });
+
+  bool get isInsufficient => status == IngredientProductionStatus.insufficient;
+  bool get isLowStock => status == IngredientProductionStatus.lowStock;
+}
+
+class RecipeProductionPreview {
+  final double multiplier;
+  final double portions;
+  final double totalCost;
+  final double totalRevenue;
+  final double totalProfit;
+  final double? maxMakeableBatches;
+  final double? maxMakeablePortions;
+  final String? bottleneckIngredientName;
+  final List<IngredientProductionCheck> checks;
+
+  const RecipeProductionPreview({
+    required this.multiplier,
+    required this.portions,
+    required this.totalCost,
+    required this.totalRevenue,
+    required this.totalProfit,
+    required this.maxMakeableBatches,
+    required this.maxMakeablePortions,
+    required this.bottleneckIngredientName,
+    required this.checks,
+  });
+
+  bool get hasInsufficient => checks.any((c) => c.isInsufficient);
+  bool get hasLowStock => checks.any((c) => c.isLowStock);
+
+  static RecipeProductionPreview calculate({
+    required Recipe recipe,
+    required List<RecipeIngredientWithData> ingredients,
+    required Map<String, Unit> unitMap,
+    required List<Unit> allUnits,
+    required double multiplier,
+    Set<String> excludedIngredientPks = const {},
+  }) {
+    final safeMultiplier = multiplier <= 0 ? 1.0 : multiplier;
+    final portions = recipe.defaultYield * safeMultiplier;
+    double totalCost = 0.0;
+    double? minMaxBatches;
+    String? bottleneckName;
+    final checks = <IngredientProductionCheck>[];
+
+    for (final item in ingredients) {
+      final ing = item.ingredient;
+      if (ing.isDeleted) continue;
+
+      final reqUnit = unitMap[ing.unitFk];
+      final stockUnitPk = ing.stockUnit ?? ing.unitFk;
+      final stockUnit = allUnits
+          .where((u) => u.unitPk == stockUnitPk || u.symbol == stockUnitPk)
+          .firstOrNull ??
+          reqUnit;
+
+      double reqPerBatchInStock = item.entry.amountNeeded;
+      if (reqUnit != null &&
+          stockUnit != null &&
+          reqUnit.category != null &&
+          reqUnit.category == stockUnit.category &&
+          reqUnit.factorToBase.isFinite &&
+          reqUnit.factorToBase > 0 &&
+          stockUnit.factorToBase.isFinite &&
+          stockUnit.factorToBase > 0) {
+        reqPerBatchInStock =
+            item.entry.amountNeeded *
+            (reqUnit.factorToBase / stockUnit.factorToBase);
+      }
+
+      final requiredInStock = reqPerBatchInStock * safeMultiplier;
+      final available = ing.currentStock ?? 0.0;
+      final remaining = (available - requiredInStock) < 0
+          ? 0.0
+          : (available - requiredInStock);
+      final shortfall = available < requiredInStock
+          ? (requiredInStock - available)
+          : 0.0;
+
+      final double? maxBatchesForIng = reqPerBatchInStock > 0
+          ? (available / reqPerBatchInStock)
+          : null;
+
+      final isExcluded = excludedIngredientPks.contains(ing.ingredientPk);
+      if (!isExcluded && maxBatchesForIng != null) {
+        if (minMaxBatches == null || maxBatchesForIng < minMaxBatches) {
+          minMaxBatches = maxBatchesForIng;
+          bottleneckName = ing.name;
+        }
+      }
+
+      final IngredientProductionStatus status;
+      if (available < requiredInStock) {
+        status = IngredientProductionStatus.insufficient;
+      } else if (ing.minimumStock != null && remaining <= ing.minimumStock!) {
+        status = IngredientProductionStatus.lowStock;
+      } else {
+        status = IngredientProductionStatus.ok;
+      }
+
+      final unitCost = ing.quantityForCost > 0
+          ? ing.cost / ing.quantityForCost
+          : 0.0;
+      final itemCost = unitCost * (item.entry.amountNeeded * safeMultiplier);
+      if (!isExcluded) {
+        totalCost += itemCost;
+      }
+
+      checks.add(
+        IngredientProductionCheck(
+          ingredient: ing,
+          requiredPerBatchInStockUnit: reqPerBatchInStock,
+          requiredInStockUnit: requiredInStock,
+          availableInStockUnit: available,
+          remainingAfterStockUnit: remaining,
+          shortfallInStockUnit: shortfall,
+          maxMakeableBatches: maxBatchesForIng,
+          stockUnitSymbol: stockUnit?.symbol ?? reqUnit?.symbol ?? '',
+          status: status,
+          estimatedCost: itemCost,
+        ),
+      );
+    }
+
+    final totalRevenue = recipe.targetPricePerPortion * portions;
+    final totalProfit = totalRevenue - totalCost;
+    final maxPortions = minMaxBatches != null
+        ? minMaxBatches * recipe.defaultYield
+        : null;
+
+    return RecipeProductionPreview(
+      multiplier: safeMultiplier,
+      portions: portions,
+      totalCost: totalCost,
+      totalRevenue: totalRevenue,
+      totalProfit: totalProfit,
+      maxMakeableBatches: minMaxBatches,
+      maxMakeablePortions: maxPortions,
+      bottleneckIngredientName: bottleneckName,
+      checks: checks,
+    );
+  }
+}

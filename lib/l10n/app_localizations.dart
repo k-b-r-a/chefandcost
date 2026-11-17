@@ -4469,6 +4469,118 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Some ingredients have insufficient stock and will be set to 0.'**
   String get recipe_deduct_insufficient_warning;
+
+  /// No description provided for @make_recipe_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Make Recipe'**
+  String get make_recipe_title;
+
+  /// No description provided for @make_recipe_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Make'**
+  String get make_recipe_button;
+
+  /// No description provided for @make_recipe_batches_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Batches'**
+  String get make_recipe_batches_label;
+
+  /// No description provided for @make_recipe_portions_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Portions'**
+  String get make_recipe_portions_label;
+
+  /// No description provided for @make_recipe_max_makeable.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock for up to {batches}x ({portions} {yieldName})'**
+  String make_recipe_max_makeable(
+    String batches,
+    String portions,
+    String yieldName,
+  );
+
+  /// No description provided for @make_recipe_bottleneck.
+  ///
+  /// In en, this message translates to:
+  /// **'Limited by {ingredient}'**
+  String make_recipe_bottleneck(String ingredient);
+
+  /// No description provided for @make_recipe_after_stock.
+  ///
+  /// In en, this message translates to:
+  /// **'After: {amount} {unit}'**
+  String make_recipe_after_stock(String amount, String unit);
+
+  /// No description provided for @make_recipe_undo_action.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get make_recipe_undo_action;
+
+  /// No description provided for @make_recipe_reverted_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Production reverted and stock restored'**
+  String get make_recipe_reverted_toast;
+
+  /// No description provided for @make_recipe_low_stock_alert.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock alert: {ingredients}'**
+  String make_recipe_low_stock_alert(String ingredients);
+
+  /// No description provided for @inventory_recent_activity.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Activity'**
+  String get inventory_recent_activity;
+
+  /// No description provided for @inventory_no_recent_activity.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent stock movements'**
+  String get inventory_no_recent_activity;
+
+  /// No description provided for @inventory_movement_production.
+  ///
+  /// In en, this message translates to:
+  /// **'Made {recipe}'**
+  String inventory_movement_production(String recipe);
+
+  /// No description provided for @inventory_movement_restock.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock'**
+  String get inventory_movement_restock;
+
+  /// No description provided for @inventory_movement_waste.
+  ///
+  /// In en, this message translates to:
+  /// **'Consume / Waste'**
+  String get inventory_movement_waste;
+
+  /// No description provided for @inventory_movement_exact.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact Count'**
+  String get inventory_movement_exact;
+
+  /// No description provided for @inventory_movement_revert.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverted'**
+  String get inventory_movement_revert;
+
+  /// No description provided for @share_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share_button;
 }
 
 class _AppLocalizationsDelegate

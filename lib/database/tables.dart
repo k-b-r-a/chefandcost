@@ -67,6 +67,14 @@ class Recipes extends Table {
       .withDefault(const Constant('cocina'))
       .nullable()();
 
+  RealColumn get currentStock => real()
+      .named('current_stock')
+      .withDefault(const Constant(0.0))
+      .nullable()();
+  RealColumn get minimumStock => real().named('minimum_stock').nullable()();
+  DateTimeColumn get lastStockUpdate =>
+      dateTime().named('last_stock_update').nullable()();
+
   @override
   Set<Column> get primaryKey => {recipePk};
 }
@@ -181,5 +189,89 @@ class DeletedRecords extends Table {
 
   @override
   Set<Column> get primaryKey => {recordPk, entityType};
+}
+
+@DataClassName('RecipeProduction')
+class RecipeProductions extends Table {
+  TextColumn get productionPk =>
+      text().named('production_pk').clientDefault(() => uuid.v4())();
+  TextColumn get recipeFk => text().named('recipe_fk')();
+  TextColumn get recipeNameSnapshot => text().named('recipe_name_snapshot')();
+  TextColumn get categorySnapshot =>
+      text().named('category_snapshot').nullable()();
+  TextColumn get spaceId => text().named('space_id').nullable()();
+  RealColumn get multiplier => real().withDefault(const Constant(1.0))();
+  RealColumn get portionsProduced => real().named('portions_produced')();
+  TextColumn get yieldNameSnapshot => text().named('yield_name_snapshot')();
+  RealColumn get totalCostSnapshot => real().named('total_cost_snapshot')();
+  RealColumn get unitPriceSnapshot => real().named('unit_price_snapshot')();
+  RealColumn get totalRevenueSnapshot =>
+      real().named('total_revenue_snapshot')();
+  RealColumn get totalProfitSnapshot =>
+      real().named('total_profit_snapshot')();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get producedAt =>
+      dateTime().named('produced_at').clientDefault(() => DateTime.now())();
+  BoolColumn get isReverted =>
+      boolean().named('is_reverted').withDefault(const Constant(false))();
+  DateTimeColumn get revertedAt => dateTime().named('reverted_at').nullable()();
+
+  @override
+  Set<Column> get primaryKey => {productionPk};
+}
+
+@DataClassName('InventoryMovement')
+class InventoryMovements extends Table {
+  TextColumn get movementPk =>
+      text().named('movement_pk').clientDefault(() => uuid.v4())();
+  TextColumn get ingredientFk => text().named('ingredient_fk')();
+  TextColumn get ingredientNameSnapshot =>
+      text().named('ingredient_name_snapshot')();
+  TextColumn get groupId => text().named('group_id').nullable()();
+  TextColumn get movementType => text().named('movement_type')();
+  TextColumn get recipeProductionFk =>
+      text().named('recipe_production_fk').nullable()();
+  TextColumn get recipeFk => text().named('recipe_fk').nullable()();
+  RealColumn get previousStock => real().named('previous_stock')();
+  RealColumn get deltaStock => real().named('delta_stock')();
+  RealColumn get newStock => real().named('new_stock')();
+  TextColumn get stockUnitPk => text().named('stock_unit_pk').nullable()();
+  RealColumn get unitCostInStockUnitSnapshot =>
+      real().named('unit_cost_in_stock_unit_snapshot')();
+  RealColumn get totalValueDeltaSnapshot =>
+      real().named('total_value_delta_snapshot')();
+  TextColumn get reason => text().nullable()();
+  DateTimeColumn get createdAt =>
+      dateTime().named('created_at').clientDefault(() => DateTime.now())();
+
+  @override
+  Set<Column> get primaryKey => {movementPk};
+}
+
+@DataClassName('RecipeInventoryMovement')
+class RecipeInventoryMovements extends Table {
+  TextColumn get movementPk =>
+      text().named('movement_pk').clientDefault(() => uuid.v4())();
+  TextColumn get recipeFk => text().named('recipe_fk')();
+  TextColumn get recipeNameSnapshot => text().named('recipe_name_snapshot')();
+  TextColumn get spaceId => text().named('space_id').nullable()();
+  TextColumn get movementType => text().named('movement_type')();
+  TextColumn get recipeProductionFk =>
+      text().named('recipe_production_fk').nullable()();
+  RealColumn get previousStock => real().named('previous_stock')();
+  RealColumn get deltaStock => real().named('delta_stock')();
+  RealColumn get newStock => real().named('new_stock')();
+  RealColumn get unitCostSnapshot => real().named('unit_cost_snapshot')();
+  RealColumn get unitPriceSnapshot => real().named('unit_price_snapshot')();
+  RealColumn get totalCostDeltaSnapshot =>
+      real().named('total_cost_delta_snapshot')();
+  RealColumn get totalRevenueDeltaSnapshot =>
+      real().named('total_revenue_delta_snapshot')();
+  TextColumn get reason => text().nullable()();
+  DateTimeColumn get createdAt =>
+      dateTime().named('created_at').clientDefault(() => DateTime.now())();
+
+  @override
+  Set<Column> get primaryKey => {movementPk};
 }
 

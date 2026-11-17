@@ -95,4 +95,79 @@ class UnitUtils {
       return true;
     }).toList();
   }
+
+  /// Returns unit-category-aware quick-stock adjustment presets.
+  static List<QuickStockPreset> quickStockPresetsForUnit(Unit? stockUnit) {
+    final category = stockUnit?.category;
+    if (isVolume(category)) {
+      return const [
+        QuickStockPreset(label: '100ml', amount: 100.0, unitSymbol: 'ml'),
+        QuickStockPreset(label: '250ml', amount: 250.0, unitSymbol: 'ml'),
+        QuickStockPreset(label: '500ml', amount: 500.0, unitSymbol: 'ml'),
+        QuickStockPreset(label: '1L', amount: 1.0, unitSymbol: 'l'),
+      ];
+    }
+    if (isMass(category)) {
+      return const [
+        QuickStockPreset(label: '100g', amount: 100.0, unitSymbol: 'g'),
+        QuickStockPreset(label: '250g', amount: 250.0, unitSymbol: 'g'),
+        QuickStockPreset(label: '500g', amount: 500.0, unitSymbol: 'g'),
+        QuickStockPreset(label: '1kg', amount: 1.0, unitSymbol: 'kg'),
+      ];
+    }
+    final symbol = stockUnit?.symbol.trim() ?? '';
+    final suffix = symbol.isNotEmpty ? ' $symbol' : '';
+    return [
+      QuickStockPreset(label: '1$suffix', amount: 1.0, unitSymbol: symbol),
+      QuickStockPreset(label: '5$suffix', amount: 5.0, unitSymbol: symbol),
+      QuickStockPreset(label: '10$suffix', amount: 10.0, unitSymbol: symbol),
+      QuickStockPreset(label: '25$suffix', amount: 25.0, unitSymbol: symbol),
+    ];
+  }
+
+  /// Converts a [preset] amount into [stockUnit]'s scale using [units].
+  static double convertPresetToStockDelta({
+    required QuickStockPreset preset,
+    required Unit? stockUnit,
+    required List<Unit> units,
+  }) {
+    if (stockUnit == null) return preset.amount;
+    final targetSymbol = stockUnit.symbol.toLowerCase();
+    final presetSymbol = preset.unitSymbol.toLowerCase();
+    if (presetSymbol == targetSymbol) return preset.amount;
+
+    Unit? presetUnit;
+    for (final u in units) {
+      if (u.symbol.toLowerCase() == presetSymbol) {
+        presetUnit = u;
+        break;
+      }
+    }
+    if (presetUnit != null && stockUnit.factorToBase > 0) {
+      return preset.amount * (presetUnit.factorToBase / stockUnit.factorToBase);
+    }
+
+    // Fallback for common metric pairs when units list is minimal.
+    if ((presetSymbol == 'l' && targetSymbol == 'ml') ||
+        (presetSymbol == 'kg' && targetSymbol == 'g')) {
+      return preset.amount * 1000.0;
+    }
+    if ((presetSymbol == 'ml' && (targetSymbol == 'l' || targetSymbol == 'lt')) ||
+        (presetSymbol == 'g' && targetSymbol == 'kg')) {
+      return preset.amount / 1000.0;
+    }
+    return preset.amount;
+  }
+}
+
+class QuickStockPreset {
+  final String label;
+  final double amount;
+  final String unitSymbol;
+
+  const QuickStockPreset({
+    required this.label,
+    required this.amount,
+    required this.unitSymbol,
+  });
 }

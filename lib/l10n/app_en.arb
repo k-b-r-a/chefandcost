@@ -1008,5 +1008,67 @@
   "recipe_deduct_available": "Available",
   "recipe_deduct_confirm": "Deduct Stock",
   "recipe_deduct_success": "Ingredients deducted from inventory",
-  "recipe_deduct_insufficient_warning": "Some ingredients have insufficient stock and will be set to 0."
+  "recipe_deduct_insufficient_warning": "Some ingredients have insufficient stock and will be set to 0.",
+  "make_recipe_title": "Make Recipe",
+  "make_recipe_button": "Make",
+  "make_recipe_batches_label": "Batches",
+  "make_recipe_portions_label": "Portions",
+  "make_recipe_max_makeable": "Stock for up to {batches}x ({portions} {yieldName})",
+  "@make_recipe_max_makeable": {
+    "placeholders": {
+      "batches": {
+        "type": "String"
+      },
+      "portions": {
+        "type": "String"
+      },
+      "yieldName": {
+        "type": "String"
+      }
+    }
+  },
+  "make_recipe_bottleneck": "Limited by {ingredient}",
+  "@make_recipe_bottleneck": {
+    "placeholders": {
+      "ingredient": {
+        "type": "String"
+      }
+    }
+  },
+  "make_recipe_after_stock": "After: {amount} {unit}",
+  "@make_recipe_after_stock": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "make_recipe_undo_action": "Undo",
+  "make_recipe_reverted_toast": "Production reverted and stock restored",
+  "make_recipe_low_stock_alert": "Low stock alert: {ingredients}",
+  "@make_recipe_low_stock_alert": {
+    "placeholders": {
+      "ingredients": {
+        "type": "String"
+      }
+    }
+  },
+  "inventory_recent_activity": "Recent Activity",
+  "inventory_no_recent_activity": "No recent stock movements",
+  "inventory_movement_production": "Made {recipe}",
+  "@inventory_movement_production": {
+    "placeholders": {
+      "recipe": {
+        "type": "String"
+      }
+    }
+  },
+  "inventory_movement_restock": "Restock",
+  "inventory_movement_waste": "Consume / Waste",
+  "inventory_movement_exact": "Exact Count",
+  "inventory_movement_revert": "Reverted",
+  "share_button": "Share"
 }

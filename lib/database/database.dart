@@ -18,6 +18,9 @@ part 'database.g.dart';
     Categories,
     RecipeSpaces,
     DeletedRecords,
+    RecipeProductions,
+    InventoryMovements,
+    RecipeInventoryMovements,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -32,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   Future<bool> _tableExists(String tableName) async {
     final result = await customSelect(
@@ -98,6 +101,26 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(ingredients, ingredients.lastStockUpdate);
           }
         }
+        if (from < 3) {
+          if (!await _tableExists('recipe_productions')) {
+            await m.createTable(recipeProductions);
+          }
+          if (!await _tableExists('inventory_movements')) {
+            await m.createTable(inventoryMovements);
+          }
+          if (!await _tableExists('recipe_inventory_movements')) {
+            await m.createTable(recipeInventoryMovements);
+          }
+          if (!await _columnExists('recipes', 'current_stock')) {
+            await m.addColumn(recipes, recipes.currentStock);
+          }
+          if (!await _columnExists('recipes', 'minimum_stock')) {
+            await m.addColumn(recipes, recipes.minimumStock);
+          }
+          if (!await _columnExists('recipes', 'last_stock_update')) {
+            await m.addColumn(recipes, recipes.lastStockUpdate);
+          }
+        }
       },
       beforeOpen: (details) async {
         // Repair databases already stamped at v2/v3 that are missing tables.
@@ -136,6 +159,91 @@ class AppDatabase extends _$AppDatabase {
           ''');
         }
         await repairRecipeSpaceTimestamps();
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS recipe_productions (
+            production_pk TEXT NOT NULL PRIMARY KEY,
+            recipe_fk TEXT NOT NULL,
+            recipe_name_snapshot TEXT NOT NULL,
+            category_snapshot TEXT,
+            space_id TEXT,
+            multiplier REAL NOT NULL DEFAULT 1.0,
+            portions_produced REAL NOT NULL,
+            yield_name_snapshot TEXT NOT NULL,
+            total_cost_snapshot REAL NOT NULL,
+            unit_price_snapshot REAL NOT NULL,
+            total_revenue_snapshot REAL NOT NULL,
+            total_profit_snapshot REAL NOT NULL,
+            notes TEXT,
+            produced_at INTEGER NOT NULL,
+            is_reverted INTEGER NOT NULL DEFAULT 0,
+            reverted_at INTEGER
+          )
+        ''');
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS inventory_movements (
+            movement_pk TEXT NOT NULL PRIMARY KEY,
+            ingredient_fk TEXT NOT NULL,
+            ingredient_name_snapshot TEXT NOT NULL,
+            group_id TEXT,
+            movement_type TEXT NOT NULL,
+            recipe_production_fk TEXT,
+            recipe_fk TEXT,
+            previous_stock REAL NOT NULL,
+            delta_stock REAL NOT NULL,
+            new_stock REAL NOT NULL,
+            stock_unit_pk TEXT,
+            unit_cost_in_stock_unit_snapshot REAL NOT NULL,
+            total_value_delta_snapshot REAL NOT NULL,
+            reason TEXT,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_recipe_productions_produced_at ON recipe_productions(produced_at);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_recipe_productions_recipe_fk ON recipe_productions(recipe_fk, produced_at);',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_inventory_movements_ing_created ON inventory_movements(ingredient_fk, created_at);',
+        );
+        if (!await _columnExists('recipes', 'current_stock')) {
+          await customStatement(
+            'ALTER TABLE recipes ADD COLUMN current_stock REAL DEFAULT 0.0;',
+          );
+        }
+        if (!await _columnExists('recipes', 'minimum_stock')) {
+          await customStatement(
+            'ALTER TABLE recipes ADD COLUMN minimum_stock REAL;',
+          );
+        }
+        if (!await _columnExists('recipes', 'last_stock_update')) {
+          await customStatement(
+            'ALTER TABLE recipes ADD COLUMN last_stock_update INTEGER;',
+          );
+        }
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS recipe_inventory_movements (
+            movement_pk TEXT NOT NULL PRIMARY KEY,
+            recipe_fk TEXT NOT NULL,
+            recipe_name_snapshot TEXT NOT NULL,
+            space_id TEXT,
+            movement_type TEXT NOT NULL,
+            recipe_production_fk TEXT,
+            previous_stock REAL NOT NULL,
+            delta_stock REAL NOT NULL,
+            new_stock REAL NOT NULL,
+            unit_cost_snapshot REAL NOT NULL,
+            unit_price_snapshot REAL NOT NULL,
+            total_cost_delta_snapshot REAL NOT NULL,
+            total_revenue_delta_snapshot REAL NOT NULL,
+            reason TEXT,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_recipe_inv_movements_rec_created ON recipe_inventory_movements(recipe_fk, created_at);',
+        );
         await initializeDefaultDatabase(this);
       },
     );
@@ -610,12 +718,23 @@ class AppDatabase extends _$AppDatabase {
     bool includeDeleted = false,
     String? groupId,
   }) {
+    if (groupId != null && groupId.isNotEmpty) {
+      final delFilter = includeDeleted ? '' : 'AND i.is_deleted = 0';
+      return customSelect(
+        '''
+        SELECT DISTINCT i.* FROM ingredients i
+        LEFT JOIN recipe_ingredients ri ON ri.ingredient_fk = i.ingredient_pk
+        LEFT JOIN recipe_spaces rs ON rs.recipe_id = ri.recipe_fk AND rs.is_deleted = 0
+        WHERE (i.group_id = ?1 OR rs.space_id = ?1) $delFilter
+        ORDER BY i.name ASC
+        ''',
+        variables: [Variable.withString(groupId)],
+        readsFrom: {ingredients, recipeIngredients, recipeSpaces},
+      ).watch().map((rows) => rows.map((r) => ingredients.map(r.data)).toList());
+    }
     final query = select(ingredients);
     if (!includeDeleted) {
       query.where((t) => t.isDeleted.equals(false));
-    }
-    if (groupId != null && groupId.isNotEmpty) {
-      query.where((t) => t.groupId.equals(groupId));
     }
     return (query..orderBy([(t) => OrderingTerm(expression: t.name)])).watch();
   }
@@ -628,6 +747,26 @@ class AppDatabase extends _$AppDatabase {
     return into(ingredients).insert(withTime);
   }
 
+  double _computeUnitCostInStockUnit(
+    Ingredient ing,
+    Unit? ingUnit,
+    Unit? stockUnit,
+  ) {
+    if (ing.quantityForCost <= 0 || !ing.cost.isFinite) return 0.0;
+    final costPerIngUnit = ing.cost / ing.quantityForCost;
+    if (ingUnit != null &&
+        stockUnit != null &&
+        ingUnit.category != null &&
+        ingUnit.category == stockUnit.category &&
+        ingUnit.factorToBase.isFinite &&
+        ingUnit.factorToBase > 0 &&
+        stockUnit.factorToBase.isFinite &&
+        stockUnit.factorToBase > 0) {
+      return costPerIngUnit * (stockUnit.factorToBase / ingUnit.factorToBase);
+    }
+    return costPerIngUnit;
+  }
+
   Future<void> updateIngredientStock({
     required String ingredientPk,
     double? currentStock,
@@ -636,8 +775,14 @@ class AppDatabase extends _$AppDatabase {
     double? costPerStockUnit,
     double? cost,
     double? quantityForCost,
+    String movementType = 'exact_adjustment',
+    String? reason,
   }) async {
     await transaction(() async {
+      final existing = await getIngredientById(
+        ingredientPk,
+        includeDeleted: true,
+      );
       final now = DateTime.now();
       final clampedStock = currentStock != null
           ? (currentStock < 0 ? 0.0 : currentStock)
@@ -666,6 +811,44 @@ class AppDatabase extends _$AppDatabase {
           dateTimeModified: Value(now),
         ),
       );
+
+      if (existing != null && clampedStock != null) {
+        final previous = existing.currentStock ?? 0.0;
+        final delta = clampedStock - previous;
+        if (delta.abs() > 1e-9) {
+          final allUnits = await getAllUnits();
+          final unitMap = {for (final u in allUnits) u.unitPk: u};
+          final effectiveIng = existing.copyWith(
+            cost: cost ?? existing.cost,
+            quantityForCost: quantityForCost ?? existing.quantityForCost,
+            stockUnit: Value(stockUnit ?? existing.stockUnit),
+          );
+          final ingUnit = unitMap[effectiveIng.unitFk];
+          final effStockUnitPk = effectiveIng.stockUnit ?? effectiveIng.unitFk;
+          final effStockUnit = unitMap[effStockUnitPk];
+          final unitCostInStock = _computeUnitCostInStockUnit(
+            effectiveIng,
+            ingUnit,
+            effStockUnit,
+          );
+          await into(inventoryMovements).insert(
+            InventoryMovementsCompanion.insert(
+              ingredientFk: existing.ingredientPk,
+              ingredientNameSnapshot: existing.name,
+              groupId: Value(existing.groupId),
+              movementType: movementType,
+              previousStock: previous,
+              deltaStock: delta,
+              newStock: clampedStock,
+              stockUnitPk: Value(effStockUnitPk),
+              unitCostInStockUnitSnapshot: unitCostInStock,
+              totalValueDeltaSnapshot: delta * unitCostInStock,
+              reason: Value(reason),
+              createdAt: Value(now),
+            ),
+          );
+        }
+      }
     });
   }
 
@@ -673,29 +856,56 @@ class AppDatabase extends _$AppDatabase {
     required String recipePk,
     double multiplier = 1.0,
   }) async {
-    await transaction(() async {
-      final rIngs = await (select(
-        recipeIngredients,
-      )..where((t) => t.recipeFk.equals(recipePk))).get();
-      if (rIngs.isEmpty) return;
+    await executeRecipeProduction(
+      recipePk: recipePk,
+      multiplier: multiplier,
+    );
+  }
 
+  Future<RecipeProductionResult> executeRecipeProduction({
+    required String recipePk,
+    double multiplier = 1.0,
+    double? customPortions,
+    Map<String, double>? ingredientAmountOverrides,
+    Set<String>? excludedIngredientPks,
+    String? spaceId,
+    String? notes,
+  }) async {
+    return transaction(() async {
+      final detail = await getRecipeDetail(recipePk);
+      final recipe = detail.recipe;
       final allUnits = await getAllUnits();
       final unitMap = {for (final u in allUnits) u.unitPk: u};
       final now = DateTime.now();
+      final productionPk = const Uuid().v4();
+      final portionsProduced =
+          customPortions ?? (recipe.defaultYield * multiplier);
 
-      for (final ri in rIngs) {
-        final ing = await getIngredientById(ri.ingredientFk);
-        if (ing == null) continue;
+      double totalCost = 0.0;
+      final deductedItems = <ProducedIngredientDeduction>[];
+      final lowStockAlerts = <String>[];
+
+      for (final item in detail.ingredients) {
+        final ing = item.ingredient;
+        if (ing.isDeleted) continue;
+        if (excludedIngredientPks != null &&
+            excludedIngredientPks.contains(ing.ingredientPk)) {
+          continue;
+        }
 
         final ingUnit = unitMap[ing.unitFk];
-        final stockUnit = ing.stockUnit != null
-            ? allUnits
-                  .where(
-                    (u) => u.unitPk == ing.stockUnit || u.symbol == ing.stockUnit,
-                  )
-                  .firstOrNull
-            : null;
-        double deductAmount = ri.amountNeeded * multiplier;
+        final stockUnitPk = ing.stockUnit ?? ing.unitFk;
+        final stockUnit =
+            allUnits
+                .where((u) => u.unitPk == stockUnitPk || u.symbol == stockUnitPk)
+                .firstOrNull ??
+            ingUnit;
+
+        final baseAmount =
+            ingredientAmountOverrides?[ing.ingredientPk] ??
+            (item.entry.amountNeeded * multiplier);
+
+        double deductAmount = baseAmount;
         if (ingUnit != null &&
             stockUnit != null &&
             ingUnit.category != null &&
@@ -705,14 +915,23 @@ class AppDatabase extends _$AppDatabase {
             stockUnit.factorToBase.isFinite &&
             stockUnit.factorToBase > 0) {
           deductAmount =
-              (ri.amountNeeded * multiplier) *
-              (ingUnit.factorToBase / stockUnit.factorToBase);
+              baseAmount * (ingUnit.factorToBase / stockUnit.factorToBase);
         }
 
-        final current = ing.currentStock ?? 0.0;
-        final nextStock = (current - deductAmount) < 0
+        final unitCostInStock = _computeUnitCostInStockUnit(
+          ing,
+          ingUnit,
+          stockUnit,
+        );
+        final itemCost = deductAmount * unitCostInStock;
+        totalCost += itemCost;
+
+        final previous = ing.currentStock ?? 0.0;
+        final nextStock = (previous - deductAmount) < 0
             ? 0.0
-            : (current - deductAmount);
+            : (previous - deductAmount);
+        final actualDelta = nextStock - previous;
+
         await (update(
           ingredients,
         )..where((t) => t.ingredientPk.equals(ing.ingredientPk))).write(
@@ -722,8 +941,466 @@ class AppDatabase extends _$AppDatabase {
             dateTimeModified: Value(now),
           ),
         );
+
+        await into(inventoryMovements).insert(
+          InventoryMovementsCompanion.insert(
+            ingredientFk: ing.ingredientPk,
+            ingredientNameSnapshot: ing.name,
+            groupId: Value(ing.groupId ?? spaceId),
+            movementType: 'recipe_production',
+            recipeProductionFk: Value(productionPk),
+            recipeFk: Value(recipe.recipePk),
+            previousStock: previous,
+            deltaStock: actualDelta,
+            newStock: nextStock,
+            stockUnitPk: Value(stockUnit?.unitPk ?? stockUnitPk),
+            unitCostInStockUnitSnapshot: unitCostInStock,
+            totalValueDeltaSnapshot: actualDelta * unitCostInStock,
+            reason: Value(recipe.name),
+            createdAt: Value(now),
+          ),
+        );
+
+        if (ing.minimumStock != null &&
+            nextStock <= ing.minimumStock! &&
+            previous > ing.minimumStock!) {
+          lowStockAlerts.add(ing.name);
+        }
+
+        deductedItems.add(
+          ProducedIngredientDeduction(
+            ingredientPk: ing.ingredientPk,
+            name: ing.name,
+            previousStock: previous,
+            deductedAmount: deductAmount,
+            newStock: nextStock,
+            unitSymbol: stockUnit?.symbol ?? ingUnit?.symbol ?? '',
+          ),
+        );
+      }
+
+      final unitPrice = recipe.targetPricePerPortion;
+      final totalRevenue = unitPrice * portionsProduced;
+      final totalProfit = totalRevenue - totalCost;
+
+      await into(recipeProductions).insert(
+        RecipeProductionsCompanion.insert(
+          productionPk: Value(productionPk),
+          recipeFk: recipe.recipePk,
+          recipeNameSnapshot: recipe.name,
+          categorySnapshot: Value(recipe.category),
+          spaceId: Value(spaceId ?? recipe.groupId),
+          multiplier: Value(multiplier),
+          portionsProduced: portionsProduced,
+          yieldNameSnapshot: recipe.yieldName,
+          totalCostSnapshot: totalCost,
+          unitPriceSnapshot: unitPrice,
+          totalRevenueSnapshot: totalRevenue,
+          totalProfitSnapshot: totalProfit,
+          notes: Value(notes),
+          producedAt: Value(now),
+        ),
+      );
+
+      // Increment prepared recipe stock (+multiplier, e.g. 1x Tarta = +1)
+      final prevRecipeStock = recipe.currentStock ?? 0.0;
+      final nextRecipeStock = prevRecipeStock + multiplier;
+      await (update(
+        recipes,
+      )..where((t) => t.recipePk.equals(recipe.recipePk))).write(
+        RecipesCompanion(
+          currentStock: Value(nextRecipeStock),
+          lastStockUpdate: Value(now),
+          dateTimeModified: Value(now),
+        ),
+      );
+
+      await into(recipeInventoryMovements).insert(
+        RecipeInventoryMovementsCompanion.insert(
+          recipeFk: recipe.recipePk,
+          recipeNameSnapshot: recipe.name,
+          spaceId: Value(spaceId ?? recipe.groupId),
+          movementType: 'recipe_production',
+          recipeProductionFk: Value(productionPk),
+          previousStock: prevRecipeStock,
+          deltaStock: multiplier,
+          newStock: nextRecipeStock,
+          unitCostSnapshot: multiplier > 0 ? totalCost / multiplier : 0.0,
+          unitPriceSnapshot: multiplier > 0 ? totalRevenue / multiplier : 0.0,
+          totalCostDeltaSnapshot: totalCost,
+          totalRevenueDeltaSnapshot: totalRevenue,
+          reason: Value(recipe.name),
+          createdAt: Value(now),
+        ),
+      );
+
+      return RecipeProductionResult(
+        productionPk: productionPk,
+        recipePk: recipe.recipePk,
+        recipeName: recipe.name,
+        multiplier: multiplier,
+        portionsProduced: portionsProduced,
+        totalCost: totalCost,
+        totalRevenue: totalRevenue,
+        totalProfit: totalProfit,
+        deductedItems: deductedItems,
+        lowStockAlerts: lowStockAlerts,
+      );
+    });
+  }
+
+  Future<void> revertRecipeProduction(String productionPk) async {
+    await transaction(() async {
+      final prod =
+          (await (select(recipeProductions)
+                    ..where((t) => t.productionPk.equals(productionPk))
+                    ..limit(1))
+                  .get())
+              .firstOrNull;
+      if (prod == null || prod.isReverted) return;
+
+      final now = DateTime.now();
+      final movements =
+          await (select(inventoryMovements)..where(
+                (t) =>
+                    t.recipeProductionFk.equals(productionPk) &
+                    t.movementType.equals('recipe_production'),
+              ))
+              .get();
+
+      for (final mov in movements) {
+        final ing = await getIngredientById(
+          mov.ingredientFk,
+          includeDeleted: true,
+        );
+        if (ing == null) continue;
+        final previous = ing.currentStock ?? 0.0;
+        final restoreDelta = -mov.deltaStock; // deltaStock was negative
+        final nextStock = (previous + restoreDelta) < 0
+            ? 0.0
+            : (previous + restoreDelta);
+
+        await (update(
+          ingredients,
+        )..where((t) => t.ingredientPk.equals(ing.ingredientPk))).write(
+          IngredientsCompanion(
+            currentStock: Value(nextStock),
+            lastStockUpdate: Value(now),
+            dateTimeModified: Value(now),
+          ),
+        );
+
+        await into(inventoryMovements).insert(
+          InventoryMovementsCompanion.insert(
+            ingredientFk: ing.ingredientPk,
+            ingredientNameSnapshot: ing.name,
+            groupId: Value(mov.groupId),
+            movementType: 'revert',
+            recipeProductionFk: Value(productionPk),
+            recipeFk: Value(mov.recipeFk),
+            previousStock: previous,
+            deltaStock: nextStock - previous,
+            newStock: nextStock,
+            stockUnitPk: Value(mov.stockUnitPk),
+            unitCostInStockUnitSnapshot: mov.unitCostInStockUnitSnapshot,
+            totalValueDeltaSnapshot:
+                (nextStock - previous) * mov.unitCostInStockUnitSnapshot,
+            reason: Value('Revert: ${prod.recipeNameSnapshot}'),
+            createdAt: Value(now),
+          ),
+        );
+      }
+
+      // Revert prepared recipe stock
+      final recipeRow =
+          (await (select(recipes)
+                    ..where((t) => t.recipePk.equals(prod.recipeFk))
+                    ..limit(1))
+                  .get())
+              .firstOrNull;
+      if (recipeRow != null) {
+        final prevRecStock = recipeRow.currentStock ?? 0.0;
+        final nextRecStock = (prevRecStock - prod.multiplier) < 0
+            ? 0.0
+            : (prevRecStock - prod.multiplier);
+        await (update(
+          recipes,
+        )..where((t) => t.recipePk.equals(recipeRow.recipePk))).write(
+          RecipesCompanion(
+            currentStock: Value(nextRecStock),
+            lastStockUpdate: Value(now),
+            dateTimeModified: Value(now),
+          ),
+        );
+        await into(recipeInventoryMovements).insert(
+          RecipeInventoryMovementsCompanion.insert(
+            recipeFk: recipeRow.recipePk,
+            recipeNameSnapshot: recipeRow.name,
+            spaceId: Value(prod.spaceId),
+            movementType: 'revert',
+            recipeProductionFk: Value(productionPk),
+            previousStock: prevRecStock,
+            deltaStock: nextRecStock - prevRecStock,
+            newStock: nextRecStock,
+            unitCostSnapshot: prod.multiplier > 0
+                ? prod.totalCostSnapshot / prod.multiplier
+                : 0.0,
+            unitPriceSnapshot: prod.multiplier > 0
+                ? prod.totalRevenueSnapshot / prod.multiplier
+                : 0.0,
+            totalCostDeltaSnapshot: -prod.totalCostSnapshot,
+            totalRevenueDeltaSnapshot: -prod.totalRevenueSnapshot,
+            reason: Value('Revert: ${prod.recipeNameSnapshot}'),
+            createdAt: Value(now),
+          ),
+        );
+      }
+
+      await (update(
+        recipeProductions,
+      )..where((t) => t.productionPk.equals(productionPk))).write(
+        RecipeProductionsCompanion(
+          isReverted: const Value(true),
+          revertedAt: Value(now),
+        ),
+      );
+    });
+  }
+
+  Stream<List<RecipeProduction>> watchRecipeProductions({
+    DateTime? from,
+    DateTime? to,
+    String? spaceId,
+    String? recipePk,
+    bool includeReverted = false,
+    int? limit,
+  }) {
+    final query = select(recipeProductions);
+    if (!includeReverted) {
+      query.where((t) => t.isReverted.equals(false));
+    }
+    if (from != null) {
+      query.where((t) => t.producedAt.isBiggerOrEqualValue(from));
+    }
+    if (to != null) {
+      query.where((t) => t.producedAt.isSmallerOrEqualValue(to));
+    }
+    if (spaceId != null && spaceId.isNotEmpty) {
+      query.where((t) => t.spaceId.equals(spaceId));
+    }
+    if (recipePk != null && recipePk.isNotEmpty) {
+      query.where((t) => t.recipeFk.equals(recipePk));
+    }
+    query.orderBy([
+      (t) => OrderingTerm(expression: t.producedAt, mode: OrderingMode.desc),
+    ]);
+    if (limit != null) {
+      query.limit(limit);
+    }
+    return query.watch();
+  }
+
+  Stream<List<InventoryMovement>> watchInventoryMovements({
+    String? ingredientPk,
+    String? movementType,
+    DateTime? from,
+    DateTime? to,
+    int? limit,
+  }) {
+    final query = select(inventoryMovements);
+    if (ingredientPk != null && ingredientPk.isNotEmpty) {
+      query.where((t) => t.ingredientFk.equals(ingredientPk));
+    }
+    if (movementType != null && movementType.isNotEmpty) {
+      query.where((t) => t.movementType.equals(movementType));
+    }
+    if (from != null) {
+      query.where((t) => t.createdAt.isBiggerOrEqualValue(from));
+    }
+    if (to != null) {
+      query.where((t) => t.createdAt.isSmallerOrEqualValue(to));
+    }
+    query.orderBy([
+      (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+    ]);
+    if (limit != null) {
+      query.limit(limit);
+    }
+    return query.watch();
+  }
+
+  Future<void> updateRecipeStock({
+    required String recipePk,
+    double? currentStock,
+    double? minimumStock,
+    String movementType = 'exact_adjustment',
+    String? reason,
+    double unitCostSnapshot = 0.0,
+    double unitPriceSnapshot = 0.0,
+    String? spaceId,
+  }) async {
+    await transaction(() async {
+      final existing =
+          (await (select(recipes)
+                    ..where((t) => t.recipePk.equals(recipePk))
+                    ..limit(1))
+                  .get())
+              .firstOrNull;
+      final now = DateTime.now();
+      final clampedStock = currentStock != null
+          ? (currentStock < 0 ? 0.0 : currentStock)
+          : null;
+      await (update(recipes)..where((t) => t.recipePk.equals(recipePk))).write(
+        RecipesCompanion(
+          currentStock: clampedStock != null
+              ? Value(clampedStock)
+              : const Value.absent(),
+          minimumStock: minimumStock != null
+              ? Value(minimumStock)
+              : const Value.absent(),
+          lastStockUpdate: Value(now),
+          dateTimeModified: Value(now),
+        ),
+      );
+
+      if (existing != null && clampedStock != null) {
+        final previous = existing.currentStock ?? 0.0;
+        final delta = clampedStock - previous;
+        if (delta.abs() > 1e-9) {
+          await into(recipeInventoryMovements).insert(
+            RecipeInventoryMovementsCompanion.insert(
+              recipeFk: existing.recipePk,
+              recipeNameSnapshot: existing.name,
+              spaceId: Value(spaceId ?? existing.groupId),
+              movementType: movementType,
+              previousStock: previous,
+              deltaStock: delta,
+              newStock: clampedStock,
+              unitCostSnapshot: unitCostSnapshot,
+              unitPriceSnapshot: unitPriceSnapshot,
+              totalCostDeltaSnapshot: delta * unitCostSnapshot,
+              totalRevenueDeltaSnapshot: delta * unitPriceSnapshot,
+              reason: Value(reason ?? existing.name),
+              createdAt: Value(now),
+            ),
+          );
+        }
       }
     });
+  }
+
+  Stream<List<RecipeInventoryMovement>> watchRecipeInventoryMovements({
+    String? recipePk,
+    int? limit,
+  }) {
+    final query = select(recipeInventoryMovements);
+    if (recipePk != null && recipePk.isNotEmpty) {
+      query.where((t) => t.recipeFk.equals(recipePk));
+    }
+    query.orderBy([
+      (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+    ]);
+    if (limit != null) {
+      query.limit(limit);
+    }
+    return query.watch();
+  }
+
+  Future<ProductionStatisticsSummary> getProductionStatisticsSummary({
+    required DateTime from,
+    required DateTime to,
+    String? spaceId,
+  }) async {
+    final prodQuery = select(recipeProductions)
+      ..where(
+        (t) =>
+            t.isReverted.equals(false) &
+            t.producedAt.isBiggerOrEqualValue(from) &
+            t.producedAt.isSmallerOrEqualValue(to),
+      );
+    if (spaceId != null && spaceId.isNotEmpty) {
+      prodQuery.where((t) => t.spaceId.equals(spaceId));
+    }
+    final prods = await prodQuery.get();
+
+    final movQuery = select(inventoryMovements)
+      ..where(
+        (t) =>
+            t.createdAt.isBiggerOrEqualValue(from) &
+            t.createdAt.isSmallerOrEqualValue(to),
+      );
+    if (spaceId != null && spaceId.isNotEmpty) {
+      movQuery.where((t) => t.groupId.equals(spaceId));
+    }
+    final movs = await movQuery.get();
+
+    double totalCost = 0.0;
+    double totalRevenue = 0.0;
+    double totalProfit = 0.0;
+    double totalPortions = 0.0;
+    final dailyBuckets = <DateTime, DailyProductionBucket>{};
+    final recipeAgg = <String, RecipeProductionStat>{};
+
+    for (final p in prods) {
+      totalCost += p.totalCostSnapshot;
+      totalRevenue += p.totalRevenueSnapshot;
+      totalProfit += p.totalProfitSnapshot;
+      totalPortions += p.portionsProduced;
+
+      final day = DateTime(
+        p.producedAt.year,
+        p.producedAt.month,
+        p.producedAt.day,
+      );
+      final prevDay = dailyBuckets[day];
+      dailyBuckets[day] = DailyProductionBucket(
+        date: day,
+        batches: (prevDay?.batches ?? 0) + 1,
+        portions: (prevDay?.portions ?? 0.0) + p.portionsProduced,
+        cost: (prevDay?.cost ?? 0.0) + p.totalCostSnapshot,
+        revenue: (prevDay?.revenue ?? 0.0) + p.totalRevenueSnapshot,
+        profit: (prevDay?.profit ?? 0.0) + p.totalProfitSnapshot,
+      );
+
+      final prevRec = recipeAgg[p.recipeFk];
+      recipeAgg[p.recipeFk] = RecipeProductionStat(
+        recipePk: p.recipeFk,
+        recipeName: p.recipeNameSnapshot,
+        batches: (prevRec?.batches ?? 0) + 1,
+        portions: (prevRec?.portions ?? 0.0) + p.portionsProduced,
+        totalCost: (prevRec?.totalCost ?? 0.0) + p.totalCostSnapshot,
+        totalRevenue: (prevRec?.totalRevenue ?? 0.0) + p.totalRevenueSnapshot,
+        totalProfit: (prevRec?.totalProfit ?? 0.0) + p.totalProfitSnapshot,
+      );
+    }
+
+    double totalRestockSpend = 0.0;
+    double totalWasteCost = 0.0;
+    for (final m in movs) {
+      if (m.movementType == 'restock' && m.totalValueDeltaSnapshot > 0) {
+        totalRestockSpend += m.totalValueDeltaSnapshot;
+      } else if (m.movementType == 'consume_waste' &&
+          m.totalValueDeltaSnapshot < 0) {
+        totalWasteCost += m.totalValueDeltaSnapshot.abs();
+      }
+    }
+
+    final sortedDaily = dailyBuckets.values.toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    final sortedRecipes = recipeAgg.values.toList()
+      ..sort((a, b) => b.batches.compareTo(a.batches));
+
+    return ProductionStatisticsSummary(
+      totalBatches: prods.length,
+      totalPortions: totalPortions,
+      totalProductionCost: totalCost,
+      totalEstimatedRevenue: totalRevenue,
+      totalEstimatedProfit: totalProfit,
+      totalRestockSpend: totalRestockSpend,
+      totalWasteCost: totalWasteCost,
+      dailyBuckets: sortedDaily,
+      topRecipes: sortedRecipes,
+    );
   }
 
   Future<bool> updateIngredient(Ingredient ingredient) async {
@@ -2048,6 +2725,55 @@ class AppDatabase extends _$AppDatabase {
           }
         }
       }
+
+      // 4. Merge RecipeProductions & InventoryMovements (non-destructive append)
+      final remoteProductions = await remoteDb.select(remoteDb.recipeProductions).get();
+      for (final rp in remoteProductions) {
+        await into(recipeProductions).insert(
+          RecipeProductionsCompanion.insert(
+            productionPk: Value(rp.productionPk),
+            recipeFk: rp.recipeFk,
+            recipeNameSnapshot: rp.recipeNameSnapshot,
+            categorySnapshot: Value(rp.categorySnapshot),
+            spaceId: Value(rp.spaceId),
+            multiplier: Value(rp.multiplier),
+            portionsProduced: rp.portionsProduced,
+            yieldNameSnapshot: rp.yieldNameSnapshot,
+            totalCostSnapshot: rp.totalCostSnapshot,
+            unitPriceSnapshot: rp.unitPriceSnapshot,
+            totalRevenueSnapshot: rp.totalRevenueSnapshot,
+            totalProfitSnapshot: rp.totalProfitSnapshot,
+            notes: Value(rp.notes),
+            producedAt: Value(rp.producedAt),
+            isReverted: Value(rp.isReverted),
+            revertedAt: Value(rp.revertedAt),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+      final remoteMovements = await remoteDb.select(remoteDb.inventoryMovements).get();
+      for (final im in remoteMovements) {
+        await into(inventoryMovements).insert(
+          InventoryMovementsCompanion.insert(
+            movementPk: Value(im.movementPk),
+            ingredientFk: im.ingredientFk,
+            ingredientNameSnapshot: im.ingredientNameSnapshot,
+            groupId: Value(im.groupId),
+            movementType: im.movementType,
+            recipeProductionFk: Value(im.recipeProductionFk),
+            recipeFk: Value(im.recipeFk),
+            previousStock: im.previousStock,
+            deltaStock: im.deltaStock,
+            newStock: im.newStock,
+            stockUnitPk: Value(im.stockUnitPk),
+            unitCostInStockUnitSnapshot: im.unitCostInStockUnitSnapshot,
+            totalValueDeltaSnapshot: im.totalValueDeltaSnapshot,
+            reason: Value(im.reason),
+            createdAt: Value(im.createdAt),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
     });
 
     return SyncMergeResult(
@@ -2115,6 +2841,112 @@ class RecipeIngredientWithData {
   final Ingredient ingredient;
 
   RecipeIngredientWithData({required this.entry, required this.ingredient});
+}
+
+class ProducedIngredientDeduction {
+  final String ingredientPk;
+  final String name;
+  final double previousStock;
+  final double deductedAmount;
+  final double newStock;
+  final String unitSymbol;
+
+  const ProducedIngredientDeduction({
+    required this.ingredientPk,
+    required this.name,
+    required this.previousStock,
+    required this.deductedAmount,
+    required this.newStock,
+    required this.unitSymbol,
+  });
+}
+
+class RecipeProductionResult {
+  final String productionPk;
+  final String recipePk;
+  final String recipeName;
+  final double multiplier;
+  final double portionsProduced;
+  final double totalCost;
+  final double totalRevenue;
+  final double totalProfit;
+  final List<ProducedIngredientDeduction> deductedItems;
+  final List<String> lowStockAlerts;
+
+  const RecipeProductionResult({
+    required this.productionPk,
+    required this.recipePk,
+    required this.recipeName,
+    required this.multiplier,
+    required this.portionsProduced,
+    required this.totalCost,
+    required this.totalRevenue,
+    required this.totalProfit,
+    required this.deductedItems,
+    required this.lowStockAlerts,
+  });
+}
+
+class DailyProductionBucket {
+  final DateTime date;
+  final int batches;
+  final double portions;
+  final double cost;
+  final double revenue;
+  final double profit;
+
+  const DailyProductionBucket({
+    required this.date,
+    required this.batches,
+    required this.portions,
+    required this.cost,
+    required this.revenue,
+    required this.profit,
+  });
+}
+
+class RecipeProductionStat {
+  final String recipePk;
+  final String recipeName;
+  final int batches;
+  final double portions;
+  final double totalCost;
+  final double totalRevenue;
+  final double totalProfit;
+
+  const RecipeProductionStat({
+    required this.recipePk,
+    required this.recipeName,
+    required this.batches,
+    required this.portions,
+    required this.totalCost,
+    required this.totalRevenue,
+    required this.totalProfit,
+  });
+}
+
+class ProductionStatisticsSummary {
+  final int totalBatches;
+  final double totalPortions;
+  final double totalProductionCost;
+  final double totalEstimatedRevenue;
+  final double totalEstimatedProfit;
+  final double totalRestockSpend;
+  final double totalWasteCost;
+  final List<DailyProductionBucket> dailyBuckets;
+  final List<RecipeProductionStat> topRecipes;
+
+  const ProductionStatisticsSummary({
+    required this.totalBatches,
+    required this.totalPortions,
+    required this.totalProductionCost,
+    required this.totalEstimatedRevenue,
+    required this.totalEstimatedProfit,
+    required this.totalRestockSpend,
+    required this.totalWasteCost,
+    required this.dailyBuckets,
+    required this.topRecipes,
+  });
 }
 
 QueryExecutor _openConnection() {

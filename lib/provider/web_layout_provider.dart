@@ -288,3 +288,16 @@ final recipeCanLeaveGuardProvider =
   RecipeCanLeaveGuardNotifier.new,
 );
 
+class MobileTabRequestNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void requestTab(int index) => state = index;
+  void clear() => state = null;
+}
+
+final mobileTabRequestProvider =
+    NotifierProvider<MobileTabRequestNotifier, int?>(
+  MobileTabRequestNotifier.new,
+);
+

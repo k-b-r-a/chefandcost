@@ -587,6 +587,9 @@ class FirestoreSyncService {
       'groupId': r.groupId,
       'space_ids': detail.spaceIds,
       'category': r.category,
+      'current_stock': r.currentStock,
+      'minimum_stock': r.minimumStock,
+      'last_stock_update': r.lastStockUpdate?.toIso8601String(),
       'dateCreated': r.dateCreated.toIso8601String(),
       'dateTimeModified': r.dateTimeModified?.toIso8601String(),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -661,6 +664,9 @@ class FirestoreSyncService {
       archived: d['archived'] as bool? ?? false,
       groupId: (d['group_id'] ?? d['groupId']) as String?,
       category: (d['category'] ?? d['category_id'] as String?) ?? 'cocina',
+      currentStock: (d['current_stock'] ?? d['currentStock'] as num?)?.toDouble() ?? 0.0,
+      minimumStock: (d['minimum_stock'] ?? d['minimumStock'] as num?)?.toDouble(),
+      lastStockUpdate: _parseNullableDate(d['last_stock_update'] ?? d['lastStockUpdate']),
     );
     final rawSpaceIds = d.containsKey('space_ids')
         ? d['space_ids']

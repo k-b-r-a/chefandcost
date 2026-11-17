@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import '../l10n/app_localizations.dart';
 import '../provider/database_provider.dart';
+import '../provider/settings_provider.dart';
 import '../utils/recipe_utils.dart';
 import '../utils/ui_utils.dart';
 
@@ -142,6 +143,12 @@ class _InventoryAdjustmentSheetState
         if (newQty <= 0) newQty = 1.0;
       }
 
+      final movementType = switch (_mode) {
+        InventoryAdjustmentMode.restock => 'restock',
+        InventoryAdjustmentMode.consume => 'consume_waste',
+        InventoryAdjustmentMode.exact => 'exact_adjustment',
+      };
+
       await db.updateIngredientStock(
         ingredientPk: widget.ingredient.ingredientPk,
         currentStock: newStock,
@@ -149,10 +156,14 @@ class _InventoryAdjustmentSheetState
         stockUnit: _stockUnitPk,
         cost: newCost,
         quantityForCost: newQty,
+        movementType: movementType,
       );
 
       if (mounted) {
         ref.invalidate(ingredientsStreamProvider);
+        ref.invalidate(
+          ingredientMovementsStreamProvider(widget.ingredient.ingredientPk),
+        );
         if (newCost != null) {
           ref.invalidate(recipesWithFinancialsStreamProvider);
         }
@@ -172,6 +183,7 @@ class _InventoryAdjustmentSheetState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final settings = ref.watch(settingsProvider);
     final stockUnit = _unitMap[_stockUnitPk];
     final stockSymbol = stockUnit?.symbol ?? '';
     final currentStock = widget.ingredient.currentStock ?? 0.0;
@@ -203,7 +215,7 @@ class _InventoryAdjustmentSheetState
           ),
           const SizedBox(height: 4),
           Text(
-            '${l10n.inventory_current_stock}: ${RecipeUtils.formatNumber(currentStock)} $stockSymbol',
+            '${l10n.inventory_current_stock}: ${RecipeUtils.formatQuantity(currentStock)} $stockSymbol',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -292,7 +304,7 @@ class _InventoryAdjustmentSheetState
             ),
             child: Text(
               l10n.inventory_new_stock_preview(
-                RecipeUtils.formatNumber(newStock),
+                RecipeUtils.formatQuantity(newStock),
                 stockSymbol,
               ),
               style: theme.textTheme.titleSmall?.copyWith(
@@ -321,6 +333,7 @@ class _InventoryAdjustmentSheetState
                       ),
                       decoration: InputDecoration(
                         labelText: l10n.inventory_new_cost_label,
+                        prefixText: '${settings.currencySymbol} ',
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -357,6 +370,8 @@ class _InventoryAdjustmentSheetState
             ),
           ],
           const SizedBox(height: 20),
+          _buildRecentActivitySection(context, l10n, theme, stockSymbol),
+          const SizedBox(height: 16),
           SizedBox(
             height: 48,
             child: FilledButton(
@@ -372,6 +387,74 @@ class _InventoryAdjustmentSheetState
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRecentActivitySection(
+    BuildContext context,
+    AppLocalizations l10n,
+    ThemeData theme,
+    String stockSymbol,
+  ) {
+    final movementsAsync = ref.watch(
+      ingredientMovementsStreamProvider(widget.ingredient.ingredientPk),
+    );
+
+    return movementsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (movements) {
+        if (movements.isEmpty) {
+          return Text(
+            l10n.inventory_no_recent_activity,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          );
+        }
+        final recent = movements.take(5).toList();
+        return ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: Text(
+            l10n.inventory_recent_activity,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          children: recent.map((m) {
+            final isPositive = m.deltaStock >= 0;
+            final sign = isPositive ? '+' : '';
+            final label = switch (m.movementType) {
+              'recipe_production' => l10n.inventory_movement_production(
+                m.reason ?? '',
+              ),
+              'restock' => l10n.inventory_movement_restock,
+              'consume_waste' => l10n.inventory_movement_waste,
+              'revert' => l10n.inventory_movement_revert,
+              _ => l10n.inventory_movement_exact,
+            };
+            return ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              trailing: Text(
+                '$sign${RecipeUtils.formatQuantity(m.deltaStock)} $stockSymbol',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isPositive ? Colors.green : theme.colorScheme.error,
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

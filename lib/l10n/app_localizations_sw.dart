@@ -2391,4 +2391,73 @@ class AppLocalizationsSw extends AppLocalizations {
   @override
   String get recipe_deduct_insufficient_warning =>
       'Some ingredients have insufficient stock and will be set to 0.';
+
+  @override
+  String get make_recipe_title => 'Make Recipe';
+
+  @override
+  String get make_recipe_button => 'Make';
+
+  @override
+  String get make_recipe_batches_label => 'Batches';
+
+  @override
+  String get make_recipe_portions_label => 'Portions';
+
+  @override
+  String make_recipe_max_makeable(
+    String batches,
+    String portions,
+    String yieldName,
+  ) {
+    return 'Stock for up to ${batches}x ($portions $yieldName)';
+  }
+
+  @override
+  String make_recipe_bottleneck(String ingredient) {
+    return 'Limited by $ingredient';
+  }
+
+  @override
+  String make_recipe_after_stock(String amount, String unit) {
+    return 'After: $amount $unit';
+  }
+
+  @override
+  String get make_recipe_undo_action => 'Undo';
+
+  @override
+  String get make_recipe_reverted_toast =>
+      'Production reverted and stock restored';
+
+  @override
+  String make_recipe_low_stock_alert(String ingredients) {
+    return 'Low stock alert: $ingredients';
+  }
+
+  @override
+  String get inventory_recent_activity => 'Recent Activity';
+
+  @override
+  String get inventory_no_recent_activity => 'No recent stock movements';
+
+  @override
+  String inventory_movement_production(String recipe) {
+    return 'Made $recipe';
+  }
+
+  @override
+  String get inventory_movement_restock => 'Restock';
+
+  @override
+  String get inventory_movement_waste => 'Consume / Waste';
+
+  @override
+  String get inventory_movement_exact => 'Exact Count';
+
+  @override
+  String get inventory_movement_revert => 'Reverted';
+
+  @override
+  String get share_button => 'Share';
 }

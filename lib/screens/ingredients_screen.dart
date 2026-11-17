@@ -20,9 +20,12 @@ import '../utils/ad_interleaving_helper.dart';
 import '../widgets/inline_ad_card.dart';
 import '../services/app_tutorial_service.dart';
 import '../widgets/inventory_adjustment_sheet.dart';
+import '../widgets/inventory_workspace_chip.dart';
 
 class IngredientsScreen extends ConsumerStatefulWidget {
-  const IngredientsScreen({super.key});
+  final bool isWebWorkspace;
+
+  const IngredientsScreen({super.key, this.isWebWorkspace = false});
 
   @override
   ConsumerState<IngredientsScreen> createState() => _IngredientsScreenState();
@@ -141,30 +144,6 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
           )
         : null;
 
-    final int alertCount = ingredientsAsync.maybeWhen(
-      data: (ingredients) {
-        final units = unitsAsync.value ?? const <Unit>[];
-        final unitMap = _getUnitMap(units);
-        int count = 0;
-        for (final ing in ingredients) {
-          final metrics = IngredientInventoryMetrics.fromIngredient(
-            ing,
-            ingredientUnit: unitMap[ing.unitFk],
-            stockUnit: unitMap[ing.stockUnit ?? ing.unitFk],
-          );
-          if (metrics.status == InventoryStockStatus.lowStock ||
-              metrics.status == InventoryStockStatus.outOfStock) {
-            count++;
-          }
-        }
-        return count;
-      },
-      orElse: () => 0,
-    );
-
-    final double bottomHeight =
-        activeTab == IngredientsSectionTab.inventory ? 148 : 104;
-
     return Scaffold(
       body: Stack(
         children: [
@@ -176,6 +155,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                 context: context,
                 title: l10n.ingredients_title,
                 controller: _scrollController,
+                showCollapsedTitlePill: false,
                 leading: const AdFreePassButton(),
                 actions: [
                   IconButton(
@@ -190,108 +170,23 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                   ),
                 ],
                 bottom: PreferredSize(
-                  preferredSize: Size.fromHeight(bottomHeight),
+                  preferredSize: Size.fromHeight(widget.isWebWorkspace ? 52 : 96),
                   child: RepaintBoundary(
                     child: SizedBox(
-                      height: bottomHeight,
+                      height: widget.isWebWorkspace ? 52 : 96,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: SegmentedButton<IngredientsSectionTab>(
-                                showSelectedIcon: false,
-                                segments: [
-                                  ButtonSegment(
-                                    value: IngredientsSectionTab.ingredients,
-                                    label: Text(l10n.ingredients_tab_ingredients),
-                                  ),
-                                  ButtonSegment(
-                                    value: IngredientsSectionTab.inventory,
-                                    label: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(l10n.ingredients_tab_inventory),
-                                        if (alertCount > 0) ...[
-                                          const SizedBox(width: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 1,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: theme.colorScheme.error,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                            child: Text(
-                                              '$alertCount',
-                                              style: theme.textTheme.labelSmall
-                                                  ?.copyWith(
-                                                color:
-                                                    theme.colorScheme.onError,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                                selected: {activeTab},
-                                onSelectionChanged: (selection) {
-                                  ref
-                                      .read(
-                                        ingredientsSectionTabProvider.notifier,
-                                      )
-                                      .setTab(selection.first);
-                                },
-                              ),
-                            ),
-                          ),
-                          if (activeTab == IngredientsSectionTab.inventory)
-                            SizedBox(
+                          if (!widget.isWebWorkspace)
+                            const SizedBox(
                               height: 44,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 4,
+                              child: Padding(
+                                padding: EdgeInsets.fromLTRB(16, 6, 16, 2),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: InventoryWorkspaceChip(isCompact: true),
                                 ),
-                                children: [
-                                  _buildStockFilterChip(
-                                    context,
-                                    label: l10n.inventory_filter_all,
-                                    filter: InventoryStockFilter.all,
-                                    current: stockFilter,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _buildStockFilterChip(
-                                    context,
-                                    label: l10n.inventory_filter_low_stock,
-                                    filter: InventoryStockFilter.lowStock,
-                                    current: stockFilter,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _buildStockFilterChip(
-                                    context,
-                                    label: l10n.inventory_filter_out_of_stock,
-                                    filter: InventoryStockFilter.outOfStock,
-                                    current: stockFilter,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _buildStockFilterChip(
-                                    context,
-                                    label: l10n.inventory_filter_in_stock,
-                                    filter: InventoryStockFilter.inStock,
-                                    current: stockFilter,
-                                  ),
-                                ],
                               ),
                             ),
                           SizedBox(
@@ -334,14 +229,26 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                   );
 
                   if (activeTab == IngredientsSectionTab.inventory) {
-                    return _buildInventorySliver(
-                      context: context,
-                      allIngredients: ingredients,
-                      filteredIngredients: filteredIngredients,
-                      units: units,
-                      unitMap: unitMap,
-                      stockFilter: stockFilter,
-                      currencySymbol: settings.currencySymbol,
+                    return TweenAnimationBuilder<double>(
+                      key: const ValueKey('ingredients_inventory_tab_anim'),
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: settings.animationsEnabled
+                          ? const Duration(milliseconds: 220)
+                          : Duration.zero,
+                      curve: Curves.easeOutCubic,
+                      builder: (context, opacity, child) => SliverOpacity(
+                        opacity: opacity,
+                        sliver: child!,
+                      ),
+                      child: _buildInventorySliver(
+                        context: context,
+                        allIngredients: ingredients,
+                        filteredIngredients: filteredIngredients,
+                        units: units,
+                        unitMap: unitMap,
+                        stockFilter: stockFilter,
+                        currencySymbol: settings.currencySymbol,
+                      ),
                     );
                   }
 
@@ -764,30 +671,6 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     }
   }
 
-  Widget _buildStockFilterChip(
-    BuildContext context, {
-    required String label,
-    required InventoryStockFilter filter,
-    required InventoryStockFilter current,
-  }) {
-    final selected = filter == current;
-    return FilterChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) {
-        ref.read(inventoryStockFilterProvider.notifier).setFilter(filter);
-      },
-      visualDensity: VisualDensity.compact,
-    );
-  }
-
-  double _stepSizeForUnit(Unit? unit) {
-    final sym = (unit?.symbol ?? '').toLowerCase();
-    if (sym == 'g' || sym == 'ml') return 100.0;
-    if (sym == 'oz' || sym == 'cup' || sym == 'cups' || sym == 'tz') return 0.5;
-    return 1.0;
-  }
-
   IconData _categoryIconForUnit(Unit? unit) {
     switch (unit?.category) {
       case 'liquid':
@@ -854,6 +737,17 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
       }
     }
 
+    final isAdFree = ref.watch(adProvider.select((s) => s.isAdFree));
+    final isMonetizationAdFree =
+        ref.watch(monetizationProvider.select((s) => s.isAdFree));
+    final bool showAds =
+        !isAdFree && !isMonetizationAdFree && AdService.isSupportedPlatform;
+    final int inventoryVisualCount = AdInterleavingHelper.getVisualCount(
+      displayItems.length,
+      showAds,
+      interval: 10,
+    );
+
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
       sliver: SliverList(
@@ -892,7 +786,25 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                 ),
               );
             }
-            final item = displayItems[index - 1];
+            final visualIndex = index - 1;
+            if (showAds &&
+                AdInterleavingHelper.isAdIndex(
+                  visualIndex,
+                  interval: 10,
+                )) {
+              return InlineAdCard(
+                key: ValueKey('ad_inventory_slot_$visualIndex'),
+                style: InlineAdCardStyle.ingredient,
+              );
+            }
+            final dataIndex = showAds
+                ? AdInterleavingHelper.getDataIndex(
+                    visualIndex,
+                    interval: 10,
+                  )
+                : visualIndex;
+            if (dataIndex >= displayItems.length) return null;
+            final item = displayItems[dataIndex];
             return _buildInventoryCard(
               context: context,
               ingredient: item.ingredient,
@@ -902,7 +814,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
               currencySymbol: currencySymbol,
             );
           },
-          childCount: displayItems.isEmpty ? 2 : displayItems.length + 1,
+          childCount: displayItems.isEmpty ? 2 : inventoryVisualCount + 1,
         ),
       ),
     );
@@ -1021,7 +933,6 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
     final theme = Theme.of(context);
     final stockUnit = unitMap[ingredient.stockUnit ?? ingredient.unitFk];
     final stockSymbol = stockUnit?.symbol ?? '';
-    final step = _stepSizeForUnit(stockUnit);
 
     final (statusLabel, statusColor) = switch (metrics.status) {
       InventoryStockStatus.inStock => (l10n.inventory_status_in_stock, Colors.green),
@@ -1112,7 +1023,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${RecipeUtils.formatNumber(metrics.currentStock)} $stockSymbol',
+                          '${RecipeUtils.formatQuantity(metrics.currentStock)} $stockSymbol'.trim(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -1120,7 +1031,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                         if (minStock != null)
                           Text(
                             l10n.inventory_par_level(
-                              RecipeUtils.formatNumber(minStock),
+                              RecipeUtils.formatQuantity(minStock),
                               stockSymbol,
                             ),
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -1130,34 +1041,23 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                       ],
                     ),
                   ),
-                  IconButton.filledTonal(
-                    icon: const Icon(Icons.remove_rounded, size: 18),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () async {
-                      final next = (metrics.currentStock - step)
-                          .clamp(0.0, double.infinity)
-                          .toDouble();
-                      await ref.read(databaseProvider).updateIngredientStock(
-                        ingredientPk: ingredient.ingredientPk,
-                        currentStock: next,
-                      );
-                      ref.invalidate(ingredientsStreamProvider);
-                    },
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton.filledTonal(
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () async {
-                      final next = metrics.currentStock + step;
-                      await ref.read(databaseProvider).updateIngredientStock(
-                        ingredientPk: ingredient.ingredientPk,
-                        currentStock: next,
-                      );
-                      ref.invalidate(ingredientsStreamProvider);
-                    },
-                  ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              _QuickStockPresetBar(
+                stockUnit: stockUnit,
+                units: units,
+                onAdjust: (delta) async {
+                  final next = (metrics.currentStock + delta)
+                      .clamp(0.0, double.infinity)
+                      .toDouble();
+                  await ref.read(databaseProvider).updateIngredientStock(
+                    ingredientPk: ingredient.ingredientPk,
+                    currentStock: next,
+                    movementType: delta >= 0 ? 'restock' : 'consume_waste',
+                  );
+                  ref.invalidate(ingredientsStreamProvider);
+                },
               ),
               const SizedBox(height: 8),
               ClipRRect(
@@ -1174,6 +1074,67 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _QuickStockPresetBar extends StatefulWidget {
+  final Unit? stockUnit;
+  final List<Unit> units;
+  final Future<void> Function(double delta) onAdjust;
+
+  const _QuickStockPresetBar({
+    required this.stockUnit,
+    required this.units,
+    required this.onAdjust,
+  });
+
+  @override
+  State<_QuickStockPresetBar> createState() => _QuickStockPresetBarState();
+}
+
+class _QuickStockPresetBarState extends State<_QuickStockPresetBar> {
+  bool _isSubtract = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final presets = UnitUtils.quickStockPresetsForUnit(widget.stockUnit);
+    final sign = _isSubtract ? '-' : '+';
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        ActionChip(
+          avatar: Icon(
+            _isSubtract ? Icons.remove_rounded : Icons.add_rounded,
+            size: 16,
+            color: _isSubtract
+                ? theme.colorScheme.error
+                : theme.colorScheme.primary,
+          ),
+          label: Text(sign),
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          onPressed: () => setState(() => _isSubtract = !_isSubtract),
+        ),
+        for (final preset in presets)
+          ActionChip(
+            label: Text('$sign${preset.label}'),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            onPressed: () {
+              final rawDelta = UnitUtils.convertPresetToStockDelta(
+                preset: preset,
+                stockUnit: widget.stockUnit,
+                units: widget.units,
+              );
+              widget.onAdjust(_isSubtract ? -rawDelta : rawDelta);
+            },
+          ),
+      ],
     );
   }
 }

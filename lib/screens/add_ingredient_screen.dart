@@ -167,12 +167,15 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
             : RecipeUtils.parseFormattedNumber(minStockText).clamp(0.0, double.infinity).toDouble();
 
         if (widget.ingredient == null) {
+          final activeGroupId =
+              ref.read(activeGroupProvider)?.id ?? 'group_default_principal';
           await db.insertIngredient(
             IngredientsCompanion.insert(
               name: name,
               cost: cost,
               quantityForCost: quantity,
               unitFk: _selectedUnitPk!,
+              groupId: drift.Value(activeGroupId),
               currentStock: drift.Value(currentStock),
               minimumStock: drift.Value(minimumStock),
               stockUnit: drift.Value(_selectedUnitPk!),
@@ -676,7 +679,7 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                                           title: Text(item.name),
                                           subtitle: Text(
                                             l10n.ingredient_price_per_quantity(
-                                              RecipeUtils.formatNumber(item.cost),
+                                              '${settings.currencySymbol}${RecipeUtils.formatNumber(item.cost)}',
                                               RecipeUtils.formatNumber(
                                                 item.quantityForCost,
                                               ),

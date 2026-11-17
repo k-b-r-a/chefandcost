@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:recipetools/database/database.dart';
+import 'package:recipetools/utils/unit_utils.dart';
 import 'package:recipetools/database/initialize_default_database.dart';
 import 'package:recipetools/database/recipe_category.dart';
 import 'package:recipetools/l10n/app_localizations.dart';
@@ -570,6 +571,114 @@ void main() {
         await tester.pumpAndSettle();
       },
     );
+  });
+
+  group('6. Dynamic Quick-Stock Presets & Unit Conversion', () {
+    const mlUnit = Unit(
+      unitPk: 'u-ml',
+      name: 'Milliliter',
+      symbol: 'ml',
+      category: 'volume',
+      factorToBase: 1.0,
+      isMutable: false,
+    );
+    const lUnit = Unit(
+      unitPk: 'u-l',
+      name: 'Liter',
+      symbol: 'L',
+      category: 'volume',
+      factorToBase: 1000.0,
+      isMutable: false,
+    );
+    const gUnit = Unit(
+      unitPk: 'u-g',
+      name: 'Gram',
+      symbol: 'g',
+      category: 'mass',
+      factorToBase: 1.0,
+      isMutable: false,
+    );
+    const kgUnit = Unit(
+      unitPk: 'u-kg',
+      name: 'Kilogram',
+      symbol: 'kg',
+      category: 'mass',
+      factorToBase: 1000.0,
+      isMutable: false,
+    );
+    const pcsUnit = Unit(
+      unitPk: 'u-pcs',
+      name: 'Pieces',
+      symbol: 'pcs',
+      category: 'count',
+      factorToBase: 1.0,
+      isMutable: false,
+    );
+    const allUnits = [mlUnit, lUnit, gUnit, kgUnit, pcsUnit];
+
+    test('Volume units return 100ml, 250ml, 500ml, 1L presets', () {
+      final presets = UnitUtils.quickStockPresetsForUnit(mlUnit);
+      expect(presets.map((p) => p.label).toList(), [
+        '100ml',
+        '250ml',
+        '500ml',
+        '1L',
+      ]);
+    });
+
+    test('Mass units return 100g, 250g, 500g, 1kg presets', () {
+      final presets = UnitUtils.quickStockPresetsForUnit(kgUnit);
+      expect(presets.map((p) => p.label).toList(), [
+        '100g',
+        '250g',
+        '500g',
+        '1kg',
+      ]);
+    });
+
+    test('Count units return 1, 5, 10, 25 with unit symbol', () {
+      final presets = UnitUtils.quickStockPresetsForUnit(pcsUnit);
+      expect(presets.map((p) => p.label).toList(), [
+        '1 pcs',
+        '5 pcs',
+        '10 pcs',
+        '25 pcs',
+      ]);
+    });
+
+    test('Converts presets accurately to stored stock unit', () {
+      final massPresets = UnitUtils.quickStockPresetsForUnit(kgUnit);
+      final preset250g = massPresets[1];
+      expect(
+        UnitUtils.convertPresetToStockDelta(
+          preset: preset250g,
+          stockUnit: kgUnit,
+          units: allUnits,
+        ),
+        closeTo(0.25, 1e-6),
+      );
+
+      final volumePresets = UnitUtils.quickStockPresetsForUnit(mlUnit);
+      final preset1L = volumePresets[3];
+      expect(
+        UnitUtils.convertPresetToStockDelta(
+          preset: preset1L,
+          stockUnit: mlUnit,
+          units: allUnits,
+        ),
+        closeTo(1000.0, 1e-6),
+      );
+
+      final preset500ml = volumePresets[2];
+      expect(
+        UnitUtils.convertPresetToStockDelta(
+          preset: preset500ml,
+          stockUnit: lUnit,
+          units: allUnits,
+        ),
+        closeTo(0.5, 1e-6),
+      );
+    });
   });
 }
 

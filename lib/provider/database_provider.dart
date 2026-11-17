@@ -51,7 +51,10 @@ final recipesWithFinancialsStreamProvider =
 /// Any change in the 'ingredients' table will trigger an automatic UI update.
 final ingredientsStreamProvider = StreamProvider<List<Ingredient>>((ref) {
   final db = ref.watch(databaseProvider);
-  return db.watchAllIngredients();
+  final spaceId = ref.watch(
+    activeGroupProvider.select((group) => group?.id),
+  );
+  return db.watchAllIngredients(groupId: spaceId);
 });
 
 /// Fetches the full details of a single recipe, including its ingredients and steps.
@@ -291,3 +294,118 @@ final recipeCategoryFilterProvider =
     NotifierProvider<RecipeCategoryFilterNotifier, RecipeCategory?>(
       RecipeCategoryFilterNotifier.new,
     );
+
+/// Reactive stream of recipe production history (for statistics & audit).
+final recipeProductionHistoryStreamProvider =
+    StreamProvider<List<RecipeProduction>>((ref) {
+      final db = ref.watch(databaseProvider);
+      final spaceId = ref.watch(
+        activeGroupProvider.select((group) => group?.id),
+      );
+      return db.watchRecipeProductions(spaceId: spaceId, limit: 100);
+    });
+
+/// Reactive stream of recent inventory movements for a specific ingredient.
+final ingredientMovementsStreamProvider =
+    StreamProvider.family<List<InventoryMovement>, String>((ref, ingredientPk) {
+      final db = ref.watch(databaseProvider);
+      return db.watchInventoryMovements(
+        ingredientPk: ingredientPk,
+        limit: 10,
+      );
+    });
+
+/// Aggregated production & inventory statistics summary for a date range.
+final productionStatsSummaryProvider =
+    FutureProvider.family<ProductionStatisticsSummary, ({DateTime from, DateTime to})>((
+      ref,
+      range,
+    ) {
+      final db = ref.watch(databaseProvider);
+      final spaceId = ref.watch(
+        activeGroupProvider.select((group) => group?.id),
+      );
+      ref.watch(recipeProductionHistoryStreamProvider);
+      return db.getProductionStatisticsSummary(
+        from: range.from,
+        to: range.to,
+        spaceId: spaceId,
+      );
+    });
+
+/// Active tab in the recipes section.
+enum RecipesSectionTab { recipes, inventory }
+
+class RecipesSectionTabNotifier extends Notifier<RecipesSectionTab> {
+  @override
+  RecipesSectionTab build() => RecipesSectionTab.recipes;
+
+  void setTab(RecipesSectionTab tab) => state = tab;
+}
+
+final recipesSectionTabProvider =
+    NotifierProvider<RecipesSectionTabNotifier, RecipesSectionTab>(
+      RecipesSectionTabNotifier.new,
+    );
+
+class RecipeInventoryStockFilterNotifier extends Notifier<InventoryStockFilter> {
+  @override
+  InventoryStockFilter build() => InventoryStockFilter.all;
+
+  void setFilter(InventoryStockFilter filter) => state = filter;
+}
+
+final recipeInventoryStockFilterProvider =
+    NotifierProvider<RecipeInventoryStockFilterNotifier, InventoryStockFilter>(
+      RecipeInventoryStockFilterNotifier.new,
+    );
+
+/// Computed prepared-stock metrics for a [Recipe].
+class RecipeInventoryMetrics {
+  const RecipeInventoryMetrics({
+    required this.currentStock,
+    required this.minimumStock,
+    required this.status,
+    required this.stockCostValue,
+    required this.stockSaleValue,
+  });
+
+  final double currentStock;
+  final double? minimumStock;
+  final InventoryStockStatus status;
+  final double stockCostValue;
+  final double stockSaleValue;
+
+  factory RecipeInventoryMetrics.fromRecipeWithFinancials(
+    RecipeWithFinancials item,
+  ) {
+    final current = item.recipe.currentStock ?? 0.0;
+    final minimum = item.recipe.minimumStock;
+    final InventoryStockStatus status;
+    if (current <= 0) {
+      status = InventoryStockStatus.outOfStock;
+    } else if (minimum != null && current <= minimum) {
+      status = InventoryStockStatus.lowStock;
+    } else {
+      status = InventoryStockStatus.inStock;
+    }
+
+    return RecipeInventoryMetrics(
+      currentStock: current,
+      minimumStock: minimum,
+      status: status,
+      stockCostValue: current * item.financials.totalCost,
+      stockSaleValue: current * item.financials.totalRevenue,
+    );
+  }
+}
+
+/// Reactive stream of recent prepared-recipe inventory movements.
+final recipeInventoryMovementsStreamProvider =
+    StreamProvider.family<List<RecipeInventoryMovement>, String>((ref, recipePk) {
+      final db = ref.watch(databaseProvider);
+      return db.watchRecipeInventoryMovements(
+        recipePk: recipePk,
+        limit: 10,
+      );
+    });
