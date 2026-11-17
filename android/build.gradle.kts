@@ -17,6 +17,15 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+    plugins.withId("com.android.library") {
+        extensions.configure<com.android.build.api.variant.LibraryAndroidComponentsExtension>("androidComponents") {
+            finalizeDsl { ext ->
+                if ((ext.compileSdk ?: 0) < 36) {
+                    ext.compileSdk = 36
+                }
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
