@@ -50,11 +50,32 @@ class GlobalIngredientPickerSheet extends ConsumerStatefulWidget {
 class _GlobalIngredientPickerSheetState
     extends ConsumerState<GlobalIngredientPickerSheet> {
   late final TextEditingController _searchController;
+  final ScrollController _listScrollController = ScrollController();
+  final Map<String, GlobalKey> _itemKeys = {};
   final Map<String, (Ingredient, TextEditingController, FocusNode)>
       _selectedInModal = {};
   IngredientFilterType _modalFilter = IngredientFilterType.all;
   String? _focusedIngredientPk;
   bool _isDismissing = false;
+  double _lastKeyboardBottom = 0.0;
+  bool _isProgrammaticScroll = false;
+
+  void _ensureFocusedIngredientVisible() {
+    final pk = _focusedIngredientPk;
+    if (pk == null) return;
+    final key = _itemKeys[pk];
+    final ctx = key?.currentContext;
+    if (ctx == null) return;
+    _isProgrammaticScroll = true;
+    Scrollable.ensureVisible(
+      ctx,
+      alignment: 0.35,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+    ).whenComplete(() {
+      _isProgrammaticScroll = false;
+    });
+  }
 
   @override
   void initState() {
@@ -71,6 +92,7 @@ class _GlobalIngredientPickerSheetState
   @override
   void dispose() {
     _searchController.dispose();
+    _listScrollController.dispose();
     for (final entry in _selectedInModal.values) {
       entry.$2.dispose();
       entry.$3.dispose();
@@ -344,6 +366,19 @@ class _GlobalIngredientPickerSheetState
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
     final currency = settings.currencySymbol;
+    final keyboardBottom = MediaQuery.viewInsetsOf(context).bottom;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isCompactKeyboardLayout = !widget.isPanel &&
+        keyboardBottom > 0 &&
+        (screenHeight - keyboardBottom) < 460;
+
+    if (keyboardBottom > _lastKeyboardBottom && _focusedIngredientPk != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _ensureFocusedIngredientVisible();
+      });
+    }
+    _lastKeyboardBottom = keyboardBottom;
 
     return PopScope(
       canPop: _isDismissing || (!widget.isPanel && _selectedInModal.isEmpty),
@@ -352,17 +387,22 @@ class _GlobalIngredientPickerSheetState
         await _handleCloseOrBack();
       },
       child: Container(
-        height: widget.isPanel ? null : MediaQuery.sizeOf(context).height * 0.9,
+        height: widget.isPanel ? null : screenHeight * 0.9,
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: widget.isPanel
               ? BorderRadius.zero
               : const BorderRadius.vertical(top: Radius.circular(25)),
         ),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          isCompactKeyboardLayout ? 8 : 12,
+          16,
+          widget.isPanel ? 16 : 16 + keyboardBottom,
+        ),
         child: Column(
           children: [
-            if (!widget.isPanel) ...[
+            if (!widget.isPanel && !isCompactKeyboardLayout) ...[
               Container(
                 width: 40,
                 height: 4,
@@ -392,7 +432,7 @@ class _GlobalIngredientPickerSheetState
                 ),
               ],
             ),
-          const SizedBox(height: 16),
+          SizedBox(height: isCompactKeyboardLayout ? 8 : 16),
           Row(
             children: [
               Expanded(
@@ -450,7 +490,7 @@ class _GlobalIngredientPickerSheetState
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: isCompactKeyboardLayout ? 6 : 10),
           IngredientFilterChipsRow(
             currentFilter: _modalFilter,
             onFilterSelected: (filter) {
@@ -464,7 +504,7 @@ class _GlobalIngredientPickerSheetState
               });
             },
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: isCompactKeyboardLayout ? 4 : 6),
           Expanded(
             child: Consumer(
               builder: (context, ref, _) {
@@ -544,7 +584,8 @@ class _GlobalIngredientPickerSheetState
 
                         return NotificationListener<ScrollNotification>(
                           onNotification: (notification) {
-                            if (notification is UserScrollNotification &&
+                            if (!_isProgrammaticScroll &&
+                                notification is UserScrollNotification &&
                                 notification.direction !=
                                     ScrollDirection.idle) {
                               if (_focusedIngredientPk != null) {
@@ -571,6 +612,7 @@ class _GlobalIngredientPickerSheetState
                               }
                             },
                             child: ListView.builder(
+                              controller: _listScrollController,
                               physics: const AlwaysScrollableScrollPhysics(
                                 parent: BouncingScrollPhysics(),
                               ),
@@ -894,6 +936,7 @@ class _GlobalIngredientPickerSheetState
                                                       controller.text.length,
                                                 );
                                               }
+                                              _ensureFocusedIngredientVisible();
                                             });
                                           }
                                         });
@@ -942,6 +985,10 @@ class _GlobalIngredientPickerSheetState
                                   }
 
                                   return RepaintBoundary(
+                                    key: _itemKeys.putIfAbsent(
+                                      ing.ingredientPk,
+                                      () => GlobalKey(),
+                                    ),
                                     child: Padding(
                                       padding: const EdgeInsets.only(bottom: 8.0),
                                       child: itemContent,
@@ -964,7 +1011,8 @@ class _GlobalIngredientPickerSheetState
                 },
               ),
             ),
-            if (_selectedInModal.isNotEmpty)
+            if (_selectedInModal.isNotEmpty &&
+                !(isCompactKeyboardLayout && _focusedIngredientPk != null))
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
                 child: SizedBox(
