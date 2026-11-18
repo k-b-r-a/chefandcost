@@ -315,7 +315,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                       AdInterleavingHelper.getVisualCount(
                         filteredIngredients.length,
                         showAds,
-                        interval: 10,
+                        interval: 6,
                       );
                   final int totalItemCount =
                       ingredientsVisualCount + (showCreateNewCard ? 1 : 0);
@@ -350,7 +350,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                         if (showAds &&
                             AdInterleavingHelper.isAdIndex(
                               visualIndex,
-                              interval: 10,
+                              interval: 6,
                             )) {
                           return Center(
                             child: ConstrainedBox(
@@ -366,7 +366,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
                         final dataIndex = showAds
                             ? AdInterleavingHelper.getDataIndex(
                                 visualIndex,
-                                interval: 10,
+                                interval: 6,
                               )
                             : visualIndex;
                         if (dataIndex >= filteredIngredients.length) return null;

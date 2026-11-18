@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +17,6 @@ import 'package:recipetools/utils/ad_navigation_observer.dart';
 import 'package:recipetools/widgets/ad_free_pass_button.dart';
 import 'package:recipetools/widgets/inline_ad_card.dart';
 import 'package:recipetools/widgets/offline_cached_ad_widget.dart';
-import 'package:recipetools/widgets/smart_banner_ad_widget.dart';
 import 'package:recipetools/widgets/subscription_paywall_card.dart';
 
 void main() {
@@ -200,7 +200,7 @@ void main() {
 
     test('AdService platform restriction prevents native calls during testing', () {
       expect(AdService.isSupportedPlatform, isFalse);
-      expect(AdService.bannerAdUnitId, isEmpty);
+      expect(AdService.nativeAdUnitId, isEmpty);
       expect(AdService.rewardedAdUnitId, isEmpty);
     });
   });
@@ -695,7 +695,7 @@ void main() {
       expect(AdService.isOfflineNotifier.value, isFalse);
     });
 
-    testWidgets('InlineAdCard and SmartBannerAdWidget render OfflineCachedAdWidget when offline', (tester) async {
+    testWidgets('InlineAdCard recipe and ingredient styles render OfflineCachedAdWidget when offline', (tester) async {
       AdService.debugIsSupportedPlatform = true;
       AdService.setDebugOffline(true);
 
@@ -712,7 +712,7 @@ void main() {
               body: Column(
                 children: [
                   InlineAdCard(style: InlineAdCardStyle.recipe),
-                  SmartBannerAdWidget(style: SmartBannerAdStyle.standard),
+                  InlineAdCard(style: InlineAdCardStyle.ingredient),
                 ],
               ),
             ),
@@ -751,7 +751,7 @@ void main() {
                 body: Column(
                   children: [
                     InlineAdCard(style: InlineAdCardStyle.recipe),
-                    SmartBannerAdWidget(style: SmartBannerAdStyle.standard),
+                    InlineAdCard(style: InlineAdCardStyle.ingredient),
                   ],
                 ),
               ),
@@ -763,9 +763,52 @@ void main() {
 
         expect(find.byType(OfflineCachedAdWidget), findsNothing);
       } finally {
-        await tester.pumpWidget(const SizedBox());
         container.dispose();
       }
+    });
+
+    test('OfflineAdCacheService defaults to 320x104 native card dimensions', () {
+      final fallback = OfflineAdCacheService.getNextCachedAdSync(style: 'recipe');
+      expect(fallback.width, 320);
+      expect(fallback.height, 104);
+    });
+
+    test('AdService native pool and createNativeAd respect test platform gating', () {
+      expect(AdService.takePreloadedNativeAd(styleKey: 'recipe_light'), isNull);
+      AdService.clearPreloadedNativeAds();
+      final nativeAd = AdService.createNativeAd(
+        nativeTemplateStyle: NativeTemplateStyle(templateType: TemplateType.small),
+        onAdLoaded: (_) {},
+        onAdFailedToLoad: (_) {},
+      );
+      expect(nativeAd, isNull);
+    });
+
+    testWidgets('InlineAdCard renders OfflineCachedAdWidget in dark mode when offline', (tester) async {
+      AdService.debugIsSupportedPlatform = true;
+      AdService.setDebugOffline(true);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+          child: MaterialApp(
+            theme: ThemeData.dark(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: const Scaffold(
+              body: InlineAdCard(style: InlineAdCardStyle.recipe),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.byType(OfflineCachedAdWidget), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
     });
   });
 }

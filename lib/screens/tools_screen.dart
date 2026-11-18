@@ -11,7 +11,7 @@ import '../provider/ad_provider.dart';
 import '../provider/monetization_provider.dart';
 import '../services/ad_service.dart';
 import '../widgets/ad_free_pass_button.dart';
-import '../widgets/inline_ad_card.dart';
+import '../widgets/static_banner_ad.dart';
 
 class ToolsScreen extends ConsumerStatefulWidget {
   const ToolsScreen({super.key});
@@ -56,9 +56,8 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 820),
-                    child: const InlineAdCard(
+                    child: const StaticBannerAd(
                       key: ValueKey('ad_tools_top_static'),
-                      style: InlineAdCardStyle.ingredient,
                       margin: EdgeInsets.zero,
                     ),
                   ),
@@ -156,6 +155,20 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                     return const SizedBox.shrink();
                 }
               },
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            sliver: SliverToBoxAdapter(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 820),
+                  child: const StaticBannerAd(
+                    key: ValueKey('ad_tools_bottom_static'),
+                    margin: EdgeInsets.zero,
+                  ),
+                ),
+              ),
             ),
           ),
         ],

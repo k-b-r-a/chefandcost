@@ -11,6 +11,7 @@ import '../services/ad_service.dart';
 import '../utils/ad_interleaving_helper.dart';
 import '../widgets/ad_free_pass_button.dart';
 import '../widgets/inline_ad_card.dart';
+import '../widgets/static_banner_ad.dart';
 
 class KitchenTimersScreen extends ConsumerStatefulWidget {
   const KitchenTimersScreen({super.key});
@@ -115,9 +116,8 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           if (showAds) ...[
-                            const InlineAdCard(
+                            const StaticBannerAd(
                               key: ValueKey('ad_timers_top_static'),
-                              style: InlineAdCardStyle.ingredient,
                               margin: EdgeInsets.zero,
                             ),
                             const SizedBox(height: 16),

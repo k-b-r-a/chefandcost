@@ -18,11 +18,11 @@ class AdService {
     isOfflineNotifier.value = value ?? _isOffline;
   }
 
-  static const int kMaxPreloadedBanners = 2;
-  static final List<BannerAd> _cachedBannerPool = <BannerAd>[];
-  static final Map<int, AdSize> _adaptiveSizeCache = <int, AdSize>{};
-  static int? _lastBannerWidth;
-  static bool _isPreloadingBanners = false;
+  static const int kMaxPreloadedNativeAds = 2;
+  static final List<_PooledNativeAd> _cachedNativePool = <_PooledNativeAd>[];
+  static NativeTemplateStyle? _lastNativeStyle;
+  static String? _lastNativeStyleKey;
+  static bool _isPreloadingNativeAds = false;
 
   static bool _isInitialized = false;
   static bool _isAppMuted = true;
@@ -39,7 +39,7 @@ class AdService {
 
   static const Duration kMinAdRequestCooldown = Duration(seconds: 30);
   static const Duration kRewardedAdStaleThreshold = Duration(minutes: 45);
-  static const Duration kBannerAdRefreshThreshold = Duration(seconds: 75);
+  static const Duration kNativeAdRefreshThreshold = Duration(seconds: 75);
 
   /// Incremented by periodic/navigation evaluation to let active banner widgets
   /// check if they are stale or failed past cooldown.
@@ -135,8 +135,8 @@ class AdService {
   /// when using production ad unit IDs.
   static List<String> testDeviceIds = <String>[];
 
-  /// Enforces muted audio for banner and inline ads across the application.
-  static Future<void> muteBannerAds() async {
+  /// Enforces muted audio for inline native ads across the application.
+  static Future<void> muteInlineAds() async {
     _isAppMuted = true;
     if (!_canInvokeNativeAdMob || _hasAppliedNativeMute) return;
     try {
@@ -145,9 +145,13 @@ class AdService {
       await MobileAds.instance.setAppVolume(0.0);
     } catch (e) {
       _hasAppliedNativeMute = false;
-      debugPrint('Error muting banner ads: $e');
+      debugPrint('Error muting inline ads: $e');
     }
   }
+
+  /// Deprecated alias for [muteInlineAds].
+  @Deprecated('Use muteInlineAds() instead.')
+  static Future<void> muteBannerAds() => muteInlineAds();
 
   /// Enables audio specifically for full-screen rewarded video ads.
   static Future<void> enableRewardedAdAudio() async {
@@ -178,7 +182,7 @@ class AdService {
       _isInitialized = true;
       startPeriodicRefresh();
       preloadRewardedAd();
-      unawaited(preloadCachedBanners());
+      unawaited(preloadNativeAds());
     } catch (e) {
       debugPrint('AdService initialization error: $e');
     }
@@ -253,69 +257,69 @@ class AdService {
     }
   }
 
-  /// Synchronously returns a cached adaptive [AdSize] for [availableWidth] if known.
-  static AdSize? getCachedAdaptiveBannerSize(int availableWidth) {
-    return _adaptiveSizeCache[availableWidth];
+  /// Disposes all preloaded [NativeAd] instances in [_cachedNativePool].
+  static void clearPreloadedNativeAds() {
+    for (final entry in _cachedNativePool) {
+      entry.ad.dispose();
+    }
+    _cachedNativePool.clear();
   }
 
-  /// Resolves and caches the anchored adaptive [AdSize] for [availableWidth].
-  static Future<AdSize> resolveAdaptiveBannerSize(int availableWidth) async {
-    final cached = _adaptiveSizeCache[availableWidth];
-    if (cached != null) return cached;
-
-    if (availableWidth <= 0 || !_canInvokeNativeAdMob) {
-      return AdSize.banner;
+  /// Preloads standby [NativeAd] instances into [_cachedNativePool] while online.
+  static Future<void> preloadNativeAds({
+    NativeTemplateStyle? style,
+    String? styleKey,
+  }) async {
+    if (style != null && styleKey != null) {
+      if (_lastNativeStyleKey != null && _lastNativeStyleKey != styleKey) {
+        clearPreloadedNativeAds();
+      }
+      _lastNativeStyle = style;
+      _lastNativeStyleKey = styleKey;
     }
-
-    try {
-      final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(
-        availableWidth,
-      );
-      final resolved = size ?? AdSize.banner;
-      _adaptiveSizeCache[availableWidth] = resolved;
-      return resolved;
-    } catch (_) {
-      return AdSize.banner;
-    }
-  }
-
-  /// Preloads standby [BannerAd] instances into [_cachedBannerPool] while online.
-  static Future<void> preloadCachedBanners({int? width}) async {
-    if (width != null && width > 0) {
-      _lastBannerWidth = width;
-    }
-    if (!_canInvokeNativeAdMob || isOffline || _isPreloadingBanners) return;
+    final activeStyle = style ?? _lastNativeStyle;
+    final activeKey = styleKey ?? _lastNativeStyleKey;
+    if (activeStyle == null || activeKey == null) return;
+    if (!_canInvokeNativeAdMob || isOffline || _isPreloadingNativeAds) return;
     if (appLifecycleState != AppLifecycleState.resumed) return;
     if (isUserAdFreeCallback?.call() ?? false) return;
-    if (_cachedBannerPool.length >= kMaxPreloadedBanners) return;
+    if (_cachedNativePool.length >= kMaxPreloadedNativeAds) return;
 
-    final unitId = bannerAdUnitId;
+    final unitId = nativeAdUnitId;
     if (unitId.isEmpty) return;
 
-    final targetSize = _lastBannerWidth != null
-        ? await resolveAdaptiveBannerSize(_lastBannerWidth!)
-        : AdSize.banner;
-
-    _isPreloadingBanners = true;
+    _isPreloadingNativeAds = true;
     try {
-      while (_cachedBannerPool.length < kMaxPreloadedBanners &&
+      while (_cachedNativePool.length < kMaxPreloadedNativeAds &&
           !isOffline &&
           appLifecycleState == AppLifecycleState.resumed &&
-          !(isUserAdFreeCallback?.call() ?? false)) {
+          !(isUserAdFreeCallback?.call() ?? false) &&
+          _lastNativeStyleKey == activeKey) {
         final completer = Completer<void>();
-        late final BannerAd banner;
-        banner = BannerAd(
+        late final NativeAd nativeAd;
+        nativeAd = NativeAd(
           adUnitId: unitId,
-          size: targetSize,
           request: const AdRequest(),
-          listener: BannerAdListener(
+          nativeTemplateStyle: activeStyle,
+          nativeAdOptions: NativeAdOptions(
+            adChoicesPlacement: AdChoicesPlacement.topRightCorner,
+            videoOptions: VideoOptions(startMuted: true),
+          ),
+          listener: NativeAdListener(
             onAdLoaded: (_) {
               _isOffline = false;
               isOfflineNotifier.value = false;
-              if (_cachedBannerPool.length < kMaxPreloadedBanners) {
-                _cachedBannerPool.add(banner);
+              if (_cachedNativePool.length < kMaxPreloadedNativeAds &&
+                  _lastNativeStyleKey == activeKey) {
+                _cachedNativePool.add(
+                  _PooledNativeAd(
+                    ad: nativeAd,
+                    styleKey: activeKey,
+                    loadedAt: DateTime.now(),
+                  ),
+                );
               } else {
-                banner.dispose();
+                nativeAd.dispose();
               }
               if (!completer.isCompleted) completer.complete();
             },
@@ -326,7 +330,7 @@ class AdService {
             },
           ),
         );
-        await banner.load();
+        await nativeAd.load();
         await completer.future.timeout(
           const Duration(seconds: 6),
           onTimeout: () {},
@@ -335,32 +339,29 @@ class AdService {
       }
     } catch (_) {
     } finally {
-      _isPreloadingBanners = false;
+      _isPreloadingNativeAds = false;
     }
   }
 
-  /// Claims a preloaded standby [BannerAd] from [_cachedBannerPool] if available
-  /// and matching [preferredSize] / [maxWidth].
-  static BannerAd? takePreloadedBannerAd({
-    AdSize? preferredSize,
-    int? maxWidth,
-  }) {
-    if (_cachedBannerPool.isEmpty) return null;
-    for (int i = 0; i < _cachedBannerPool.length; i++) {
-      final candidate = _cachedBannerPool[i];
-      if (maxWidth != null && candidate.size.width > maxWidth) {
-        continue;
+  /// Claims a preloaded standby [NativeAd] from [_cachedNativePool] if available
+  /// and matching [styleKey].
+  static NativeAd? takePreloadedNativeAd({required String styleKey}) {
+    if (_cachedNativePool.isEmpty) return null;
+    final now = DateTime.now();
+    for (int i = _cachedNativePool.length - 1; i >= 0; i--) {
+      final entry = _cachedNativePool[i];
+      if (now.difference(entry.loadedAt) >= kNativeAdRefreshThreshold) {
+        _cachedNativePool.removeAt(i).ad.dispose();
       }
-      if (preferredSize != null &&
-          (candidate.size.width != preferredSize.width ||
-              candidate.size.height != preferredSize.height)) {
-        continue;
+    }
+    for (int i = 0; i < _cachedNativePool.length; i++) {
+      if (_cachedNativePool[i].styleKey == styleKey) {
+        final ad = _cachedNativePool.removeAt(i).ad;
+        if (!isOffline) {
+          unawaited(preloadNativeAds());
+        }
+        return ad;
       }
-      final ad = _cachedBannerPool.removeAt(i);
-      if (!isOffline) {
-        unawaited(preloadCachedBanners(width: maxWidth));
-      }
-      return ad;
     }
     return null;
   }
@@ -385,7 +386,7 @@ class AdService {
       return false;
     }
 
-    unawaited(preloadCachedBanners());
+    unawaited(preloadNativeAds());
 
     if (!shouldRequestRewardedAd(isAdFree: effectiveAdFree, now: now)) {
       return false;
@@ -603,8 +604,7 @@ class AdService {
     required void Function(LoadAdError error) onAdFailedToLoad,
     AdSize size = AdSize.banner,
   }) {
-    // Strictly guarantee sound is silenced for banner ads
-    unawaited(muteBannerAds());
+    unawaited(muteInlineAds());
     if (!_canInvokeNativeAdMob) return null;
     return BannerAd(
       adUnitId: bannerAdUnitId,
@@ -626,14 +626,15 @@ class AdService {
     required void Function(NativeAd ad) onAdLoaded,
     required void Function(LoadAdError error) onAdFailedToLoad,
   }) {
-    // Strictly guarantee sound is silenced for native/banner cards
-    unawaited(muteBannerAds());
+    // Strictly guarantee sound is silenced for native/inline cards
+    unawaited(muteInlineAds());
     if (!_canInvokeNativeAdMob) return null;
     return NativeAd(
       adUnitId: nativeAdUnitId,
       request: const AdRequest(),
       nativeTemplateStyle: nativeTemplateStyle,
       nativeAdOptions: NativeAdOptions(
+        adChoicesPlacement: AdChoicesPlacement.topRightCorner,
         videoOptions: VideoOptions(
           startMuted: true,
         ),
@@ -647,4 +648,16 @@ class AdService {
       ),
     );
   }
+}
+
+class _PooledNativeAd {
+  final NativeAd ad;
+  final String styleKey;
+  final DateTime loadedAt;
+
+  const _PooledNativeAd({
+    required this.ad,
+    required this.styleKey,
+    required this.loadedAt,
+  });
 }

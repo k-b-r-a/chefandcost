@@ -16,6 +16,7 @@ import '../services/ad_service.dart';
 import '../utils/ad_interleaving_helper.dart';
 import '../widgets/ad_free_pass_button.dart';
 import '../widgets/inline_ad_card.dart';
+import '../widgets/static_banner_ad.dart';
 
 class AddIngredientScreen extends ConsumerStatefulWidget {
   final Ingredient? ingredient;
@@ -392,9 +393,8 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (showAds) ...[
-                      const InlineAdCard(
+                      const StaticBannerAd(
                         key: ValueKey('ad_ingredient_edit_top_static'),
-                        style: InlineAdCardStyle.ingredient,
                         margin: EdgeInsets.zero,
                       ),
                       const SizedBox(height: 16),

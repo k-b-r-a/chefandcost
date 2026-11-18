@@ -32,7 +32,7 @@ class CachedOfflineAdPayload {
       id: json['id'] as String? ?? 'offline_pro',
       style: json['style'] as String? ?? 'recipe',
       width: (json['width'] as num?)?.toInt() ?? 320,
-      height: (json['height'] as num?)?.toInt() ?? 50,
+      height: (json['height'] as num?)?.toInt() ?? 104,
       creativeIndex: (json['creativeIndex'] as num?)?.toInt() ?? 0,
       lastSyncedMs: (json['lastSyncedMs'] as num?)?.toInt() ?? 0,
     );
@@ -66,7 +66,7 @@ class OfflineAdCacheService {
         id: 'cached_${style}_${width}x$height',
         style: style,
         width: width > 0 ? width : 320,
-        height: height > 0 ? height : 50,
+        height: height > 0 ? height : 104,
         creativeIndex: _rotationCounter % creativeCount,
         lastSyncedMs: DateTime.now().millisecondsSinceEpoch,
       );
@@ -104,7 +104,7 @@ class OfflineAdCacheService {
       id: 'offline_builtin_$index',
       style: style,
       width: 320,
-      height: 50,
+      height: 104,
       creativeIndex: index,
       lastSyncedMs: 0,
     );

@@ -5,7 +5,7 @@ import '../provider/database_provider.dart';
 import '../database/database.dart';
 import '../utils/recipe_utils.dart';
 import '../widgets/ad_free_pass_button.dart';
-import '../widgets/inline_ad_card.dart';
+import '../widgets/static_banner_ad.dart';
 
 class UnitConverterScreen extends ConsumerStatefulWidget {
   const UnitConverterScreen({super.key});
@@ -156,9 +156,8 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                 child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const InlineAdCard(
+                const StaticBannerAd(
                   key: ValueKey('ad_unit_converter_top_static'),
-                  style: InlineAdCardStyle.ingredient,
                   margin: EdgeInsets.only(bottom: 16),
                 ),
                 Text(
@@ -411,6 +410,10 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                       softWrap: true,
                     ),
                   ),
+                const StaticBannerAd(
+                  key: ValueKey('ad_unit_converter_bottom_static'),
+                  margin: EdgeInsets.only(top: 16),
+                ),
               ],
             ),
           ),
