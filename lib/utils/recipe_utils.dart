@@ -108,9 +108,23 @@ class RecipeIngredientData {
     return parsed;
   }
 
-  double get unitCost =>
-      ingredient.isDeleted ? 0 : ingredient.cost / ingredient.quantityForCost;
-  double get totalCost => unitCost * amount;
+  double get unitCost {
+    if (ingredient.isDeleted ||
+        !ingredient.cost.isFinite ||
+        !ingredient.quantityForCost.isFinite ||
+        ingredient.quantityForCost <= 0) {
+      return 0.0;
+    }
+    final result = ingredient.cost / ingredient.quantityForCost;
+    return result.isFinite ? result : 0.0;
+  }
+
+  double get totalCost {
+    final amt = amount;
+    if (!amt.isFinite || amt <= 0) return 0.0;
+    final result = unitCost * amt;
+    return result.isFinite ? result : 0.0;
+  }
 }
 
 class RecipeStepData {
@@ -308,6 +322,7 @@ class RecipeUtils {
     num value, {
     bool preferFraction = false,
   }) {
+    if (!value.isFinite) value = 0;
     final rounded = value.roundToDouble();
     if ((value - rounded).abs() < 1e-9) {
       return rounded.toInt().toString();
@@ -443,6 +458,7 @@ class RecipeUtils {
   /// Formats an ingredient quantity value cleanly without appending unnecessary trailing zeros.
   /// E.g. 2.0 -> "2", 2.000000001 -> "2", 2.5 -> "2.5", 0.50000000001 -> "0.5", 0.125 -> "0.125".
   static String formatQuantity(num value, {int maxDecimalDigits = 4}) {
+    if (!value.isFinite) value = 0;
     // If within epsilon of integer, display integer without decimals
     final rounded = value.roundToDouble();
     if ((value - rounded).abs() < 1e-9) {
@@ -464,6 +480,7 @@ class RecipeUtils {
     int? minDecimalDigits,
     bool trimTrailingZeros = false,
   }) {
+    if (!value.isFinite) value = 0;
     final maxDigits = decimalDigits ?? defaultDecimalDigits;
     final minDigits = trimTrailingZeros
         ? 0
@@ -621,24 +638,28 @@ class RecipeUtils {
     required double yieldVal,
     required double pricePerPortion,
   }) {
-    final totalRevenue = pricePerPortion * yieldVal;
-    final totalProfit = totalRevenue - totalIngredientsCost;
+    final safeCost = totalIngredientsCost.isFinite ? totalIngredientsCost : 0.0;
+    final safeYield = yieldVal.isFinite ? yieldVal : 0.0;
+    final safePrice = pricePerPortion.isFinite ? pricePerPortion : 0.0;
 
-    final costPortion = yieldVal > 0 ? totalIngredientsCost / yieldVal : 0.0;
-    final profitPortion = yieldVal > 0 ? totalProfit / yieldVal : 0.0;
+    final totalRevenue = safePrice * safeYield;
+    final totalProfit = totalRevenue - safeCost;
+
+    final costPortion = safeYield > 0 ? safeCost / safeYield : 0.0;
+    final profitPortion = safeYield > 0 ? totalProfit / safeYield : 0.0;
 
     // Markup logic: (Profit / Cost) * 100
-    final markup = (totalIngredientsCost > 0 && pricePerPortion > 0)
-        ? (totalProfit / totalIngredientsCost) * 100
+    final markup = (safeCost > 0 && safePrice > 0)
+        ? (totalProfit / safeCost) * 100
         : 0.0;
 
     return RecipeFinancialSummary(
-      totalCost: totalIngredientsCost,
-      totalRevenue: totalRevenue,
-      totalProfit: totalProfit,
-      costPerPortion: costPortion,
-      profitPerPortion: profitPortion,
-      profitMargin: markup,
+      totalCost: safeCost,
+      totalRevenue: totalRevenue.isFinite ? totalRevenue : 0.0,
+      totalProfit: totalProfit.isFinite ? totalProfit : 0.0,
+      costPerPortion: costPortion.isFinite ? costPortion : 0.0,
+      profitPerPortion: profitPortion.isFinite ? profitPortion : 0.0,
+      profitMargin: markup.isFinite ? markup : 0.0,
     );
   }
 
@@ -706,7 +727,10 @@ class RecipeUtils {
   }) {
     double totalCost = 0.0;
     for (var ing in ingredients) {
-      totalCost += ing.totalCost;
+      final ingCost = ing.totalCost;
+      if (ingCost.isFinite) {
+        totalCost += ingCost;
+      }
     }
     return calculateFinancials(
       totalIngredientsCost: totalCost,
@@ -722,9 +746,21 @@ class RecipeUtils {
     double totalCost = 0.0;
     for (var ingWithData in detail.ingredients) {
       if (ingWithData.ingredient.isDeleted) continue;
-      final unitCost =
-          ingWithData.ingredient.cost / ingWithData.ingredient.quantityForCost;
-      totalCost += unitCost * ingWithData.entry.amountNeeded;
+      final qtyForCost = ingWithData.ingredient.quantityForCost;
+      final cost = ingWithData.ingredient.cost;
+      final amountNeeded = ingWithData.entry.amountNeeded;
+      if (!qtyForCost.isFinite ||
+          qtyForCost <= 0 ||
+          !cost.isFinite ||
+          !amountNeeded.isFinite ||
+          amountNeeded <= 0) {
+        continue;
+      }
+      final unitCost = cost / qtyForCost;
+      final lineCost = unitCost * amountNeeded;
+      if (lineCost.isFinite) {
+        totalCost += lineCost;
+      }
     }
     return calculateFinancials(
       totalIngredientsCost: totalCost,
