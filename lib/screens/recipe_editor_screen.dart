@@ -210,6 +210,7 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
   bool _isLoading = false;
   bool _isSaving = false;
   bool _isCalculating = false;
+  bool _isUpdatingControllersInternally = false;
   bool _needsRecalculate = false;
   bool _isDescriptionExpanded = true;
   bool _showBottomFinancials = false;
@@ -2272,8 +2273,21 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     super.dispose();
   }
 
+  void _setControllerTextSilently(
+    TextEditingController controller,
+    String text,
+  ) {
+    if (controller.text == text) return;
+    _isUpdatingControllersInternally = true;
+    try {
+      controller.text = text;
+    } finally {
+      _isUpdatingControllersInternally = false;
+    }
+  }
+
   void _calculateSummary() {
-    if (_isLoading || _isSaving) return;
+    if (_isLoading || _isSaving || _isUpdatingControllersInternally) return;
     if (_isCalculating) {
       _needsRecalculate = true;
       return;
@@ -2296,9 +2310,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           _totalSaleController.text,
         );
         double pricePerPortion = totalSaleVal / yieldVal;
-        _priceController.text = RecipeUtils.formatNumber(
-          pricePerPortion,
-          decimalDigits: 2,
+        _setControllerTextSilently(
+          _priceController,
+          RecipeUtils.formatNumber(pricePerPortion, decimalDigits: 2),
         );
       } else if (_profitMarginFocusNode.hasFocus) {
         double targetMarkup = RecipeUtils.parseFormattedNumber(
@@ -2309,9 +2323,9 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           yieldVal: yieldVal,
           targetMarkupPercent: targetMarkup,
         );
-        _priceController.text = RecipeUtils.formatNumber(
-          recommendedPrice,
-          decimalDigits: 2,
+        _setControllerTextSilently(
+          _priceController,
+          RecipeUtils.formatNumber(recommendedPrice, decimalDigits: 2),
         );
       } else if (_priceFocusNode.hasFocus) {
         // manual price edit, margin will follow
@@ -2328,29 +2342,13 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
           yieldVal: yieldVal,
           targetMarkupPercent: targetMarkup,
         );
-        _priceController.text = RecipeUtils.formatNumber(
-          recommendedPrice,
-          decimalDigits: 2,
+        _setControllerTextSilently(
+          _priceController,
+          RecipeUtils.formatNumber(recommendedPrice, decimalDigits: 2),
         );
       } else {
-        // Default fallback (e.g., initial load or ingredient change)
-        // If margin is configured, keep price in sync without overwriting user inputs
-        double targetMarkup = RecipeUtils.parseFormattedNumber(
-          _profitMarginController.text,
-        );
-        if (targetMarkup > 0 &&
-            totalCost > 0 &&
-            RecipeUtils.parseFormattedNumber(_priceController.text) == 0) {
-          double recommendedPrice = RecipeUtils.calculatePriceFromMarkup(
-            totalIngredientsCost: totalCost,
-            yieldVal: yieldVal,
-            targetMarkupPercent: targetMarkup,
-          );
-          _priceController.text = RecipeUtils.formatNumber(
-            recommendedPrice,
-            decimalDigits: 2,
-          );
-        }
+        // Unfocused (e.g., ingredient quantity or list changed):
+        // Keep Portions and Price per Portion unchanged; only Margin % will update.
       }
 
       // 2. Perform general calculation
@@ -2377,18 +2375,21 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         _currentTotalVolumeMl = totals.totalVolumeMl;
 
         if (!_totalSaleFocusNode.hasFocus && !_isSaving) {
-          _totalSaleController.text = RecipeUtils.formatNumber(
-            summary.totalRevenue,
-            decimalDigits: 2,
+          _setControllerTextSilently(
+            _totalSaleController,
+            RecipeUtils.formatNumber(summary.totalRevenue, decimalDigits: 2),
           );
         }
 
-        // Only derive profit margin when user is explicitly editing Price or Total Sale
-        if ((_priceFocusNode.hasFocus || _totalSaleFocusNode.hasFocus) &&
+        // Update profit margin unless user is actively editing Margin % or Portions
+        if (!_profitMarginFocusNode.hasFocus &&
+            !_yieldFocusNode.hasFocus &&
+            !_webYieldFocusNode.hasFocus &&
+            !_rightPanelYieldFocusNode.hasFocus &&
             !_isSaving) {
-          _profitMarginController.text = RecipeUtils.formatNumber(
-            summary.profitMargin,
-            decimalDigits: 0,
+          _setControllerTextSilently(
+            _profitMarginController,
+            RecipeUtils.formatNumber(summary.profitMargin, decimalDigits: 0),
           );
         }
       });
@@ -6685,7 +6686,6 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                             width: 54,
                             child: TextField(
                               controller: data.amountController,
-                              onChanged: (_) => _calculateSummary(),
                               onTap: () {
                                 data.amountController.selection = TextSelection(
                                   baseOffset: 0,
