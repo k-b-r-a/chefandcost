@@ -35,7 +35,7 @@ void main() {
 
     test('AdService request before or during deferred warmup handles non-supported platform gracefully', () {
       expect(AdService.isSupportedPlatform, isFalse);
-      expect(AdService.bannerAdUnitId, isEmpty);
+      expect(AdService.nativeAdUnitId, isEmpty);
       expect(AdService.rewardedAdUnitId, isEmpty);
       expect(AdService.isRewardedAdReady, isFalse);
     });

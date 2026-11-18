@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/recipe_utils.dart';
 import '../widgets/ad_free_pass_button.dart';
-import '../widgets/inline_ad_card.dart';
+import '../widgets/static_banner_ad.dart';
 
 class RuleOfThreeScreen extends StatefulWidget {
   const RuleOfThreeScreen({super.key});
@@ -140,9 +140,8 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const InlineAdCard(
+            const StaticBannerAd(
               key: ValueKey('ad_rule_of_three_top_static'),
-              style: InlineAdCardStyle.ingredient,
               margin: EdgeInsets.only(bottom: 16),
             ),
             Text(
@@ -356,6 +355,10 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
                   ],
                 ),
               ),
+            ),
+            const StaticBannerAd(
+              key: ValueKey('ad_rule_of_three_bottom_static'),
+              margin: EdgeInsets.only(top: 16),
             ),
           ],
         ),

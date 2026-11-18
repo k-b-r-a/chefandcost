@@ -6,8 +6,8 @@ import 'package:recipetools/provider/ad_provider.dart';
 import 'package:recipetools/provider/settings_provider.dart';
 import 'package:recipetools/services/ad_service.dart';
 import 'package:recipetools/utils/ad_interleaving_helper.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:recipetools/widgets/inline_ad_card.dart';
-import 'package:recipetools/widgets/smart_banner_ad_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -79,14 +79,14 @@ void main() {
           ],
           child: const MaterialApp(
             home: Scaffold(
-              body: SmartBannerAdWidget(style: SmartBannerAdStyle.standard),
+              body: InlineAdCard(style: InlineAdCardStyle.ingredient),
             ),
           ),
         ),
       );
       await tester.pump();
 
-      final state = tester.state(find.byType(SmartBannerAdWidget));
+      final state = tester.state(find.byType(InlineAdCard));
       expect(state, isA<AutomaticKeepAliveClientMixin>());
       expect((state as dynamic).wantKeepAlive, isTrue);
     });
@@ -121,7 +121,7 @@ void main() {
       expect(hasPreallocatedSlot, isTrue, reason: 'Target banner ad slot must be pre-allocated');
     });
 
-    testWidgets('SmartBannerAdWidget pre-allocates exact dimensions for standard style (Zero-CLS)', (tester) async {
+    testWidgets('InlineAdCard pre-allocates native card bounds for ingredient style (Zero-CLS)', (tester) async {
       AdService.debugIsSupportedPlatform = true;
 
       await tester.pumpWidget(
@@ -131,31 +131,7 @@ void main() {
           ],
           child: const MaterialApp(
             home: Scaffold(
-              body: SmartBannerAdWidget(style: SmartBannerAdStyle.standard),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      final sizedBoxes = tester.widgetList<SizedBox>(find.byType(SizedBox));
-      final hasPreallocatedSlot = sizedBoxes.any(
-        (box) => box.width == 320.0 && box.height == 50.0,
-      );
-      expect(hasPreallocatedSlot, isTrue, reason: 'Standard SmartBannerAdWidget must pre-allocate 320x50 slot');
-    });
-
-    testWidgets('SmartBannerAdWidget pre-allocates card bounds for recipe/ingredient style (Zero-CLS)', (tester) async {
-      AdService.debugIsSupportedPlatform = true;
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: SmartBannerAdWidget(style: SmartBannerAdStyle.recipe),
+              body: InlineAdCard(style: InlineAdCardStyle.ingredient),
             ),
           ),
         ),
@@ -163,11 +139,11 @@ void main() {
       await tester.pump();
 
       expect(find.byType(Card), findsOneWidget);
-      final constrainedBoxes = tester.widgetList<ConstrainedBox>(find.byType(ConstrainedBox));
-      final hasCardConstraints = constrainedBoxes.any(
-        (cb) => cb.constraints.maxWidth == 860 && cb.constraints.minHeight == 90 && cb.constraints.maxHeight == 110,
+      final sizedBoxes = tester.widgetList<SizedBox>(find.byType(SizedBox));
+      final hasPreallocatedSlot = sizedBoxes.any(
+        (box) => box.width == double.infinity && (box.height ?? 0) >= 96.0,
       );
-      expect(hasCardConstraints, isTrue, reason: 'SmartBannerAdWidget recipe card must pre-allocate 90-110 height constraints');
+      expect(hasPreallocatedSlot, isTrue, reason: 'InlineAdCard must pre-allocate native slot height');
     });
 
     testWidgets('InlineAdCard hides completely when user unlocks ad-free pass', (tester) async {
@@ -209,15 +185,16 @@ void main() {
       await AdService.enableRewardedAdAudio();
       expect(AdService.isAppMuted, isFalse);
 
-      // Muting banner ads sets isAppMuted back to true
-      await AdService.muteBannerAds();
+      // Muting inline ads sets isAppMuted back to true
+      await AdService.muteInlineAds();
       expect(AdService.isAppMuted, isTrue);
 
-      // Triggering banner ad creation enforces muted policy
+      // Triggering native ad creation enforces muted policy
       await AdService.enableRewardedAdAudio();
       expect(AdService.isAppMuted, isFalse);
-      AdService.createBannerAd(
-        onAdLoaded: () {},
+      AdService.createNativeAd(
+        nativeTemplateStyle: NativeTemplateStyle(templateType: TemplateType.small),
+        onAdLoaded: (_) {},
         onAdFailedToLoad: (_) {},
       );
       expect(AdService.isAppMuted, isTrue);

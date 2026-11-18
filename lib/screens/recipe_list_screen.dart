@@ -333,7 +333,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
               final int totalVisualCount = AdInterleavingHelper.getVisualCount(
                 filteredRecipes.length,
                 showAds,
-                interval: 10,
+                interval: 5,
               );
               final isWideWebCard = screenWidth >= 800;
               final selectedRecipeId = isWideWebCard
@@ -351,7 +351,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                     if (showAds &&
                         AdInterleavingHelper.isAdIndex(
                           visualIndex,
-                          interval: 10,
+                          interval: 5,
                         )) {
                       return Center(
                         child: ConstrainedBox(
@@ -367,7 +367,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                     final dataIndex = showAds
                         ? AdInterleavingHelper.getDataIndex(
                             visualIndex,
-                            interval: 10,
+                            interval: 5,
                           )
                         : visualIndex;
                     if (dataIndex >= filteredRecipes.length) return null;

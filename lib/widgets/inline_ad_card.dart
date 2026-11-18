@@ -39,9 +39,11 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
   static const int _maxActiveInlineAds = 3;
   static final List<_InlineAdCardState> _activePool = [];
 
-  BannerAd? _bannerAd;
-  BannerAd? _stagingBannerAd;
-  AdSize? _targetAdSize;
+  NativeAd? _nativeAd;
+  NativeAd? _stagingNativeAd;
+  String? _loadedStyleKey;
+  String? _currentStyleKey;
+  NativeTemplateStyle? _currentTemplateStyle;
   int? _lastMeasuredInnerWidth;
   CachedOfflineAdPayload? _cachedOfflinePayload;
   Timer? _loadDebounceTimer;
@@ -69,10 +71,10 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
 
   void _onOfflineStateChanged() {
     if (!mounted) return;
-    if (!AdService.isOffline && _bannerAd == null && !_isLoading) {
+    if (!AdService.isOffline && _nativeAd == null && !_isLoading) {
       _loadFailed = false;
       _scheduleAdLoad();
-    } else if (AdService.isOffline && _bannerAd == null) {
+    } else if (AdService.isOffline && _nativeAd == null) {
       setState(() {});
     }
   }
@@ -92,20 +94,66 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
       return;
     }
 
-    if (_bannerAd != null &&
+    if (_nativeAd != null &&
         _isAdLoaded &&
         _adLoadedAt != null &&
-        now.difference(_adLoadedAt!) >= AdService.kBannerAdRefreshThreshold) {
+        now.difference(_adLoadedAt!) >= AdService.kNativeAdRefreshThreshold) {
       if (AdService.isOffline) {
         return;
       }
-      unawaited(_refreshBannerNonDestructively());
+      unawaited(_refreshNativeAdNonDestructively());
     }
+  }
+
+  (NativeTemplateStyle, String) _buildNativeStyle(ThemeData theme) {
+    final isRecipe = widget.style == InlineAdCardStyle.recipe;
+    final primaryColor =
+        isRecipe ? theme.colorScheme.primary : theme.colorScheme.secondary;
+    final surfaceColor = theme.colorScheme.surfaceContainer;
+    final styleKey =
+        '${widget.style.name}_${theme.brightness.name}_${primaryColor.toARGB32()}_${surfaceColor.toARGB32()}';
+    final style = NativeTemplateStyle(
+      templateType: TemplateType.small,
+      mainBackgroundColor: surfaceColor,
+      cornerRadius: isRecipe ? 16.0 : 14.0,
+      callToActionTextStyle: NativeTemplateTextStyle(
+        textColor: isRecipe
+            ? theme.colorScheme.onPrimary
+            : theme.colorScheme.onSecondary,
+        backgroundColor: primaryColor,
+        style: NativeTemplateFontStyle.bold,
+        size: 12.0,
+      ),
+      primaryTextStyle: NativeTemplateTextStyle(
+        textColor: theme.colorScheme.onSurface,
+        style: NativeTemplateFontStyle.bold,
+        size: 14.0,
+      ),
+      secondaryTextStyle: NativeTemplateTextStyle(
+        textColor: theme.colorScheme.onSurfaceVariant,
+        size: 11.5,
+      ),
+      tertiaryTextStyle: NativeTemplateTextStyle(
+        textColor: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+        size: 10.5,
+      ),
+    );
+    return (style, styleKey);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final (style, styleKey) = _buildNativeStyle(Theme.of(context));
+    _currentTemplateStyle = style;
+    _currentStyleKey = styleKey;
+    if (_loadedStyleKey != null && _loadedStyleKey != styleKey) {
+      AdService.clearPreloadedNativeAds();
+      if (_nativeAd != null && !_isLoading && !AdService.isOffline) {
+        unawaited(_refreshNativeAdNonDestructively());
+      }
+    }
+
     final nextNotifier =
         Scrollable.maybeOf(context)?.position.isScrollingNotifier;
     if (_isScrollingNotifier != nextNotifier) {
@@ -129,7 +177,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
     } else {
       _isScrolling = scrolling;
     }
-    if (!scrolling && _bannerAd == null && !_isLoading && !_loadFailed) {
+    if (!scrolling && _nativeAd == null && !_isLoading && !_loadFailed) {
       _scheduleAdLoad();
     } else if (scrolling) {
       _loadDebounceTimer?.cancel();
@@ -158,8 +206,9 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
   void _evictFromPool() {
     _loadDebounceTimer?.cancel();
     _loadDebounceTimer = null;
-    _bannerAd?.dispose();
-    _bannerAd = null;
+    _nativeAd?.dispose();
+    _nativeAd = null;
+    _loadedStyleKey = null;
     _isAdLoaded = false;
     _isLoading = false;
     if (mounted) {
@@ -167,48 +216,51 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
     }
   }
 
-  Future<void> _refreshBannerNonDestructively() async {
+  Future<void> _refreshNativeAdNonDestructively() async {
     if (!AdService.isSupportedPlatform ||
         AdService.isOffline ||
         _isScrolling ||
         _isLoading ||
-        _stagingBannerAd != null) {
+        _stagingNativeAd != null) {
       return;
     }
+    final style = _currentTemplateStyle;
+    final styleKey = _currentStyleKey;
+    if (style == null || styleKey == null) return;
+
     _isLoading = true;
-    final targetSize = _bannerAd?.size ?? _targetAdSize ?? AdSize.banner;
-    final nextAd = AdService.createBannerAd(
-      size: targetSize,
-      onAdLoaded: () {
+    final nextAd = AdService.createNativeAd(
+      nativeTemplateStyle: style,
+      onAdLoaded: (loaded) {
         if (!mounted) {
-          _stagingBannerAd?.dispose();
-          _stagingBannerAd = null;
+          loaded.dispose();
+          _stagingNativeAd = null;
           return;
         }
-        final loaded = _stagingBannerAd;
-        _stagingBannerAd = null;
-        if (loaded != null) {
-          _bannerAd?.dispose();
-          _bannerAd = loaded;
-          _adLoadedAt = DateTime.now();
-          _isAdLoaded = true;
-          _loadFailed = false;
-          unawaited(
-            OfflineAdCacheService.recordLiveAdLoaded(
-              width: loaded.size.width,
-              height: loaded.size.height,
-              style: widget.style.name,
-            ),
-          );
-        }
+        _stagingNativeAd = null;
+        _nativeAd?.dispose();
+        _nativeAd = loaded;
+        _loadedStyleKey = styleKey;
+        _adLoadedAt = DateTime.now();
+        _isAdLoaded = true;
+        _loadFailed = false;
+        final innerWidth = (_lastMeasuredInnerWidth ?? 320).clamp(280, 560);
+        final adHeight = (innerWidth / 4.0).clamp(96.0, 120.0).round();
+        unawaited(
+          OfflineAdCacheService.recordLiveAdLoaded(
+            width: innerWidth,
+            height: adHeight,
+            style: widget.style.name,
+          ),
+        );
         setState(() {
           _isLoading = false;
         });
       },
       onAdFailedToLoad: (error) {
         AdService.markOfflineFromAdError(error);
-        _stagingBannerAd?.dispose();
-        _stagingBannerAd = null;
+        _stagingNativeAd?.dispose();
+        _stagingNativeAd = null;
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -220,8 +272,8 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
       _isLoading = false;
       return;
     }
-    _stagingBannerAd = nextAd;
-    await _stagingBannerAd!.load();
+    _stagingNativeAd = nextAd;
+    await _stagingNativeAd!.load();
   }
 
   Future<void> _loadAdIfNeeded() async {
@@ -229,42 +281,34 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
     final adState = ref.read(adProvider);
     final monetization = ref.read(monetizationProvider);
     if (adState.isAdFree || monetization.isAdFree) return;
-    if (_bannerAd != null || _isLoading || _loadFailed) return;
+    if (_nativeAd != null || _isLoading || _loadFailed) return;
 
     final innerWidth = _lastMeasuredInnerWidth;
     if (innerWidth == null || innerWidth < 280) {
       return;
     }
+    final style = _currentTemplateStyle;
+    final styleKey = _currentStyleKey;
+    if (style == null || styleKey == null) return;
 
-    // Resolve and lock the target adaptive size before claiming/loading
-    final targetSize = AdService.getCachedAdaptiveBannerSize(innerWidth) ??
-        await AdService.resolveAdaptiveBannerSize(innerWidth);
-    if (!mounted) return;
+    final effectiveWidth = innerWidth.clamp(280, 560);
+    final adHeight = (effectiveWidth / 4.0).clamp(96.0, 120.0).round();
 
-    if (_targetAdSize != targetSize) {
-      setState(() {
-        _targetAdSize = targetSize;
-      });
-    }
-
-    // 1. Try claiming a size-matched standby preloaded banner from AdService
-    final pooled = AdService.takePreloadedBannerAd(
-      preferredSize: targetSize,
-      maxWidth: innerWidth,
-    );
+    // 1. Try claiming a style-matched standby preloaded NativeAd from AdService
+    final pooled = AdService.takePreloadedNativeAd(styleKey: styleKey);
     if (pooled != null) {
       _registerInPool();
       unawaited(
         OfflineAdCacheService.recordLiveAdLoaded(
-          width: pooled.size.width,
-          height: pooled.size.height,
+          width: effectiveWidth,
+          height: adHeight,
           style: widget.style.name,
         ),
       );
       if (mounted) {
         setState(() {
-          _bannerAd = pooled;
-          _targetAdSize = pooled.size;
+          _nativeAd = pooled;
+          _loadedStyleKey = styleKey;
           _adLoadedAt = DateTime.now();
           _isAdLoaded = true;
           _isLoading = false;
@@ -290,24 +334,28 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
     _lastLoadAttemptAt = DateTime.now();
     _isLoading = true;
 
-    final createdAd = AdService.createBannerAd(
-      size: targetSize,
-      onAdLoaded: () {
+    final createdAd = AdService.createNativeAd(
+      nativeTemplateStyle: style,
+      onAdLoaded: (loaded) {
         if (mounted) {
           _registerInPool();
           unawaited(
             OfflineAdCacheService.recordLiveAdLoaded(
-              width: targetSize.width,
-              height: targetSize.height,
+              width: effectiveWidth,
+              height: adHeight,
               style: widget.style.name,
             ),
           );
           setState(() {
+            _nativeAd = loaded;
+            _loadedStyleKey = styleKey;
             _adLoadedAt = DateTime.now();
             _isAdLoaded = true;
             _isLoading = false;
             _loadFailed = false;
           });
+        } else {
+          loaded.dispose();
         }
       },
       onAdFailedToLoad: (error) {
@@ -315,8 +363,9 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
         _activePool.remove(this);
         if (mounted) {
           setState(() {
-            _bannerAd?.dispose();
-            _bannerAd = null;
+            _nativeAd?.dispose();
+            _nativeAd = null;
+            _loadedStyleKey = null;
             _isAdLoaded = false;
             _isLoading = false;
             _loadFailed = true;
@@ -330,18 +379,19 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
       return;
     }
 
-    _bannerAd = createdAd;
-    _bannerAd!.load();
+    _nativeAd = createdAd;
+    _nativeAd!.load();
   }
 
   void _disposeAd() {
     _activePool.remove(this);
     _loadDebounceTimer?.cancel();
     _loadDebounceTimer = null;
-    _stagingBannerAd?.dispose();
-    _stagingBannerAd = null;
-    _bannerAd?.dispose();
-    _bannerAd = null;
+    _stagingNativeAd?.dispose();
+    _stagingNativeAd = null;
+    _nativeAd?.dispose();
+    _nativeAd = null;
+    _loadedStyleKey = null;
     _isAdLoaded = false;
     _isLoading = false;
     _loadFailed = false;
@@ -363,20 +413,20 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
 
     // Listen for ad-free state updates to dismiss ad immediately
     ref.listen<bool>(adProvider.select((s) => s.isAdFree), (previous, next) {
-      if (next && _bannerAd != null) {
+      if (next && _nativeAd != null) {
         setState(() {
           _disposeAd();
         });
-      } else if (!next && _bannerAd == null && !_isLoading && !_loadFailed) {
+      } else if (!next && _nativeAd == null && !_isLoading && !_loadFailed) {
         _loadAdIfNeeded();
       }
     });
     ref.listen<bool>(monetizationProvider.select((s) => s.isAdFree), (previous, next) {
-      if (next && _bannerAd != null) {
+      if (next && _nativeAd != null) {
         setState(() {
           _disposeAd();
         });
-      } else if (!next && _bannerAd == null && !_isLoading && !_loadFailed) {
+      } else if (!next && _nativeAd == null && !_isLoading && !_loadFailed) {
         _loadAdIfNeeded();
       }
     });
@@ -427,26 +477,16 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
                 if (innerWidth >= 280 &&
                     _lastMeasuredInnerWidth != innerWidth) {
                   _lastMeasuredInnerWidth = innerWidth;
-                  final cachedSize =
-                      AdService.getCachedAdaptiveBannerSize(innerWidth);
-                  if (cachedSize != null && _targetAdSize == null) {
-                    _targetAdSize = cachedSize;
-                  }
-                  if (_bannerAd == null && !_isLoading && !_loadFailed) {
+                  if (_nativeAd == null && !_isLoading && !_loadFailed) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (mounted) _scheduleAdLoad();
                     });
                   }
                 }
 
-                final effectiveSize = _bannerAd?.size ??
-                    _targetAdSize ??
-                    AdService.getCachedAdaptiveBannerSize(innerWidth) ??
-                    const AdSize(width: 320, height: 60);
-                final adHeight = effectiveSize.height.toDouble();
-                final adWidth = effectiveSize.width
-                    .toDouble()
-                    .clamp(0.0, innerWidth.toDouble());
+                final effectiveInnerWidth =
+                    innerWidth.toDouble().clamp(0.0, 560.0);
+                final adHeight = (effectiveInnerWidth / 4.0).clamp(96.0, 120.0);
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
@@ -542,14 +582,12 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
                       width: double.infinity,
                       height: adHeight,
                       alignment: Alignment.center,
-                      color: theme.colorScheme.surface,
-                      child: (!_isScrolling &&
-                              _isAdLoaded &&
-                              _bannerAd != null)
+                      color: theme.colorScheme.surfaceContainer,
+                      child: (_isAdLoaded && _nativeAd != null)
                           ? SizedBox(
-                              width: adWidth,
+                              width: effectiveInnerWidth,
                               height: adHeight,
-                              child: AdWidget(ad: _bannerAd!),
+                              child: AdWidget(ad: _nativeAd!),
                             )
                           : (_loadFailed || AdService.isOffline)
                               ? OfflineCachedAdWidget(
