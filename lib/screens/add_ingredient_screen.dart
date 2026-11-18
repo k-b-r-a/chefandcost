@@ -41,6 +41,8 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
   late TextEditingController _nameController;
   late TextEditingController _costController;
   late TextEditingController _quantityController;
+  final FocusNode _costFocusNode = FocusNode();
+  final FocusNode _quantityFocusNode = FocusNode();
   String? _selectedUnitPk;
   String? _initialUnitPk;
   bool _isLoading = false;
@@ -70,6 +72,16 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
     _quantityController = TextEditingController(
       text: widget.ingredient != null ? RecipeUtils.formatNumber(widget.ingredient!.quantityForCost) : '',
     );
+    _costFocusNode.addListener(() {
+      if (_costFocusNode.hasFocus) {
+        _selectAllText(_costController);
+      }
+    });
+    _quantityFocusNode.addListener(() {
+      if (_quantityFocusNode.hasFocus) {
+        _selectAllText(_quantityController);
+      }
+    });
     _selectedUnitPk = widget.ingredient?.unitFk;
     _initialUnitPk = widget.ingredient?.unitFk;
 
@@ -96,7 +108,24 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
     _nameController.dispose();
     _costController.dispose();
     _quantityController.dispose();
+    _costFocusNode.dispose();
+    _quantityFocusNode.dispose();
     super.dispose();
+  }
+
+  void _selectAllText(TextEditingController controller) {
+    if (controller.text.isEmpty) return;
+    controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: controller.text.length,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || controller.text.isEmpty) return;
+      controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: controller.text.length,
+      );
+    });
   }
 
   void _maybeTriggerTutorial() {
@@ -419,6 +448,9 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                           child: TextFormField(
                             key: const ValueKey('ingredient_cost_input'),
                             controller: _costController,
+                            focusNode: _costFocusNode,
+                            textInputAction: TextInputAction.next,
+                            onTap: () => _selectAllText(_costController),
                             decoration: InputDecoration(
                               labelText: l10n.ingredient_cost,
                               prefixText: '${settings.currencySymbol} ',
@@ -437,7 +469,11 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: TextFormField(
+                            key: const ValueKey('ingredient_quantity_input'),
                             controller: _quantityController,
+                            focusNode: _quantityFocusNode,
+                            textInputAction: TextInputAction.done,
+                            onTap: () => _selectAllText(_quantityController),
                             decoration: InputDecoration(
                               labelText: l10n.ingredient_quantity,
                               border: const OutlineInputBorder(),
