@@ -39,3 +39,6 @@
 -keep class * extends androidx.room.RoomDatabase {
     <init>();
 }
+
+# Repackage obfuscated classes into a short package (Play Console optimization)
+-repackageclasses 'o'
