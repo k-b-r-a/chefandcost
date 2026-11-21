@@ -3564,6 +3564,24 @@ abstract class AppLocalizations {
   /// **'Manage venues, kitchens and operational workspaces'**
   String get group_management_subtitle;
 
+  /// No description provided for @group_toggle_visibility_hide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide workspace'**
+  String get group_toggle_visibility_hide;
+
+  /// No description provided for @group_toggle_visibility_show.
+  ///
+  /// In en, this message translates to:
+  /// **'Show workspace'**
+  String get group_toggle_visibility_show;
+
+  /// No description provided for @group_visible_count.
+  ///
+  /// In en, this message translates to:
+  /// **'{visible}/{total} visible'**
+  String group_visible_count(int visible, int total);
+
   /// No description provided for @settings_about_privacy_view_online.
   ///
   /// In en, this message translates to:

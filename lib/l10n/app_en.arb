@@ -808,6 +808,19 @@
   "group_all_workspaces": "All Workspaces",
   "group_select_prompt": "Select a workspace to manage its recipes",
   "group_management_subtitle": "Manage venues, kitchens and operational workspaces",
+  "group_toggle_visibility_hide": "Hide workspace",
+  "group_toggle_visibility_show": "Show workspace",
+  "group_visible_count": "{visible}/{total} visible",
+  "@group_visible_count": {
+    "placeholders": {
+      "visible": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "settings_about_privacy_view_online": "View Online Privacy Policy",
   "settings_about_privacy_delete_portal": "Web Account & Data Deletion Portal",
   "cloud_sync_delete_account_btn": "Delete account & cloud data",

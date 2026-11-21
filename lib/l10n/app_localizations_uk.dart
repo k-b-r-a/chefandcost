@@ -1870,6 +1870,17 @@ class AppLocalizationsUk extends AppLocalizations {
       'Manage venues, kitchens and operational workspaces';
 
   @override
+  String get group_toggle_visibility_hide => 'Hide workspace';
+
+  @override
+  String get group_toggle_visibility_show => 'Show workspace';
+
+  @override
+  String group_visible_count(int visible, int total) {
+    return '$visible/$total visible';
+  }
+
+  @override
   String get settings_about_privacy_view_online => 'View Online Privacy Policy';
 
   @override

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../database/database.dart';
 import '../l10n/app_localizations.dart';
 import '../provider/database_provider.dart';
 import 'group_management_sheet.dart';
 
-/// Interactive chip widget displaying the currently active workspace / group.
-/// Tapping opens the [GroupManagementSheet] switcher.
+/// Interactive chip widget displaying the current workspace visibility summary.
+/// Tapping opens the [GroupManagementSheet] visibility filter sheet.
 class ActiveGroupChip extends ConsumerWidget {
   final bool isCompact;
 
@@ -14,20 +15,64 @@ class ActiveGroupChip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeGroup = ref.watch(activeGroupProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    final allSpaces = ref.watch(activeGroupIdProvider) == kAllGroupsId;
-    final groupName = (activeGroup?.id == 'group_default_principal' &&
-            (activeGroup?.name == 'Principal' || activeGroup?.name == 'Main'))
-        ? l10n.group_default_name
-        : (activeGroup?.name ??
-            (allSpaces ? l10n.group_all_workspaces : l10n.group_default_name));
-    final groupColor = parseGroupColor(activeGroup?.colorHex);
-    final groupIcon = allSpaces
-        ? Icons.all_inclusive_rounded
-        : getGroupIconData(activeGroup?.iconName);
+    final groups =
+        ref.watch(groupsStreamProvider).asData?.value ?? const <Group>[];
+    final activeGroups = groups.where((g) => !g.isDeleted).toList();
+    final hiddenIds = ref.watch(hiddenWorkspaceIdsProvider);
+    final visibleGroups = activeGroups
+        .where((g) => !hiddenIds.contains(g.id))
+        .toList();
+    final totalCount = activeGroups.length;
+    final visibleCount = visibleGroups.length;
+    final hiddenCount = totalCount - visibleCount;
+
+    final String label;
+    final IconData groupIcon;
+    final Color groupColor;
+    final bool isFiltered;
+
+    if (totalCount == 0 || hiddenCount == 0) {
+      label = l10n.group_all_workspaces;
+      groupIcon = Icons.visibility_rounded;
+      groupColor = theme.colorScheme.primary;
+      isFiltered = false;
+    } else if (visibleCount == 0) {
+      label = l10n.group_visible_count(0, totalCount);
+      groupIcon = Icons.visibility_off_outlined;
+      groupColor = theme.colorScheme.onSurfaceVariant;
+      isFiltered = true;
+    } else if (visibleCount == 1) {
+      final single = visibleGroups.first;
+      label = resolveWorkspaceDisplayName(single, l10n);
+      groupIcon = getGroupIconData(single.iconName);
+      groupColor = parseGroupColor(single.colorHex);
+      isFiltered = true;
+    } else {
+      label = l10n.group_visible_count(visibleCount, totalCount);
+      groupIcon = Icons.visibility_rounded;
+      groupColor = theme.colorScheme.primary;
+      isFiltered = true;
+    }
+
+    final Color chipBackground;
+    final Color chipBorder;
+    if (!isFiltered) {
+      chipBackground = theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: 0.6,
+      );
+      chipBorder = theme.colorScheme.outlineVariant.withValues(alpha: 0.35);
+    } else if (visibleCount == 0) {
+      chipBackground = theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: 0.55,
+      );
+      chipBorder = theme.colorScheme.outline.withValues(alpha: 0.45);
+    } else {
+      chipBackground = groupColor.withValues(alpha: 0.14);
+      chipBorder = groupColor.withValues(alpha: 0.55);
+    }
 
     return Material(
       color: Colors.transparent,
@@ -42,12 +87,10 @@ class ActiveGroupChip extends ConsumerWidget {
               vertical: isCompact ? 4 : 6,
             ),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.6,
-              ),
+              color: chipBackground,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                color: chipBorder,
                 width: 1,
               ),
             ),
@@ -73,7 +116,7 @@ class ActiveGroupChip extends ConsumerWidget {
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 120),
                   child: Text(
-                    groupName,
+                    label,
                     style: TextStyle(
                       fontSize: isCompact ? 12 : 13,
                       fontWeight: FontWeight.w600,

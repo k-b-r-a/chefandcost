@@ -56,7 +56,15 @@ Color parseGroupColor(
   }
 }
 
-/// Modal bottom sheet allowing users to view, switch, create, edit,
+String resolveWorkspaceDisplayName(Group group, AppLocalizations l10n) {
+  if (group.id == 'group_default_principal' &&
+      (group.name == 'Principal' || group.name == 'Main')) {
+    return l10n.group_default_name;
+  }
+  return group.name;
+}
+
+/// Modal bottom sheet allowing users to toggle visibility, create, edit,
 /// and soft-delete operational workspaces / venues.
 class GroupManagementSheet extends ConsumerWidget {
   const GroupManagementSheet({super.key});
@@ -75,7 +83,7 @@ class GroupManagementSheet extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final groupsAsync = ref.watch(groupsStreamProvider);
-    final activeGroup = ref.watch(activeGroupProvider);
+    final hiddenIds = ref.watch(hiddenWorkspaceIdsProvider);
 
     return Container(
       constraints: BoxConstraints(
@@ -161,6 +169,12 @@ class GroupManagementSheet extends ConsumerWidget {
               child: groupsAsync.when(
                 data: (groups) {
                   final activeList = groups.where((g) => !g.isDeleted).toList();
+                  final activeIds = activeList.map((g) => g.id).toList();
+                  final visibleCount = activeList
+                      .where((g) => !hiddenIds.contains(g.id))
+                      .length;
+                  final allVisible =
+                      activeList.isEmpty || visibleCount == activeList.length;
 
                   return ListView.separated(
                     shrinkWrap: true,
@@ -172,164 +186,265 @@ class GroupManagementSheet extends ConsumerWidget {
                     separatorBuilder: (_, _) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
                       if (index == 0) {
-                        final isSelected =
-                            ref.watch(activeGroupIdProvider) == kAllGroupsId;
-                        return ListTile(
-                          selected: isSelected,
-                          leading: const CircleAvatar(
-                            child: Icon(Icons.all_inclusive_rounded),
-                          ),
-                          title: Text(l10n.group_all_workspaces),
-                          trailing: isSelected
-                              ? Icon(
-                                  Icons.check_rounded,
-                                  color: theme.colorScheme.primary,
+                        void toggleAllVisibility() {
+                          final notifier = ref.read(
+                            hiddenWorkspaceIdsProvider.notifier,
+                          );
+                          if (allVisible && activeIds.isNotEmpty) {
+                            notifier.hideAllWorkspaces(activeIds);
+                          } else {
+                            notifier.showAllWorkspaces();
+                          }
+                        }
+
+                        return Material(
+                          color: allVisible
+                              ? theme.colorScheme.primaryContainer.withValues(
+                                  alpha: 0.25,
                                 )
-                              : null,
-                          onTap: () async {
-                            await ref
-                                .read(activeGroupIdProvider.notifier)
-                                .setActiveGroupId(kAllGroupsId);
-                            if (context.mounted) Navigator.of(context).pop();
-                          },
+                              : theme.colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: toggleAllVisibility,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: allVisible
+                                      ? theme.colorScheme.primary.withValues(
+                                          alpha: 0.5,
+                                        )
+                                      : theme.colorScheme.outlineVariant
+                                            .withValues(alpha: 0.25),
+                                  width: allVisible ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 42,
+                                    height: 42,
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.14),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.all_inclusive_rounded,
+                                      color: theme.colorScheme.primary,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          l10n.group_all_workspaces,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                        if (!allVisible &&
+                                            activeList.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            l10n.group_visible_count(
+                                              visibleCount,
+                                              activeList.length,
+                                            ),
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    key: const ValueKey(
+                                      'workspace_visibility_all',
+                                    ),
+                                    visualDensity: VisualDensity.compact,
+                                    icon: Icon(
+                                      allVisible
+                                          ? Icons.visibility_rounded
+                                          : Icons.visibility_off_outlined,
+                                      size: 22,
+                                      color: allVisible
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    tooltip: allVisible
+                                        ? l10n.group_toggle_visibility_hide
+                                        : l10n.group_toggle_visibility_show,
+                                    onPressed: toggleAllVisibility,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         );
                       }
                       final group = activeList[index - 1];
-                      final isSelected = activeGroup?.id == group.id;
+                      final isVisible = !hiddenIds.contains(group.id);
                       final groupColor = parseGroupColor(group.colorHex);
                       final iconData = getGroupIconData(group.iconName);
-                      final groupDisplayName = (group.id == 'group_default_principal' &&
-                              (group.name == 'Principal' || group.name == 'Main'))
-                          ? l10n.group_default_name
-                          : group.name;
+                      final groupDisplayName = resolveWorkspaceDisplayName(
+                        group,
+                        l10n,
+                      );
 
-                      return Material(
-                        color: isSelected
-                            ? theme.colorScheme.primaryContainer.withValues(
-                                alpha: 0.35,
-                              )
-                            : theme.colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
+                      void toggleRowVisibility() {
+                        ref
+                            .read(hiddenWorkspaceIdsProvider.notifier)
+                            .toggleWorkspaceVisibility(group.id);
+                      }
+
+                      return AnimatedOpacity(
+                        duration: const Duration(milliseconds: 180),
+                        opacity: isVisible ? 1.0 : 0.55,
+                        child: Material(
+                          color: isVisible
+                              ? theme.colorScheme.primaryContainer.withValues(
+                                  alpha: 0.25,
+                                )
+                              : theme.colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(16),
-                          onTap: () async {
-                            await ref
-                                .read(activeGroupIdProvider.notifier)
-                                .setActiveGroupId(group.id);
-                            if (context.mounted) {
-                              GooeyToast.showSuccess(
-                                context,
-                                message: l10n.group_switch_success(groupDisplayName),
-                                duration: const Duration(seconds: 2),
-                              );
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.outlineVariant
-                                          .withValues(alpha: 0.25),
-                                width: isSelected ? 1.75 : 1.0,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: toggleRowVisibility,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                // Badge avatar
-                                Container(
-                                  width: 42,
-                                  height: 42,
-                                  decoration: BoxDecoration(
-                                    color: groupColor.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: groupColor.withValues(alpha: 0.6),
-                                      width: 1.2,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isVisible
+                                      ? theme.colorScheme.primary.withValues(
+                                          alpha: 0.5,
+                                        )
+                                      : theme.colorScheme.outlineVariant
+                                            .withValues(alpha: 0.25),
+                                  width: isVisible ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Badge avatar
+                                  Container(
+                                    width: 42,
+                                    height: 42,
+                                    decoration: BoxDecoration(
+                                      color: groupColor.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: groupColor.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      iconData,
+                                      color: groupColor,
+                                      size: 22,
                                     ),
                                   ),
-                                  child: Icon(
-                                    iconData,
-                                    color: groupColor,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
+                                  const SizedBox(width: 14),
 
-                                // Name & Active pill
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        groupDisplayName,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: isSelected
-                                                  ? FontWeight.bold
-                                                  : FontWeight.w600,
-                                            ),
-                                      ),
-                                      if (isSelected) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          l10n.group_active_label,
-                                          style: TextStyle(
-                                            color: theme.colorScheme.primary,
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.bold,
+                                  // Workspace Name
+                                  Expanded(
+                                    child: Text(
+                                      groupDisplayName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: isVisible
+                                                ? FontWeight.w600
+                                                : FontWeight.w500,
                                           ),
-                                        ),
-                                      ],
-                                    ],
+                                    ),
                                   ),
-                                ),
 
-                                // Actions (Edit / Delete)
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.edit_outlined,
-                                    size: 20,
+                                  // Actions (Edit / Delete / Eye Toggle)
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      size: 20,
+                                    ),
+                                    tooltip: l10n.group_edit,
+                                    onPressed: () => _showAddOrEditGroupDialog(
+                                      context,
+                                      ref,
+                                      existingGroup: group,
+                                    ),
                                   ),
-                                  tooltip: l10n.group_edit,
-                                  onPressed: () => _showAddOrEditGroupDialog(
-                                    context,
-                                    ref,
-                                    existingGroup: group,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline_rounded,
-                                    size: 20,
-                                    color: activeList.length <= 1
-                                        ? theme.colorScheme.onSurfaceVariant
-                                              .withValues(alpha: 0.3)
-                                        : theme.colorScheme.error,
-                                  ),
-                                  tooltip: l10n.group_delete,
-                                  onPressed: activeList.length <= 1
-                                      ? () {
-                                          GooeyToast.showWarning(
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    icon: Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 20,
+                                      color: activeList.length <= 1
+                                          ? theme.colorScheme.onSurfaceVariant
+                                                .withValues(alpha: 0.3)
+                                          : theme.colorScheme.error,
+                                    ),
+                                    tooltip: l10n.group_delete,
+                                    onPressed: activeList.length <= 1
+                                        ? () {
+                                            GooeyToast.showWarning(
+                                              context,
+                                              message:
+                                                  l10n.group_delete_cannot_last,
+                                            );
+                                          }
+                                        : () => _confirmDeleteGroup(
                                             context,
-                                            message: l10n.group_delete_cannot_last,
-                                          );
-                                        }
-                                      : () => _confirmDeleteGroup(
-                                          context,
-                                          ref,
-                                          group,
-                                        ),
-                                ),
-                              ],
+                                            ref,
+                                            group,
+                                          ),
+                                  ),
+                                  IconButton(
+                                    key: ValueKey(
+                                      'workspace_visibility_${group.id}',
+                                    ),
+                                    visualDensity: VisualDensity.compact,
+                                    icon: Icon(
+                                      isVisible
+                                          ? Icons.visibility_rounded
+                                          : Icons.visibility_off_outlined,
+                                      size: 22,
+                                      color: isVisible
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    tooltip: isVisible
+                                        ? l10n.group_toggle_visibility_hide
+                                        : l10n.group_toggle_visibility_show,
+                                    onPressed: toggleRowVisibility,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -382,9 +497,6 @@ class GroupManagementSheet extends ConsumerWidget {
                 isDeleted: const drift.Value(false),
               ),
             );
-            await ref
-                .read(activeGroupIdProvider.notifier)
-                .setActiveGroupId(newId);
           } else {
             await db.updateGroup(
               existingGroup.copyWith(
@@ -430,13 +542,16 @@ class GroupManagementSheet extends ConsumerWidget {
     if (confirmed == true) {
       final db = ref.read(databaseProvider);
       await db.softDeleteGroup(group.id);
+      await ref
+          .read(hiddenWorkspaceIdsProvider.notifier)
+          .removeWorkspaceId(group.id);
 
-      // If active group was deleted, switch to the first remaining group
+      // Keep legacy activeGroupIdProvider consistent if it pointed to this deleted group
       final activeId = ref.read(activeGroupIdProvider);
       if (activeId == group.id) {
-        final remaining = await db.getAllGroups(includeDeleted: false);
-        final nextId = remaining.isNotEmpty ? remaining.first.id : null;
-        await ref.read(activeGroupIdProvider.notifier).setActiveGroupId(nextId);
+        await ref
+            .read(activeGroupIdProvider.notifier)
+            .setActiveGroupId(kAllGroupsId);
       }
     }
   }

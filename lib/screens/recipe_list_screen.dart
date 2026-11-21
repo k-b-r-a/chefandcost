@@ -316,7 +316,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                   child: AppEmptyState(
                     icon: Icons.restaurant_menu,
                     message: searchQuery.isEmpty
-                        ? (ref.watch(activeGroupProvider) != null
+                        ? (ref.watch(hiddenWorkspaceIdsProvider).isNotEmpty
                               ? l10n.no_recipes_in_space
                               : l10n.recipes_title)
                         : l10n.no_recipes_found,

@@ -241,18 +241,29 @@ class AppDatabase extends _$AppDatabase {
     String? groupId,
     String? spaceId,
     String? category,
-  }) => getRecipes(spaceId: spaceId ?? groupId, category: category);
+    Set<String>? hiddenSpaceIds,
+  }) => getRecipes(
+    spaceId: spaceId ?? groupId,
+    category: category,
+    hiddenSpaceIds: hiddenSpaceIds,
+  );
 
   Stream<List<Recipe>> watchAllRecipes({
     String? groupId,
     String? spaceId,
     String? category,
-  }) => watchRecipes(spaceId: spaceId ?? groupId, category: category);
+    Set<String>? hiddenSpaceIds,
+  }) => watchRecipes(
+    spaceId: spaceId ?? groupId,
+    category: category,
+    hiddenSpaceIds: hiddenSpaceIds,
+  );
 
   Future<List<Recipe>> getRecipes({
     String? spaceId,
     String? category,
     String? searchQuery,
+    Set<String>? hiddenSpaceIds,
   }) async {
     final List<Recipe> rows;
     if (spaceId != null && spaceId.isNotEmpty) {
@@ -276,6 +287,22 @@ class AppDatabase extends _$AppDatabase {
       )..orderBy([(t) => OrderingTerm(expression: t.name)])).get();
     }
     var filtered = rows;
+    if (hiddenSpaceIds != null && hiddenSpaceIds.isNotEmpty) {
+      final activeLinks = await (select(
+        recipeSpaces,
+      )..where((t) => t.isDeleted.equals(false))).get();
+      final spacesByRecipe = <String, Set<String>>{};
+      for (final link in activeLinks) {
+        spacesByRecipe
+            .putIfAbsent(link.recipeId, () => <String>{})
+            .add(link.spaceId);
+      }
+      filtered = filtered.where((r) {
+        final linkedSpaces = spacesByRecipe[r.recipePk];
+        if (linkedSpaces == null || linkedSpaces.isEmpty) return true;
+        return linkedSpaces.any((id) => !hiddenSpaceIds.contains(id));
+      }).toList();
+    }
     if (category != null && category.isNotEmpty) {
       filtered = filtered.where((r) => r.category == category).toList();
     }
@@ -295,9 +322,15 @@ class AppDatabase extends _$AppDatabase {
     String? spaceId,
     String? category,
     String? searchQuery,
+    Set<String>? hiddenSpaceIds,
   }) {
     final targetSpaceId = spaceId ?? groupId;
-    if (targetSpaceId != null && targetSpaceId.isNotEmpty) {
+    final hidden = (hiddenSpaceIds == null || hiddenSpaceIds.isEmpty)
+        ? null
+        : Set<String>.unmodifiable(hiddenSpaceIds);
+    if (targetSpaceId != null &&
+        targetSpaceId.isNotEmpty &&
+        hidden == null) {
       final query =
           select(recipes).join([
             innerJoin(
@@ -334,24 +367,45 @@ class AppDatabase extends _$AppDatabase {
     ]);
     return query.watch().map((rows) {
       final unique = <String, Recipe>{};
+      final activeSpacesByRecipe = <String, Set<String>>{};
       for (final row in rows) {
         final recipe = row.readTable(recipes);
+        unique[recipe.recipePk] = recipe;
+        final link = row.readTableOrNull(recipeSpaces);
+        if (link != null && !link.isDeleted) {
+          activeSpacesByRecipe
+              .putIfAbsent(recipe.recipePk, () => <String>{})
+              .add(link.spaceId);
+        }
+      }
+      final trimmedQuery = searchQuery?.trim().toLowerCase();
+      final result = unique.values.where((recipe) {
+        if (targetSpaceId != null && targetSpaceId.isNotEmpty) {
+          final linked = activeSpacesByRecipe[recipe.recipePk];
+          if (linked == null || !linked.contains(targetSpaceId)) {
+            return false;
+          }
+        }
         if (category != null &&
             category.isNotEmpty &&
             recipe.category != category) {
-          continue;
+          return false;
         }
-        if (searchQuery != null &&
-            searchQuery.trim().isNotEmpty &&
-            !recipe.name.toLowerCase().contains(
-              searchQuery.trim().toLowerCase(),
-            )) {
-          continue;
+        if (trimmedQuery != null &&
+            trimmedQuery.isNotEmpty &&
+            !recipe.name.toLowerCase().contains(trimmedQuery)) {
+          return false;
         }
-        unique[recipe.recipePk] = recipe;
-      }
-      final result = unique.values.toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
+        if (hidden != null) {
+          final linkedSpaces = activeSpacesByRecipe[recipe.recipePk];
+          if (linkedSpaces != null &&
+              linkedSpaces.isNotEmpty &&
+              linkedSpaces.every(hidden.contains)) {
+            return false;
+          }
+        }
+        return true;
+      }).toList()..sort((a, b) => a.name.compareTo(b.name));
       return result;
     });
   }
@@ -413,17 +467,23 @@ class AppDatabase extends _$AppDatabase {
     String? groupId,
     String? spaceId,
     String? category,
+    Set<String>? hiddenSpaceIds,
   }) => watchRecipesWithFinancials(
     groupId: groupId,
     spaceId: spaceId,
     category: category,
+    hiddenSpaceIds: hiddenSpaceIds,
   );
 
   Stream<List<RecipeWithFinancials>> watchRecipesWithFinancials({
     String? groupId,
     String? spaceId,
     String? category,
+    Set<String>? hiddenSpaceIds,
   }) {
+    final hidden = (hiddenSpaceIds == null || hiddenSpaceIds.isEmpty)
+        ? null
+        : Set<String>.unmodifiable(hiddenSpaceIds);
     // Observe all inputs without restarting the subscription when ingredients
     // change. Read each complete feed from one consistent database snapshot.
     final changes = customSelect(
@@ -443,6 +503,7 @@ class AppDatabase extends _$AppDatabase {
         final recipeList = await getRecipes(
           spaceId: spaceId ?? groupId,
           category: category,
+          hiddenSpaceIds: hidden,
         );
         final List<RecipeWithFinancials> results = [];
 

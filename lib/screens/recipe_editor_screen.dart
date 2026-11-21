@@ -336,12 +336,16 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     super.initState();
     _currentRecipePk = widget.recipeId;
     if (widget.recipeId == null) {
-      final active = ref.read(activeGroupProvider);
-      if (active != null) {
-        _selectedSpaceIds.add(active.id);
+      final visibleSpaces = ref.read(visibleWorkspacesProvider);
+      if (visibleSpaces.length == 1) {
+        _selectedSpaceIds.add(visibleSpaces.first.id);
       } else {
         final groups = ref.read(groupsStreamProvider).asData?.value ?? [];
-        final defaultSpace = groups.where((g) => !g.isDeleted).firstOrNull;
+        final activeGroups = groups.where((g) => !g.isDeleted);
+        final defaultSpace = activeGroups
+                .where((g) => g.id == 'group_default_principal')
+                .firstOrNull ??
+            activeGroups.firstOrNull;
         if (defaultSpace != null) {
           _selectedSpaceIds.add(defaultSpace.id);
         }
