@@ -2264,4 +2264,473 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get offline_ad_cta => 'Go Ad-Free';
+
+  @override
+  String get mold_calc_title => 'Mold & Pan Calculator';
+
+  @override
+  String get mold_calc_short_title => 'Mold';
+
+  @override
+  String get mold_calc_desc =>
+      'Scale recipes across pans, solve equivalent dimensions, and optimize portion yields.';
+
+  @override
+  String get mold_calc_tab_scale => 'Scale & Convert';
+
+  @override
+  String get mold_calc_tab_portion => 'Portion & Yield';
+
+  @override
+  String get mold_calc_source_mold => 'Source Mold';
+
+  @override
+  String get mold_calc_target_mold => 'Target Mold';
+
+  @override
+  String get mold_calc_swap_molds => 'Swap source and target';
+
+  @override
+  String get mold_calc_reset => 'Reset';
+
+  @override
+  String get mold_calc_presets => 'Presets';
+
+  @override
+  String get mold_calc_save_custom => 'Save custom mold';
+
+  @override
+  String get mold_calc_delete_custom => 'Delete custom mold';
+
+  @override
+  String get mold_calc_custom_name_hint => 'e.g. Grandma\'s Bundt 23 cm';
+
+  @override
+  String get mold_calc_custom_saved_toast => 'Custom mold saved';
+
+  @override
+  String get mold_calc_cancel => 'Cancel';
+
+  @override
+  String get mold_calc_save => 'Save';
+
+  @override
+  String get mold_calc_select_preset => 'Select Mold Preset';
+
+  @override
+  String get mold_calc_shape_cylinder => 'Round / Cylinder';
+
+  @override
+  String get mold_calc_shape_square => 'Square';
+
+  @override
+  String get mold_calc_shape_rectangular => 'Rectangular / Sheet';
+
+  @override
+  String get mold_calc_shape_frustum => 'Round Tapered / Cone';
+
+  @override
+  String get mold_calc_shape_rect_frustum => 'Tapered Loaf / Budinera';
+
+  @override
+  String get mold_calc_shape_v_channel => 'V-Channel Trough';
+
+  @override
+  String get mold_calc_shape_annular => 'Tube / Savarin / Bundt';
+
+  @override
+  String get mold_calc_shape_spherical_cap => 'Dome / Hemisphere';
+
+  @override
+  String get mold_calc_shape_u_channel => 'U-Channel / Half-Cylinder';
+
+  @override
+  String get mold_calc_shape_polygon => 'Regular Polygon';
+
+  @override
+  String get mold_calc_shape_heart => 'Heart / Petal';
+
+  @override
+  String get mold_calc_shape_water_displacement =>
+      'Water Displacement (Custom)';
+
+  @override
+  String get mold_calc_shape_multi_cavity => 'Multi-Cavity Tray';
+
+  @override
+  String get mold_calc_dim_diameter => 'Diameter (cm)';
+
+  @override
+  String get mold_calc_dim_bottom_diameter => 'Bottom Ø (cm)';
+
+  @override
+  String get mold_calc_dim_top_diameter => 'Top Ø (cm)';
+
+  @override
+  String get mold_calc_dim_side => 'Side (cm)';
+
+  @override
+  String get mold_calc_dim_length => 'Length (cm)';
+
+  @override
+  String get mold_calc_dim_width => 'Width (cm)';
+
+  @override
+  String get mold_calc_dim_bottom_length => 'Bottom Length (cm)';
+
+  @override
+  String get mold_calc_dim_bottom_width => 'Bottom Width (cm)';
+
+  @override
+  String get mold_calc_dim_top_length => 'Top Length (cm)';
+
+  @override
+  String get mold_calc_dim_top_width => 'Top Width (cm)';
+
+  @override
+  String get mold_calc_dim_height => 'Height (cm)';
+
+  @override
+  String get mold_calc_dim_slant_height => 'Slant Height (cm)';
+
+  @override
+  String get mold_calc_use_slant_height => 'Enter slant height';
+
+  @override
+  String get mold_calc_dim_tube_bottom => 'Tube Bottom Ø (cm)';
+
+  @override
+  String get mold_calc_dim_tube_top => 'Tube Top Ø (cm)';
+
+  @override
+  String get mold_calc_dim_tube_height => 'Tube Height (cm)';
+
+  @override
+  String get mold_calc_dim_fluting => 'Fluting Relief (η)';
+
+  @override
+  String get mold_calc_dim_sides_n => 'Sides (n)';
+
+  @override
+  String get mold_calc_dim_shape_factor => 'Shape Factor';
+
+  @override
+  String get mold_calc_dim_measured_ml => 'Measured Volume (ml)';
+
+  @override
+  String get mold_calc_dim_fill_curve => 'Fill Curve Exponent';
+
+  @override
+  String get mold_calc_dim_cavities => 'Cavities (N)';
+
+  @override
+  String get mold_calc_multi_cavity_toggle => 'Multi-cavity tray (×N)';
+
+  @override
+  String get mold_calc_cavity_shape => 'Cavity Shape';
+
+  @override
+  String get mold_calc_cat_round => 'Round Cake Pans';
+
+  @override
+  String get mold_calc_cat_square => 'Square Pans';
+
+  @override
+  String get mold_calc_cat_gn_sheet => 'Gastronorm & Sheet Pans';
+
+  @override
+  String get mold_calc_cat_loaf => 'Loaf & Budineras';
+
+  @override
+  String get mold_calc_cat_tube_bundt => 'Tube, Savarin & Bundt';
+
+  @override
+  String get mold_calc_cat_tart => 'Tart Rings';
+
+  @override
+  String get mold_calc_cat_custom => 'Custom Molds';
+
+  @override
+  String get mold_calc_fill_profile_label => 'Batter / Fill Type';
+
+  @override
+  String mold_calc_fill_ratio_label(String percent) {
+    return 'Fill Level: $percent%';
+  }
+
+  @override
+  String get mold_calc_link_fill_profiles => 'Sync fill profile';
+
+  @override
+  String get mold_calc_fill_chiffon => 'Chiffon / Sponge (62%)';
+
+  @override
+  String get mold_calc_fill_butter => 'Butter / Pound Cake (72%)';
+
+  @override
+  String get mold_calc_fill_brownie => 'Brownie / Cheesecake / Tart (88%)';
+
+  @override
+  String get mold_calc_fill_mousse => 'Mousse / Entremet / Gelatin (98%)';
+
+  @override
+  String get mold_calc_fill_custom => 'Custom Fill %';
+
+  @override
+  String get mold_calc_equiv_toggle => 'Find Equivalent Dimension';
+
+  @override
+  String get mold_calc_equiv_solve_primary => 'Solve Width / Ø';
+
+  @override
+  String get mold_calc_equiv_solve_height => 'Solve Height';
+
+  @override
+  String get mold_calc_equiv_result_title => 'Equivalent Dimension Found';
+
+  @override
+  String mold_calc_equiv_result_desc(String value, String volume) {
+    return 'Solved dimension: $value cm → achieves $volume ml (1.00×)';
+  }
+
+  @override
+  String get mold_calc_equiv_apply_btn => 'Apply to Target';
+
+  @override
+  String get mold_calc_equiv_no_solution =>
+      'Target volume cannot be matched with the current constraints.';
+
+  @override
+  String get mold_calc_summary_title => 'Scaling Summary';
+
+  @override
+  String get mold_calc_factor_kv => 'Volume Factor (k_V)';
+
+  @override
+  String get mold_calc_factor_ka => 'Area Factor (k_A)';
+
+  @override
+  String get mold_calc_effective_volume => 'Effective Volume';
+
+  @override
+  String get mold_calc_fill_height => 'Fill Height';
+
+  @override
+  String get mold_calc_depth_ratio => 'Depth Ratio';
+
+  @override
+  String get mold_calc_leftover_batter => 'Leftover Batter (1× recipe)';
+
+  @override
+  String get mold_calc_extra_batter_needed => 'Extra Batter Needed (1× recipe)';
+
+  @override
+  String get mold_calc_exact_match => 'Exact volume match';
+
+  @override
+  String mold_calc_unscaled_fill(String height, String percent) {
+    return 'Unscaled 1× fill in target: $height cm ($percent%)';
+  }
+
+  @override
+  String get mold_calc_overflows_target =>
+      '1× recipe overflows the target mold!';
+
+  @override
+  String get mold_calc_apply_to_recipe => 'Apply to Recipe';
+
+  @override
+  String get mold_calc_select_recipe_title => 'Select Recipe to Scale';
+
+  @override
+  String get mold_calc_no_recipes_copy_msg =>
+      'No saved recipes found. Copy the scale factor to use it anywhere.';
+
+  @override
+  String get mold_calc_copy_factor => 'Copy Factor';
+
+  @override
+  String mold_calc_copied_factor_toast(String factor) {
+    return 'Copied scale factor: $factor×';
+  }
+
+  @override
+  String mold_calc_applied_factor_toast(String factor) {
+    return 'Applied mold scale factor: $factor×';
+  }
+
+  @override
+  String get mold_calc_thermal_title => 'Thermal & Baking Advisories';
+
+  @override
+  String get mold_calc_thermal_shallow_title => 'Shallow / Fast-Bake Warning';
+
+  @override
+  String get mold_calc_thermal_shallow_desc =>
+      'Target batter is thinner or has higher surface-to-volume exposure. Shorten bake time and watch edges to avoid drying.';
+
+  @override
+  String get mold_calc_thermal_deep_title => 'Deep / Slow-Bake Warning';
+
+  @override
+  String get mold_calc_thermal_deep_desc =>
+      'Target batter is deeper with lower surface exposure. Lower oven temperature slightly, extend bake time, or use a heating core.';
+
+  @override
+  String get mold_calc_thermal_overflow_title => 'High Fill / Overflow Risk';
+
+  @override
+  String get mold_calc_thermal_overflow_desc =>
+      'Fill percentage exceeds the recommended ceiling for this batter type and may dome or overflow during baking.';
+
+  @override
+  String get mold_calc_thermal_optimal_title => 'Balanced Thermal Profile';
+
+  @override
+  String get mold_calc_thermal_optimal_desc =>
+      'Depth and surface-to-volume ratios are well matched; baking time and temperature should remain similar.';
+
+  @override
+  String get mold_calc_preview_cross_section =>
+      'Side Cross-Section & Fill Level';
+
+  @override
+  String get mold_calc_preview_top_down => 'Top-Down Cut Layout';
+
+  @override
+  String get mold_calc_preview_source_short => 'Src';
+
+  @override
+  String get mold_calc_preview_target_short => 'Tgt';
+
+  @override
+  String get mold_calc_portion_mold_select => 'Active Mold for Slicing';
+
+  @override
+  String get mold_calc_portion_strategy => 'Cutting Strategy';
+
+  @override
+  String get mold_calc_portion_presets => 'Portion Presets';
+
+  @override
+  String get mold_calc_cut_radial => 'Radial Wedges';
+
+  @override
+  String get mold_calc_cut_concentric => 'Concentric Rings';
+
+  @override
+  String get mold_calc_cut_grid => 'Cartesian Grid';
+
+  @override
+  String get mold_calc_cut_linear => 'Linear Loaf Slices';
+
+  @override
+  String get mold_calc_portion_full_count => 'Full Portions';
+
+  @override
+  String get mold_calc_portion_vol_each => 'Volume / Portion';
+
+  @override
+  String get mold_calc_portion_area_each => 'Area / Portion';
+
+  @override
+  String get mold_calc_portion_waste_merma => 'Trim Waste (Merma)';
+
+  @override
+  String get mold_calc_portion_arc_width => 'Target Outer Arc (cm)';
+
+  @override
+  String get mold_calc_portion_fixed_slices => 'Fixed Slice Count';
+
+  @override
+  String get mold_calc_portion_use_fixed_slices => 'Specify exact slices';
+
+  @override
+  String get mold_calc_portion_inner_diameter => 'Inner Ring Ø (cm)';
+
+  @override
+  String get mold_calc_portion_piece_length => 'Piece Length (cm)';
+
+  @override
+  String get mold_calc_portion_piece_width => 'Piece Width (cm)';
+
+  @override
+  String get mold_calc_portion_edge_trim => 'Edge Trim Margin (cm)';
+
+  @override
+  String get mold_calc_portion_slice_thickness => 'Slice Thickness (cm)';
+
+  @override
+  String get mold_calc_portion_end_trim => 'End Crust Trim (cm)';
+
+  @override
+  String get mold_calc_portion_rotated_badge =>
+      '90° rotated grid maximized yield';
+
+  @override
+  String mold_calc_portion_ring_breakdown(int inner, int outer) {
+    return 'Inner ring: $inner • Outer ring: $outer';
+  }
+
+  @override
+  String get mold_calc_err_non_positive =>
+      'All dimensions must be greater than 0.';
+
+  @override
+  String get mold_calc_err_negative_bottom =>
+      'Bottom dimension cannot be negative.';
+
+  @override
+  String get mold_calc_err_both_zero =>
+      'Top and bottom dimensions cannot both be 0.';
+
+  @override
+  String get mold_calc_err_fill_ratio =>
+      'Fill percentage must be between 1% and 100%.';
+
+  @override
+  String get mold_calc_err_fill_height =>
+      'Fill height cannot exceed mold height.';
+
+  @override
+  String get mold_calc_err_slant_height =>
+      'Slant height must exceed the radius difference |r_top − r_bottom|.';
+
+  @override
+  String get mold_calc_err_tube_exceeds_outer =>
+      'Central tube diameter must be smaller than outer diameter.';
+
+  @override
+  String get mold_calc_err_tube_height =>
+      'Tube height must be positive and not exceed mold height.';
+
+  @override
+  String get mold_calc_err_fluting =>
+      'Fluting relief factor (η) must be between 0.80 and 1.00.';
+
+  @override
+  String get mold_calc_err_spherical_cap =>
+      'Dome height cannot exceed the sphere radius (diameter / 2).';
+
+  @override
+  String get mold_calc_err_polygon_sides =>
+      'A regular polygon requires at least 3 sides.';
+
+  @override
+  String get mold_calc_err_shape_factor =>
+      'Shape factor must be between 0 and 1.';
+
+  @override
+  String get mold_calc_err_cavity_count => 'Cavity count must be at least 1.';
+
+  @override
+  String get mold_calc_err_nested_cavity =>
+      'Nested multi-cavity molds are not allowed.';
+
+  @override
+  String get mold_calc_err_portion_dim =>
+      'Portion dimensions must be greater than 0.';
+
+  @override
+  String get mold_calc_err_edge_trim => 'Trim margin exceeds usable mold size.';
 }

@@ -17,6 +17,7 @@ import 'screens/tools_screen.dart';
 import 'screens/kitchen_timers_screen.dart';
 import 'screens/rule_of_three_screen.dart';
 import 'screens/unit_converter_screen.dart';
+import 'features/mold_calculator/presentation/screens/mold_calculator_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/cloud_sync_screen.dart';
 import 'screens/privacy_policy_screen.dart';
@@ -1160,6 +1161,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           break;
         case 2:
           toolWidget = const UnitConverterScreen();
+          break;
+        case 3:
+          toolWidget = const MoldCalculatorScreen();
           break;
         default:
           toolWidget = const HomeScreen();
