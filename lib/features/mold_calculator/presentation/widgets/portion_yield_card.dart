@@ -131,17 +131,18 @@ class PortionYieldCard extends StatelessWidget {
                 ),
                 _PortionKpiTile(
                   label: l10n.mold_calc_portion_vol_each,
-                  value: RecipeUtils.formatVolume(res.portionVolumeMl),
+                  value:
+                      '${RecipeUtils.formatNumber(res.portionVolumeMl, decimalDigits: 0)} ml',
                 ),
                 _PortionKpiTile(
                   label: l10n.mold_calc_portion_area_each,
                   value:
-                      '${RecipeUtils.formatNumber(res.portionAreaCm2, decimalDigits: 1)} cm²',
+                      '${RecipeUtils.formatNumber(res.portionAreaCm2, decimalDigits: 0)} cm²',
                 ),
                 _PortionKpiTile(
                   label: l10n.mold_calc_portion_waste_merma,
                   value:
-                      '${RecipeUtils.formatNumber(res.wasteAreaCm2, decimalDigits: 1)} cm² (${RecipeUtils.formatNumber(res.wastePercent, decimalDigits: 1)}%)',
+                      '${RecipeUtils.formatNumber(res.wasteAreaCm2, decimalDigits: 0)} cm² (${RecipeUtils.formatNumber(res.wastePercent, decimalDigits: 0)}%)',
                   isWarning: res.wastePercent > 15.0,
                 ),
               ],

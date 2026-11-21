@@ -3293,7 +3293,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         GooeyToast.showSuccess(
           context,
           message: l10n.mold_calc_applied_factor_toast(
-            RecipeUtils.formatNumber(kV, decimalDigits: 2),
+            RecipeUtils.formatNumber(
+              kV,
+              decimalDigits: 2,
+              trimTrailingZeros: true,
+            ),
           ),
         );
       }

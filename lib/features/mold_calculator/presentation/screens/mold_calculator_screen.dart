@@ -130,7 +130,11 @@ class _MoldCalculatorScreenState extends ConsumerState<MoldCalculatorScreen>
             ),
             FilledButton.icon(
               onPressed: () async {
-                final text = RecipeUtils.formatNumber(factor, decimalDigits: 2);
+                final text = RecipeUtils.formatNumber(
+                  factor,
+                  decimalDigits: 2,
+                  trimTrailingZeros: true,
+                );
                 await Clipboard.setData(ClipboardData(text: text));
                 if (dlgCtx.mounted) Navigator.of(dlgCtx).pop();
                 if (mounted) {
@@ -177,8 +181,11 @@ class _MoldCalculatorScreenState extends ConsumerState<MoldCalculatorScreen>
                       ),
                       TextButton.icon(
                         onPressed: () async {
-                          final text =
-                              RecipeUtils.formatNumber(factor, decimalDigits: 2);
+                          final text = RecipeUtils.formatNumber(
+                            factor,
+                            decimalDigits: 2,
+                            trimTrailingZeros: true,
+                          );
                           await Clipboard.setData(ClipboardData(text: text));
                           if (sheetCtx.mounted) Navigator.of(sheetCtx).pop();
                           if (mounted) {
@@ -221,7 +228,7 @@ class _MoldCalculatorScreenState extends ConsumerState<MoldCalculatorScreen>
                             '${RecipeUtils.formatNumber(r.defaultYield, decimalDigits: 0)} ${r.yieldName.isEmpty ? l10n.unit_portions : r.yieldName}',
                           ),
                           trailing: Text(
-                            '${RecipeUtils.formatNumber(factor, decimalDigits: 2)}×',
+                            '${RecipeUtils.formatNumber(factor, decimalDigits: 2, trimTrailingZeros: true)}×',
                             style: TextStyle(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,

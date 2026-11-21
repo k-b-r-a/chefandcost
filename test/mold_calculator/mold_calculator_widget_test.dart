@@ -69,8 +69,8 @@ void main() {
       await tester.tap(applyEquivBtn);
       await tester.pumpAndSettle();
 
-      // After applying equivalence, volume factor converges to 1.00×
-      expect(find.textContaining('1,00×'), findsWidgets);
+      // After applying equivalence, volume factor converges to 1×
+      expect(find.textContaining('1×'), findsWidgets);
 
       // Wide layout verification
       tester.view.physicalSize = const Size(1280, 900);

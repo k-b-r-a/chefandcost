@@ -88,18 +88,21 @@ class ScalingSummaryCard extends StatelessWidget {
               builder: (context, constraints) {
                 final kVTile = _KpiBadge(
                   label: l10n.mold_calc_factor_kv,
-                  value: '${RecipeUtils.formatNumber(res.volumeScaleFactor, decimalDigits: 2)}×',
+                  value:
+                      '${RecipeUtils.formatNumber(res.volumeScaleFactor, decimalDigits: 2, trimTrailingZeros: true)}×',
                   highlight: true,
                   color: theme.colorScheme.primary,
                 );
                 final kATile = _KpiBadge(
                   label: l10n.mold_calc_factor_ka,
-                  value: '${RecipeUtils.formatNumber(res.areaScaleFactor, decimalDigits: 2)}×',
+                  value:
+                      '${RecipeUtils.formatNumber(res.areaScaleFactor, decimalDigits: 2, trimTrailingZeros: true)}×',
                   color: theme.colorScheme.tertiary,
                 );
                 final depthTile = _KpiBadge(
                   label: l10n.mold_calc_depth_ratio,
-                  value: '${RecipeUtils.formatNumber(res.depthRatio, decimalDigits: 2)}×',
+                  value:
+                      '${RecipeUtils.formatNumber(res.depthRatio, decimalDigits: 2, trimTrailingZeros: true)}×',
                   color: theme.colorScheme.secondary,
                 );
 
@@ -143,8 +146,10 @@ class ScalingSummaryCard extends StatelessWidget {
                 children: [
                   _MetricComparisonRow(
                     label: l10n.mold_calc_effective_volume,
-                    sourceValue: RecipeUtils.formatVolume(res.sourceEffectiveVolumeMl),
-                    targetValue: RecipeUtils.formatVolume(res.targetEffectiveVolumeMl),
+                    sourceValue:
+                        '${RecipeUtils.formatNumber(res.sourceEffectiveVolumeMl, decimalDigits: 0)} ml',
+                    targetValue:
+                        '${RecipeUtils.formatNumber(res.targetEffectiveVolumeMl, decimalDigits: 0)} ml',
                     sourceShort: l10n.mold_calc_preview_source_short,
                     targetShort: l10n.mold_calc_preview_target_short,
                   ),
@@ -152,9 +157,9 @@ class ScalingSummaryCard extends StatelessWidget {
                   _MetricComparisonRow(
                     label: l10n.mold_calc_fill_height,
                     sourceValue:
-                        '${RecipeUtils.formatNumber(res.sourceFillHeightCm, decimalDigits: 1)} cm',
+                        '${RecipeUtils.formatNumber(res.sourceFillHeightCm, decimalDigits: 1, trimTrailingZeros: true)} cm',
                     targetValue:
-                        '${RecipeUtils.formatNumber(res.targetFillHeightCm, decimalDigits: 1)} cm',
+                        '${RecipeUtils.formatNumber(res.targetFillHeightCm, decimalDigits: 1, trimTrailingZeros: true)} cm',
                     sourceShort: l10n.mold_calc_preview_source_short,
                     targetShort: l10n.mold_calc_preview_target_short,
                   ),
@@ -275,7 +280,11 @@ class ScalingSummaryCard extends StatelessWidget {
                 if (ok)
                   Text(
                     l10n.mold_calc_equiv_result_desc(
-                      RecipeUtils.formatNumber(eq.solvedValueCm, decimalDigits: 2),
+                      RecipeUtils.formatNumber(
+                        eq.solvedValueCm,
+                        decimalDigits: 2,
+                        trimTrailingZeros: true,
+                      ),
                       RecipeUtils.formatNumber(eq.achievedVolumeMl, decimalDigits: 0),
                     ),
                     style: theme.textTheme.bodySmall,
@@ -313,12 +322,12 @@ class ScalingSummaryCard extends StatelessWidget {
     } else if (isLeftover) {
       title = l10n.mold_calc_leftover_batter;
       valueText =
-          '${RecipeUtils.formatVolume(res.leftoverBatterMl)} (${RecipeUtils.formatNumber(res.leftoverPercent, decimalDigits: 1)}%)';
+          '${RecipeUtils.formatNumber(res.leftoverBatterMl, decimalDigits: 0)} ml (${RecipeUtils.formatNumber(res.leftoverPercent, decimalDigits: 0)}%)';
       tone = Colors.orange.shade800;
     } else {
       title = l10n.mold_calc_extra_batter_needed;
       valueText =
-          '${RecipeUtils.formatVolume(res.deficitBatterMl)} (${RecipeUtils.formatNumber(res.deficitPercent, decimalDigits: 1)}%)';
+          '${RecipeUtils.formatNumber(res.deficitBatterMl, decimalDigits: 0)} ml (${RecipeUtils.formatNumber(res.deficitPercent, decimalDigits: 0)}%)';
       tone = theme.colorScheme.primary;
     }
 
@@ -360,6 +369,7 @@ class ScalingSummaryCard extends StatelessWidget {
                     RecipeUtils.formatNumber(
                       res.unscaledTargetFillHeightCm,
                       decimalDigits: 1,
+                      trimTrailingZeros: true,
                     ),
                     RecipeUtils.formatNumber(
                       res.unscaledTargetFillPercent,

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../../utils/recipe_utils.dart';
 import '../../domain/entities/mold_geometry.dart';
 import '../../domain/entities/mold_preset.dart';
 import '../../domain/entities/portion_yield.dart';
@@ -388,7 +389,7 @@ class MoldSideCrossSectionPainter extends CustomPainter {
     // Bottom dimension callout
     final hFillCm = GeometryEngine.effectiveFillHeight(mold, clampedRatio);
     final dimText =
-        '${wCm.toStringAsFixed(1)}×${hCm.toStringAsFixed(1)} cm (h=${hFillCm.toStringAsFixed(1)})';
+        '${RecipeUtils.formatNumber(wCm, decimalDigits: 1, trimTrailingZeros: true)}×${RecipeUtils.formatNumber(hCm, decimalDigits: 1, trimTrailingZeros: true)} cm (h=${RecipeUtils.formatNumber(hFillCm, decimalDigits: 1, trimTrailingZeros: true)})';
     _drawCenteredText(
       canvas: canvas,
       text: dimText,
