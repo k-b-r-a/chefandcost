@@ -1894,6 +1894,17 @@ class AppLocalizationsEs extends AppLocalizations {
       'Administra sucursales, cocinas y áreas de trabajo';
 
   @override
+  String get group_toggle_visibility_hide => 'Ocultar espacio';
+
+  @override
+  String get group_toggle_visibility_show => 'Mostrar espacio';
+
+  @override
+  String group_visible_count(int visible, int total) {
+    return '$visible/$total visibles';
+  }
+
+  @override
   String get settings_about_privacy_view_online =>
       'Ver Política de Privacidad Online';
 

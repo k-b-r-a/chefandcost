@@ -736,6 +736,19 @@
   "group_all_workspaces": "Todos los espacios",
   "group_select_prompt": "Selecciona un espacio para gestionar sus recetas",
   "group_management_subtitle": "Administra sucursales, cocinas y áreas de trabajo",
+  "group_toggle_visibility_hide": "Ocultar espacio",
+  "group_toggle_visibility_show": "Mostrar espacio",
+  "group_visible_count": "{visible}/{total} visibles",
+  "@group_visible_count": {
+    "placeholders": {
+      "visible": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "settings_about_privacy_view_online": "Ver Política de Privacidad Online",
   "settings_about_privacy_delete_portal": "Portal Web de Eliminación de Cuenta y Datos",
   "cloud_sync_delete_account_btn": "Eliminar cuenta y datos de la nube",

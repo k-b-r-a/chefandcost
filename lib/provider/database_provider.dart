@@ -34,18 +34,16 @@ final databaseProvider = NotifierProvider<DatabaseNotifier, AppDatabase>(
 /// Any change in the 'recipes' table will trigger an automatic UI update.
 final recipesStreamProvider = StreamProvider<List<Recipe>>((ref) {
   final db = ref.watch(databaseProvider);
-  final active = ref.watch(activeGroupProvider);
-  return db.watchAllRecipes(spaceId: active?.id);
+  final hiddenIds = ref.watch(hiddenWorkspaceIdsProvider);
+  return db.watchAllRecipes(hiddenSpaceIds: hiddenIds);
 });
 
 /// Stream of recipes including their calculated financial summaries.
 final recipesWithFinancialsStreamProvider =
     StreamProvider<List<RecipeWithFinancials>>((ref) {
       final db = ref.watch(databaseProvider);
-      final spaceId = ref.watch(
-        activeGroupProvider.select((group) => group?.id),
-      );
-      return db.watchAllRecipesWithFinancials(spaceId: spaceId);
+      final hiddenIds = ref.watch(hiddenWorkspaceIdsProvider);
+      return db.watchAllRecipesWithFinancials(hiddenSpaceIds: hiddenIds);
     });
 
 /// Any change in the 'ingredients' table will trigger an automatic UI update.
@@ -182,6 +180,74 @@ final activeGroupProvider = Provider<Group?>((ref) {
       .where((g) => g.id == activeId && !g.isDeleted)
       .firstOrNull;
   return found;
+});
+
+/// Notifier to manage the set of hidden workspace / group IDs.
+/// Empty set means all workspaces are visible.
+class HiddenWorkspaceIdsNotifier extends Notifier<Set<String>> {
+  static const String prefHiddenWorkspaceIdsKey = 'hidden_workspace_ids';
+
+  @override
+  Set<String> build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final stored = prefs.getStringList(prefHiddenWorkspaceIdsKey);
+    if (stored == null || stored.isEmpty) {
+      return const <String>{};
+    }
+    return Set<String>.unmodifiable(stored);
+  }
+
+  Future<void> _persist(Set<String> next) async {
+    state = Set<String>.unmodifiable(next);
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.setStringList(prefHiddenWorkspaceIdsKey, next.toList());
+  }
+
+  Future<void> toggleWorkspaceVisibility(String groupId) async {
+    final next = Set<String>.of(state);
+    if (!next.remove(groupId)) {
+      next.add(groupId);
+    }
+    await _persist(next);
+  }
+
+  Future<void> showAllWorkspaces() async {
+    if (state.isEmpty) return;
+    await _persist(const <String>{});
+  }
+
+  Future<void> hideAllWorkspaces(Iterable<String> allGroupIds) async {
+    await _persist(Set<String>.of(allGroupIds));
+  }
+
+  Future<void> showOnlyWorkspace(
+    String groupId,
+    Iterable<String> allGroupIds,
+  ) async {
+    final next = Set<String>.of(allGroupIds)..remove(groupId);
+    await _persist(next);
+  }
+
+  Future<void> removeWorkspaceId(String groupId) async {
+    if (!state.contains(groupId)) return;
+    final next = Set<String>.of(state)..remove(groupId);
+    await _persist(next);
+  }
+}
+
+/// State provider for the set of hidden workspace IDs.
+final hiddenWorkspaceIdsProvider =
+    NotifierProvider<HiddenWorkspaceIdsNotifier, Set<String>>(
+      HiddenWorkspaceIdsNotifier.new,
+    );
+
+/// Derived list of active, non-deleted workspaces that are currently visible.
+final visibleWorkspacesProvider = Provider<List<Group>>((ref) {
+  final groups = ref.watch(groupsStreamProvider).asData?.value ?? const [];
+  final hiddenIds = ref.watch(hiddenWorkspaceIdsProvider);
+  return groups
+      .where((g) => !g.isDeleted && !hiddenIds.contains(g.id))
+      .toList();
 });
 
 /// Notifier for category filtering on recipes (null represents 'Todos').
