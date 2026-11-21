@@ -954,5 +954,200 @@
   "offline_ad_costing_subtitle": "Upgrade to Pro for real-time cloud backup & zero ads",
   "offline_ad_pass_title": "Want 8 Hours Without Ads?",
   "offline_ad_pass_subtitle": "Connect to the internet to watch 1 short video or upgrade to Pro",
-  "offline_ad_cta": "Go Ad-Free"
+  "offline_ad_cta": "Go Ad-Free",
+  "mold_calc_title": "Mold & Pan Calculator",
+  "mold_calc_short_title": "Mold",
+  "mold_calc_desc": "Scale recipes across pans, solve equivalent dimensions, and optimize portion yields.",
+  "mold_calc_tab_scale": "Scale & Convert",
+  "mold_calc_tab_portion": "Portion & Yield",
+  "mold_calc_source_mold": "Source Mold",
+  "mold_calc_target_mold": "Target Mold",
+  "mold_calc_swap_molds": "Swap source and target",
+  "mold_calc_reset": "Reset",
+  "mold_calc_presets": "Presets",
+  "mold_calc_save_custom": "Save custom mold",
+  "mold_calc_delete_custom": "Delete custom mold",
+  "mold_calc_custom_name_hint": "e.g. Grandma's Bundt 23 cm",
+  "mold_calc_custom_saved_toast": "Custom mold saved",
+  "mold_calc_cancel": "Cancel",
+  "mold_calc_save": "Save",
+  "mold_calc_select_preset": "Select Mold Preset",
+  "mold_calc_shape_cylinder": "Round / Cylinder",
+  "mold_calc_shape_square": "Square",
+  "mold_calc_shape_rectangular": "Rectangular / Sheet",
+  "mold_calc_shape_frustum": "Round Tapered / Cone",
+  "mold_calc_shape_rect_frustum": "Tapered Loaf / Budinera",
+  "mold_calc_shape_v_channel": "V-Channel Trough",
+  "mold_calc_shape_annular": "Tube / Savarin / Bundt",
+  "mold_calc_shape_spherical_cap": "Dome / Hemisphere",
+  "mold_calc_shape_u_channel": "U-Channel / Half-Cylinder",
+  "mold_calc_shape_polygon": "Regular Polygon",
+  "mold_calc_shape_heart": "Heart / Petal",
+  "mold_calc_shape_water_displacement": "Water Displacement (Custom)",
+  "mold_calc_shape_multi_cavity": "Multi-Cavity Tray",
+  "mold_calc_dim_diameter": "Diameter (cm)",
+  "mold_calc_dim_bottom_diameter": "Bottom Ø (cm)",
+  "mold_calc_dim_top_diameter": "Top Ø (cm)",
+  "mold_calc_dim_side": "Side (cm)",
+  "mold_calc_dim_length": "Length (cm)",
+  "mold_calc_dim_width": "Width (cm)",
+  "mold_calc_dim_bottom_length": "Bottom Length (cm)",
+  "mold_calc_dim_bottom_width": "Bottom Width (cm)",
+  "mold_calc_dim_top_length": "Top Length (cm)",
+  "mold_calc_dim_top_width": "Top Width (cm)",
+  "mold_calc_dim_height": "Height (cm)",
+  "mold_calc_dim_slant_height": "Slant Height (cm)",
+  "mold_calc_use_slant_height": "Enter slant height",
+  "mold_calc_dim_tube_bottom": "Tube Bottom Ø (cm)",
+  "mold_calc_dim_tube_top": "Tube Top Ø (cm)",
+  "mold_calc_dim_tube_height": "Tube Height (cm)",
+  "mold_calc_dim_fluting": "Fluting Relief (η)",
+  "mold_calc_dim_sides_n": "Sides (n)",
+  "mold_calc_dim_shape_factor": "Shape Factor",
+  "mold_calc_dim_measured_ml": "Measured Volume (ml)",
+  "mold_calc_dim_fill_curve": "Fill Curve Exponent",
+  "mold_calc_dim_cavities": "Cavities (N)",
+  "mold_calc_multi_cavity_toggle": "Multi-cavity tray (×N)",
+  "mold_calc_cavity_shape": "Cavity Shape",
+  "mold_calc_cat_round": "Round Cake Pans",
+  "mold_calc_cat_square": "Square Pans",
+  "mold_calc_cat_gn_sheet": "Gastronorm & Sheet Pans",
+  "mold_calc_cat_loaf": "Loaf & Budineras",
+  "mold_calc_cat_tube_bundt": "Tube, Savarin & Bundt",
+  "mold_calc_cat_tart": "Tart Rings",
+  "mold_calc_cat_custom": "Custom Molds",
+  "mold_calc_fill_profile_label": "Batter / Fill Type",
+  "mold_calc_fill_ratio_label": "Fill Level: {percent}%",
+  "@mold_calc_fill_ratio_label": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "mold_calc_link_fill_profiles": "Sync fill profile",
+  "mold_calc_fill_chiffon": "Chiffon / Sponge (62%)",
+  "mold_calc_fill_butter": "Butter / Pound Cake (72%)",
+  "mold_calc_fill_brownie": "Brownie / Cheesecake / Tart (88%)",
+  "mold_calc_fill_mousse": "Mousse / Entremet / Gelatin (98%)",
+  "mold_calc_fill_custom": "Custom Fill %",
+  "mold_calc_equiv_toggle": "Find Equivalent Dimension",
+  "mold_calc_equiv_solve_primary": "Solve Width / Ø",
+  "mold_calc_equiv_solve_height": "Solve Height",
+  "mold_calc_equiv_result_title": "Equivalent Dimension Found",
+  "mold_calc_equiv_result_desc": "Solved dimension: {value} cm → achieves {volume} ml (1.00×)",
+  "@mold_calc_equiv_result_desc": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "volume": {
+        "type": "String"
+      }
+    }
+  },
+  "mold_calc_equiv_apply_btn": "Apply to Target",
+  "mold_calc_equiv_no_solution": "Target volume cannot be matched with the current constraints.",
+  "mold_calc_summary_title": "Scaling Summary",
+  "mold_calc_factor_kv": "Volume Factor (k_V)",
+  "mold_calc_factor_ka": "Area Factor (k_A)",
+  "mold_calc_effective_volume": "Effective Volume",
+  "mold_calc_fill_height": "Fill Height",
+  "mold_calc_depth_ratio": "Depth Ratio",
+  "mold_calc_leftover_batter": "Leftover Batter (1× recipe)",
+  "mold_calc_extra_batter_needed": "Extra Batter Needed (1× recipe)",
+  "mold_calc_exact_match": "Exact volume match",
+  "mold_calc_unscaled_fill": "Unscaled 1× fill in target: {height} cm ({percent}%)",
+  "@mold_calc_unscaled_fill": {
+    "placeholders": {
+      "height": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "mold_calc_overflows_target": "1× recipe overflows the target mold!",
+  "mold_calc_apply_to_recipe": "Apply to Recipe",
+  "mold_calc_select_recipe_title": "Select Recipe to Scale",
+  "mold_calc_no_recipes_copy_msg": "No saved recipes found. Copy the scale factor to use it anywhere.",
+  "mold_calc_copy_factor": "Copy Factor",
+  "mold_calc_copied_factor_toast": "Copied scale factor: {factor}×",
+  "@mold_calc_copied_factor_toast": {
+    "placeholders": {
+      "factor": {
+        "type": "String"
+      }
+    }
+  },
+  "mold_calc_applied_factor_toast": "Applied mold scale factor: {factor}×",
+  "@mold_calc_applied_factor_toast": {
+    "placeholders": {
+      "factor": {
+        "type": "String"
+      }
+    }
+  },
+  "mold_calc_thermal_title": "Thermal & Baking Advisories",
+  "mold_calc_thermal_shallow_title": "Shallow / Fast-Bake Warning",
+  "mold_calc_thermal_shallow_desc": "Target batter is thinner or has higher surface-to-volume exposure. Shorten bake time and watch edges to avoid drying.",
+  "mold_calc_thermal_deep_title": "Deep / Slow-Bake Warning",
+  "mold_calc_thermal_deep_desc": "Target batter is deeper with lower surface exposure. Lower oven temperature slightly, extend bake time, or use a heating core.",
+  "mold_calc_thermal_overflow_title": "High Fill / Overflow Risk",
+  "mold_calc_thermal_overflow_desc": "Fill percentage exceeds the recommended ceiling for this batter type and may dome or overflow during baking.",
+  "mold_calc_thermal_optimal_title": "Balanced Thermal Profile",
+  "mold_calc_thermal_optimal_desc": "Depth and surface-to-volume ratios are well matched; baking time and temperature should remain similar.",
+  "mold_calc_preview_cross_section": "Side Cross-Section & Fill Level",
+  "mold_calc_preview_top_down": "Top-Down Cut Layout",
+  "mold_calc_preview_source_short": "Src",
+  "mold_calc_preview_target_short": "Tgt",
+  "mold_calc_portion_mold_select": "Active Mold for Slicing",
+  "mold_calc_portion_strategy": "Cutting Strategy",
+  "mold_calc_portion_presets": "Portion Presets",
+  "mold_calc_cut_radial": "Radial Wedges",
+  "mold_calc_cut_concentric": "Concentric Rings",
+  "mold_calc_cut_grid": "Cartesian Grid",
+  "mold_calc_cut_linear": "Linear Loaf Slices",
+  "mold_calc_portion_full_count": "Full Portions",
+  "mold_calc_portion_vol_each": "Volume / Portion",
+  "mold_calc_portion_area_each": "Area / Portion",
+  "mold_calc_portion_waste_merma": "Trim Waste (Merma)",
+  "mold_calc_portion_arc_width": "Target Outer Arc (cm)",
+  "mold_calc_portion_fixed_slices": "Fixed Slice Count",
+  "mold_calc_portion_use_fixed_slices": "Specify exact slices",
+  "mold_calc_portion_inner_diameter": "Inner Ring Ø (cm)",
+  "mold_calc_portion_piece_length": "Piece Length (cm)",
+  "mold_calc_portion_piece_width": "Piece Width (cm)",
+  "mold_calc_portion_edge_trim": "Edge Trim Margin (cm)",
+  "mold_calc_portion_slice_thickness": "Slice Thickness (cm)",
+  "mold_calc_portion_end_trim": "End Crust Trim (cm)",
+  "mold_calc_portion_rotated_badge": "90° rotated grid maximized yield",
+  "mold_calc_portion_ring_breakdown": "Inner ring: {inner} • Outer ring: {outer}",
+  "@mold_calc_portion_ring_breakdown": {
+    "placeholders": {
+      "inner": {
+        "type": "int"
+      },
+      "outer": {
+        "type": "int"
+      }
+    }
+  },
+  "mold_calc_err_non_positive": "All dimensions must be greater than 0.",
+  "mold_calc_err_negative_bottom": "Bottom dimension cannot be negative.",
+  "mold_calc_err_both_zero": "Top and bottom dimensions cannot both be 0.",
+  "mold_calc_err_fill_ratio": "Fill percentage must be between 1% and 100%.",
+  "mold_calc_err_fill_height": "Fill height cannot exceed mold height.",
+  "mold_calc_err_slant_height": "Slant height must exceed the radius difference |r_top − r_bottom|.",
+  "mold_calc_err_tube_exceeds_outer": "Central tube diameter must be smaller than outer diameter.",
+  "mold_calc_err_tube_height": "Tube height must be positive and not exceed mold height.",
+  "mold_calc_err_fluting": "Fluting relief factor (η) must be between 0.80 and 1.00.",
+  "mold_calc_err_spherical_cap": "Dome height cannot exceed the sphere radius (diameter / 2).",
+  "mold_calc_err_polygon_sides": "A regular polygon requires at least 3 sides.",
+  "mold_calc_err_shape_factor": "Shape factor must be between 0 and 1.",
+  "mold_calc_err_cavity_count": "Cavity count must be at least 1.",
+  "mold_calc_err_nested_cavity": "Nested multi-cavity molds are not allowed.",
+  "mold_calc_err_portion_dim": "Portion dimensions must be greater than 0.",
+  "mold_calc_err_edge_trim": "Trim margin exceeds usable mold size."
 }

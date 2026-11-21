@@ -4247,6 +4247,870 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go Ad-Free'**
   String get offline_ad_cta;
+
+  /// No description provided for @mold_calc_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Mold & Pan Calculator'**
+  String get mold_calc_title;
+
+  /// No description provided for @mold_calc_short_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Mold'**
+  String get mold_calc_short_title;
+
+  /// No description provided for @mold_calc_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale recipes across pans, solve equivalent dimensions, and optimize portion yields.'**
+  String get mold_calc_desc;
+
+  /// No description provided for @mold_calc_tab_scale.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale & Convert'**
+  String get mold_calc_tab_scale;
+
+  /// No description provided for @mold_calc_tab_portion.
+  ///
+  /// In en, this message translates to:
+  /// **'Portion & Yield'**
+  String get mold_calc_tab_portion;
+
+  /// No description provided for @mold_calc_source_mold.
+  ///
+  /// In en, this message translates to:
+  /// **'Source Mold'**
+  String get mold_calc_source_mold;
+
+  /// No description provided for @mold_calc_target_mold.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Mold'**
+  String get mold_calc_target_mold;
+
+  /// No description provided for @mold_calc_swap_molds.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap source and target'**
+  String get mold_calc_swap_molds;
+
+  /// No description provided for @mold_calc_reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get mold_calc_reset;
+
+  /// No description provided for @mold_calc_presets.
+  ///
+  /// In en, this message translates to:
+  /// **'Presets'**
+  String get mold_calc_presets;
+
+  /// No description provided for @mold_calc_save_custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Save custom mold'**
+  String get mold_calc_save_custom;
+
+  /// No description provided for @mold_calc_delete_custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete custom mold'**
+  String get mold_calc_delete_custom;
+
+  /// No description provided for @mold_calc_custom_name_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Grandma\'s Bundt 23 cm'**
+  String get mold_calc_custom_name_hint;
+
+  /// No description provided for @mold_calc_custom_saved_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom mold saved'**
+  String get mold_calc_custom_saved_toast;
+
+  /// No description provided for @mold_calc_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get mold_calc_cancel;
+
+  /// No description provided for @mold_calc_save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get mold_calc_save;
+
+  /// No description provided for @mold_calc_select_preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Mold Preset'**
+  String get mold_calc_select_preset;
+
+  /// No description provided for @mold_calc_shape_cylinder.
+  ///
+  /// In en, this message translates to:
+  /// **'Round / Cylinder'**
+  String get mold_calc_shape_cylinder;
+
+  /// No description provided for @mold_calc_shape_square.
+  ///
+  /// In en, this message translates to:
+  /// **'Square'**
+  String get mold_calc_shape_square;
+
+  /// No description provided for @mold_calc_shape_rectangular.
+  ///
+  /// In en, this message translates to:
+  /// **'Rectangular / Sheet'**
+  String get mold_calc_shape_rectangular;
+
+  /// No description provided for @mold_calc_shape_frustum.
+  ///
+  /// In en, this message translates to:
+  /// **'Round Tapered / Cone'**
+  String get mold_calc_shape_frustum;
+
+  /// No description provided for @mold_calc_shape_rect_frustum.
+  ///
+  /// In en, this message translates to:
+  /// **'Tapered Loaf / Budinera'**
+  String get mold_calc_shape_rect_frustum;
+
+  /// No description provided for @mold_calc_shape_v_channel.
+  ///
+  /// In en, this message translates to:
+  /// **'V-Channel Trough'**
+  String get mold_calc_shape_v_channel;
+
+  /// No description provided for @mold_calc_shape_annular.
+  ///
+  /// In en, this message translates to:
+  /// **'Tube / Savarin / Bundt'**
+  String get mold_calc_shape_annular;
+
+  /// No description provided for @mold_calc_shape_spherical_cap.
+  ///
+  /// In en, this message translates to:
+  /// **'Dome / Hemisphere'**
+  String get mold_calc_shape_spherical_cap;
+
+  /// No description provided for @mold_calc_shape_u_channel.
+  ///
+  /// In en, this message translates to:
+  /// **'U-Channel / Half-Cylinder'**
+  String get mold_calc_shape_u_channel;
+
+  /// No description provided for @mold_calc_shape_polygon.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular Polygon'**
+  String get mold_calc_shape_polygon;
+
+  /// No description provided for @mold_calc_shape_heart.
+  ///
+  /// In en, this message translates to:
+  /// **'Heart / Petal'**
+  String get mold_calc_shape_heart;
+
+  /// No description provided for @mold_calc_shape_water_displacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Water Displacement (Custom)'**
+  String get mold_calc_shape_water_displacement;
+
+  /// No description provided for @mold_calc_shape_multi_cavity.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-Cavity Tray'**
+  String get mold_calc_shape_multi_cavity;
+
+  /// No description provided for @mold_calc_dim_diameter.
+  ///
+  /// In en, this message translates to:
+  /// **'Diameter (cm)'**
+  String get mold_calc_dim_diameter;
+
+  /// No description provided for @mold_calc_dim_bottom_diameter.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom Ø (cm)'**
+  String get mold_calc_dim_bottom_diameter;
+
+  /// No description provided for @mold_calc_dim_top_diameter.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Ø (cm)'**
+  String get mold_calc_dim_top_diameter;
+
+  /// No description provided for @mold_calc_dim_side.
+  ///
+  /// In en, this message translates to:
+  /// **'Side (cm)'**
+  String get mold_calc_dim_side;
+
+  /// No description provided for @mold_calc_dim_length.
+  ///
+  /// In en, this message translates to:
+  /// **'Length (cm)'**
+  String get mold_calc_dim_length;
+
+  /// No description provided for @mold_calc_dim_width.
+  ///
+  /// In en, this message translates to:
+  /// **'Width (cm)'**
+  String get mold_calc_dim_width;
+
+  /// No description provided for @mold_calc_dim_bottom_length.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom Length (cm)'**
+  String get mold_calc_dim_bottom_length;
+
+  /// No description provided for @mold_calc_dim_bottom_width.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom Width (cm)'**
+  String get mold_calc_dim_bottom_width;
+
+  /// No description provided for @mold_calc_dim_top_length.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Length (cm)'**
+  String get mold_calc_dim_top_length;
+
+  /// No description provided for @mold_calc_dim_top_width.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Width (cm)'**
+  String get mold_calc_dim_top_width;
+
+  /// No description provided for @mold_calc_dim_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Height (cm)'**
+  String get mold_calc_dim_height;
+
+  /// No description provided for @mold_calc_dim_slant_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Slant Height (cm)'**
+  String get mold_calc_dim_slant_height;
+
+  /// No description provided for @mold_calc_use_slant_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter slant height'**
+  String get mold_calc_use_slant_height;
+
+  /// No description provided for @mold_calc_dim_tube_bottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Tube Bottom Ø (cm)'**
+  String get mold_calc_dim_tube_bottom;
+
+  /// No description provided for @mold_calc_dim_tube_top.
+  ///
+  /// In en, this message translates to:
+  /// **'Tube Top Ø (cm)'**
+  String get mold_calc_dim_tube_top;
+
+  /// No description provided for @mold_calc_dim_tube_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Tube Height (cm)'**
+  String get mold_calc_dim_tube_height;
+
+  /// No description provided for @mold_calc_dim_fluting.
+  ///
+  /// In en, this message translates to:
+  /// **'Fluting Relief (η)'**
+  String get mold_calc_dim_fluting;
+
+  /// No description provided for @mold_calc_dim_sides_n.
+  ///
+  /// In en, this message translates to:
+  /// **'Sides (n)'**
+  String get mold_calc_dim_sides_n;
+
+  /// No description provided for @mold_calc_dim_shape_factor.
+  ///
+  /// In en, this message translates to:
+  /// **'Shape Factor'**
+  String get mold_calc_dim_shape_factor;
+
+  /// No description provided for @mold_calc_dim_measured_ml.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured Volume (ml)'**
+  String get mold_calc_dim_measured_ml;
+
+  /// No description provided for @mold_calc_dim_fill_curve.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill Curve Exponent'**
+  String get mold_calc_dim_fill_curve;
+
+  /// No description provided for @mold_calc_dim_cavities.
+  ///
+  /// In en, this message translates to:
+  /// **'Cavities (N)'**
+  String get mold_calc_dim_cavities;
+
+  /// No description provided for @mold_calc_multi_cavity_toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-cavity tray (×N)'**
+  String get mold_calc_multi_cavity_toggle;
+
+  /// No description provided for @mold_calc_cavity_shape.
+  ///
+  /// In en, this message translates to:
+  /// **'Cavity Shape'**
+  String get mold_calc_cavity_shape;
+
+  /// No description provided for @mold_calc_cat_round.
+  ///
+  /// In en, this message translates to:
+  /// **'Round Cake Pans'**
+  String get mold_calc_cat_round;
+
+  /// No description provided for @mold_calc_cat_square.
+  ///
+  /// In en, this message translates to:
+  /// **'Square Pans'**
+  String get mold_calc_cat_square;
+
+  /// No description provided for @mold_calc_cat_gn_sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Gastronorm & Sheet Pans'**
+  String get mold_calc_cat_gn_sheet;
+
+  /// No description provided for @mold_calc_cat_loaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Loaf & Budineras'**
+  String get mold_calc_cat_loaf;
+
+  /// No description provided for @mold_calc_cat_tube_bundt.
+  ///
+  /// In en, this message translates to:
+  /// **'Tube, Savarin & Bundt'**
+  String get mold_calc_cat_tube_bundt;
+
+  /// No description provided for @mold_calc_cat_tart.
+  ///
+  /// In en, this message translates to:
+  /// **'Tart Rings'**
+  String get mold_calc_cat_tart;
+
+  /// No description provided for @mold_calc_cat_custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Molds'**
+  String get mold_calc_cat_custom;
+
+  /// No description provided for @mold_calc_fill_profile_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Batter / Fill Type'**
+  String get mold_calc_fill_profile_label;
+
+  /// No description provided for @mold_calc_fill_ratio_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill Level: {percent}%'**
+  String mold_calc_fill_ratio_label(String percent);
+
+  /// No description provided for @mold_calc_link_fill_profiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync fill profile'**
+  String get mold_calc_link_fill_profiles;
+
+  /// No description provided for @mold_calc_fill_chiffon.
+  ///
+  /// In en, this message translates to:
+  /// **'Chiffon / Sponge (62%)'**
+  String get mold_calc_fill_chiffon;
+
+  /// No description provided for @mold_calc_fill_butter.
+  ///
+  /// In en, this message translates to:
+  /// **'Butter / Pound Cake (72%)'**
+  String get mold_calc_fill_butter;
+
+  /// No description provided for @mold_calc_fill_brownie.
+  ///
+  /// In en, this message translates to:
+  /// **'Brownie / Cheesecake / Tart (88%)'**
+  String get mold_calc_fill_brownie;
+
+  /// No description provided for @mold_calc_fill_mousse.
+  ///
+  /// In en, this message translates to:
+  /// **'Mousse / Entremet / Gelatin (98%)'**
+  String get mold_calc_fill_mousse;
+
+  /// No description provided for @mold_calc_fill_custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Fill %'**
+  String get mold_calc_fill_custom;
+
+  /// No description provided for @mold_calc_equiv_toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Equivalent Dimension'**
+  String get mold_calc_equiv_toggle;
+
+  /// No description provided for @mold_calc_equiv_solve_primary.
+  ///
+  /// In en, this message translates to:
+  /// **'Solve Width / Ø'**
+  String get mold_calc_equiv_solve_primary;
+
+  /// No description provided for @mold_calc_equiv_solve_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Solve Height'**
+  String get mold_calc_equiv_solve_height;
+
+  /// No description provided for @mold_calc_equiv_result_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Equivalent Dimension Found'**
+  String get mold_calc_equiv_result_title;
+
+  /// No description provided for @mold_calc_equiv_result_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Solved dimension: {value} cm → achieves {volume} ml (1.00×)'**
+  String mold_calc_equiv_result_desc(String value, String volume);
+
+  /// No description provided for @mold_calc_equiv_apply_btn.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to Target'**
+  String get mold_calc_equiv_apply_btn;
+
+  /// No description provided for @mold_calc_equiv_no_solution.
+  ///
+  /// In en, this message translates to:
+  /// **'Target volume cannot be matched with the current constraints.'**
+  String get mold_calc_equiv_no_solution;
+
+  /// No description provided for @mold_calc_summary_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Scaling Summary'**
+  String get mold_calc_summary_title;
+
+  /// No description provided for @mold_calc_factor_kv.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume Factor (k_V)'**
+  String get mold_calc_factor_kv;
+
+  /// No description provided for @mold_calc_factor_ka.
+  ///
+  /// In en, this message translates to:
+  /// **'Area Factor (k_A)'**
+  String get mold_calc_factor_ka;
+
+  /// No description provided for @mold_calc_effective_volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective Volume'**
+  String get mold_calc_effective_volume;
+
+  /// No description provided for @mold_calc_fill_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill Height'**
+  String get mold_calc_fill_height;
+
+  /// No description provided for @mold_calc_depth_ratio.
+  ///
+  /// In en, this message translates to:
+  /// **'Depth Ratio'**
+  String get mold_calc_depth_ratio;
+
+  /// No description provided for @mold_calc_leftover_batter.
+  ///
+  /// In en, this message translates to:
+  /// **'Leftover Batter (1× recipe)'**
+  String get mold_calc_leftover_batter;
+
+  /// No description provided for @mold_calc_extra_batter_needed.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra Batter Needed (1× recipe)'**
+  String get mold_calc_extra_batter_needed;
+
+  /// No description provided for @mold_calc_exact_match.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact volume match'**
+  String get mold_calc_exact_match;
+
+  /// No description provided for @mold_calc_unscaled_fill.
+  ///
+  /// In en, this message translates to:
+  /// **'Unscaled 1× fill in target: {height} cm ({percent}%)'**
+  String mold_calc_unscaled_fill(String height, String percent);
+
+  /// No description provided for @mold_calc_overflows_target.
+  ///
+  /// In en, this message translates to:
+  /// **'1× recipe overflows the target mold!'**
+  String get mold_calc_overflows_target;
+
+  /// No description provided for @mold_calc_apply_to_recipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to Recipe'**
+  String get mold_calc_apply_to_recipe;
+
+  /// No description provided for @mold_calc_select_recipe_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Recipe to Scale'**
+  String get mold_calc_select_recipe_title;
+
+  /// No description provided for @mold_calc_no_recipes_copy_msg.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved recipes found. Copy the scale factor to use it anywhere.'**
+  String get mold_calc_no_recipes_copy_msg;
+
+  /// No description provided for @mold_calc_copy_factor.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Factor'**
+  String get mold_calc_copy_factor;
+
+  /// No description provided for @mold_calc_copied_factor_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied scale factor: {factor}×'**
+  String mold_calc_copied_factor_toast(String factor);
+
+  /// No description provided for @mold_calc_applied_factor_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied mold scale factor: {factor}×'**
+  String mold_calc_applied_factor_toast(String factor);
+
+  /// No description provided for @mold_calc_thermal_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Thermal & Baking Advisories'**
+  String get mold_calc_thermal_title;
+
+  /// No description provided for @mold_calc_thermal_shallow_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Shallow / Fast-Bake Warning'**
+  String get mold_calc_thermal_shallow_title;
+
+  /// No description provided for @mold_calc_thermal_shallow_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Target batter is thinner or has higher surface-to-volume exposure. Shorten bake time and watch edges to avoid drying.'**
+  String get mold_calc_thermal_shallow_desc;
+
+  /// No description provided for @mold_calc_thermal_deep_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep / Slow-Bake Warning'**
+  String get mold_calc_thermal_deep_title;
+
+  /// No description provided for @mold_calc_thermal_deep_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Target batter is deeper with lower surface exposure. Lower oven temperature slightly, extend bake time, or use a heating core.'**
+  String get mold_calc_thermal_deep_desc;
+
+  /// No description provided for @mold_calc_thermal_overflow_title.
+  ///
+  /// In en, this message translates to:
+  /// **'High Fill / Overflow Risk'**
+  String get mold_calc_thermal_overflow_title;
+
+  /// No description provided for @mold_calc_thermal_overflow_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill percentage exceeds the recommended ceiling for this batter type and may dome or overflow during baking.'**
+  String get mold_calc_thermal_overflow_desc;
+
+  /// No description provided for @mold_calc_thermal_optimal_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced Thermal Profile'**
+  String get mold_calc_thermal_optimal_title;
+
+  /// No description provided for @mold_calc_thermal_optimal_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Depth and surface-to-volume ratios are well matched; baking time and temperature should remain similar.'**
+  String get mold_calc_thermal_optimal_desc;
+
+  /// No description provided for @mold_calc_preview_cross_section.
+  ///
+  /// In en, this message translates to:
+  /// **'Side Cross-Section & Fill Level'**
+  String get mold_calc_preview_cross_section;
+
+  /// No description provided for @mold_calc_preview_top_down.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-Down Cut Layout'**
+  String get mold_calc_preview_top_down;
+
+  /// No description provided for @mold_calc_preview_source_short.
+  ///
+  /// In en, this message translates to:
+  /// **'Src'**
+  String get mold_calc_preview_source_short;
+
+  /// No description provided for @mold_calc_preview_target_short.
+  ///
+  /// In en, this message translates to:
+  /// **'Tgt'**
+  String get mold_calc_preview_target_short;
+
+  /// No description provided for @mold_calc_portion_mold_select.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Mold for Slicing'**
+  String get mold_calc_portion_mold_select;
+
+  /// No description provided for @mold_calc_portion_strategy.
+  ///
+  /// In en, this message translates to:
+  /// **'Cutting Strategy'**
+  String get mold_calc_portion_strategy;
+
+  /// No description provided for @mold_calc_portion_presets.
+  ///
+  /// In en, this message translates to:
+  /// **'Portion Presets'**
+  String get mold_calc_portion_presets;
+
+  /// No description provided for @mold_calc_cut_radial.
+  ///
+  /// In en, this message translates to:
+  /// **'Radial Wedges'**
+  String get mold_calc_cut_radial;
+
+  /// No description provided for @mold_calc_cut_concentric.
+  ///
+  /// In en, this message translates to:
+  /// **'Concentric Rings'**
+  String get mold_calc_cut_concentric;
+
+  /// No description provided for @mold_calc_cut_grid.
+  ///
+  /// In en, this message translates to:
+  /// **'Cartesian Grid'**
+  String get mold_calc_cut_grid;
+
+  /// No description provided for @mold_calc_cut_linear.
+  ///
+  /// In en, this message translates to:
+  /// **'Linear Loaf Slices'**
+  String get mold_calc_cut_linear;
+
+  /// No description provided for @mold_calc_portion_full_count.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Portions'**
+  String get mold_calc_portion_full_count;
+
+  /// No description provided for @mold_calc_portion_vol_each.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume / Portion'**
+  String get mold_calc_portion_vol_each;
+
+  /// No description provided for @mold_calc_portion_area_each.
+  ///
+  /// In en, this message translates to:
+  /// **'Area / Portion'**
+  String get mold_calc_portion_area_each;
+
+  /// No description provided for @mold_calc_portion_waste_merma.
+  ///
+  /// In en, this message translates to:
+  /// **'Trim Waste (Merma)'**
+  String get mold_calc_portion_waste_merma;
+
+  /// No description provided for @mold_calc_portion_arc_width.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Outer Arc (cm)'**
+  String get mold_calc_portion_arc_width;
+
+  /// No description provided for @mold_calc_portion_fixed_slices.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed Slice Count'**
+  String get mold_calc_portion_fixed_slices;
+
+  /// No description provided for @mold_calc_portion_use_fixed_slices.
+  ///
+  /// In en, this message translates to:
+  /// **'Specify exact slices'**
+  String get mold_calc_portion_use_fixed_slices;
+
+  /// No description provided for @mold_calc_portion_inner_diameter.
+  ///
+  /// In en, this message translates to:
+  /// **'Inner Ring Ø (cm)'**
+  String get mold_calc_portion_inner_diameter;
+
+  /// No description provided for @mold_calc_portion_piece_length.
+  ///
+  /// In en, this message translates to:
+  /// **'Piece Length (cm)'**
+  String get mold_calc_portion_piece_length;
+
+  /// No description provided for @mold_calc_portion_piece_width.
+  ///
+  /// In en, this message translates to:
+  /// **'Piece Width (cm)'**
+  String get mold_calc_portion_piece_width;
+
+  /// No description provided for @mold_calc_portion_edge_trim.
+  ///
+  /// In en, this message translates to:
+  /// **'Edge Trim Margin (cm)'**
+  String get mold_calc_portion_edge_trim;
+
+  /// No description provided for @mold_calc_portion_slice_thickness.
+  ///
+  /// In en, this message translates to:
+  /// **'Slice Thickness (cm)'**
+  String get mold_calc_portion_slice_thickness;
+
+  /// No description provided for @mold_calc_portion_end_trim.
+  ///
+  /// In en, this message translates to:
+  /// **'End Crust Trim (cm)'**
+  String get mold_calc_portion_end_trim;
+
+  /// No description provided for @mold_calc_portion_rotated_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'90° rotated grid maximized yield'**
+  String get mold_calc_portion_rotated_badge;
+
+  /// No description provided for @mold_calc_portion_ring_breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Inner ring: {inner} • Outer ring: {outer}'**
+  String mold_calc_portion_ring_breakdown(int inner, int outer);
+
+  /// No description provided for @mold_calc_err_non_positive.
+  ///
+  /// In en, this message translates to:
+  /// **'All dimensions must be greater than 0.'**
+  String get mold_calc_err_non_positive;
+
+  /// No description provided for @mold_calc_err_negative_bottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom dimension cannot be negative.'**
+  String get mold_calc_err_negative_bottom;
+
+  /// No description provided for @mold_calc_err_both_zero.
+  ///
+  /// In en, this message translates to:
+  /// **'Top and bottom dimensions cannot both be 0.'**
+  String get mold_calc_err_both_zero;
+
+  /// No description provided for @mold_calc_err_fill_ratio.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill percentage must be between 1% and 100%.'**
+  String get mold_calc_err_fill_ratio;
+
+  /// No description provided for @mold_calc_err_fill_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill height cannot exceed mold height.'**
+  String get mold_calc_err_fill_height;
+
+  /// No description provided for @mold_calc_err_slant_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Slant height must exceed the radius difference |r_top − r_bottom|.'**
+  String get mold_calc_err_slant_height;
+
+  /// No description provided for @mold_calc_err_tube_exceeds_outer.
+  ///
+  /// In en, this message translates to:
+  /// **'Central tube diameter must be smaller than outer diameter.'**
+  String get mold_calc_err_tube_exceeds_outer;
+
+  /// No description provided for @mold_calc_err_tube_height.
+  ///
+  /// In en, this message translates to:
+  /// **'Tube height must be positive and not exceed mold height.'**
+  String get mold_calc_err_tube_height;
+
+  /// No description provided for @mold_calc_err_fluting.
+  ///
+  /// In en, this message translates to:
+  /// **'Fluting relief factor (η) must be between 0.80 and 1.00.'**
+  String get mold_calc_err_fluting;
+
+  /// No description provided for @mold_calc_err_spherical_cap.
+  ///
+  /// In en, this message translates to:
+  /// **'Dome height cannot exceed the sphere radius (diameter / 2).'**
+  String get mold_calc_err_spherical_cap;
+
+  /// No description provided for @mold_calc_err_polygon_sides.
+  ///
+  /// In en, this message translates to:
+  /// **'A regular polygon requires at least 3 sides.'**
+  String get mold_calc_err_polygon_sides;
+
+  /// No description provided for @mold_calc_err_shape_factor.
+  ///
+  /// In en, this message translates to:
+  /// **'Shape factor must be between 0 and 1.'**
+  String get mold_calc_err_shape_factor;
+
+  /// No description provided for @mold_calc_err_cavity_count.
+  ///
+  /// In en, this message translates to:
+  /// **'Cavity count must be at least 1.'**
+  String get mold_calc_err_cavity_count;
+
+  /// No description provided for @mold_calc_err_nested_cavity.
+  ///
+  /// In en, this message translates to:
+  /// **'Nested multi-cavity molds are not allowed.'**
+  String get mold_calc_err_nested_cavity;
+
+  /// No description provided for @mold_calc_err_portion_dim.
+  ///
+  /// In en, this message translates to:
+  /// **'Portion dimensions must be greater than 0.'**
+  String get mold_calc_err_portion_dim;
+
+  /// No description provided for @mold_calc_err_edge_trim.
+  ///
+  /// In en, this message translates to:
+  /// **'Trim margin exceeds usable mold size.'**
+  String get mold_calc_err_edge_trim;
 }
 
 class _AppLocalizationsDelegate
