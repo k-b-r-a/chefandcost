@@ -69,7 +69,11 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
               20.0,
               16.0,
               20.0,
-              isWide ? 16.0 : (100.0 + MediaQuery.paddingOf(context).bottom),
+              showAds
+                  ? 16.0
+                  : (isWide
+                      ? 16.0
+                      : (100.0 + MediaQuery.paddingOf(context).bottom)),
             ),
             sliver: SliverList.separated(
               itemCount: 3,
@@ -157,20 +161,26 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
               },
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            sliver: SliverToBoxAdapter(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 820),
-                  child: const StaticBannerAd(
-                    key: ValueKey('ad_tools_bottom_static'),
-                    margin: EdgeInsets.zero,
+          if (showAds)
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                20.0,
+                0.0,
+                20.0,
+                isWide ? 24.0 : (100.0 + MediaQuery.paddingOf(context).bottom),
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 820),
+                    child: const StaticBannerAd(
+                      key: ValueKey('ad_tools_bottom_static'),
+                      margin: EdgeInsets.zero,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
