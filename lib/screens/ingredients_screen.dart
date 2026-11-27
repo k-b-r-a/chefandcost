@@ -143,6 +143,7 @@ class _IngredientsScreenState extends ConsumerState<IngredientsScreen> {
         children: [
           CustomScrollView(
             controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
             cacheExtent: 600,
             slivers: [
               buildFloatingPillAppBar(

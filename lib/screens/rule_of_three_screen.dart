@@ -5,7 +5,8 @@ import '../widgets/ad_free_pass_button.dart';
 import '../widgets/static_banner_ad.dart';
 
 class RuleOfThreeScreen extends StatefulWidget {
-  const RuleOfThreeScreen({super.key});
+  final VoidCallback? onClose;
+  const RuleOfThreeScreen({super.key, this.onClose});
 
   @override
   State<RuleOfThreeScreen> createState() => _RuleOfThreeScreenState();
@@ -112,7 +113,13 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        leading: const BackButton(),
+        leading: widget.onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.back_to_home_tooltip,
+                onPressed: widget.onClose,
+              )
+            : const BackButton(),
         title: Text(
           l10n.rule_of_three_title,
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -407,8 +414,24 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
                 color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
               ),
               isDense: true,
-              contentPadding: EdgeInsets.zero,
-              border: InputBorder.none,
+              filled: false,
+              contentPadding: const EdgeInsets.only(bottom: 4),
+              border: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 1.8,
+                ),
+              ),
             ),
           ),
         ],

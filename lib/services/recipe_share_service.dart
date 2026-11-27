@@ -165,7 +165,7 @@ class RecipeShareService {
     if (includeCosts) {
       rows.add([
         l10n.target_profit_margin,
-        '${RecipeUtils.formatNumber(detail.recipe.targetProfitMargin, decimalDigits: 1)}%',
+        '${RecipeUtils.formatNumber(detail.recipe.targetProfitMargin * 100, decimalDigits: 1)}%',
       ]);
       rows.add([
         l10n.target_price_portion,
@@ -199,7 +199,7 @@ class RecipeShareService {
         l10n.share_recipe_pdf_subtotal,
       ]);
 
-      for (final item in detail.ingredients) {
+      for (final item in detail.ingredients.where((i) => !i.ingredient.isDeleted)) {
         final unit = unitMap[item.ingredient.unitFk];
         final unitSymbol = unit?.symbol ?? '';
         final unitCost =
@@ -229,7 +229,7 @@ class RecipeShareService {
         l10n.share_recipe_pdf_unit,
       ]);
 
-      for (final item in detail.ingredients) {
+      for (final item in detail.ingredients.where((i) => !i.ingredient.isDeleted)) {
         final unit = unitMap[item.ingredient.unitFk];
         final unitSymbol = unit?.symbol ?? '';
 
@@ -408,7 +408,7 @@ class RecipeShareService {
                         _buildPdfStatItem(
                           title: l10n.target_profit_margin,
                           value:
-                              '${RecipeUtils.formatNumber(detail.recipe.targetProfitMargin, decimalDigits: 0)}%',
+                              '${RecipeUtils.formatNumber(detail.recipe.targetProfitMargin * 100, decimalDigits: 0)}%',
                         ),
                         _buildPdfStatItem(
                           title: l10n.total_cost,
@@ -492,7 +492,9 @@ class RecipeShareService {
               cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
               data: includeCosts
                   ? [
-                      ...detail.ingredients.map((item) {
+                      ...detail.ingredients
+                          .where((item) => !item.ingredient.isDeleted)
+                          .map((item) {
                         final unit = unitMap[item.ingredient.unitFk];
                         final unitSymbol = unit?.symbol ?? '';
                         final unitCost = item.ingredient.cost /
@@ -519,7 +521,9 @@ class RecipeShareService {
                       ],
                     ]
                   : [
-                      ...detail.ingredients.map((item) {
+                      ...detail.ingredients
+                          .where((item) => !item.ingredient.isDeleted)
+                          .map((item) {
                         final unit = unitMap[item.ingredient.unitFk];
                         final unitSymbol = unit?.symbol ?? '';
 

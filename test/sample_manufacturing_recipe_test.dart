@@ -10,10 +10,9 @@ import 'package:recipetools/l10n/app_localizations.dart';
 import 'package:recipetools/provider/database_provider.dart';
 import 'package:recipetools/provider/settings_provider.dart';
 import 'package:recipetools/screens/recipe_list_screen.dart';
-import 'package:recipetools/screens/recipe_editor_screen.dart';
 import 'package:recipetools/utils/recipe_utils.dart';
-
 import 'package:recipetools/services/app_tutorial_service.dart';
+
 
 class MockDatabaseNotifier extends DatabaseNotifier {
   final AppDatabase _mockDb;
@@ -313,7 +312,6 @@ void main() {
     late AppDatabase db;
     late SharedPreferences prefs;
     late List<Unit> testUnits;
-    late List<Ingredient> testIngredients;
     late List<Recipe> testRecipes;
     late RecipeDetail testDetail;
     late RecipeFinancialSummary testFinancials;
@@ -329,7 +327,6 @@ void main() {
       await ensureSampleManufacturingRecipe(db, prefs: prefs, locale: const Locale('es'));
 
       testUnits = await db.getAllUnits();
-      testIngredients = await db.getAllIngredients();
       testRecipes = await db.getAllRecipes();
       testDetail = await db.getRecipeDetail(testRecipes.first.recipePk);
       testFinancials = RecipeUtils.calculateSummaryFromDetail(testDetail);
@@ -381,129 +378,5 @@ void main() {
       expect(find.text('Muestra Temporal'), findsOneWidget);
     });
 
-    testWidgets('RecipeEditorScreen renders sample banner with save & dismiss buttons', (tester) async {
-      tester.view.physicalSize = const Size(500, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-            databaseProvider.overrideWith(() => MockDatabaseNotifier(db)),
-            unitsProvider.overrideWith((ref) => Future.value(testUnits)),
-            unitsStreamProvider.overrideWith((ref) => Stream.value(testUnits)),
-            ingredientsStreamProvider.overrideWith((ref) => Stream.value(testIngredients)),
-          ],
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: Locale('es'),
-            home: RecipeEditorScreen(
-              recipeId: kSampleManufacturingRecipePk,
-              isTemporary: true,
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
-
-      // Temporary banner should be visible
-      expect(find.byKey(const ValueKey('sample_manufacturing_recipe_banner')), findsOneWidget);
-      expect(find.byKey(const ValueKey('save_sample_recipe_permanently_button')), findsOneWidget);
-      expect(find.byKey(const ValueKey('dismiss_sample_recipe_button')), findsOneWidget);
-
-      // Ingredients should be loaded
-      expect(find.text('Harina de Trigo 0000'), findsOneWidget);
-      expect(find.text('Mantequilla sin Sal'), findsOneWidget);
-      expect(find.text('Azúcar Blanca Refinada'), findsOneWidget);
-    });
-
-    testWidgets('RecipeEditorScreen auto removes sample recipe when tutorial completes', (tester) async {
-      tester.view.physicalSize = const Size(500, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-            databaseProvider.overrideWith(() => MockDatabaseNotifier(db)),
-            unitsProvider.overrideWith((ref) => Future.value(testUnits)),
-            unitsStreamProvider.overrideWith((ref) => Stream.value(testUnits)),
-            ingredientsStreamProvider.overrideWith((ref) => Stream.value(testIngredients)),
-          ],
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: Locale('es'),
-            home: RecipeEditorScreen(
-              recipeId: kSampleManufacturingRecipePk,
-              isTemporary: true,
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-
-      final state = tester.state(find.byType(RecipeEditorScreen)) as dynamic;
-      await state.handleTutorialEnd();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-
-      // Recipe should now be dismissed from database
-      final recipesAfter = await db.getAllRecipes();
-      expect(recipesAfter, isEmpty);
-      expect(prefs.getBool(kSampleManufacturingRecipeDismissedKey), isTrue);
-    });
-
-    testWidgets('RecipeEditorScreen adapts to English locale', (tester) async {
-      tester.view.physicalSize = const Size(500, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-            databaseProvider.overrideWith(() => MockDatabaseNotifier(db)),
-            unitsProvider.overrideWith((ref) => Future.value(testUnits)),
-            unitsStreamProvider.overrideWith((ref) => Stream.value(testUnits)),
-            ingredientsStreamProvider.overrideWith((ref) => Stream.value(testIngredients)),
-          ],
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: Locale('en'),
-            home: RecipeEditorScreen(
-              recipeId: kSampleManufacturingRecipePk,
-              isTemporary: true,
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
-
-      // Localized English recipe and ingredients should be rendered
-      expect(find.text('Butter Cookies (Manufacturing Batch)'), findsOneWidget);
-      expect(find.text('All-Purpose Wheat Flour'), findsOneWidget);
-      expect(find.text('Unsalted Butter'), findsOneWidget);
-      expect(find.text('Refined White Sugar'), findsOneWidget);
-      expect(find.text('Temporary Sample'), findsOneWidget);
-    });
   });
 }

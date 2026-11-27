@@ -181,6 +181,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         children: [
           CustomScrollView(
             controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
             cacheExtent: 600,
             slivers: [
           buildFloatingPillAppBar(
@@ -335,7 +336,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 showAds,
                 interval: 5,
               );
-              final isWideWebCard = screenWidth >= 800;
+              final isWideWebCard = screenWidth >= 640;
               final selectedRecipeId = isWideWebCard
                   ? ref.watch(
                       webLayoutProvider.select((s) => s.selectedRecipeId),
@@ -1236,7 +1237,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop(); // dismiss loading indicator
-        AppSnackBar.showError(context, "Error scaling recipe: $e");
+        AppSnackBar.showError(
+          context,
+          AppLocalizations.of(context)!.recipe_list_error_scaling(e.toString()),
+        );
       }
     }
   }

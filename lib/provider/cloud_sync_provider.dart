@@ -731,9 +731,11 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   Future<bool> restoreBackup(String backupId) async {
     state = state.copyWith(loading: true);
     try {
+      await ref.read(databaseProvider).close();
       final success = await _syncService.restoreBackup(backupId);
+      ref.read(databaseProvider.notifier).refreshDatabase();
       if (success) {
-        ref.read(databaseProvider.notifier).refreshDatabase();
+        _invalidateDataStreams();
         state = state.copyWith(
           loading: false,
           successMessage: 'Database restored successfully.',
@@ -747,6 +749,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         return false;
       }
     } catch (e) {
+      ref.read(databaseProvider.notifier).refreshDatabase();
       state = state.copyWith(
         loading: false,
         errorMessage: 'Restore operation error: $e',
@@ -761,35 +764,33 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }) async {
     state = state.copyWith(loading: true);
     try {
+      await ref.read(databaseProvider).close();
       final success = await _syncService.restoreFromLocalFile(
         filePath,
         fileBytes: fileBytes,
       );
+      ref.read(databaseProvider.notifier).refreshDatabase();
 
       if (success) {
-        ref.read(databaseProvider.notifier).refreshDatabase();
-        ref.invalidate(recipesStreamProvider);
-        ref.invalidate(recipesWithFinancialsStreamProvider);
-        ref.invalidate(ingredientsStreamProvider);
-        ref.invalidate(unitsProvider);
-        ref.invalidate(unitsStreamProvider);
+        _invalidateDataStreams();
 
         state = state.copyWith(
           loading: false,
-          successMessage: 'Copia de seguridad local cargada con éxito.',
+          successMessage: 'cloud_sync_load_local_backup_success',
         );
         return true;
       } else {
         state = state.copyWith(
           loading: false,
-          errorMessage: 'El archivo seleccionado no es válido o no se pudo restaurar.',
+          errorMessage: 'cloud_sync_load_local_backup_invalid',
         );
         return false;
       }
     } catch (e) {
+      ref.read(databaseProvider.notifier).refreshDatabase();
       state = state.copyWith(
         loading: false,
-        errorMessage: 'Error al restaurar copia local: $e',
+        errorMessage: 'Restore error: $e',
       );
       return false;
     } finally {

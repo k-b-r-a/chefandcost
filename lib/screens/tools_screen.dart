@@ -43,6 +43,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           buildFloatingPillAppBar(
             context: context,
@@ -72,9 +73,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
               20.0,
               showAds
                   ? 16.0
-                  : (isWide
-                      ? 16.0
-                      : (100.0 + MediaQuery.paddingOf(context).bottom)),
+                  : (isWide ? 16.0 : (100.0 + MediaQuery.paddingOf(context).bottom)),
             ),
             sliver: SliverList.separated(
               itemCount: 4,
@@ -93,7 +92,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                             final guard = ref.read(recipeCanLeaveGuardProvider);
                             if (guard != null && !await guard()) return;
                             if (!context.mounted) return;
-                            if (MediaQuery.sizeOf(context).width >= 800) {
+                            if (MediaQuery.sizeOf(context).width >= 640) {
                               ref.read(webLayoutProvider.notifier).openTool(0);
                             } else {
                               Navigator.of(context).push(
@@ -118,7 +117,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                             final guard = ref.read(recipeCanLeaveGuardProvider);
                             if (guard != null && !await guard()) return;
                             if (!context.mounted) return;
-                            if (MediaQuery.sizeOf(context).width >= 800) {
+                            if (MediaQuery.sizeOf(context).width >= 640) {
                               ref.read(webLayoutProvider.notifier).openTool(1);
                             } else {
                               Navigator.of(context).push(
@@ -143,7 +142,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                             final guard = ref.read(recipeCanLeaveGuardProvider);
                             if (guard != null && !await guard()) return;
                             if (!context.mounted) return;
-                            if (MediaQuery.sizeOf(context).width >= 800) {
+                            if (MediaQuery.sizeOf(context).width >= 640) {
                               ref.read(webLayoutProvider.notifier).openTool(2);
                             } else {
                               Navigator.of(context).push(

@@ -1064,11 +1064,15 @@ class _LiveActiveTimersBanner extends ConsumerWidget {
                   ),
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const KitchenTimersScreen(),
-                        ),
-                      );
+                      if (MediaQuery.sizeOf(context).width >= 640) {
+                        ref.read(webLayoutProvider.notifier).openTool(0);
+                      } else {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const KitchenTimersScreen(),
+                          ),
+                        );
+                      }
                     },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,

@@ -170,13 +170,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
   void _onScrollStateChanged() {
     final scrolling = _isScrollingNotifier?.value ?? false;
     if (_isScrolling == scrolling) return;
-    if (mounted) {
-      setState(() {
-        _isScrolling = scrolling;
-      });
-    } else {
-      _isScrolling = scrolling;
-    }
+    _isScrolling = scrolling;
     if (!scrolling && _nativeAd == null && !_isLoading && !_loadFailed) {
       _scheduleAdLoad();
     } else if (scrolling) {
@@ -284,14 +278,14 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
     if (_nativeAd != null || _isLoading || _loadFailed) return;
 
     final innerWidth = _lastMeasuredInnerWidth;
-    if (innerWidth == null || innerWidth < 280) {
+    if (innerWidth == null || innerWidth < 200) {
       return;
     }
     final style = _currentTemplateStyle;
     final styleKey = _currentStyleKey;
     if (style == null || styleKey == null) return;
 
-    final effectiveWidth = innerWidth.clamp(280, 560);
+    final effectiveWidth = innerWidth.clamp(200, 560);
     final adHeight = (effectiveWidth / 4.0).clamp(96.0, 120.0).round();
 
     // 1. Try claiming a style-matched standby preloaded NativeAd from AdService
@@ -474,7 +468,7 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
                 final innerWidth = (constraints.maxWidth - 2.0)
                     .floor()
                     .clamp(0, 860);
-                if (innerWidth >= 280 &&
+                if (innerWidth >= 200 &&
                     _lastMeasuredInnerWidth != innerWidth) {
                   _lastMeasuredInnerWidth = innerWidth;
                   if (_nativeAd == null && !_isLoading && !_loadFailed) {
@@ -584,10 +578,12 @@ class _InlineAdCardState extends ConsumerState<InlineAdCard>
                       alignment: Alignment.center,
                       color: theme.colorScheme.surfaceContainer,
                       child: (_isAdLoaded && _nativeAd != null)
-                          ? SizedBox(
-                              width: effectiveInnerWidth,
-                              height: adHeight,
-                              child: AdWidget(ad: _nativeAd!),
+                          ? ClipRect(
+                              child: SizedBox(
+                                width: effectiveInnerWidth,
+                                height: adHeight,
+                                child: AdWidget(ad: _nativeAd!),
+                              ),
                             )
                           : (_loadFailed || AdService.isOffline)
                               ? OfflineCachedAdWidget(

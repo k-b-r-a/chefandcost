@@ -68,10 +68,10 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
       });
     });
     _costController = TextEditingController(
-      text: widget.ingredient != null ? RecipeUtils.formatNumber(widget.ingredient!.cost) : '',
+      text: widget.ingredient != null ? RecipeUtils.formatQuantity(widget.ingredient!.cost) : '',
     );
     _quantityController = TextEditingController(
-      text: widget.ingredient != null ? RecipeUtils.formatNumber(widget.ingredient!.quantityForCost) : '',
+      text: widget.ingredient != null ? RecipeUtils.formatQuantity(widget.ingredient!.quantityForCost) : '',
     );
     _costFocusNode.addListener(() {
       if (_costFocusNode.hasFocus) {
@@ -331,14 +331,16 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
   /// navigates to comparison screen for merging
   void _compareAndMerge(Ingredient other) {
     final l10n = AppLocalizations.of(context)!;
+    final parsedCost = RecipeUtils.parseFormattedNumber(_costController.text);
+    final parsedQty = RecipeUtils.parseFormattedNumber(_quantityController.text);
     final ing1 = widget.ingredient ??
         Ingredient(
           ingredientPk: const Uuid().v4(),
           name: _nameController.text.trim().isNotEmpty
               ? _nameController.text.trim()
               : l10n.new_ingredient_button,
-          cost: double.tryParse(_costController.text) ?? 0.0,
-          quantityForCost: double.tryParse(_quantityController.text) ?? 1.0,
+          cost: parsedCost,
+          quantityForCost: parsedQty > 0 ? parsedQty : 1.0,
           unitFk: _selectedUnitPk ?? '',
           dateCreated: DateTime.now(),
           isDeleted: false,
@@ -350,6 +352,10 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
         builder: (context) => CompareIngredientsScreen(
           ingredient1: ing1,
           ingredient2: other,
+          isIngredient1Unsaved: widget.ingredient == null,
+          onMerged: () {
+            _dismiss();
+          },
         ),
       ),
     );
@@ -461,9 +467,16 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                               border: const OutlineInputBorder(),
                             ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: (value) => value == null || value.isEmpty
-                                ? l10n.validation_required
-                                : null,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return l10n.validation_required;
+                              }
+                              final parsed = RecipeUtils.parseFormattedNumber(value);
+                              if (!parsed.isFinite || parsed < 0) {
+                                return l10n.validation_required;
+                              }
+                              return null;
+                            },
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -479,9 +492,16 @@ class _AddIngredientScreenState extends ConsumerState<AddIngredientScreen> {
                               border: const OutlineInputBorder(),
                             ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: (value) => value == null || value.isEmpty
-                                ? l10n.validation_required
-                                : null,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return l10n.validation_required;
+                              }
+                              final parsed = RecipeUtils.parseFormattedNumber(value);
+                              if (!parsed.isFinite || parsed <= 0) {
+                                return l10n.validation_required;
+                              }
+                              return null;
+                            },
                           ),
                         ),
                       ],

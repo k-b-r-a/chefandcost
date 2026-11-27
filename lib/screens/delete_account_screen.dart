@@ -73,7 +73,7 @@ class DeleteAccountScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Google Play Store Compliance • Package: com.chefandcost.app',
+                              l10n.privacy_policy_compliance_subtitle,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -100,7 +100,7 @@ class DeleteAccountScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Data Deletion Policy',
+                        l10n.delete_account_policy_title,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
@@ -136,7 +136,9 @@ class DeleteAccountScreen extends ConsumerWidget {
                             const Icon(Icons.account_circle_outlined, size: 22),
                             const SizedBox(width: 8),
                             Text(
-                              'Current Account: ${syncState.email ?? "Signed In"}',
+                              l10n.delete_account_current_account(
+                                syncState.email ?? l10n.delete_account_signed_in_fallback,
+                              ),
                               style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ],
@@ -204,12 +206,12 @@ class DeleteAccountScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Request Account & Data Deletion via Email',
+                        l10n.delete_account_email_request_title,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'If you uninstalled the application or cannot access your device, you can send an automated email request to our support team. We will permanently delete your authentication record and all synced cloud Firestore documents within 48 hours.',
+                        l10n.delete_account_email_request_desc,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.45,
@@ -223,7 +225,7 @@ class DeleteAccountScreen extends ConsumerWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         icon: const Icon(Icons.mail_outline, size: 18),
-                        label: const Text('Send Deletion Request Email'),
+                        label: Text(AppLocalizations.of(context)!.delete_account_send_email),
                         onPressed: () {
                           UrlLauncherService.openUrl(
                             'mailto:kbradevp@gmail.com?subject=Chef%26Cost%20Account%20Deletion%20Request&body=Please%20delete%20my%20Chef%26Cost%20account%20and%20all%20associated%20cloud%20data.%20My%20registered%20email%20is:%20',
@@ -239,7 +241,7 @@ class DeleteAccountScreen extends ConsumerWidget {
               Center(
                 child: TextButton.icon(
                   icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back to Home'),
+                  label: Text(AppLocalizations.of(context)!.delete_account_back_to_home),
                   onPressed: () {
                     Navigator.of(context).pushReplacementNamed('/');
                   },

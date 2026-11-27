@@ -221,6 +221,35 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
   late final List<Widget> _screens;
 
+  String _resolveCloudSyncMessage(String msg, AppLocalizations l10n) {
+    switch (msg) {
+      case 'error_sign_in_canceled':
+        return l10n.cloud_sync_sign_in_canceled;
+      case 'error_drive_permission_denied':
+        return l10n.cloud_sync_error_drive_permission_denied;
+      case 'error_network':
+        return l10n.cloud_sync_error_network;
+      case 'error_requires_recent_login':
+        return l10n.cloud_sync_delete_account_reauth_required;
+      case 'cloud_sync_delete_account_success':
+        return l10n.cloud_sync_delete_account_success;
+      case 'cloud_sync_delete_cloud_data_success':
+        return l10n.cloud_sync_delete_cloud_data_success;
+      case 'cloud_sync_delete_all_backups_success':
+        return l10n.cloud_sync_delete_all_backups_success;
+      case 'cloud_sync_terms_required_warning':
+        return l10n.cloud_sync_terms_required_warning;
+      case 'cloud_sync_subscription_required':
+        return l10n.cloud_sync_subscription_required;
+      case 'cloud_sync_load_local_backup_success':
+        return l10n.cloud_sync_load_local_backup_success;
+      case 'cloud_sync_load_local_backup_invalid':
+        return l10n.cloud_sync_load_local_backup_invalid;
+      default:
+        return msg;
+    }
+  }
+
   void _closeSearch() {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
@@ -393,11 +422,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       }
       if (next.errorMessage != null &&
           next.errorMessage != previous?.errorMessage) {
-        GooeyToast.showError(context, message: next.errorMessage!);
+        GooeyToast.showError(
+          context,
+          message: _resolveCloudSyncMessage(next.errorMessage!, l10n),
+        );
       }
       if (next.successMessage != null &&
           next.successMessage != previous?.successMessage) {
-        GooeyToast.showSuccess(context, message: next.successMessage!);
+        GooeyToast.showSuccess(
+          context,
+          message: _resolveCloudSyncMessage(next.successMessage!, l10n),
+        );
       }
     });
 
@@ -1043,6 +1078,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         ),
                       );
@@ -1151,37 +1194,18 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     if (webLayout.rightPaneView == WebRightPaneView.tool &&
         webLayout.selectedToolIndex != null) {
-      Widget toolWidget;
       switch (webLayout.selectedToolIndex) {
         case 0:
-          toolWidget = const KitchenTimersScreen();
-          break;
+          return KitchenTimersScreen(onClose: () => webNotifier.showHome());
         case 1:
-          toolWidget = const RuleOfThreeScreen();
-          break;
+          return RuleOfThreeScreen(onClose: () => webNotifier.showHome());
         case 2:
-          toolWidget = const UnitConverterScreen();
-          break;
+          return UnitConverterScreen(onClose: () => webNotifier.showHome());
         case 3:
-          toolWidget = const MoldCalculatorScreen();
-          break;
+          return const MoldCalculatorScreen();
         default:
-          toolWidget = const HomeScreen();
+          return const HomeScreen();
       }
-      return Stack(
-        children: [
-          toolWidget,
-          Positioned(
-            top: 14,
-            left: 14,
-            child: IconButton.filledTonal(
-              icon: const Icon(Icons.arrow_back),
-              tooltip: l10n.back_to_home_tooltip,
-              onPressed: () => webNotifier.showHome(),
-            ),
-          ),
-        ],
-      );
     }
 
     if (webLayout.rightPaneView == WebRightPaneView.settingsGeneral) {
@@ -1605,7 +1629,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                                       .onSurface
                                                       .withValues(alpha: 0.5),
                                                 ),
+                                            filled: false,
                                             border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
                                             contentPadding:
                                                 const EdgeInsets.only(
                                                   left: 16,

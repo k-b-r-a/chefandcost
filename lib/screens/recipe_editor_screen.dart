@@ -1208,8 +1208,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                                     );
                                 final scaledAmt = originalAmt * multiplier;
                                 final unitDisplay =
-                                    ingData.targetUnit?.name ??
-                                    ingData.sourceUnit?.name ??
+                                    ingData.targetUnit?.symbol ??
+                                    ingData.sourceUnit?.symbol ??
                                     ingData.ingredient.unitFk;
                                 final scaledIngCost =
                                     ingData.totalCost * multiplier;
@@ -3819,14 +3819,32 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                           fontSize: 12.5,
                           color: numberColor,
                         ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
+                        decoration: InputDecoration(
+                          border: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outlineVariant
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outlineVariant
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 1.5,
+                            ),
+                          ),
                           disabledBorder: InputBorder.none,
                           filled: false,
                           isDense: true,
-                          contentPadding: EdgeInsets.zero,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 2,
+                            horizontal: 0,
+                          ),
                         ),
                         onTap: () {
                           if (_yieldController.text.isNotEmpty) {
@@ -5563,12 +5581,30 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                     fontSize: 13.5,
                     color: numberColor,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 2,
+                      horizontal: 0,
+                    ),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.7),
+                      ),
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.7),
+                      ),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.primary,
+                        width: 1.5,
+                      ),
+                    ),
                     disabledBorder: InputBorder.none,
                     filled: false,
                   ),
@@ -7167,7 +7203,11 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     ref.read(ingredientSearchQueryProvider.notifier).setQuery('');
     ref.invalidate(ingredientsStreamProvider);
     ref.invalidate(unitsProvider);
-    final isDesktopWeb = MediaQuery.sizeOf(context).width >= 640;
+    final renderBox = context.findRenderObject() as RenderBox?;
+    final editorWidth = renderBox != null && renderBox.hasSize
+        ? renderBox.size.width
+        : MediaQuery.sizeOf(context).width;
+    final isDesktopWeb = editorWidth >= 640;
     if (isDesktopWeb) {
       setState(() {
         _webRightPanelMode = WebRecipeRightPanelMode.ingredientPicker;

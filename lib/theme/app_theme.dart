@@ -353,17 +353,13 @@ class AppTheme {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark
-                ? AppColors.outlineVariantDark
-                : AppColors.secondary.withValues(alpha: 0.65),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark
-                ? AppColors.outlineVariantDark
-                : AppColors.secondary.withValues(alpha: 0.65),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
         focusedBorder: OutlineInputBorder(

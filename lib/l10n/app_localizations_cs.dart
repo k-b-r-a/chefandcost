@@ -1674,7 +1674,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Tutorial completed. Temporary sample recipe removed.';
 
   @override
-  String get share_recipe_menu_title => 'Share Recipe';
+  String get share_recipe_menu_title => 'Share';
 
   @override
   String get share_recipe_bottom_sheet_title => 'Share Recipe';
@@ -2275,6 +2275,68 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get offline_ad_cta => 'Go Ad-Free';
+
+  @override
+  String get timer_finished_notification_title => 'Timer Finished!';
+
+  @override
+  String timer_finished_notification_body(String name, String time) {
+    return '$name finished at $time.';
+  }
+
+  @override
+  String get delete_account_send_email => 'Send Deletion Request Email';
+
+  @override
+  String get delete_account_back_to_home => 'Back to Home';
+
+  @override
+  String get privacy_policy_email_button => 'Email';
+
+  @override
+  String recipe_list_error_scaling(String error) {
+    return 'Error scaling recipe: $error';
+  }
+
+  @override
+  String common_error_with_details(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get privacy_policy_compliance_subtitle =>
+      'Google Play Store Compliance • Package: com.chefandcost.app';
+
+  @override
+  String get privacy_policy_delete_desc =>
+      'You have full control over your data. You can delete your account and all associated cloud backups directly from the app or via our web portal.';
+
+  @override
+  String get delete_account_policy_title => 'Data Deletion Policy';
+
+  @override
+  String delete_account_current_account(String account) {
+    return 'Current Account: $account';
+  }
+
+  @override
+  String get delete_account_signed_in_fallback => 'Signed In';
+
+  @override
+  String get delete_account_email_request_title =>
+      'Request Account & Data Deletion via Email';
+
+  @override
+  String get delete_account_email_request_desc =>
+      'If you uninstalled the application or cannot access your device, you can send an automated email request to our support team. We will permanently delete your authentication record and all synced cloud Firestore documents within 48 hours.';
+
+  @override
+  String compare_per_quantity(String quantity, String unit) {
+    return 'per $quantity $unit';
+  }
+
+  @override
+  String get settings_about_channel_alpha => 'Alpha Channel';
 
   @override
   String get mold_calc_title => 'Mold & Pan Calculator';

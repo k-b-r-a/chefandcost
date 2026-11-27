@@ -78,6 +78,10 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
         return l10n.cloud_sync_terms_required_warning;
       case 'cloud_sync_subscription_required':
         return l10n.cloud_sync_subscription_required;
+      case 'cloud_sync_load_local_backup_success':
+        return l10n.cloud_sync_load_local_backup_success;
+      case 'cloud_sync_load_local_backup_invalid':
+        return l10n.cloud_sync_load_local_backup_invalid;
       default:
         return msg;
     }
@@ -197,8 +201,10 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
                             else
                               _buildBackupsList(syncState, syncNotifier, theme, l10n),
                           ],
-                          const SizedBox(height: 24),
-                          _buildLocalBackupCard(syncNotifier, theme, l10n),
+                          if (!kIsWeb) ...[
+                            const SizedBox(height: 24),
+                            _buildLocalBackupCard(syncNotifier, theme, l10n),
+                          ],
                         ],
                       ),
                     ),
@@ -2480,24 +2486,10 @@ class _CloudSyncScreenState extends ConsumerState<CloudSyncScreen> {
 
       if (confirmed != true || !context.mounted) return;
 
-      final success = await notifier.restoreFromLocalFile(
+      await notifier.restoreFromLocalFile(
         filePath: file.path ?? '',
         fileBytes: file.bytes,
       );
-
-      if (!context.mounted) return;
-
-      if (success) {
-        GooeyToast.showSuccess(
-          context,
-          message: l10n.cloud_sync_load_local_backup_success,
-        );
-      } else {
-        GooeyToast.showError(
-          context,
-          message: l10n.cloud_sync_load_local_backup_invalid,
-        );
-      }
     } catch (e) {
       if (!context.mounted) return;
       GooeyToast.showError(

@@ -662,32 +662,34 @@ class SettingsGeneralScreen extends ConsumerWidget {
                       _showLoadSampleConfirmation(context, ref);
                     },
                   ),
-                  const Divider(height: 1, indent: 20, endIndent: 20),
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    leading: CircleAvatar(
-                      backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
-                      child: Icon(Icons.file_open_outlined, color: theme.colorScheme.secondary),
-                    ),
-                    title: Text(
-                      l10n.cloud_sync_load_local_backup_btn,
-                      softWrap: true,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      l10n.cloud_sync_load_local_backup_desc,
-                      softWrap: true,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                  if (!kIsWeb) ...[
+                    const Divider(height: 1, indent: 20, endIndent: 20),
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      leading: CircleAvatar(
+                        backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
+                        child: Icon(Icons.file_open_outlined, color: theme.colorScheme.secondary),
                       ),
+                      title: Text(
+                        l10n.cloud_sync_load_local_backup_btn,
+                        softWrap: true,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        l10n.cloud_sync_load_local_backup_desc,
+                        softWrap: true,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      onTap: () {
+                        if (settings.hapticFeedbackEnabled) {
+                          HapticFeedback.lightImpact();
+                        }
+                        _pickAndLoadLocalBackup(context, ref);
+                      },
                     ),
-                    onTap: () {
-                      if (settings.hapticFeedbackEnabled) {
-                        HapticFeedback.lightImpact();
-                      }
-                      _pickAndLoadLocalBackup(context, ref);
-                    },
-                  ),
+                  ],
                   const Divider(height: 1, indent: 20, endIndent: 20),
                   ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -1236,88 +1238,90 @@ class SettingsStylesScreen extends ConsumerWidget {
                     settingsNotifier.setAnimationsEnabled(val);
                   },
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.water_drop_rounded, size: 18, color: theme.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Gooey Toast Notification',
+                              style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ActionChip(
+                              avatar: const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF10B981)),
+                              label: const Text('Success'),
+                              onPressed: () {
+                                triggerHaptic();
+                                GooeyToast.showSuccess(
+                                  context,
+                                  message: 'Receta guardada con éxito',
+                                  title: 'Guardado',
+                                );
+                              },
+                            ),
+                            ActionChip(
+                              avatar: const Icon(Icons.error_outline_rounded, size: 16, color: Color(0xFFEF4444)),
+                              label: const Text('Error'),
+                              onPressed: () {
+                                triggerHaptic();
+                                GooeyToast.showError(
+                                  context,
+                                  message: 'No se pudo sincronizar los datos',
+                                  title: 'Error',
+                                );
+                              },
+                            ),
+                            ActionChip(
+                              avatar: const Icon(Icons.warning_amber_rounded, size: 16, color: Color(0xFFF59E0B)),
+                              label: const Text('Warning'),
+                              onPressed: () {
+                                triggerHaptic();
+                                GooeyToast.showWarning(
+                                  context,
+                                  message: 'El temporizador está por expirar',
+                                  title: 'Atención',
+                                );
+                              },
+                            ),
+                            ActionChip(
+                              avatar: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF3B82F6)),
+                              label: const Text('Info'),
+                              onPressed: () {
+                                triggerHaptic();
+                                GooeyToast.show(
+                                  context,
+                                  message: 'Nueva versión disponible para sincronizar',
+                                  title: 'Información',
+                                  type: GooeyToastType.info,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.water_drop_rounded, size: 18, color: theme.colorScheme.primary),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Gooey Toast Notification',
-                            style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          ActionChip(
-                            avatar: const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF10B981)),
-                            label: const Text('Success'),
-                            onPressed: () {
-                              triggerHaptic();
-                              GooeyToast.showSuccess(
-                                context,
-                                message: 'Receta guardada con éxito',
-                                title: 'Guardado',
-                              );
-                            },
-                          ),
-                          ActionChip(
-                            avatar: const Icon(Icons.error_outline_rounded, size: 16, color: Color(0xFFEF4444)),
-                            label: const Text('Error'),
-                            onPressed: () {
-                              triggerHaptic();
-                              GooeyToast.showError(
-                                context,
-                                message: 'No se pudo sincronizar los datos',
-                                title: 'Error',
-                              );
-                            },
-                          ),
-                          ActionChip(
-                            avatar: const Icon(Icons.warning_amber_rounded, size: 16, color: Color(0xFFF59E0B)),
-                            label: const Text('Warning'),
-                            onPressed: () {
-                              triggerHaptic();
-                              GooeyToast.showWarning(
-                                context,
-                                message: 'El temporizador está por expirar',
-                                title: 'Atención',
-                              );
-                            },
-                          ),
-                          ActionChip(
-                            avatar: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF3B82F6)),
-                            label: const Text('Info'),
-                            onPressed: () {
-                              triggerHaptic();
-                              GooeyToast.show(
-                                context,
-                                message: 'Nueva versión disponible para sincronizar',
-                                title: 'Información',
-                                type: GooeyToastType.info,
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                ],
                 const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -1837,7 +1841,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'https://chefycostalpha.web.app/privacy',
+                                'https://chefycost.web.app/privacy',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: theme.colorScheme.primary,
@@ -2193,9 +2197,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                                 const SizedBox(width: 5),
                                 Text(
                                   isAlpha
-                                      ? (Localizations.localeOf(context).languageCode == 'es'
-                                          ? 'Canal Alpha'
-                                          : 'Alpha Channel')
+                                      ? l10n.settings_about_channel_alpha
                                       : (isBeta
                                           ? l10n.settings_about_channel_beta
                                           : l10n.settings_about_channel_stable),
@@ -2347,7 +2349,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                                   const SizedBox(width: 4),
                                   Flexible(
                                     child: Text(
-                                      'https://chefycostalpha.web.app/privacy',
+                                      'https://chefycost.web.app/privacy',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: theme.colorScheme.primary,
@@ -2380,7 +2382,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                           l10n.settings_about_privacy_view_online,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text('https://chefycostalpha.web.app/privacy'),
+                        subtitle: const Text('https://chefycost.web.app/privacy'),
                         trailing: const Icon(Icons.open_in_new, size: 20),
                         onTap: () => UrlLauncherService.openPrivacyPolicy(),
                       ),

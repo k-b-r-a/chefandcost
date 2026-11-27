@@ -3219,7 +3219,7 @@ abstract class AppLocalizations {
   /// No description provided for @share_recipe_menu_title.
   ///
   /// In en, this message translates to:
-  /// **'Share Recipe'**
+  /// **'Share'**
   String get share_recipe_menu_title;
 
   /// No description provided for @share_recipe_bottom_sheet_title.
@@ -4247,6 +4247,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go Ad-Free'**
   String get offline_ad_cta;
+
+  /// No description provided for @timer_finished_notification_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Timer Finished!'**
+  String get timer_finished_notification_title;
+
+  /// No description provided for @timer_finished_notification_body.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} finished at {time}.'**
+  String timer_finished_notification_body(String name, String time);
+
+  /// No description provided for @delete_account_send_email.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Deletion Request Email'**
+  String get delete_account_send_email;
+
+  /// No description provided for @delete_account_back_to_home.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Home'**
+  String get delete_account_back_to_home;
+
+  /// No description provided for @privacy_policy_email_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get privacy_policy_email_button;
+
+  /// No description provided for @recipe_list_error_scaling.
+  ///
+  /// In en, this message translates to:
+  /// **'Error scaling recipe: {error}'**
+  String recipe_list_error_scaling(String error);
+
+  /// No description provided for @common_error_with_details.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String common_error_with_details(String error);
+
+  /// No description provided for @privacy_policy_compliance_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Play Store Compliance • Package: com.chefandcost.app'**
+  String get privacy_policy_compliance_subtitle;
+
+  /// No description provided for @privacy_policy_delete_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'You have full control over your data. You can delete your account and all associated cloud backups directly from the app or via our web portal.'**
+  String get privacy_policy_delete_desc;
+
+  /// No description provided for @delete_account_policy_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Deletion Policy'**
+  String get delete_account_policy_title;
+
+  /// No description provided for @delete_account_current_account.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Account: {account}'**
+  String delete_account_current_account(String account);
+
+  /// No description provided for @delete_account_signed_in_fallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed In'**
+  String get delete_account_signed_in_fallback;
+
+  /// No description provided for @delete_account_email_request_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Account & Data Deletion via Email'**
+  String get delete_account_email_request_title;
+
+  /// No description provided for @delete_account_email_request_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'If you uninstalled the application or cannot access your device, you can send an automated email request to our support team. We will permanently delete your authentication record and all synced cloud Firestore documents within 48 hours.'**
+  String get delete_account_email_request_desc;
+
+  /// No description provided for @compare_per_quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'per {quantity} {unit}'**
+  String compare_per_quantity(String quantity, String unit);
+
+  /// No description provided for @settings_about_channel_alpha.
+  ///
+  /// In en, this message translates to:
+  /// **'Alpha Channel'**
+  String get settings_about_channel_alpha;
 
   /// No description provided for @mold_calc_title.
   ///

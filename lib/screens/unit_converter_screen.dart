@@ -8,7 +8,8 @@ import '../widgets/ad_free_pass_button.dart';
 import '../widgets/static_banner_ad.dart';
 
 class UnitConverterScreen extends ConsumerStatefulWidget {
-  const UnitConverterScreen({super.key});
+  final VoidCallback? onClose;
+  const UnitConverterScreen({super.key, this.onClose});
 
   @override
   ConsumerState<UnitConverterScreen> createState() => _UnitConverterScreenState();
@@ -88,7 +89,13 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        leading: const BackButton(),
+        leading: widget.onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.back_to_home_tooltip,
+                onPressed: widget.onClose,
+              )
+            : const BackButton(),
         title: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
@@ -148,277 +155,312 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
             _result = valueInBase / _toUnit!.factorToBase;
           }
 
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const StaticBannerAd(
-                  key: ValueKey('ad_unit_converter_top_static'),
-                  margin: EdgeInsets.only(bottom: 16),
-                ),
-                Text(
-                  l10n.unit_converter_desc,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  softWrap: true,
-                ),
-                const SizedBox(height: 24),
-                // Category tabs
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<String>(
-                    segments: categories.map((cat) {
-                      String label = cat;
-                      if (cat == 'mass') label = l10n.unit_category_mass;
-                      if (cat == 'volume') label = l10n.unit_category_volume;
-                      if (cat == 'count') label = l10n.unit_category_count;
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: (constraints.maxHeight - 24.0).clamp(0.0, double.infinity),
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const StaticBannerAd(
+                                  key: ValueKey('ad_unit_converter_top_static'),
+                                  margin: EdgeInsets.only(bottom: 12),
+                                ),
+                                Text(
+                                  l10n.unit_converter_desc,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  softWrap: true,
+                                ),
+                                const SizedBox(height: 14),
+                                // Category tabs
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: SegmentedButton<String>(
+                                    segments: categories.map((cat) {
+                                      String label = cat;
+                                      if (cat == 'mass') label = l10n.unit_category_mass;
+                                      if (cat == 'volume') label = l10n.unit_category_volume;
+                                      if (cat == 'count') label = l10n.unit_category_count;
 
-                      return ButtonSegment<String>(
-                        value: cat,
-                        label: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    selected: {_selectedCategory},
-                    onSelectionChanged: (newSelection) {
-                      _onCategoryChanged(newSelection.first, allUnits);
-                    },
-                    showSelectedIcon: false,
-                    style: SegmentedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Source Input Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.unit_converter_from,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        softWrap: true,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: TextField(
-                              controller: _valueController,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              style: theme.textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.w900,
-                              ),
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                                border: InputBorder.none,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 5,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.outlineVariant
-                                      .withValues(alpha: 0.5),
-                                ),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<Unit>(
-                                  value: _fromUnit,
-                                  isExpanded: true,
-                                  onChanged: (Unit? newUnit) {
-                                    if (newUnit != null) {
-                                      setState(() => _fromUnit = newUnit);
-                                      _calculateConversion();
-                                    }
-                                  },
-                                  items: filteredUnits.map((Unit unit) {
-                                    return DropdownMenuItem<Unit>(
-                                      value: unit,
-                                      child: Text(
-                                        '${_getLocalizedUnitName(unit, l10n)} (${unit.symbol})',
-                                        overflow: TextOverflow.ellipsis,
+                                      return ButtonSegment<String>(
+                                        value: cat,
+                                        label: Text(
+                                          label,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                    selected: {_selectedCategory},
+                                    onSelectionChanged: (newSelection) {
+                                      _onCategoryChanged(newSelection.first, allUnits);
+                                    },
+                                    showSelectedIcon: false,
+                                    style: SegmentedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
-                                    );
-                                  }).toList(),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Swap button
-                Center(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.swap_vert_rounded),
-                      color: theme.colorScheme.onPrimary,
-                      onPressed: _swapUnits,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Target Result Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.unit_converter_to,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        softWrap: true,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                RecipeUtils.formatNumber(_result, decimalDigits: 4, trimTrailingZeros: true),
-                                style: theme.textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 5,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.outlineVariant
-                                      .withValues(alpha: 0.5),
-                                ),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<Unit>(
-                                  value: _toUnit,
-                                  isExpanded: true,
-                                  onChanged: (Unit? newUnit) {
-                                    if (newUnit != null) {
-                                      setState(() => _toUnit = newUnit);
-                                      _calculateConversion();
-                                    }
-                                  },
-                                  items: filteredUnits.map((Unit unit) {
-                                    return DropdownMenuItem<Unit>(
-                                      value: unit,
-                                      child: Text(
-                                        '${_getLocalizedUnitName(unit, l10n)} (${unit.symbol})',
-                                        overflow: TextOverflow.ellipsis,
+                                const SizedBox(height: 14),
+                                // Source Input Card
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.unit_converter_from,
+                                        style: theme.textTheme.labelMedium?.copyWith(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        softWrap: true,
                                       ),
-                                    );
-                                  }).toList(),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 5,
+                                            child: TextField(
+                                              controller: _valueController,
+                                              keyboardType: const TextInputType.numberWithOptions(
+                                                decimal: true,
+                                              ),
+                                              style: theme.textTheme.headlineMedium?.copyWith(
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                              decoration: InputDecoration(
+                                                isDense: true,
+                                                filled: false,
+                                                contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                                                border: UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                    color: theme.colorScheme.outlineVariant
+                                                        .withValues(alpha: 0.6),
+                                                  ),
+                                                ),
+                                                enabledBorder: UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                    color: theme.colorScheme.outlineVariant
+                                                        .withValues(alpha: 0.6),
+                                                  ),
+                                                ),
+                                                focusedBorder: UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                    color: theme.colorScheme.primary,
+                                                    width: 1.8,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            flex: 5,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                                              decoration: BoxDecoration(
+                                                color: theme.colorScheme.surface,
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: theme.colorScheme.outlineVariant
+                                                      .withValues(alpha: 0.5),
+                                                ),
+                                              ),
+                                              child: DropdownButtonHideUnderline(
+                                                child: DropdownButton<Unit>(
+                                                  value: _fromUnit,
+                                                  isExpanded: true,
+                                                  onChanged: (Unit? newUnit) {
+                                                    if (newUnit != null) {
+                                                      setState(() => _fromUnit = newUnit);
+                                                      _calculateConversion();
+                                                    }
+                                                  },
+                                                  items: filteredUnits.map((Unit unit) {
+                                                    return DropdownMenuItem<Unit>(
+                                                      value: unit,
+                                                      child: Text(
+                                                        '${_getLocalizedUnitName(unit, l10n)} (${unit.symbol})',
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 10),
+                                // Swap button
+                                Center(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.swap_vert_rounded),
+                                      color: theme.colorScheme.onPrimary,
+                                      onPressed: _swapUnits,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                // Target Result Card
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.unit_converter_to,
+                                        style: theme.textTheme.labelMedium?.copyWith(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        softWrap: true,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 5,
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                RecipeUtils.formatNumber(_result, decimalDigits: 4, trimTrailingZeros: true),
+                                                style: theme.textTheme.headlineMedium?.copyWith(
+                                                  fontWeight: FontWeight.w900,
+                                                  color: theme.colorScheme.primary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            flex: 5,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                                              decoration: BoxDecoration(
+                                                color: theme.colorScheme.surface,
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: theme.colorScheme.outlineVariant
+                                                      .withValues(alpha: 0.5),
+                                                ),
+                                              ),
+                                              child: DropdownButtonHideUnderline(
+                                                child: DropdownButton<Unit>(
+                                                  value: _toUnit,
+                                                  isExpanded: true,
+                                                  onChanged: (Unit? newUnit) {
+                                                    if (newUnit != null) {
+                                                      setState(() => _toUnit = newUnit);
+                                                      _calculateConversion();
+                                                    }
+                                                  },
+                                                  items: filteredUnits.map((Unit unit) {
+                                                    return DropdownMenuItem<Unit>(
+                                                      value: unit,
+                                                      child: Text(
+                                                        '${_getLocalizedUnitName(unit, l10n)} (${unit.symbol})',
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (_fromUnit != null && _toUnit != null && _result > 0.0) ...[
+                                  const SizedBox(height: 14),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '${_valueController.text} ${_fromUnit!.symbol} = ${RecipeUtils.formatNumber(_result, decimalDigits: 4, trimTrailingZeros: true)} ${_toUnit!.symbol}',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      softWrap: true,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Detailed summary text
-                if (_fromUnit != null && _toUnit != null && _result > 0.0)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+                            const StaticBannerAd(
+                              key: ValueKey('ad_unit_converter_bottom_static'),
+                              margin: EdgeInsets.only(top: 12),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    child: Text(
-                      '${_valueController.text} ${_fromUnit!.symbol} = ${RecipeUtils.formatNumber(_result, decimalDigits: 4, trimTrailingZeros: true)} ${_toUnit!.symbol}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                    ),
                   ),
-                const StaticBannerAd(
-                  key: ValueKey('ad_unit_converter_bottom_static'),
-                  margin: EdgeInsets.only(top: 16),
                 ),
-              ],
-            ),
-          ),
-        ),
-      );
+              );
+            },
+          );
     },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
