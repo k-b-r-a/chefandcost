@@ -862,7 +862,7 @@
   "cloud_sync_terms_review_btn": "Review Terms",
   "cloud_sync_terms_required_warning": "You must accept the terms of service and privacy policy to connect to cloud services.",
   "cloud_sync_in_progress": "Syncing in background...",
-  "cloud_sync_error_prefix": "Sync error: ",
+  "cloud_sync_error_prefix": "Sync error:",
   "ad_free_pass_btn_label": "Ad-Free Pass",
   "ad_free_pass_btn_label_8h": "Ad-Free (8h)",
   "ad_free_pass_active_badge": "{time} ad-free",
@@ -959,8 +959,12 @@
   "timer_finished_notification_body": "{name} finished at {time}.",
   "@timer_finished_notification_body": {
     "placeholders": {
-      "name": {"type": "String"},
-      "time": {"type": "String"}
+      "name": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
     }
   },
   "delete_account_send_email": "Send Deletion Request Email",
@@ -969,13 +973,17 @@
   "recipe_list_error_scaling": "Error scaling recipe: {error}",
   "@recipe_list_error_scaling": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
   "common_error_with_details": "Error: {error}",
   "@common_error_with_details": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
   "privacy_policy_compliance_subtitle": "Google Play Store Compliance • Package: com.chefandcost.app",
@@ -984,7 +992,9 @@
   "delete_account_current_account": "Current Account: {account}",
   "@delete_account_current_account": {
     "placeholders": {
-      "account": {"type": "String"}
+      "account": {
+        "type": "String"
+      }
     }
   },
   "delete_account_signed_in_fallback": "Signed In",
@@ -993,8 +1003,12 @@
   "compare_per_quantity": "per {quantity} {unit}",
   "@compare_per_quantity": {
     "placeholders": {
-      "quantity": {"type": "String"},
-      "unit": {"type": "String"}
+      "quantity": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
     }
   },
   "settings_about_channel_alpha": "Alpha Channel",
