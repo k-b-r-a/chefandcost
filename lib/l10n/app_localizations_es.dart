@@ -1697,7 +1697,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tutorial completado. Se removió la receta de muestra temporal.';
 
   @override
-  String get share_recipe_menu_title => 'Compartir receta';
+  String get share_recipe_menu_title => 'Compartir';
 
   @override
   String get share_recipe_bottom_sheet_title => 'Compartir receta';
@@ -2296,4 +2296,32 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get offline_ad_cta => 'Sin Anuncios';
+
+  @override
+  String get timer_finished_notification_title => '¡Temporizador Finalizado!';
+
+  @override
+  String timer_finished_notification_body(String name, String time) {
+    return '$name ha terminado a las $time.';
+  }
+
+  @override
+  String get delete_account_send_email =>
+      'Enviar correo de solicitud de eliminación';
+
+  @override
+  String get delete_account_back_to_home => 'Volver al inicio';
+
+  @override
+  String get privacy_policy_email_button => 'Correo';
+
+  @override
+  String recipe_list_error_scaling(String error) {
+    return 'Error al escalar la receta: $error';
+  }
+
+  @override
+  String common_error_with_details(String error) {
+    return 'Error: $error';
+  }
 }

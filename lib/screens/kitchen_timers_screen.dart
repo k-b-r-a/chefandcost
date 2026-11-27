@@ -71,40 +71,6 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                 title: l10n.timers_title,
                 controller: _scrollController,
                 actions: const [AdFreePassButton()],
-                trailing: InkWell(
-                  onTap: () => _showAddTimerDialog(context, notifier, l10n),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.35),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.add_rounded,
-                          size: 16,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          l10n.add_button,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(22.0, 16.0, 22.0, 110.0),

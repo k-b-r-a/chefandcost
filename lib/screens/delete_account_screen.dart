@@ -223,7 +223,7 @@ class DeleteAccountScreen extends ConsumerWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         icon: const Icon(Icons.mail_outline, size: 18),
-                        label: const Text('Send Deletion Request Email'),
+                        label: Text(AppLocalizations.of(context)!.delete_account_send_email),
                         onPressed: () {
                           UrlLauncherService.openUrl(
                             'mailto:kbradevp@gmail.com?subject=Chef%26Cost%20Account%20Deletion%20Request&body=Please%20delete%20my%20Chef%26Cost%20account%20and%20all%20associated%20cloud%20data.%20My%20registered%20email%20is:%20',
@@ -239,7 +239,7 @@ class DeleteAccountScreen extends ConsumerWidget {
               Center(
                 child: TextButton.icon(
                   icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back to Home'),
+                  label: Text(AppLocalizations.of(context)!.delete_account_back_to_home),
                   onPressed: () {
                     Navigator.of(context).pushReplacementNamed('/');
                   },

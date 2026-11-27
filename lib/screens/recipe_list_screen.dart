@@ -1236,7 +1236,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop(); // dismiss loading indicator
-        AppSnackBar.showError(context, "Error scaling recipe: $e");
+        AppSnackBar.showError(
+          context,
+          AppLocalizations.of(context)!.recipe_list_error_scaling(e.toString()),
+        );
       }
     }
   }

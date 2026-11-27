@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/notification_service.dart';
 import '../utils/audio_alarm_service.dart';
 
@@ -104,10 +106,11 @@ class KitchenTimersNotifier extends Notifier<List<KitchenTimerModel>> {
           final now = DateTime.now();
           final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
           AudioAlarmService().playAlarm();
+          final l10n = lookupAppLocalizations(PlatformDispatcher.instance.locale);
           NotificationService().showTimerFinishedNotification(
             id: timer.id.hashCode,
-            title: '¡Temporizador Finalizado!',
-            body: '${timer.name} ha terminado a las $timeStr.',
+            title: l10n.timer_finished_notification_title,
+            body: l10n.timer_finished_notification_body(timer.name, timeStr),
           );
 
           return timer.copyWith(

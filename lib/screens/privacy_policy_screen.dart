@@ -247,7 +247,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                       TextButton.icon(
                         icon: const Icon(Icons.send, size: 16),
-                        label: const Text('Email'),
+                        label: Text(AppLocalizations.of(context)!.privacy_policy_email_button),
                         onPressed: () {
                           UrlLauncherService.openUrl(
                             'mailto:kbradevp@gmail.com?subject=Chef%26Cost%20Privacy%20Inquiry',

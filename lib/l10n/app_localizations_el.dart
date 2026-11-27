@@ -1674,7 +1674,7 @@ class AppLocalizationsEl extends AppLocalizations {
       'Tutorial completed. Temporary sample recipe removed.';
 
   @override
-  String get share_recipe_menu_title => 'Share Recipe';
+  String get share_recipe_menu_title => 'Share';
 
   @override
   String get share_recipe_bottom_sheet_title => 'Share Recipe';
@@ -2264,4 +2264,31 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get offline_ad_cta => 'Go Ad-Free';
+
+  @override
+  String get timer_finished_notification_title => 'Timer Finished!';
+
+  @override
+  String timer_finished_notification_body(String name, String time) {
+    return '$name finished at $time.';
+  }
+
+  @override
+  String get delete_account_send_email => 'Send Deletion Request Email';
+
+  @override
+  String get delete_account_back_to_home => 'Back to Home';
+
+  @override
+  String get privacy_policy_email_button => 'Email';
+
+  @override
+  String recipe_list_error_scaling(String error) {
+    return 'Error scaling recipe: $error';
+  }
+
+  @override
+  String common_error_with_details(String error) {
+    return 'Error: $error';
+  }
 }

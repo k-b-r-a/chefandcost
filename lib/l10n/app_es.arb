@@ -678,7 +678,7 @@
   "sample_manufacturing_save_btn": "Guardar como receta real",
   "sample_manufacturing_dismiss_btn": "Descartar muestra",
   "sample_manufacturing_auto_removed": "Tutorial completado. Se removió la receta de muestra temporal.",
-  "share_recipe_menu_title": "Compartir receta",
+  "share_recipe_menu_title": "Compartir",
   "share_recipe_bottom_sheet_title": "Compartir receta",
   "share_recipe_format_chefy_title": "Archivo Chef&Cost (.chefy)",
   "share_recipe_format_chefy_subtitle": "Archivo para abrir e importar en Chef&Cost en otro dispositivo",
@@ -869,5 +869,12 @@
   "offline_ad_costing_subtitle": "Pásate a Pro para respaldo en la nube y cero anuncios",
   "offline_ad_pass_title": "¿Quieres 8 Horas Sin Anuncios?",
   "offline_ad_pass_subtitle": "Conéctate a internet para ver 1 video corto o pásate a Pro",
-  "offline_ad_cta": "Sin Anuncios"
+  "offline_ad_cta": "Sin Anuncios",
+  "timer_finished_notification_title": "¡Temporizador Finalizado!",
+  "timer_finished_notification_body": "{name} ha terminado a las {time}.",
+  "delete_account_send_email": "Enviar correo de solicitud de eliminación",
+  "delete_account_back_to_home": "Volver al inicio",
+  "privacy_policy_email_button": "Correo",
+  "recipe_list_error_scaling": "Error al escalar la receta: {error}",
+  "common_error_with_details": "Error: {error}"
 }

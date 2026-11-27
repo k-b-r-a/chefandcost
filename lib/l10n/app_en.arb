@@ -705,7 +705,7 @@
   "sample_manufacturing_save_btn": "Save as Real Recipe",
   "sample_manufacturing_dismiss_btn": "Dismiss Sample",
   "sample_manufacturing_auto_removed": "Tutorial completed. Temporary sample recipe removed.",
-  "share_recipe_menu_title": "Share Recipe",
+  "share_recipe_menu_title": "Share",
   "share_recipe_bottom_sheet_title": "Share Recipe",
   "share_recipe_format_chefy_title": "Chef&Cost Recipe (.chefy)",
   "share_recipe_format_chefy_subtitle": "Exchange file to open and import in Chef&Cost on another device",
@@ -941,5 +941,28 @@
   "offline_ad_costing_subtitle": "Upgrade to Pro for real-time cloud backup & zero ads",
   "offline_ad_pass_title": "Want 8 Hours Without Ads?",
   "offline_ad_pass_subtitle": "Connect to the internet to watch 1 short video or upgrade to Pro",
-  "offline_ad_cta": "Go Ad-Free"
+  "offline_ad_cta": "Go Ad-Free",
+  "timer_finished_notification_title": "Timer Finished!",
+  "timer_finished_notification_body": "{name} finished at {time}.",
+  "@timer_finished_notification_body": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "time": {"type": "String"}
+    }
+  },
+  "delete_account_send_email": "Send Deletion Request Email",
+  "delete_account_back_to_home": "Back to Home",
+  "privacy_policy_email_button": "Email",
+  "recipe_list_error_scaling": "Error scaling recipe: {error}",
+  "@recipe_list_error_scaling": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "common_error_with_details": "Error: {error}",
+  "@common_error_with_details": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  }
 }

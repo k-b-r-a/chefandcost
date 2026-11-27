@@ -346,7 +346,7 @@ class GroupManagementSheet extends ConsumerWidget {
                 error: (e, _) => Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
-                    child: Text('Error: $e'),
+                    child: Text(AppLocalizations.of(context)!.common_error_with_details(e.toString())),
                   ),
                 ),
               ),
