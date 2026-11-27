@@ -103,15 +103,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                           subtitle: Builder(
                             builder: (context) {
-                              final currentGroup = ref.watch(activeGroupProvider);
-                              final isDefaultPrincipal = currentGroup?.id == 'group_default_principal' &&
-                                  (currentGroup?.name == 'Principal' || currentGroup?.name == 'Main');
-                              final activeLabel = isDefaultPrincipal
-                                  ? l10n.group_default_name
-                                  : (currentGroup?.name ??
-                                      (ref.watch(activeGroupIdProvider) == kAllGroupsId
-                                          ? l10n.group_all_workspaces
-                                          : l10n.group_default_name));
+                              final groups =
+                                  ref.watch(groupsStreamProvider).asData?.value ??
+                                  const [];
+                              final activeGroups = groups
+                                  .where((g) => !g.isDeleted)
+                                  .toList();
+                              final hiddenIds = ref.watch(
+                                hiddenWorkspaceIdsProvider,
+                              );
+                              final visibleGroups = activeGroups
+                                  .where((g) => !hiddenIds.contains(g.id))
+                                  .toList();
+                              final String activeLabel;
+                              if (activeGroups.isEmpty ||
+                                  visibleGroups.length == activeGroups.length) {
+                                activeLabel = l10n.group_all_workspaces;
+                              } else if (visibleGroups.length == 1) {
+                                activeLabel = resolveWorkspaceDisplayName(
+                                  visibleGroups.first,
+                                  l10n,
+                                );
+                              } else {
+                                activeLabel = l10n.group_visible_count(
+                                  visibleGroups.length,
+                                  activeGroups.length,
+                                );
+                              }
                               return Text('${l10n.group_active_label}: $activeLabel');
                             },
                           ),

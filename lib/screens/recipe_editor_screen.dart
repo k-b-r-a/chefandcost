@@ -23,6 +23,8 @@ import '../database/sample_manufacturing_recipe.dart';
 import '../database/recipe_category.dart';
 import '../widgets/share_recipe_sheet.dart';
 import '../widgets/gooey_toast.dart';
+import '../features/mold_calculator/presentation/screens/mold_calculator_screen.dart';
+import '../features/mold_calculator/presentation/providers/mold_calculator_provider.dart';
 
 enum WebRecipeRightPanelMode {
   financials,
@@ -336,12 +338,16 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     super.initState();
     _currentRecipePk = widget.recipeId;
     if (widget.recipeId == null) {
-      final active = ref.read(activeGroupProvider);
-      if (active != null) {
-        _selectedSpaceIds.add(active.id);
+      final visibleSpaces = ref.read(visibleWorkspacesProvider);
+      if (visibleSpaces.length == 1) {
+        _selectedSpaceIds.add(visibleSpaces.first.id);
       } else {
         final groups = ref.read(groupsStreamProvider).asData?.value ?? [];
-        final defaultSpace = groups.where((g) => !g.isDeleted).firstOrNull;
+        final activeGroups = groups.where((g) => !g.isDeleted);
+        final defaultSpace = activeGroups
+                .where((g) => g.id == 'group_default_principal')
+                .firstOrNull ??
+            activeGroups.firstOrNull;
         if (defaultSpace != null) {
           _selectedSpaceIds.add(defaultSpace.id);
         }
@@ -2000,6 +2006,17 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
         setState(() => _isLoading = false);
         _calculateSummary();
         _initialSnapshot = _createSnapshot();
+        final pendingFactor =
+            ref.read(pendingMoldScaleFactorProvider.notifier).consume();
+        final initialScale = pendingFactor ??
+            (!widget.isTemporary && (widget.multiplier - 1.0).abs() > 0.0001
+                ? widget.multiplier
+                : null);
+        if (initialScale != null &&
+            (initialScale - 1.0).abs() > 0.0001 &&
+            _ingredients.isNotEmpty) {
+          _applyScaleMultiplier(initialScale);
+        }
       }
     }
   }
@@ -3265,6 +3282,32 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
     );
   }
 
+  Future<void> _openMoldCalculator() async {
+    final l10n = AppLocalizations.of(context)!;
+    final kV = await Navigator.of(context).push<double>(
+      MaterialPageRoute(
+        builder: (ctx) => MoldCalculatorScreen(
+          onApplyScaleFactor: (factor) => Navigator.of(ctx).pop(factor),
+        ),
+      ),
+    );
+    if (kV != null && kV > 0 && mounted) {
+      _applyScaleMultiplier(kV);
+      if (_ingredients.isNotEmpty) {
+        GooeyToast.showSuccess(
+          context,
+          message: l10n.mold_calc_applied_factor_toast(
+            RecipeUtils.formatNumber(
+              kV,
+              decimalDigits: 2,
+              trimTrailingZeros: true,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildToolsMenu(ThemeData theme, AppLocalizations l10n) {
     return PopupMenuButton<String>(
       key: const ValueKey('recipe_tools_menu_button'),
@@ -3282,6 +3325,8 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               builder: (context) => const KitchenTimersScreen(),
             ),
           );
+        } else if (value == 'mold_calculator') {
+          await _openMoldCalculator();
         } else if (value == 'add_timer') {
           _showAddRecipeTimerDialog(theme, l10n);
         } else if (value.startsWith('start_timer_')) {
@@ -3340,6 +3385,25 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
               Expanded(
                 child: Text(
                   l10n.timers_title,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'mold_calculator',
+          child: Row(
+            children: [
+              Icon(
+                Icons.straighten_rounded,
+                size: 20,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.mold_calc_title,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -3872,6 +3936,24 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 );
               }),
             ],
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const ValueKey('scale_by_mold_web_button'),
+              onPressed: _openMoldCalculator,
+              icon: const Icon(Icons.straighten_rounded, size: 15),
+              label: Text(l10n.mold_calc_title),
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                textStyle: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -6203,6 +6285,15 @@ class _RecipeEditorScreenState extends ConsumerState<RecipeEditorScreen> {
                 ),
               );
             }),
+            _buildScaleOptionChip(
+              theme: theme,
+              icon: Icons.straighten_rounded,
+              label: l10n.mold_calc_short_title,
+              isSelected: false,
+              key: const ValueKey('scale_chip_mold_calculator'),
+              tooltip: l10n.mold_calc_title,
+              onTap: _openMoldCalculator,
+            ),
           ],
         ),
       ),

@@ -1894,6 +1894,17 @@ class AppLocalizationsEs extends AppLocalizations {
       'Administra sucursales, cocinas y áreas de trabajo';
 
   @override
+  String get group_toggle_visibility_hide => 'Ocultar espacio';
+
+  @override
+  String get group_toggle_visibility_show => 'Mostrar espacio';
+
+  @override
+  String group_visible_count(int visible, int total) {
+    return '$visible/$total visibles';
+  }
+
+  @override
   String get settings_about_privacy_view_online =>
       'Ver Política de Privacidad Online';
 
@@ -2359,4 +2370,475 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settings_about_channel_alpha => 'Canal Alpha';
+
+  @override
+  String get mold_calc_title => 'Calculadora de Moldes';
+
+  @override
+  String get mold_calc_short_title => 'Molde';
+
+  @override
+  String get mold_calc_desc =>
+      'Escala recetas entre moldes, resuelve dimensiones equivalentes y optimiza porciones.';
+
+  @override
+  String get mold_calc_tab_scale => 'Escalar y Convertir';
+
+  @override
+  String get mold_calc_tab_portion => 'Porciones y Rendimiento';
+
+  @override
+  String get mold_calc_source_mold => 'Molde Origen';
+
+  @override
+  String get mold_calc_target_mold => 'Molde Destino';
+
+  @override
+  String get mold_calc_swap_molds => 'Intercambiar origen y destino';
+
+  @override
+  String get mold_calc_reset => 'Restablecer';
+
+  @override
+  String get mold_calc_presets => 'Preajustes';
+
+  @override
+  String get mold_calc_save_custom => 'Guardar molde personalizado';
+
+  @override
+  String get mold_calc_delete_custom => 'Eliminar molde personalizado';
+
+  @override
+  String get mold_calc_custom_name_hint => 'Ej. Savarin Abuela 23 cm';
+
+  @override
+  String get mold_calc_custom_saved_toast => 'Molde personalizado guardado';
+
+  @override
+  String get mold_calc_cancel => 'Cancelar';
+
+  @override
+  String get mold_calc_save => 'Guardar';
+
+  @override
+  String get mold_calc_select_preset => 'Seleccionar Molde Preajustado';
+
+  @override
+  String get mold_calc_shape_cylinder => 'Redondo / Cilindro';
+
+  @override
+  String get mold_calc_shape_square => 'Cuadrado';
+
+  @override
+  String get mold_calc_shape_rectangular => 'Rectangular / Plancha';
+
+  @override
+  String get mold_calc_shape_frustum => 'Redondo Cónico / Cono';
+
+  @override
+  String get mold_calc_shape_rect_frustum => 'Budinera Cónica';
+
+  @override
+  String get mold_calc_shape_v_channel => 'Canal en V';
+
+  @override
+  String get mold_calc_shape_annular => 'Tubo Central / Savarin / Bundt';
+
+  @override
+  String get mold_calc_shape_spherical_cap => 'Domo / Semiesfera';
+
+  @override
+  String get mold_calc_shape_u_channel => 'Canal en U / Medio Cilindro';
+
+  @override
+  String get mold_calc_shape_polygon => 'Polígono Regular';
+
+  @override
+  String get mold_calc_shape_heart => 'Corazón / Pétalo';
+
+  @override
+  String get mold_calc_shape_water_displacement => 'Desplazamiento de Agua';
+
+  @override
+  String get mold_calc_shape_multi_cavity => 'Bandeja Multicavidad';
+
+  @override
+  String get mold_calc_dim_diameter => 'Diámetro (cm)';
+
+  @override
+  String get mold_calc_dim_bottom_diameter => 'Ø Inferior (cm)';
+
+  @override
+  String get mold_calc_dim_top_diameter => 'Ø Superior (cm)';
+
+  @override
+  String get mold_calc_dim_side => 'Lado (cm)';
+
+  @override
+  String get mold_calc_dim_length => 'Largo (cm)';
+
+  @override
+  String get mold_calc_dim_width => 'Ancho (cm)';
+
+  @override
+  String get mold_calc_dim_bottom_length => 'Largo Inferior (cm)';
+
+  @override
+  String get mold_calc_dim_bottom_width => 'Ancho Inferior (cm)';
+
+  @override
+  String get mold_calc_dim_top_length => 'Largo Superior (cm)';
+
+  @override
+  String get mold_calc_dim_top_width => 'Ancho Superior (cm)';
+
+  @override
+  String get mold_calc_dim_height => 'Altura (cm)';
+
+  @override
+  String get mold_calc_dim_slant_height => 'Generatriz (cm)';
+
+  @override
+  String get mold_calc_use_slant_height => 'Usar generatriz';
+
+  @override
+  String get mold_calc_dim_tube_bottom => 'Ø Tubo Inferior (cm)';
+
+  @override
+  String get mold_calc_dim_tube_top => 'Ø Tubo Superior (cm)';
+
+  @override
+  String get mold_calc_dim_tube_height => 'Altura del Tubo (cm)';
+
+  @override
+  String get mold_calc_dim_fluting => 'Factor de Relieve (η)';
+
+  @override
+  String get mold_calc_dim_sides_n => 'Lados (n)';
+
+  @override
+  String get mold_calc_dim_shape_factor => 'Factor de Forma';
+
+  @override
+  String get mold_calc_dim_measured_ml => 'Volumen Medido (ml)';
+
+  @override
+  String get mold_calc_dim_fill_curve => 'Exponente de Curva';
+
+  @override
+  String get mold_calc_dim_cavities => 'Cavidades (N)';
+
+  @override
+  String get mold_calc_multi_cavity_toggle => 'Bandeja multicavidad (×N)';
+
+  @override
+  String get mold_calc_cavity_shape => 'Forma de Cavidad';
+
+  @override
+  String get mold_calc_cat_round => 'Moldes Redondos';
+
+  @override
+  String get mold_calc_cat_square => 'Moldes Cuadrados';
+
+  @override
+  String get mold_calc_cat_gn_sheet => 'Gastronorm y Planchas';
+
+  @override
+  String get mold_calc_cat_loaf => 'Budineras y Pan de Molde';
+
+  @override
+  String get mold_calc_cat_tube_bundt => 'Tubo, Savarin y Bundt';
+
+  @override
+  String get mold_calc_cat_tart => 'Aros de Tarta';
+
+  @override
+  String get mold_calc_cat_custom => 'Moldes Personalizados';
+
+  @override
+  String get mold_calc_fill_profile_label => 'Tipo de Mezcla / Relleno';
+
+  @override
+  String mold_calc_fill_ratio_label(String percent) {
+    return 'Nivel de Llenado: $percent%';
+  }
+
+  @override
+  String get mold_calc_link_fill_profiles => 'Sincronizar perfil de llenado';
+
+  @override
+  String get mold_calc_fill_chiffon => 'Chiffon / Genoise / Bizcochuelo (62%)';
+
+  @override
+  String get mold_calc_fill_butter => 'Budín / Torta de Manteca (72%)';
+
+  @override
+  String get mold_calc_fill_brownie => 'Brownie / Cheesecake / Tarta (88%)';
+
+  @override
+  String get mold_calc_fill_mousse => 'Mousse / Entremet / Gelatina (98%)';
+
+  @override
+  String get mold_calc_fill_custom => 'Llenado Personalizado %';
+
+  @override
+  String get mold_calc_equiv_toggle => 'Buscar Dimensión Equivalente';
+
+  @override
+  String get mold_calc_equiv_solve_primary => 'Resolver Ancho / Ø';
+
+  @override
+  String get mold_calc_equiv_solve_height => 'Resolver Altura';
+
+  @override
+  String get mold_calc_equiv_result_title => 'Dimensión Equivalente Encontrada';
+
+  @override
+  String mold_calc_equiv_result_desc(String value, String volume) {
+    return 'Dimensión calculada: $value cm → alcanza $volume ml (1.00×)';
+  }
+
+  @override
+  String get mold_calc_equiv_apply_btn => 'Aplicar al Destino';
+
+  @override
+  String get mold_calc_equiv_no_solution =>
+      'No es posible igualar el volumen con las restricciones actuales.';
+
+  @override
+  String get mold_calc_summary_title => 'Resumen de Escalamiento';
+
+  @override
+  String get mold_calc_factor_kv => 'Factor de Volumen (k_V)';
+
+  @override
+  String get mold_calc_factor_ka => 'Factor de Área (k_A)';
+
+  @override
+  String get mold_calc_effective_volume => 'Volumen Efectivo';
+
+  @override
+  String get mold_calc_fill_height => 'Altura de Llenado';
+
+  @override
+  String get mold_calc_depth_ratio => 'Relación de Profundidad';
+
+  @override
+  String get mold_calc_leftover_batter => 'Mezcla Sobrante (receta 1×)';
+
+  @override
+  String get mold_calc_extra_batter_needed => 'Mezcla Faltante (receta 1×)';
+
+  @override
+  String get mold_calc_exact_match => 'Coincidencia exacta de volumen';
+
+  @override
+  String mold_calc_unscaled_fill(String height, String percent) {
+    return 'Llenado 1× sin escalar en destino: $height cm ($percent%)';
+  }
+
+  @override
+  String get mold_calc_overflows_target =>
+      '¡La receta 1× desborda el molde destino!';
+
+  @override
+  String get mold_calc_apply_to_recipe => 'Aplicar a Receta';
+
+  @override
+  String get mold_calc_select_recipe_title => 'Elegir Receta para Escalar';
+
+  @override
+  String get mold_calc_no_recipes_copy_msg =>
+      'No hay recetas guardadas. Copia el factor para usarlo donde quieras.';
+
+  @override
+  String get mold_calc_copy_factor => 'Copiar Factor';
+
+  @override
+  String mold_calc_copied_factor_toast(String factor) {
+    return 'Factor copiado: $factor×';
+  }
+
+  @override
+  String mold_calc_applied_factor_toast(String factor) {
+    return 'Factor de molde aplicado: $factor×';
+  }
+
+  @override
+  String get mold_calc_thermal_title => 'Alertas Térmicas y de Horneado';
+
+  @override
+  String get mold_calc_thermal_shallow_title =>
+      'Alerta: Capa Delgada / Horneado Rápido';
+
+  @override
+  String get mold_calc_thermal_shallow_desc =>
+      'La mezcla quedará más baja o con mayor exposición superficial. Reduce el tiempo y vigila los bordes para que no se seque.';
+
+  @override
+  String get mold_calc_thermal_deep_title =>
+      'Alerta: Capa Profunda / Horneado Lento';
+
+  @override
+  String get mold_calc_thermal_deep_desc =>
+      'Mayor altura de masa y menor relación superficie/volumen. Baja levemente la temperatura, extiende el tiempo o usa clavo difusor.';
+
+  @override
+  String get mold_calc_thermal_overflow_title => 'Riesgo de Desborde';
+
+  @override
+  String get mold_calc_thermal_overflow_desc =>
+      'El porcentaje de llenado supera el máximo recomendado para este tipo de mezcla y puede desbordar al hornear.';
+
+  @override
+  String get mold_calc_thermal_optimal_title => 'Perfil Térmico Equilibrado';
+
+  @override
+  String get mold_calc_thermal_optimal_desc =>
+      'La profundidad y exposición térmica son equivalentes; el tiempo y temperatura de cocción serán similares.';
+
+  @override
+  String get mold_calc_preview_cross_section => 'Corte Transversal y Llenado';
+
+  @override
+  String get mold_calc_preview_top_down => 'Vista Superior de Cortes';
+
+  @override
+  String get mold_calc_preview_source_short => 'Orig';
+
+  @override
+  String get mold_calc_preview_target_short => 'Dest';
+
+  @override
+  String get mold_calc_portion_mold_select => 'Molde a Porcionar';
+
+  @override
+  String get mold_calc_portion_strategy => 'Estrategia de Corte';
+
+  @override
+  String get mold_calc_portion_presets => 'Preajustes de Corte';
+
+  @override
+  String get mold_calc_cut_radial => 'Cuñas Radiales';
+
+  @override
+  String get mold_calc_cut_concentric => 'Anillos Concéntricos';
+
+  @override
+  String get mold_calc_cut_grid => 'Grilla Cartesiana';
+
+  @override
+  String get mold_calc_cut_linear => 'Rebanadas Lineales';
+
+  @override
+  String get mold_calc_portion_full_count => 'Porciones Enteras';
+
+  @override
+  String get mold_calc_portion_vol_each => 'Volumen / Porción';
+
+  @override
+  String get mold_calc_portion_area_each => 'Área / Porción';
+
+  @override
+  String get mold_calc_portion_waste_merma => 'Merma (Descarte)';
+
+  @override
+  String get mold_calc_portion_arc_width => 'Arco Exterior Objetivo (cm)';
+
+  @override
+  String get mold_calc_portion_fixed_slices => 'Cantidad Fija de Cortes';
+
+  @override
+  String get mold_calc_portion_use_fixed_slices => 'Fijar número de porciones';
+
+  @override
+  String get mold_calc_portion_inner_diameter => 'Ø Anillo Interno (cm)';
+
+  @override
+  String get mold_calc_portion_piece_length => 'Largo de Pieza (cm)';
+
+  @override
+  String get mold_calc_portion_piece_width => 'Ancho de Pieza (cm)';
+
+  @override
+  String get mold_calc_portion_edge_trim => 'Refile de Bordes (cm)';
+
+  @override
+  String get mold_calc_portion_slice_thickness => 'Grosor de Rebanada (cm)';
+
+  @override
+  String get mold_calc_portion_end_trim => 'Descarte en Puntas (cm)';
+
+  @override
+  String get mold_calc_portion_rotated_badge =>
+      'Rotado 90° para máximo rendimiento';
+
+  @override
+  String mold_calc_portion_ring_breakdown(int inner, int outer) {
+    return 'Anillo interno: $inner • Anillo externo: $outer';
+  }
+
+  @override
+  String get mold_calc_err_non_positive =>
+      'Todas las dimensiones deben ser mayores que 0.';
+
+  @override
+  String get mold_calc_err_negative_bottom =>
+      'La dimensión inferior no puede ser negativa.';
+
+  @override
+  String get mold_calc_err_both_zero =>
+      'Las dimensiones superior e inferior no pueden ser ambas 0.';
+
+  @override
+  String get mold_calc_err_fill_ratio =>
+      'El porcentaje de llenado debe estar entre 1% y 100%.';
+
+  @override
+  String get mold_calc_err_fill_height =>
+      'La altura de llenado no puede superar la altura del molde.';
+
+  @override
+  String get mold_calc_err_slant_height =>
+      'La generatriz debe superar la diferencia de radios |r_sup − r_inf|.';
+
+  @override
+  String get mold_calc_err_tube_exceeds_outer =>
+      'El diámetro del tubo central debe ser menor al diámetro exterior.';
+
+  @override
+  String get mold_calc_err_tube_height =>
+      'La altura del tubo debe ser positiva y no superar la altura total.';
+
+  @override
+  String get mold_calc_err_fluting =>
+      'El factor de relieve (η) debe estar entre 0.80 y 1.00.';
+
+  @override
+  String get mold_calc_err_spherical_cap =>
+      'La altura del domo no puede superar el radio (diámetro / 2).';
+
+  @override
+  String get mold_calc_err_polygon_sides =>
+      'Un polígono regular requiere al menos 3 lados.';
+
+  @override
+  String get mold_calc_err_shape_factor =>
+      'El factor de forma debe estar entre 0 y 1.';
+
+  @override
+  String get mold_calc_err_cavity_count =>
+      'La cantidad de cavidades debe ser al menos 1.';
+
+  @override
+  String get mold_calc_err_nested_cavity =>
+      'No se permiten moldes multicavidad anidados.';
+
+  @override
+  String get mold_calc_err_portion_dim =>
+      'Las dimensiones de corte deben ser mayores que 0.';
+
+  @override
+  String get mold_calc_err_edge_trim =>
+      'El margen de refile supera el tamaño útil del molde.';
 }

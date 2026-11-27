@@ -18,6 +18,7 @@ import 'add_ingredient_screen.dart';
 import 'kitchen_timers_screen.dart';
 import 'rule_of_three_screen.dart';
 import 'unit_converter_screen.dart';
+import '../features/mold_calculator/presentation/screens/mold_calculator_screen.dart';
 import '../services/app_tutorial_service.dart';
 import '../provider/cloud_sync_provider.dart';
 import '../utils/cloud_sync_service.dart';
@@ -452,6 +453,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => const UnitConverterScreen(),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(width: 10),
+              _buildQuickActionButton(
+                context: context,
+                theme: theme,
+                label: l10n.mold_calc_title,
+                icon: Icons.straighten_rounded,
+                isPrimary: false,
+                onTap: () {
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openTool(3);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const MoldCalculatorScreen(),
                       ),
                     );
                   }
@@ -944,6 +964,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => const UnitConverterScreen(),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              ToolCard(
+                title: l10n.mold_calc_title,
+                subtitle: l10n.mold_calc_desc,
+                icon: Icons.straighten_rounded,
+                isCompact: true,
+                onTap: () {
+                  if (MediaQuery.sizeOf(context).width >= 640) {
+                    ref.read(webLayoutProvider.notifier).openTool(3);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const MoldCalculatorScreen(),
                       ),
                     );
                   }

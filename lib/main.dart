@@ -17,6 +17,7 @@ import 'screens/tools_screen.dart';
 import 'screens/kitchen_timers_screen.dart';
 import 'screens/rule_of_three_screen.dart';
 import 'screens/unit_converter_screen.dart';
+import 'features/mold_calculator/presentation/screens/mold_calculator_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/cloud_sync_screen.dart';
 import 'screens/privacy_policy_screen.dart';
@@ -1200,6 +1201,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           return RuleOfThreeScreen(onClose: () => webNotifier.showHome());
         case 2:
           return UnitConverterScreen(onClose: () => webNotifier.showHome());
+        case 3:
+          return const MoldCalculatorScreen();
         default:
           return const HomeScreen();
       }

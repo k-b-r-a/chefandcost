@@ -6,6 +6,7 @@ import '../widgets/tool_card.dart';
 import 'rule_of_three_screen.dart';
 import 'unit_converter_screen.dart';
 import 'kitchen_timers_screen.dart';
+import '../features/mold_calculator/presentation/screens/mold_calculator_screen.dart';
 import '../provider/web_layout_provider.dart';
 import '../provider/ad_provider.dart';
 import '../provider/monetization_provider.dart';
@@ -75,7 +76,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                   : (isWide ? 16.0 : (100.0 + MediaQuery.paddingOf(context).bottom)),
             ),
             sliver: SliverList.separated(
-              itemCount: 3,
+              itemCount: 4,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 switch (index) {
@@ -154,6 +155,31 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                         ),
                       ),
                     );
+                  case 3:
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 820),
+                        child: ToolCard(
+                          title: l10n.mold_calc_title,
+                          subtitle: l10n.mold_calc_desc,
+                          icon: Icons.straighten_rounded,
+                          onTap: () async {
+                            final guard = ref.read(recipeCanLeaveGuardProvider);
+                            if (guard != null && !await guard()) return;
+                            if (!context.mounted) return;
+                            if (MediaQuery.sizeOf(context).width >= 800) {
+                              ref.read(webLayoutProvider.notifier).openTool(3);
+                            } else {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const MoldCalculatorScreen(),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    );
                   default:
                     return const SizedBox.shrink();
                 }
@@ -163,9 +189,9 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
           if (showAds)
             SliverPadding(
               padding: EdgeInsets.fromLTRB(
-                16,
-                16,
-                16,
+                20.0,
+                0.0,
+                20.0,
                 isWide ? 24.0 : (100.0 + MediaQuery.paddingOf(context).bottom),
               ),
               sliver: SliverToBoxAdapter(
