@@ -1042,6 +1042,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
                           ),
                         ),
                       );
@@ -1601,7 +1609,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                                                       .onSurface
                                                       .withValues(alpha: 0.5),
                                                 ),
+                                            filled: false,
                                             border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
                                             contentPadding:
                                                 const EdgeInsets.only(
                                                   left: 16,

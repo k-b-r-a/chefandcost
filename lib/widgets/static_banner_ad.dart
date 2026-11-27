@@ -89,19 +89,21 @@ class _StaticBannerAdState extends ConsumerState<StaticBannerAd>
     }
 
     final width = _lastMeasuredWidth;
-    if (width == null || width < 280) return;
+    if (width == null || width < 200) return;
 
     _lastLoadAttemptAt = DateTime.now();
     _isLoading = true;
 
     AdSize targetSize = AdSize.banner;
-    try {
-      final adaptive =
-          await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
-      if (adaptive != null) {
-        targetSize = adaptive;
-      }
-    } catch (_) {}
+    if (width >= 320) {
+      try {
+        final adaptive =
+            await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
+        if (adaptive != null) {
+          targetSize = adaptive;
+        }
+      } catch (_) {}
+    }
     if (!mounted) return;
     setState(() {
       _adaptiveSize = targetSize;
@@ -201,7 +203,7 @@ class _StaticBannerAdState extends ConsumerState<StaticBannerAd>
           builder: (context, constraints) {
             final availableWidth =
                 constraints.maxWidth.isFinite ? constraints.maxWidth.floor() : 320;
-            if (availableWidth >= 280 && _lastMeasuredWidth != availableWidth) {
+            if (availableWidth >= 200 && _lastMeasuredWidth != availableWidth) {
               _lastMeasuredWidth = availableWidth;
               if (_bannerAd == null && !_isLoading && !_loadFailed) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -221,7 +223,14 @@ class _StaticBannerAdState extends ConsumerState<StaticBannerAd>
                 width: bannerWidth,
                 height: bannerHeight,
                 child: (_isAdLoaded && _bannerAd != null)
-                    ? AdWidget(ad: _bannerAd!)
+                    ? FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: SizedBox(
+                          width: effectiveSize.width.toDouble(),
+                          height: bannerHeight,
+                          child: AdWidget(ad: _bannerAd!),
+                        ),
+                      )
                     : (_loadFailed || AdService.isOffline)
                         ? OfflineCachedAdWidget(
                             payload: _cachedOfflinePayload ??

@@ -249,10 +249,28 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
                                               style: theme.textTheme.headlineMedium?.copyWith(
                                                 fontWeight: FontWeight.w900,
                                               ),
-                                              decoration: const InputDecoration(
+                                              decoration: InputDecoration(
                                                 isDense: true,
-                                                contentPadding: EdgeInsets.symmetric(vertical: 4),
-                                                border: InputBorder.none,
+                                                filled: false,
+                                                contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                                                border: UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                    color: theme.colorScheme.outlineVariant
+                                                        .withValues(alpha: 0.6),
+                                                  ),
+                                                ),
+                                                enabledBorder: UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                    color: theme.colorScheme.outlineVariant
+                                                        .withValues(alpha: 0.6),
+                                                  ),
+                                                ),
+                                                focusedBorder: UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                    color: theme.colorScheme.primary,
+                                                    width: 1.8,
+                                                  ),
+                                                ),
                                               ),
                                             ),
                                           ),

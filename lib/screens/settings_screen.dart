@@ -1819,7 +1819,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'https://chefycostalpha.web.app/privacy',
+                                'https://chefycost.web.app/privacy',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: theme.colorScheme.primary,
@@ -2329,7 +2329,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                                   const SizedBox(width: 4),
                                   Flexible(
                                     child: Text(
-                                      'https://chefycostalpha.web.app/privacy',
+                                      'https://chefycost.web.app/privacy',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: theme.colorScheme.primary,
@@ -2362,7 +2362,7 @@ class SettingsAboutScreen extends ConsumerWidget {
                           l10n.settings_about_privacy_view_online,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text('https://chefycostalpha.web.app/privacy'),
+                        subtitle: const Text('https://chefycost.web.app/privacy'),
                         trailing: const Icon(Icons.open_in_new, size: 20),
                         onTap: () => UrlLauncherService.openPrivacyPolicy(),
                       ),

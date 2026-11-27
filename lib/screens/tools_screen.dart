@@ -42,6 +42,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           buildFloatingPillAppBar(
             context: context,

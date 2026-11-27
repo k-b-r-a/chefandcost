@@ -407,8 +407,24 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
                 color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
               ),
               isDense: true,
-              contentPadding: EdgeInsets.zero,
-              border: InputBorder.none,
+              filled: false,
+              contentPadding: const EdgeInsets.only(bottom: 4),
+              border: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 1.8,
+                ),
+              ),
             ),
           ),
         ],
