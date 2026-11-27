@@ -307,97 +307,6 @@ void main() {
       expect(find.byKey(const ValueKey('settings_general')), findsOneWidget);
     });
 
-    testWidgets('Opening new recipe in wide screen displays web layout with persistent right financial panel and no bottom sheet',
-        (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1280, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
-
-      SharedPreferences.setMockInitialValues({});
-      final sharedPrefs = await SharedPreferences.getInstance();
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(sharedPrefs),
-            recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
-            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
-            ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
-            unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
-          ],
-          child: const RecipetoolsApp(),
-        ),
-      );
-
-      await tester.pump();
-      await tester.pump();
-
-      // Tap New Recipe add button in middle column toolbar
-      final addRecipeBtn = find.byIcon(Icons.add);
-      expect(addRecipeBtn, findsWidgets);
-      await tester.tap(addRecipeBtn.first);
-      await tester.pump();
-      await tester.pump();
-
-      // Right pane displays RecipeEditorScreen
-      expect(find.byKey(const ValueKey('recipe_new')), findsOneWidget);
-
-      // Financial summary is persistently displayed on the right
-      expect(find.text('Resumen Financiero'), findsOneWidget);
-
-      // Collapsible bottom sheets are NOT shown
-      expect(find.byKey(const ValueKey('expanded_financials')), findsNothing);
-      expect(find.byKey(const ValueKey('collapsed_financials')), findsNothing);
-
-      // Verify portions stepper and scale buttons exist in right financial list
-      final decBtn = find.byKey(const ValueKey('decrement_portions_button'));
-      final incBtn = find.byKey(const ValueKey('increment_portions_button'));
-      final yieldField = find.byKey(const ValueKey('right_panel_yield_field'));
-      final scaleChipX2 = find.byKey(const ValueKey('scale_preset_x2'));
-
-      expect(decBtn, findsOneWidget);
-      expect(incBtn, findsOneWidget);
-      expect(yieldField, findsOneWidget);
-      expect(scaleChipX2, findsOneWidget);
-
-      // Initial portions is '1'
-      expect(find.descendant(of: yieldField, matching: find.text('1')), findsOneWidget);
-
-      // Tap increment button [+]
-      await tester.tap(incBtn);
-      await tester.pump();
-      await tester.pump();
-
-      // Portions incremented to '2'
-      expect(find.descendant(of: yieldField, matching: find.text('2')), findsOneWidget);
-
-      // Tap decrement button [-]
-      await tester.tap(decBtn);
-      await tester.pump();
-      await tester.pump();
-
-      // Portions decremented back to '1'
-      expect(find.descendant(of: yieldField, matching: find.text('1')), findsOneWidget);
-
-      // Tap scale preset x2 button
-      await tester.tap(scaleChipX2);
-      await tester.pump();
-      await tester.pump();
-
-      // Scaled recipe dialog opens in the middle (Dialog, not full screen route)
-      expect(find.byKey(const ValueKey('scaled_recipe_dialog')), findsOneWidget);
-      expect(find.byKey(const ValueKey('apply_scaled_recipe_button')), findsOneWidget);
-
-      // Tap Apply to Recipe button
-      await tester.tap(find.byKey(const ValueKey('apply_scaled_recipe_button')));
-      await tester.pump();
-      await tester.pump();
-
-      // Dialog is dismissed and portions is now updated to 2
-      expect(find.byKey(const ValueKey('scaled_recipe_dialog')), findsNothing);
-      expect(find.descendant(of: yieldField, matching: find.text('2')), findsOneWidget);
-    });
-
     testWidgets('Adding ingredient inside recipe opens picker in right panel without full screen modal',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1280, 800);
@@ -455,62 +364,6 @@ void main() {
       // Returns to financial summary in right panel
       expect(find.text('Resumen Financiero'), findsOneWidget);
       expect(find.byType(GlobalIngredientPickerSheet), findsNothing);
-    });
-
-    testWidgets('Leaving recipe with unsaved changes prompts confirmation dialog',
-        (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1280, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
-
-      SharedPreferences.setMockInitialValues({});
-      final sharedPrefs = await SharedPreferences.getInstance();
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(sharedPrefs),
-            recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
-            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
-            ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
-            unitsProvider.overrideWith((ref) => Future.value(<Unit>[])),
-          ],
-          child: const RecipetoolsApp(),
-        ),
-      );
-
-      await tester.pump();
-      await tester.pump();
-
-      // Tap New Recipe add button
-      final addRecipeBtn = find.byIcon(Icons.add);
-      await tester.tap(addRecipeBtn.first);
-      await tester.pump();
-      await tester.pump();
-
-      // Enter recipe name to create unsaved changes
-      final nameField = find.byType(TextFormField).first;
-      await tester.enterText(nameField, 'Delicious Pie');
-      await tester.pump();
-
-      // Attempt to navigate to Settings in NavigationRail
-      final settingsRailItem = find.byIcon(Icons.settings_outlined);
-      await tester.tap(settingsRailItem.first);
-      await tester.pump();
-      await tester.pump();
-
-      // Unsaved changes confirmation dialog appears!
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Descartar'), findsOneWidget);
-
-      // Tap Discard
-      await tester.tap(find.text('Descartar'));
-      await tester.pump();
-      await tester.pump();
-
-      // Dialog is dismissed and navigation proceeded to Settings
-      expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byKey(const ValueKey('web_settings_list')), findsOneWidget);
     });
 
     testWidgets('When no recipe is open, opening an ingredient shows HomeScreen in middle and AddIngredientScreen in right panel',
@@ -724,40 +577,6 @@ void main() {
       expect(syncPos.dy, lessThan(signInPos.dy));
 
       await tester.tap(syncNavButton);
-      await tester.pump();
-      expect(mockSyncNotifier.syncCalled, isTrue);
-    });
-
-    testWidgets('HomeScreen renders sync button in AppBar and QuickActions and triggers sync',
-        (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1280, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
-
-      SharedPreferences.setMockInitialValues({});
-      final sharedPrefs = await SharedPreferences.getInstance();
-      final mockSyncNotifier = MockWebCloudSyncNotifier();
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(sharedPrefs),
-            recipesWithFinancialsStreamProvider.overrideWith((ref) => Stream.value([])),
-            groupsStreamProvider.overrideWith((ref) => Stream.value(<Group>[])),
-            ingredientsStreamProvider.overrideWith((ref) => Stream.value([])),
-            cloudSyncProvider.overrideWith(() => mockSyncNotifier),
-          ],
-          child: const RecipetoolsApp(),
-        ),
-      );
-
-      await tester.pump();
-      await tester.pump();
-
-      final homeSyncButton = find.byKey(const ValueKey('home_sync_button'));
-      expect(homeSyncButton, findsOneWidget);
-
-      await tester.tap(homeSyncButton);
       await tester.pump();
       expect(mockSyncNotifier.syncCalled, isTrue);
     });

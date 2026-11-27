@@ -964,5 +964,25 @@
     "placeholders": {
       "error": {"type": "String"}
     }
-  }
+  },
+  "privacy_policy_compliance_subtitle": "Google Play Store Compliance • Package: com.chefandcost.app",
+  "privacy_policy_delete_desc": "You have full control over your data. You can delete your account and all associated cloud backups directly from the app or via our web portal.",
+  "delete_account_policy_title": "Data Deletion Policy",
+  "delete_account_current_account": "Current Account: {account}",
+  "@delete_account_current_account": {
+    "placeholders": {
+      "account": {"type": "String"}
+    }
+  },
+  "delete_account_signed_in_fallback": "Signed In",
+  "delete_account_email_request_title": "Request Account & Data Deletion via Email",
+  "delete_account_email_request_desc": "If you uninstalled the application or cannot access your device, you can send an automated email request to our support team. We will permanently delete your authentication record and all synced cloud Firestore documents within 48 hours.",
+  "compare_per_quantity": "per {quantity} {unit}",
+  "@compare_per_quantity": {
+    "placeholders": {
+      "quantity": {"type": "String"},
+      "unit": {"type": "String"}
+    }
+  },
+  "settings_about_channel_alpha": "Alpha Channel"
 }

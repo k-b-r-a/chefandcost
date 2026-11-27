@@ -8,7 +8,8 @@ import '../widgets/ad_free_pass_button.dart';
 import '../widgets/static_banner_ad.dart';
 
 class UnitConverterScreen extends ConsumerStatefulWidget {
-  const UnitConverterScreen({super.key});
+  final VoidCallback? onClose;
+  const UnitConverterScreen({super.key, this.onClose});
 
   @override
   ConsumerState<UnitConverterScreen> createState() => _UnitConverterScreenState();
@@ -88,7 +89,13 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        leading: const BackButton(),
+        leading: widget.onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.back_to_home_tooltip,
+                onPressed: widget.onClose,
+              )
+            : const BackButton(),
         title: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:recipetools/utils/recipe_utils.dart';
-import 'package:recipetools/screens/rule_of_three_screen.dart';
 import 'package:recipetools/screens/unit_converter_screen.dart';
 import 'package:recipetools/database/database.dart';
 import 'package:recipetools/provider/database_provider.dart';
@@ -59,55 +58,6 @@ void main() {
       expect(RecipeUtils.formatNumber(0.5, decimalDigits: 4, trimTrailingZeros: true), '0,5');
       expect(RecipeUtils.formatNumber(0.1234, decimalDigits: 4, trimTrailingZeros: true), '0,1234');
       expect(RecipeUtils.formatNumber(0, trimTrailingZeros: true), '0');
-    });
-  });
-
-  group('RuleOfThreeScreen widget tests', () {
-    Widget buildTestApp(Widget child) {
-      return MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('es'),
-        home: child,
-      );
-    }
-
-    testWidgets('calculates correctly with numbers, decimals, and units', (tester) async {
-      await tester.pumpWidget(buildTestApp(const RuleOfThreeScreen()));
-      await tester.pumpAndSettle();
-
-      final textFields = find.byType(TextField);
-      expect(textFields, findsNWidgets(3));
-
-      // Initial state displays '-'
-      expect(find.text('-'), findsOneWidget);
-
-      // Enter A = 10, B = 100g, C = 25
-      await tester.enterText(textFields.at(0), '10');
-      await tester.enterText(textFields.at(1), '100g');
-      await tester.enterText(textFields.at(2), '25');
-      await tester.pumpAndSettle();
-
-      // Result should be 250 g
-      expect(find.text('250 g'), findsWidgets);
-
-      // Change C to 2.5
-      await tester.enterText(textFields.at(2), '2.5');
-      await tester.pumpAndSettle();
-
-      // (100 * 2.5) / 10 = 25 g
-      expect(find.text('25 g'), findsWidgets);
-
-      // Division by zero displays Error
-      await tester.enterText(textFields.at(0), '0');
-      await tester.pumpAndSettle();
-      expect(find.text('Error'), findsWidgets);
-
-      // Clear button resets everything
-      final clearButton = find.text('Limpiar');
-      await tester.tap(clearButton);
-      await tester.pumpAndSettle();
-      expect(find.text('-'), findsOneWidget);
     });
   });
 

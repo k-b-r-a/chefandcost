@@ -336,7 +336,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 showAds,
                 interval: 5,
               );
-              final isWideWebCard = screenWidth >= 800;
+              final isWideWebCard = screenWidth >= 640;
               final selectedRecipeId = isWideWebCard
                   ? ref.watch(
                       webLayoutProvider.select((s) => s.selectedRecipeId),

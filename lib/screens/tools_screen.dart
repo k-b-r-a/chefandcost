@@ -91,7 +91,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                             final guard = ref.read(recipeCanLeaveGuardProvider);
                             if (guard != null && !await guard()) return;
                             if (!context.mounted) return;
-                            if (MediaQuery.sizeOf(context).width >= 800) {
+                            if (MediaQuery.sizeOf(context).width >= 640) {
                               ref.read(webLayoutProvider.notifier).openTool(0);
                             } else {
                               Navigator.of(context).push(
@@ -116,7 +116,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                             final guard = ref.read(recipeCanLeaveGuardProvider);
                             if (guard != null && !await guard()) return;
                             if (!context.mounted) return;
-                            if (MediaQuery.sizeOf(context).width >= 800) {
+                            if (MediaQuery.sizeOf(context).width >= 640) {
                               ref.read(webLayoutProvider.notifier).openTool(1);
                             } else {
                               Navigator.of(context).push(
@@ -141,7 +141,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                             final guard = ref.read(recipeCanLeaveGuardProvider);
                             if (guard != null && !await guard()) return;
                             if (!context.mounted) return;
-                            if (MediaQuery.sizeOf(context).width >= 800) {
+                            if (MediaQuery.sizeOf(context).width >= 640) {
                               ref.read(webLayoutProvider.notifier).openTool(2);
                             } else {
                               Navigator.of(context).push(

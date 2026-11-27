@@ -5,7 +5,8 @@ import '../widgets/ad_free_pass_button.dart';
 import '../widgets/static_banner_ad.dart';
 
 class RuleOfThreeScreen extends StatefulWidget {
-  const RuleOfThreeScreen({super.key});
+  final VoidCallback? onClose;
+  const RuleOfThreeScreen({super.key, this.onClose});
 
   @override
   State<RuleOfThreeScreen> createState() => _RuleOfThreeScreenState();
@@ -112,7 +113,13 @@ class _RuleOfThreeScreenState extends State<RuleOfThreeScreen> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        leading: const BackButton(),
+        leading: widget.onClose != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: l10n.back_to_home_tooltip,
+                onPressed: widget.onClose,
+              )
+            : const BackButton(),
         title: Text(
           l10n.rule_of_three_title,
           style: const TextStyle(fontWeight: FontWeight.bold),

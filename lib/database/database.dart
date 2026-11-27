@@ -100,8 +100,13 @@ class AppDatabase extends _$AppDatabase {
         }
       },
       beforeOpen: (details) async {
-        // Repair databases already stamped at v2/v3 that are missing tables.
+        // Repair databases already stamped at v2/v3 that are missing tables or columns.
         // Drift only calls onUpgrade when the stored schema version is older.
+        if (!await _columnExists('recipes', 'fixed_overhead_cost')) {
+          await customStatement(
+            'ALTER TABLE recipes ADD COLUMN fixed_overhead_cost REAL NOT NULL DEFAULT 0.0',
+          );
+        }
         await customStatement('''
           CREATE TABLE IF NOT EXISTS deleted_records (
             record_pk TEXT NOT NULL,
@@ -552,6 +557,7 @@ class AppDatabase extends _$AppDatabase {
           yieldName: Value(detail.recipe.yieldName),
           targetProfitMargin: Value(detail.recipe.targetProfitMargin),
           targetPricePerPortion: Value(detail.recipe.targetPricePerPortion),
+          fixedOverheadCost: Value(detail.recipe.fixedOverheadCost),
           colour: Value(detail.recipe.colour),
           groupId: Value(detail.recipe.groupId),
           category: Value(detail.recipe.category),
@@ -943,11 +949,13 @@ class AppDatabase extends _$AppDatabase {
   // --- Complex Queries ---
   Future<void> resetDatabase() async {
     await transaction(() async {
+      await delete(recipeSpaces).go();
       await delete(recipeIngredients).go();
       await delete(recipeSteps).go();
       await delete(recipes).go();
       await delete(ingredients).go();
       await delete(units).go();
+      await delete(deletedRecords).go();
       await initializeDefaultDatabase(this);
     });
   }
@@ -1026,6 +1034,14 @@ class AppDatabase extends _$AppDatabase {
                   dateTimeModified: Value(now),
                 ),
               );
+          await into(deletedRecords).insert(
+            DeletedRecordsCompanion(
+              recordPk: Value(entry.recipeIngredientPk),
+              entityType: const Value('recipe_ingredients'),
+              deletedAt: Value(now),
+            ),
+            mode: InsertMode.insertOrReplace,
+          );
           await (delete(recipeIngredients)..where(
                 (t) => t.recipeIngredientPk.equals(entry.recipeIngredientPk),
               ))
@@ -1595,16 +1611,27 @@ class AppDatabase extends _$AppDatabase {
   /// Local records and newer local edits are never wiped or overwritten.
   Future<SyncMergeResult> mergeWithDatabase(AppDatabase remoteDb) async {
     final remoteUnits = await remoteDb.getAllUnits();
+    final remoteGroups = await remoteDb.getAllGroups(includeDeleted: true);
     final remoteIngredients = await remoteDb.getAllIngredients(
       includeDeleted: true,
     );
     final remoteRecipes = await remoteDb.getAllRecipes();
+    final allRemoteRecipeSpaces = await (remoteDb.select(
+      remoteDb.recipeSpaces,
+    )).get();
     final allRemoteRecipeIngredients = await (remoteDb.select(
       remoteDb.recipeIngredients,
     )).get();
     final allRemoteRecipeSteps = await (remoteDb.select(
       remoteDb.recipeSteps,
     )).get();
+
+    final remoteSpacesByRecipe = <String, List<String>>{};
+    for (final rs in allRemoteRecipeSpaces) {
+      if (!rs.isDeleted) {
+        remoteSpacesByRecipe.putIfAbsent(rs.recipeId, () => []).add(rs.spaceId);
+      }
+    }
 
     final remoteIngsByRecipe = <String, List<RecipeIngredient>>{};
     for (final ri in allRemoteRecipeIngredients) {
@@ -1651,6 +1678,11 @@ class AppDatabase extends _$AppDatabase {
         );
       }
 
+      // 1b. Merge Groups (Workspaces)
+      for (final rg in remoteGroups) {
+        await mergeGroupFromRemote(rg);
+      }
+
       // 2. Merge Ingredients (non-destructive, LWW based on updated_at, with deletion tracking)
       final localIngredients = await getAllIngredients(includeDeleted: true);
       final localIngMap = {for (final i in localIngredients) i.ingredientPk: i};
@@ -1671,6 +1703,13 @@ class AppDatabase extends _$AppDatabase {
               dateTimeModified: Value(ri.dateTimeModified),
               isDeleted: Value(ri.isDeleted),
               deletedAt: Value(ri.deletedAt),
+              groupId: Value(ri.groupId),
+              category: Value(ri.category),
+              currentStock: Value(ri.currentStock),
+              minimumStock: Value(ri.minimumStock),
+              stockUnit: Value(ri.stockUnit),
+              costPerStockUnit: Value(ri.costPerStockUnit),
+              lastStockUpdate: Value(ri.lastStockUpdate),
             ),
             mode: InsertMode.insertOrReplace,
           );
@@ -1819,6 +1858,8 @@ class AppDatabase extends _$AppDatabase {
               dateCreated: Value(remoteRecipe.dateCreated),
               dateTimeModified: Value(remoteRecipe.dateTimeModified),
               archived: Value(remoteRecipe.archived),
+              groupId: Value(remoteRecipe.groupId),
+              category: Value(remoteRecipe.category),
             ),
           );
 
@@ -1831,6 +1872,7 @@ class AppDatabase extends _$AppDatabase {
                 amountNeeded: Value(ri.amountNeeded),
                 dateTimeModified: Value(ri.dateTimeModified),
               ),
+              mode: InsertMode.insertOrReplace,
             );
           }
 
@@ -1844,8 +1886,15 @@ class AppDatabase extends _$AppDatabase {
                 instruction: Value(rs.instruction),
                 dateTimeModified: Value(rs.dateTimeModified),
               ),
+              mode: InsertMode.insertOrReplace,
             );
           }
+
+          await setRecipeSpaces(
+            remoteRecipe.recipePk,
+            remoteSpacesByRecipe[remoteRecipe.recipePk] ?? const [],
+            markModified: false,
+          );
 
           recipesAdded++;
         } else {
@@ -1871,6 +1920,8 @@ class AppDatabase extends _$AppDatabase {
                 colour: Value(remoteRecipe.colour),
                 dateTimeModified: Value(remoteRecipe.dateTimeModified),
                 archived: Value(remoteRecipe.archived),
+                groupId: Value(remoteRecipe.groupId),
+                category: Value(remoteRecipe.category),
               ),
             );
 
@@ -1887,6 +1938,7 @@ class AppDatabase extends _$AppDatabase {
                   amountNeeded: Value(ri.amountNeeded),
                   dateTimeModified: Value(ri.dateTimeModified),
                 ),
+                mode: InsertMode.insertOrReplace,
               );
             }
 
@@ -1904,8 +1956,15 @@ class AppDatabase extends _$AppDatabase {
                   instruction: Value(rs.instruction),
                   dateTimeModified: Value(rs.dateTimeModified),
                 ),
+                mode: InsertMode.insertOrReplace,
               );
             }
+
+            await setRecipeSpaces(
+              localRecipe.recipePk,
+              remoteSpacesByRecipe[remoteRecipe.recipePk] ?? const [],
+              markModified: false,
+            );
 
             recipesUpdated++;
           } else {

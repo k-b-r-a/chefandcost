@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart' as drift;
 import '../database/database.dart';
 import '../provider/database_provider.dart';
 import '../l10n/app_localizations.dart';
@@ -11,11 +12,15 @@ import '../provider/settings_provider.dart';
 class CompareIngredientsScreen extends ConsumerStatefulWidget {
   final Ingredient ingredient1;
   final Ingredient ingredient2;
+  final bool isIngredient1Unsaved;
+  final VoidCallback? onMerged;
 
   const CompareIngredientsScreen({
     super.key,
     required this.ingredient1,
     required this.ingredient2,
+    this.isIngredient1Unsaved = false,
+    this.onMerged,
   });
 
   @override
@@ -51,14 +56,37 @@ class _CompareIngredientsScreenState
     if (confirmed) {
       setState(() => _isMerging = true);
       try {
-        await ref.read(databaseProvider).mergeIngredients(other, survivor);
+        final db = ref.read(databaseProvider);
+        if (widget.isIngredient1Unsaved) {
+          if (survivor.ingredientPk == widget.ingredient1.ingredientPk) {
+            await db.insertIngredient(
+              IngredientsCompanion.insert(
+                ingredientPk: drift.Value(widget.ingredient1.ingredientPk),
+                name: widget.ingredient1.name,
+                cost: widget.ingredient1.cost,
+                quantityForCost: widget.ingredient1.quantityForCost,
+                unitFk: widget.ingredient1.unitFk,
+              ),
+            );
+            await db.mergeIngredients(other, survivor);
+          }
+          // If ingredient2 was chosen as survivor, unsaved ingredient1 is simply discarded.
+        } else {
+          await db.mergeIngredients(other, survivor);
+        }
         if (mounted) {
+          ref.invalidate(ingredientsStreamProvider);
+          ref.invalidate(recipesWithFinancialsStreamProvider);
           AppSnackBar.showSuccess(
             context,
             l10n.compare_merged_success,
           );
-          Navigator.pop(context); // go back to add screen
-          Navigator.pop(context); // go back to list
+          Navigator.pop(context); // close compare screen
+          if (widget.onMerged != null) {
+            widget.onMerged!();
+          } else if (Navigator.canPop(context)) {
+            Navigator.pop(context); // go back to list
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -352,7 +380,10 @@ class _IngredientSimpleCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'per ${RecipeUtils.formatNumber(ingredient.quantityForCost)} ${unit.symbol}',
+                    AppLocalizations.of(context)!.compare_per_quantity(
+                      RecipeUtils.formatNumber(ingredient.quantityForCost),
+                      unit.symbol,
+                    ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 10,

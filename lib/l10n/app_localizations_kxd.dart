@@ -2291,4 +2291,39 @@ class AppLocalizationsKxd extends AppLocalizations {
   String common_error_with_details(String error) {
     return 'Error: $error';
   }
+
+  @override
+  String get privacy_policy_compliance_subtitle =>
+      'Google Play Store Compliance • Package: com.chefandcost.app';
+
+  @override
+  String get privacy_policy_delete_desc =>
+      'You have full control over your data. You can delete your account and all associated cloud backups directly from the app or via our web portal.';
+
+  @override
+  String get delete_account_policy_title => 'Data Deletion Policy';
+
+  @override
+  String delete_account_current_account(String account) {
+    return 'Current Account: $account';
+  }
+
+  @override
+  String get delete_account_signed_in_fallback => 'Signed In';
+
+  @override
+  String get delete_account_email_request_title =>
+      'Request Account & Data Deletion via Email';
+
+  @override
+  String get delete_account_email_request_desc =>
+      'If you uninstalled the application or cannot access your device, you can send an automated email request to our support team. We will permanently delete your authentication record and all synced cloud Firestore documents within 48 hours.';
+
+  @override
+  String compare_per_quantity(String quantity, String unit) {
+    return 'per $quantity $unit';
+  }
+
+  @override
+  String get settings_about_channel_alpha => 'Alpha Channel';
 }

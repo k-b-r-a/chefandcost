@@ -14,7 +14,8 @@ import '../widgets/inline_ad_card.dart';
 import '../widgets/static_banner_ad.dart';
 
 class KitchenTimersScreen extends ConsumerStatefulWidget {
-  const KitchenTimersScreen({super.key});
+  final VoidCallback? onClose;
+  const KitchenTimersScreen({super.key, this.onClose});
 
   @override
   ConsumerState<KitchenTimersScreen> createState() => _KitchenTimersScreenState();
@@ -70,6 +71,13 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
                 context: context,
                 title: l10n.timers_title,
                 controller: _scrollController,
+                leading: widget.onClose != null
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        tooltip: l10n.back_to_home_tooltip,
+                        onPressed: widget.onClose,
+                      )
+                    : null,
                 actions: const [AdFreePassButton()],
               ),
               SliverPadding(

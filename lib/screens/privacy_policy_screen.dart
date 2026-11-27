@@ -95,7 +95,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Google Play Store Compliance • Package: com.chefandcost.app',
+                              l10n.privacy_policy_compliance_subtitle,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -188,7 +188,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'You have full control over your data. You can delete your account and all associated cloud backups directly from the app or via our web portal.',
+                        l10n.privacy_policy_delete_desc,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),

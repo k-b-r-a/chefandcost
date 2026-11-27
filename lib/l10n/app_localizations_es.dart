@@ -2324,4 +2324,39 @@ class AppLocalizationsEs extends AppLocalizations {
   String common_error_with_details(String error) {
     return 'Error: $error';
   }
+
+  @override
+  String get privacy_policy_compliance_subtitle =>
+      'Cumplimiento Google Play Store • Paquete: com.chefandcost.app';
+
+  @override
+  String get privacy_policy_delete_desc =>
+      'Tienes control total sobre tus datos. Puedes eliminar tu cuenta y todas las copias en la nube directamente desde la app o desde nuestro portal web.';
+
+  @override
+  String get delete_account_policy_title => 'Política de eliminación de datos';
+
+  @override
+  String delete_account_current_account(String account) {
+    return 'Cuenta actual: $account';
+  }
+
+  @override
+  String get delete_account_signed_in_fallback => 'Sesión iniciada';
+
+  @override
+  String get delete_account_email_request_title =>
+      'Solicitar eliminación de cuenta y datos por correo';
+
+  @override
+  String get delete_account_email_request_desc =>
+      'Si desinstalaste la aplicación o no puedes acceder a tu dispositivo, puedes enviar una solicitud por correo a nuestro equipo de soporte. Eliminaremos permanentemente tu cuenta y todos los documentos sincronizados en Firestore en un plazo de 48 horas.';
+
+  @override
+  String compare_per_quantity(String quantity, String unit) {
+    return 'por $quantity $unit';
+  }
+
+  @override
+  String get settings_about_channel_alpha => 'Canal Alpha';
 }

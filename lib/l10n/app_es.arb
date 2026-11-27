@@ -876,5 +876,14 @@
   "delete_account_back_to_home": "Volver al inicio",
   "privacy_policy_email_button": "Correo",
   "recipe_list_error_scaling": "Error al escalar la receta: {error}",
-  "common_error_with_details": "Error: {error}"
+  "common_error_with_details": "Error: {error}",
+  "privacy_policy_compliance_subtitle": "Cumplimiento Google Play Store • Paquete: com.chefandcost.app",
+  "privacy_policy_delete_desc": "Tienes control total sobre tus datos. Puedes eliminar tu cuenta y todas las copias en la nube directamente desde la app o desde nuestro portal web.",
+  "delete_account_policy_title": "Política de eliminación de datos",
+  "delete_account_current_account": "Cuenta actual: {account}",
+  "delete_account_signed_in_fallback": "Sesión iniciada",
+  "delete_account_email_request_title": "Solicitar eliminación de cuenta y datos por correo",
+  "delete_account_email_request_desc": "Si desinstalaste la aplicación o no puedes acceder a tu dispositivo, puedes enviar una solicitud por correo a nuestro equipo de soporte. Eliminaremos permanentemente tu cuenta y todos los documentos sincronizados en Firestore en un plazo de 48 horas.",
+  "compare_per_quantity": "por {quantity} {unit}",
+  "settings_about_channel_alpha": "Canal Alpha"
 }
