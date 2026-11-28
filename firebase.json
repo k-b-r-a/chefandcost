@@ -28,7 +28,7 @@
         "lib/firebase_options.dart": {
           "projectId": "chefycost",
           "configurations": {
-            "android": "1:194514517992:android:e049ba4d67978ff89bae5d",
+            "android": "1:194514517992:android:d4202c981e2a718d9bae5d",
             "ios": "1:194514517992:ios:635a898ca8c7658e9bae5d",
             "macos": "1:194514517992:ios:635a898ca8c7658e9bae5d",
             "web": "1:194514517992:web:c03bc87d5fe1ce309bae5d",

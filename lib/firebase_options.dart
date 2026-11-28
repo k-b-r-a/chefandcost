@@ -60,7 +60,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '194514517992',
     projectId: 'chefycost',
     storageBucket: 'chefycost.firebasestorage.app',
-    iosBundleId: 'com.chefandcost.app',
+    iosBundleId: 'com.example.recipetools',
   );
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBJHjHLEqqsPKQI2joDupFBWJFXcztaFn4',
@@ -68,7 +68,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '194514517992',
     projectId: 'chefycost',
     storageBucket: 'chefycost.firebasestorage.app',
-    iosBundleId: 'com.chefandcost.app',
+    iosBundleId: 'com.example.recipetools',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
