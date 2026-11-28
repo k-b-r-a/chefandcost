@@ -33,6 +33,16 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    // Dynamically derive supported Android locale filters from lib/l10n/app_*.arb
+    val supportedLocales = rootProject.file("../lib/l10n")
+        .listFiles { f -> f.name.startsWith("app_") && f.name.endsWith(".arb") }
+        ?.map { f ->
+            val code = f.name.removePrefix("app_").removeSuffix(".arb")
+            if (code.contains("_")) "b+${code.replace("_", "+")}" else code
+        }
+        ?.sorted()
+        ?: listOf("en", "es")
+
     defaultConfig {
         applicationId = "com.chefandcost.app"
         minSdk = flutter.minSdkVersion
@@ -41,19 +51,25 @@ android {
         versionName = flutter.versionName
     }
 
+    androidResources {
+        localeFilters += supportedLocales
+    }
+
     signingConfigs {
         getByName("debug") {
             enableV1Signing = true
             enableV2Signing = true
         }
         create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-            val storeFilePath = keystoreProperties.getProperty("storeFile")
-            storeFile = if (storeFilePath != null) file(storeFilePath) else null
-            storePassword = keystoreProperties.getProperty("storePassword")
-            enableV1Signing = true
+            keyAlias = keystoreProperties.getProperty("keyAlias")?.trim()
+            keyPassword = keystoreProperties.getProperty("keyPassword")?.trim()
+            val storeFilePath = keystoreProperties.getProperty("storeFile")?.trim()
+            storeFile = if (!storeFilePath.isNullOrEmpty()) rootProject.file(storeFilePath) else null
+            storePassword = keystoreProperties.getProperty("storePassword")?.trim()
+            enableV1Signing = false
             enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
         }
     }
 
@@ -61,23 +77,29 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
 
             val releaseSigning = signingConfigs.getByName("release")
-            val hasValidReleaseKeystore = releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()
+            val hasValidReleaseKeystore = releaseSigning.storeFile != null &&
+                releaseSigning.storeFile!!.exists() &&
+                !releaseSigning.keyAlias.isNullOrBlank() &&
+                !releaseSigning.keyPassword.isNullOrBlank() &&
+                !releaseSigning.storePassword.isNullOrBlank()
+
+            val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
+                it.contains("Release", ignoreCase = true) || it.contains("Bundle", ignoreCase = true)
+            }
 
             if (hasValidReleaseKeystore) {
                 signingConfig = releaseSigning
+            } else if (isReleaseBuildRequested && project.findProperty("allowDebugSignedRelease") != "true") {
+                throw GradleException(
+                    "Release build aborted: android/key.properties or keystore file is missing/incomplete. " +
+                    "Configure android/key.properties (or pass -PallowDebugSignedRelease=true for local R8 testing only)."
+                )
             } else {
-                val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
-                    it.contains("Release", ignoreCase = true) || it.contains("bundle", ignoreCase = true)
-                }
-                if (isReleaseBuildRequested) {
-                    logger.warn("=======================================================================")
-                    logger.warn("[SECURITY ALERT] Release build requested, but valid android/key.properties")
-                    logger.warn("or storeFile was not found! Falling back to DEBUG signing.")
-                    logger.warn("DO NOT publish debug-signed bundles to Google Play Store.")
-                    logger.warn("=======================================================================")
-                }
                 signingConfig = signingConfigs.getByName("debug")
             }
 
@@ -106,7 +128,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.activity:activity-ktx:1.10.1")
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // Google Play Integrity API (StandardIntegrityManager & Classic Integrity)
     implementation("com.google.android.play:integrity:1.4.0")

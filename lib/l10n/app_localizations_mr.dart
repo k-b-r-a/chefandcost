@@ -2028,7 +2028,7 @@ class AppLocalizationsMr extends AppLocalizations {
   String get cloud_sync_in_progress => 'Syncing in background...';
 
   @override
-  String get cloud_sync_error_prefix => 'Sync error: ';
+  String get cloud_sync_error_prefix => 'Sync error:';
 
   @override
   String get ad_free_pass_btn_label => 'Ad-Free Pass';
@@ -2497,7 +2497,7 @@ class AppLocalizationsMr extends AppLocalizations {
   String get mold_calc_dim_cavities => 'Cavities (N)';
 
   @override
-  String get mold_calc_multi_cavity_toggle => 'Multi-cavity tray (×N)';
+  String get mold_calc_multi_cavity_toggle => 'Multi-cavity tray';
 
   @override
   String get mold_calc_cavity_shape => 'Cavity Shape';

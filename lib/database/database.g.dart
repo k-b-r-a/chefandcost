@@ -643,7 +643,7 @@ class $RecipesTable extends Recipes with TableInfo<$RecipesTable, Recipe> {
         true,
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
-        defaultValue: Constant(DateTime.now()),
+        defaultValue: currentDateAndTime,
       );
   static const VerificationMeta _archivedMeta = const VerificationMeta(
     'archived',
@@ -1863,7 +1863,7 @@ class $IngredientsTable extends Ingredients
         true,
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
-        defaultValue: Constant(DateTime.now()),
+        defaultValue: currentDateAndTime,
       );
   static const VerificationMeta _isDeletedMeta = const VerificationMeta(
     'isDeleted',
@@ -2809,7 +2809,7 @@ class $RecipeIngredientsTable extends RecipeIngredients
         true,
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
-        defaultValue: Constant(DateTime.now()),
+        defaultValue: currentDateAndTime,
       );
   @override
   List<GeneratedColumn> get $columns => [
@@ -3213,7 +3213,7 @@ class $RecipeStepsTable extends RecipeSteps
         true,
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
-        defaultValue: Constant(DateTime.now()),
+        defaultValue: currentDateAndTime,
       );
   @override
   List<GeneratedColumn> get $columns => [
@@ -4472,7 +4472,7 @@ final class $$GroupsTableReferences
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
     db.recipes,
-    aliasName: $_aliasNameGenerator(db.groups.id, db.recipes.groupId),
+    aliasName: 'groups__id__recipes__group_id',
   );
 
   $$RecipesTableProcessedTableManager get recipesRefs {
@@ -4490,7 +4490,7 @@ final class $$GroupsTableReferences
   static MultiTypedResultKey<$IngredientsTable, List<Ingredient>>
   _ingredientsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.ingredients,
-    aliasName: $_aliasNameGenerator(db.groups.id, db.ingredients.groupId),
+    aliasName: 'groups__id__ingredients__group_id',
   );
 
   $$IngredientsTableProcessedTableManager get ingredientsRefs {
@@ -4508,7 +4508,7 @@ final class $$GroupsTableReferences
   static MultiTypedResultKey<$RecipeSpacesTable, List<RecipeSpace>>
   _recipeSpacesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.recipeSpaces,
-    aliasName: $_aliasNameGenerator(db.groups.id, db.recipeSpaces.spaceId),
+    aliasName: 'groups__id__recipe_spaces__space_id',
   );
 
   $$RecipeSpacesTableProcessedTableManager get recipeSpacesRefs {
@@ -5030,9 +5030,8 @@ final class $$RecipesTableReferences
     extends BaseReferences<_$AppDatabase, $RecipesTable, Recipe> {
   $$RecipesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $GroupsTable _groupIdTable(_$AppDatabase db) => db.groups.createAlias(
-    $_aliasNameGenerator(db.recipes.groupId, db.groups.id),
-  );
+  static $GroupsTable _groupIdTable(_$AppDatabase db) =>
+      db.groups.createAlias('recipes__group_id__groups__id');
 
   $$GroupsTableProcessedTableManager? get groupId {
     final $_column = $_itemColumn<String>('group_id');
@@ -5052,10 +5051,7 @@ final class $$RecipesTableReferences
   _recipeIngredientsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.recipeIngredients,
-        aliasName: $_aliasNameGenerator(
-          db.recipes.recipePk,
-          db.recipeIngredients.recipeFk,
-        ),
+        aliasName: 'recipes__recipe_pk__recipe_ingredients__recipe_fk',
       );
 
   $$RecipeIngredientsTableProcessedTableManager get recipeIngredientsRefs {
@@ -5079,10 +5075,7 @@ final class $$RecipesTableReferences
   static MultiTypedResultKey<$RecipeStepsTable, List<RecipeStep>>
   _recipeStepsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.recipeSteps,
-    aliasName: $_aliasNameGenerator(
-      db.recipes.recipePk,
-      db.recipeSteps.recipeFk,
-    ),
+    aliasName: 'recipes__recipe_pk__recipe_steps__recipe_fk',
   );
 
   $$RecipeStepsTableProcessedTableManager get recipeStepsRefs {
@@ -5101,10 +5094,7 @@ final class $$RecipesTableReferences
   static MultiTypedResultKey<$RecipeSpacesTable, List<RecipeSpace>>
   _recipeSpacesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.recipeSpaces,
-    aliasName: $_aliasNameGenerator(
-      db.recipes.recipePk,
-      db.recipeSpaces.recipeId,
-    ),
+    aliasName: 'recipes__recipe_pk__recipe_spaces__recipe_id',
   );
 
   $$RecipeSpacesTableProcessedTableManager get recipeSpacesRefs {
@@ -5827,7 +5817,7 @@ final class $$UnitsTableReferences
   static MultiTypedResultKey<$IngredientsTable, List<Ingredient>>
   _ingredientsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.ingredients,
-    aliasName: $_aliasNameGenerator(db.units.unitPk, db.ingredients.unitFk),
+    aliasName: 'units__unit_pk__ingredients__unit_fk',
   );
 
   $$IngredientsTableProcessedTableManager get ingredientsRefs {
@@ -6155,9 +6145,8 @@ final class $$IngredientsTableReferences
     extends BaseReferences<_$AppDatabase, $IngredientsTable, Ingredient> {
   $$IngredientsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $UnitsTable _unitFkTable(_$AppDatabase db) => db.units.createAlias(
-    $_aliasNameGenerator(db.ingredients.unitFk, db.units.unitPk),
-  );
+  static $UnitsTable _unitFkTable(_$AppDatabase db) =>
+      db.units.createAlias('ingredients__unit_fk__units__unit_pk');
 
   $$UnitsTableProcessedTableManager get unitFk {
     final $_column = $_itemColumn<String>('unit_fk')!;
@@ -6173,9 +6162,8 @@ final class $$IngredientsTableReferences
     );
   }
 
-  static $GroupsTable _groupIdTable(_$AppDatabase db) => db.groups.createAlias(
-    $_aliasNameGenerator(db.ingredients.groupId, db.groups.id),
-  );
+  static $GroupsTable _groupIdTable(_$AppDatabase db) =>
+      db.groups.createAlias('ingredients__group_id__groups__id');
 
   $$GroupsTableProcessedTableManager? get groupId {
     final $_column = $_itemColumn<String>('group_id');
@@ -6195,10 +6183,8 @@ final class $$IngredientsTableReferences
   _recipeIngredientsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.recipeIngredients,
-        aliasName: $_aliasNameGenerator(
-          db.ingredients.ingredientPk,
-          db.recipeIngredients.ingredientFk,
-        ),
+        aliasName:
+            'ingredients__ingredient_pk__recipe_ingredients__ingredient_fk',
       );
 
   $$RecipeIngredientsTableProcessedTableManager get recipeIngredientsRefs {
@@ -6893,13 +6879,8 @@ final class $$RecipeIngredientsTableReferences
     super.$_typedResult,
   );
 
-  static $RecipesTable _recipeFkTable(_$AppDatabase db) =>
-      db.recipes.createAlias(
-        $_aliasNameGenerator(
-          db.recipeIngredients.recipeFk,
-          db.recipes.recipePk,
-        ),
-      );
+  static $RecipesTable _recipeFkTable(_$AppDatabase db) => db.recipes
+      .createAlias('recipe_ingredients__recipe_fk__recipes__recipe_pk');
 
   $$RecipesTableProcessedTableManager get recipeFk {
     final $_column = $_itemColumn<String>('recipe_fk')!;
@@ -6917,10 +6898,7 @@ final class $$RecipeIngredientsTableReferences
 
   static $IngredientsTable _ingredientFkTable(_$AppDatabase db) =>
       db.ingredients.createAlias(
-        $_aliasNameGenerator(
-          db.recipeIngredients.ingredientFk,
-          db.ingredients.ingredientPk,
-        ),
+        'recipe_ingredients__ingredient_fk__ingredients__ingredient_pk',
       );
 
   $$IngredientsTableProcessedTableManager get ingredientFk {
@@ -7322,9 +7300,7 @@ final class $$RecipeStepsTableReferences
   $$RecipeStepsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $RecipesTable _recipeFkTable(_$AppDatabase db) =>
-      db.recipes.createAlias(
-        $_aliasNameGenerator(db.recipeSteps.recipeFk, db.recipes.recipePk),
-      );
+      db.recipes.createAlias('recipe_steps__recipe_fk__recipes__recipe_pk');
 
   $$RecipesTableProcessedTableManager get recipeFk {
     final $_column = $_itemColumn<String>('recipe_fk')!;
@@ -7801,9 +7777,7 @@ final class $$RecipeSpacesTableReferences
   $$RecipeSpacesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $RecipesTable _recipeIdTable(_$AppDatabase db) =>
-      db.recipes.createAlias(
-        $_aliasNameGenerator(db.recipeSpaces.recipeId, db.recipes.recipePk),
-      );
+      db.recipes.createAlias('recipe_spaces__recipe_id__recipes__recipe_pk');
 
   $$RecipesTableProcessedTableManager get recipeId {
     final $_column = $_itemColumn<String>('recipe_id')!;
@@ -7819,9 +7793,8 @@ final class $$RecipeSpacesTableReferences
     );
   }
 
-  static $GroupsTable _spaceIdTable(_$AppDatabase db) => db.groups.createAlias(
-    $_aliasNameGenerator(db.recipeSpaces.spaceId, db.groups.id),
-  );
+  static $GroupsTable _spaceIdTable(_$AppDatabase db) =>
+      db.groups.createAlias('recipe_spaces__space_id__groups__id');
 
   $$GroupsTableProcessedTableManager get spaceId {
     final $_column = $_itemColumn<String>('space_id')!;

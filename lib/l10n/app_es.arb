@@ -951,7 +951,7 @@
   "mold_calc_dim_measured_ml": "Volumen Medido (ml)",
   "mold_calc_dim_fill_curve": "Exponente de Curva",
   "mold_calc_dim_cavities": "Cavidades (N)",
-  "mold_calc_multi_cavity_toggle": "Bandeja multicavidad (×N)",
+  "mold_calc_multi_cavity_toggle": "Bandeja multicavidad",
   "mold_calc_cavity_shape": "Forma de Cavidad",
   "mold_calc_cat_round": "Moldes Redondos",
   "mold_calc_cat_square": "Moldes Cuadrados",

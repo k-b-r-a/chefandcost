@@ -2057,7 +2057,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cloud_sync_in_progress => 'Sincronizando en segundo plano...';
 
   @override
-  String get cloud_sync_error_prefix => 'Error de sincronización: ';
+  String get cloud_sync_error_prefix => 'Error de sincronización:';
 
   @override
   String get ad_free_pass_btn_label => 'Pase sin anuncios';
@@ -2529,7 +2529,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mold_calc_dim_cavities => 'Cavidades (N)';
 
   @override
-  String get mold_calc_multi_cavity_toggle => 'Bandeja multicavidad (×N)';
+  String get mold_calc_multi_cavity_toggle => 'Bandeja multicavidad';
 
   @override
   String get mold_calc_cavity_shape => 'Forma de Cavidad';

@@ -1064,7 +1064,7 @@
   "mold_calc_dim_measured_ml": "Measured Volume (ml)",
   "mold_calc_dim_fill_curve": "Fill Curve Exponent",
   "mold_calc_dim_cavities": "Cavities (N)",
-  "mold_calc_multi_cavity_toggle": "Multi-cavity tray (×N)",
+  "mold_calc_multi_cavity_toggle": "Multi-cavity tray",
   "mold_calc_cavity_shape": "Cavity Shape",
   "mold_calc_cat_round": "Round Cake Pans",
   "mold_calc_cat_square": "Square Pans",

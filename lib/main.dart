@@ -32,7 +32,6 @@ import 'theme/app_theme.dart';
 import 'services/app_tutorial_service.dart';
 import 'services/ad_service.dart';
 import 'utils/ad_navigation_observer.dart';
-import 'services/play_integrity_service.dart';
 import 'services/recipe_file_intent_service.dart';
 import 'services/windows_registry_helper.dart';
 import 'utils/recipe_import_helper.dart';
@@ -52,7 +51,6 @@ void _runDeferredInitializations() {
   unawaited(AdService.initialize());
   unawaited(AudioAlarmService().init());
   unawaited(GoogleSignInInitializer.ensureInitialized());
-  unawaited(PlayIntegrityService.prepareTokenProvider());
 }
 
 void main([List<String> args = const []]) async {

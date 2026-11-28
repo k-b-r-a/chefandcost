@@ -137,8 +137,44 @@ class FirestoreSyncService {
   /// Checks if the user has an owner-granted or lifetime entitlement in Firestore.
   /// Looks up:
   /// 1. Firestore `entitlements/{uid}` and `entitlements/{email}`
-  /// 2. Firestore `users/{uid}` document (`hasLifetimeSubscription` / `isSubscribed`)
-  Future<({bool isGranted, String plan})> checkRemoteEntitlement({
+  ({bool isGranted, bool isLifetime, String plan, DateTime? expiresAt})
+      _evaluateEntitlementData(Map<String, dynamic> data) {
+    final isLifetime = data['hasLifetimeSubscription'] == true ||
+        data['isVip'] == true ||
+        data['plan'] == kLifetimeSubscriptionId;
+    if (isLifetime) {
+      final plan = (data['subscriptionPlan'] as String?) ??
+          (data['plan'] as String?) ??
+          kLifetimeSubscriptionId;
+      return (isGranted: true, isLifetime: true, plan: plan, expiresAt: null);
+    }
+
+    final isSub = data['isSubscribed'] == true || data['active'] == true;
+    if (!isSub) {
+      return (isGranted: false, isLifetime: false, plan: '', expiresAt: null);
+    }
+
+    final expiresAt = _parseNullableDate(
+      data['subscriptionExpiresAt'] ?? data['expiresAt'],
+    );
+    if (expiresAt != null && expiresAt.toUtc().isAfter(DateTime.now().toUtc())) {
+      final plan = (data['subscriptionPlan'] as String?) ??
+          (data['plan'] as String?) ??
+          kMonthlySubscriptionId;
+      return (
+        isGranted: true,
+        isLifetime: false,
+        plan: plan,
+        expiresAt: expiresAt,
+      );
+    }
+
+    return (isGranted: false, isLifetime: false, plan: '', expiresAt: null);
+  }
+
+  /// 2. Firestore `entitlements/{uid}` / `entitlements/{email}` / `users/{uid}`
+  Future<({bool isGranted, bool isLifetime, String plan, DateTime? expiresAt})>
+      checkRemoteEntitlement({
     String? uid,
     String? email,
   }) async {
@@ -146,7 +182,7 @@ class FirestoreSyncService {
     final activeEmail = email ?? authCurrentUser?.email;
 
     if (!isConfigured || activeUid == null || activeUid.isEmpty) {
-      return (isGranted: false, plan: '');
+      return (isGranted: false, isLifetime: false, plan: '', expiresAt: null);
     }
 
     try {
@@ -154,14 +190,8 @@ class FirestoreSyncService {
       final entDoc =
           await _firestore.collection('entitlements').doc(activeUid).get();
       if (entDoc.exists) {
-        final data = entDoc.data() ?? {};
-        final isSub = data['isSubscribed'] == true ||
-            data['hasLifetimeSubscription'] == true ||
-            data['active'] == true;
-        if (isSub) {
-          final plan = data['plan'] as String? ?? kLifetimeSubscriptionId;
-          return (isGranted: true, plan: plan);
-        }
+        final evaluated = _evaluateEntitlementData(entDoc.data() ?? {});
+        if (evaluated.isGranted) return evaluated;
       }
 
       // 3. Check entitlements/{email}
@@ -171,36 +201,22 @@ class FirestoreSyncService {
             .doc(activeEmail.toLowerCase().trim())
             .get();
         if (emailDoc.exists) {
-          final data = emailDoc.data() ?? {};
-          final isSub = data['isSubscribed'] == true ||
-              data['hasLifetimeSubscription'] == true ||
-              data['active'] == true;
-          if (isSub) {
-            final plan = data['plan'] as String? ?? kLifetimeSubscriptionId;
-            return (isGranted: true, plan: plan);
-          }
+          final evaluated = _evaluateEntitlementData(emailDoc.data() ?? {});
+          if (evaluated.isGranted) return evaluated;
         }
       }
 
       // 4. Check users/{uid} document
       final userDoc = await _firestore.collection('users').doc(activeUid).get();
       if (userDoc.exists) {
-        final data = userDoc.data() ?? {};
-        final isSub = data['hasLifetimeSubscription'] == true ||
-            data['isSubscribed'] == true ||
-            data['isVip'] == true;
-        if (isSub) {
-          final plan = data['subscriptionPlan'] as String? ??
-              data['plan'] as String? ??
-              kLifetimeSubscriptionId;
-          return (isGranted: true, plan: plan);
-        }
+        final evaluated = _evaluateEntitlementData(userDoc.data() ?? {});
+        if (evaluated.isGranted) return evaluated;
       }
     } catch (e) {
       debugPrint('Error checking remote entitlement: $e');
     }
 
-    return (isGranted: false, plan: '');
+    return (isGranted: false, isLifetime: false, plan: '', expiresAt: null);
   }
 
   /// Updates the user's subscription metadata in Firestore (`users/{userId}`).
@@ -587,9 +603,10 @@ class FirestoreSyncService {
       'groupId': r.groupId,
       'space_ids': detail.spaceIds,
       'category': r.category,
-      'dateCreated': r.dateCreated.toIso8601String(),
-      'dateTimeModified': r.dateTimeModified?.toIso8601String(),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'dateCreated': r.dateCreated.toUtc().toIso8601String(),
+      'dateTimeModified': r.dateTimeModified?.toUtc().toIso8601String(),
+      'updatedAt': Timestamp.fromDate(updatedAt.toUtc()),
+      'serverUpdatedAt': FieldValue.serverTimestamp(),
       'archived': r.archived,
       'ingredients': detail.ingredients
           .map(
@@ -781,9 +798,10 @@ class FirestoreSyncService {
       'cost': ing.cost,
       'quantityForCost': ing.quantityForCost,
       'unitFk': ing.unitFk,
-      'dateCreated': ing.dateCreated.toIso8601String(),
-      'dateTimeModified': ing.dateTimeModified?.toIso8601String(),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'dateCreated': ing.dateCreated.toUtc().toIso8601String(),
+      'dateTimeModified': ing.dateTimeModified?.toUtc().toIso8601String(),
+      'updatedAt': Timestamp.fromDate(updatedAt.toUtc()),
+      'serverUpdatedAt': FieldValue.serverTimestamp(),
       'is_deleted': ing.isDeleted,
       'deleted_at': ing.deletedAt?.toIso8601String(),
       'group_id': ing.groupId,
@@ -840,10 +858,11 @@ class FirestoreSyncService {
       'icon_name': g.iconName,
       'color_hex': g.colorHex,
       'is_active': g.isActive,
-      'created_at': g.createdAt.toIso8601String(),
-      'updated_at': g.updatedAt.toIso8601String(),
+      'created_at': g.createdAt.toUtc().toIso8601String(),
+      'updated_at': g.updatedAt.toUtc().toIso8601String(),
       'is_deleted': g.isDeleted,
-      'updatedAt': Timestamp.fromDate(g.updatedAt),
+      'updatedAt': Timestamp.fromDate(g.updatedAt.toUtc()),
+      'serverUpdatedAt': FieldValue.serverTimestamp(),
     };
   }
 
@@ -1101,6 +1120,9 @@ class FirestoreSyncService {
     await initPersistence();
 
     final lastSyncTimestamp = await getLastSyncedAt(activeUid);
+    final prefs = await SharedPreferences.getInstance();
+    final serverCursorKey = '${prefLastSyncTimestampKey}_server_cursor_$activeUid';
+    final hasServerCursor = prefs.getBool(serverCursorKey) ?? false;
     final syncStartTime = DateTime.now().toUtc();
 
     int recipesAdded = 0;
@@ -1123,10 +1145,10 @@ class FirestoreSyncService {
 
     // 1. Remote Groups / Spaces
     Query<Map<String, dynamic>> groupsQuery = groupsCol;
-    if (lastSyncTimestamp != null) {
+    if (lastSyncTimestamp != null && hasServerCursor) {
       groupsQuery = groupsQuery.where(
-        'updated_at',
-        isGreaterThan: lastSyncTimestamp.toIso8601String(),
+        'serverUpdatedAt',
+        isGreaterThan: Timestamp.fromDate(lastSyncTimestamp.toUtc()),
       );
     }
     final remoteGroupsSnap = await groupsQuery.get();
@@ -1152,10 +1174,10 @@ class FirestoreSyncService {
 
     // 3. Remote Ingredients (Delta query if lastSyncTimestamp exists)
     Query<Map<String, dynamic>> ingsQuery = ingsCol;
-    if (lastSyncTimestamp != null) {
+    if (lastSyncTimestamp != null && hasServerCursor) {
       ingsQuery = ingsQuery.where(
-        'dateTimeModified',
-        isGreaterThan: lastSyncTimestamp.toIso8601String(),
+        'serverUpdatedAt',
+        isGreaterThan: Timestamp.fromDate(lastSyncTimestamp.toUtc()),
       );
     }
     final remoteIngsSnap = await ingsQuery.get();
@@ -1187,10 +1209,10 @@ class FirestoreSyncService {
 
     // 4. Remote Recipes (Delta query if lastSyncTimestamp exists)
     Query<Map<String, dynamic>> recipesQuery = recipesCol;
-    if (lastSyncTimestamp != null) {
+    if (lastSyncTimestamp != null && hasServerCursor) {
       recipesQuery = recipesQuery.where(
-        'dateTimeModified',
-        isGreaterThan: lastSyncTimestamp.toIso8601String(),
+        'serverUpdatedAt',
+        isGreaterThan: Timestamp.fromDate(lastSyncTimestamp.toUtc()),
       );
     }
     final remoteRecipesSnap = await recipesQuery.get();
@@ -1349,9 +1371,10 @@ class FirestoreSyncService {
           {
             'isDeleted': true,
             'is_deleted': true,
-            'dateTimeModified': record.deletedAt.toIso8601String(),
-            'deletedAt': record.deletedAt.toIso8601String(),
-            'updatedAt': Timestamp.fromDate(record.deletedAt),
+            'dateTimeModified': record.deletedAt.toUtc().toIso8601String(),
+            'deletedAt': record.deletedAt.toUtc().toIso8601String(),
+            'updatedAt': Timestamp.fromDate(record.deletedAt.toUtc()),
+            'serverUpdatedAt': FieldValue.serverTimestamp(),
           },
           SetOptions(merge: true),
         );
@@ -1363,9 +1386,10 @@ class FirestoreSyncService {
           {
             'isDeleted': true,
             'is_deleted': true,
-            'dateTimeModified': record.deletedAt.toIso8601String(),
-            'deleted_at': record.deletedAt.toIso8601String(),
-            'updatedAt': Timestamp.fromDate(record.deletedAt),
+            'dateTimeModified': record.deletedAt.toUtc().toIso8601String(),
+            'deleted_at': record.deletedAt.toUtc().toIso8601String(),
+            'updatedAt': Timestamp.fromDate(record.deletedAt.toUtc()),
+            'serverUpdatedAt': FieldValue.serverTimestamp(),
           },
           SetOptions(merge: true),
         );
@@ -1394,6 +1418,7 @@ class FirestoreSyncService {
     // PHASE 3: RECORD LAST SYNCED AT
     // -------------------------------------------------------------
     await setLastSyncedAt(activeUid, syncStartTime);
+    await prefs.setBool(serverCursorKey, true);
 
     return SyncMergeResult(
       recipesAdded: recipesAdded,

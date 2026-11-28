@@ -108,6 +108,7 @@ class NotificationService {
     required int id,
     required String title,
     required String body,
+    String stopActionLabel = 'Stop',
   }) async {
     await initialize();
 
@@ -124,10 +125,10 @@ class NotificationService {
       fullScreenIntent: true,
       ongoing: true,
       autoCancel: false,
-      actions: const <AndroidNotificationAction>[
+      actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
           'stop_alarm_action',
-          '⏹️ DETENER ALARMA',
+          stopActionLabel,
           showsUserInterface: true,
           cancelNotification: true,
         ),

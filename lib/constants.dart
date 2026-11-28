@@ -1,4 +1,7 @@
-const String kAppVersion = '0.1.4';
+const String kAppVersion = String.fromEnvironment(
+  'APP_VERSION',
+  defaultValue: '0.1.4+7',
+);
 
 const String kMonthlySubscriptionId = 'cloud_sync_monthly_199';
 const String kAnnualSubscriptionId = 'cloud_sync_annual_1499';

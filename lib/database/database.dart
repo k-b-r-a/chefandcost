@@ -32,7 +32,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   Future<bool> _tableExists(String tableName) async {
     final result = await customSelect(
@@ -98,6 +98,14 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(ingredients, ingredients.lastStockUpdate);
           }
         }
+        if (from < 3) {
+          await customStatement(
+            'UPDATE recipes SET target_profit_margin = target_profit_margin / 100.0 WHERE target_profit_margin > 10.0;',
+          );
+          await customStatement(
+            "UPDATE units SET symbol = 'fl oz' WHERE name = 'unit_fluid_ounces' AND symbol = 'oz';",
+          );
+        }
       },
       beforeOpen: (details) async {
         // Repair databases already stamped at v2/v3 that are missing tables or columns.
@@ -141,6 +149,12 @@ class AppDatabase extends _$AppDatabase {
           ''');
         }
         await repairRecipeSpaceTimestamps();
+        await customStatement(
+          'UPDATE recipes SET target_profit_margin = target_profit_margin / 100.0 WHERE target_profit_margin > 10.0;',
+        );
+        await customStatement(
+          "UPDATE units SET symbol = 'fl oz' WHERE name = 'unit_fluid_ounces' AND symbol = 'oz';",
+        );
         await initializeDefaultDatabase(this);
       },
     );
@@ -510,22 +524,73 @@ class AppDatabase extends _$AppDatabase {
           category: category,
           hiddenSpaceIds: hidden,
         );
-        final List<RecipeWithFinancials> results = [];
+        if (recipeList.isEmpty) return <RecipeWithFinancials>[];
 
-        for (var recipe in recipeList) {
-          final detail = await getRecipeDetail(recipe.recipePk);
-          final financials = RecipeUtils.calculateSummaryFromDetail(detail);
+        final recipeIds = recipeList.map((r) => r.recipePk).toList();
 
-          results.add(
-            RecipeWithFinancials(
-              recipe: detail.recipe,
-              financials: financials,
-              spaces: detail.spaces,
-            ),
-          );
+        // Batch query 1: all recipe_ingredients + ingredients for these recipes
+        final ingRows = await (select(recipeIngredients).join([
+          leftOuterJoin(
+            ingredients,
+            ingredients.ingredientPk.equalsExp(recipeIngredients.ingredientFk),
+          ),
+        ])..where(recipeIngredients.recipeFk.isIn(recipeIds))).get();
+
+        final ingsByRecipe = <String, List<RecipeIngredientWithData>>{};
+        for (final row in ingRows) {
+          final entry = row.readTable(recipeIngredients);
+          final ing = row.readTableOrNull(ingredients);
+          final effectiveIng = ing ??
+              Ingredient(
+                ingredientPk: entry.ingredientFk,
+                name: 'Unknown Ingredient',
+                cost: 0.0,
+                quantityForCost: 1.0,
+                unitFk: 'unit-g',
+                dateCreated: DateTime.now(),
+                isDeleted: false,
+              );
+          ingsByRecipe
+              .putIfAbsent(entry.recipeFk, () => [])
+              .add(RecipeIngredientWithData(entry: entry, ingredient: effectiveIng));
         }
 
-        return results;
+        // Batch query 2: all spaces for these recipes
+        final spaceRows = await (select(groups).join([
+          innerJoin(
+            recipeSpaces,
+            recipeSpaces.spaceId.equalsExp(groups.id),
+          ),
+        ])..where(
+          recipeSpaces.recipeId.isIn(recipeIds) &
+              recipeSpaces.isDeleted.equals(false) &
+              groups.isDeleted.equals(false),
+        )).get();
+
+        final spacesByRecipe = <String, List<Group>>{};
+        for (final row in spaceRows) {
+          final link = row.readTable(recipeSpaces);
+          final group = row.readTable(groups);
+          spacesByRecipe.putIfAbsent(link.recipeId, () => []).add(group);
+        }
+
+        return recipeList.map((recipe) {
+          final ings = ingsByRecipe[recipe.recipePk] ?? const [];
+          final spaces = spacesByRecipe[recipe.recipePk] ?? const [];
+          final detail = RecipeDetail(
+            recipe: recipe,
+            ingredients: ings,
+            steps: const [],
+            spaceIds: spaces.map((s) => s.id).toList(),
+            spaces: spaces,
+          );
+          final financials = RecipeUtils.calculateSummaryFromDetail(detail);
+          return RecipeWithFinancials(
+            recipe: recipe,
+            financials: financials,
+            spaces: spaces,
+          );
+        }).toList();
       }),
     );
   }
@@ -1235,11 +1300,83 @@ class AppDatabase extends _$AppDatabase {
       );
     }
     final recipeList = await query.get();
-    final List<RecipeDetail> details = [];
-    for (final r in recipeList) {
-      details.add(await getRecipeDetail(r.recipePk));
+    if (recipeList.isEmpty) return [];
+
+    final recipeIds = recipeList.map((r) => r.recipePk).toList();
+
+    final ingRows = await (select(recipeIngredients).join([
+      leftOuterJoin(
+        ingredients,
+        ingredients.ingredientPk.equalsExp(recipeIngredients.ingredientFk),
+      ),
+    ])..where(recipeIngredients.recipeFk.isIn(recipeIds))).get();
+
+    final ingsByRecipe = <String, List<RecipeIngredientWithData>>{};
+    for (final row in ingRows) {
+      final entry = row.readTable(recipeIngredients);
+      final ing = row.readTableOrNull(ingredients);
+      final effectiveIng = ing ??
+          Ingredient(
+            ingredientPk: entry.ingredientFk,
+            name: 'Unknown Ingredient',
+            cost: 0.0,
+            quantityForCost: 1.0,
+            unitFk: 'unit-g',
+            dateCreated: DateTime.now(),
+            isDeleted: false,
+          );
+      ingsByRecipe
+          .putIfAbsent(entry.recipeFk, () => [])
+          .add(RecipeIngredientWithData(entry: entry, ingredient: effectiveIng));
     }
-    return details;
+
+    final stepRows = await (select(recipeSteps)
+          ..where((t) => t.recipeFk.isIn(recipeIds))
+          ..orderBy([(t) => OrderingTerm(expression: t.stepNumber)]))
+        .get();
+    final stepsByRecipe = <String, List<RecipeStep>>{};
+    for (final step in stepRows) {
+      stepsByRecipe.putIfAbsent(step.recipeFk, () => []).add(step);
+    }
+
+    final spaceLinkRows = await (select(recipeSpaces)
+          ..where(
+            (t) => t.recipeId.isIn(recipeIds) & t.isDeleted.equals(false),
+          ))
+        .get();
+    final spaceIdsByRecipe = <String, List<String>>{};
+    for (final link in spaceLinkRows) {
+      spaceIdsByRecipe.putIfAbsent(link.recipeId, () => []).add(link.spaceId);
+    }
+
+    final spaceGroupRows = await (select(groups).join([
+      innerJoin(
+        recipeSpaces,
+        recipeSpaces.spaceId.equalsExp(groups.id),
+      ),
+    ])..where(
+      recipeSpaces.recipeId.isIn(recipeIds) &
+          recipeSpaces.isDeleted.equals(false) &
+          groups.isDeleted.equals(false),
+    )).get();
+    final spacesByRecipe = <String, List<Group>>{};
+    for (final row in spaceGroupRows) {
+      final link = row.readTable(recipeSpaces);
+      final group = row.readTable(groups);
+      spacesByRecipe.putIfAbsent(link.recipeId, () => []).add(group);
+    }
+
+    return recipeList
+        .map(
+          (r) => RecipeDetail(
+            recipe: r,
+            ingredients: ingsByRecipe[r.recipePk] ?? const [],
+            steps: stepsByRecipe[r.recipePk] ?? const [],
+            spaceIds: spaceIdsByRecipe[r.recipePk] ?? const [],
+            spaces: spacesByRecipe[r.recipePk] ?? const [],
+          ),
+        )
+        .toList();
   }
 
   Future<List<Ingredient>> getIngredientsModifiedSince(

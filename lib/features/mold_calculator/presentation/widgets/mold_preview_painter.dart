@@ -386,10 +386,10 @@ class MoldSideCrossSectionPainter extends CustomPainter {
       ),
     );
 
-    // Bottom dimension callout
+    // Bottom dimension callout (width × height)
     final hFillCm = GeometryEngine.effectiveFillHeight(mold, clampedRatio);
     final dimText =
-        '${RecipeUtils.formatNumber(wCm, decimalDigits: 1, trimTrailingZeros: true)}×${RecipeUtils.formatNumber(hCm, decimalDigits: 1, trimTrailingZeros: true)} cm (h=${RecipeUtils.formatNumber(hFillCm, decimalDigits: 1, trimTrailingZeros: true)})';
+        '${RecipeUtils.formatNumber(wCm, decimalDigits: 1, trimTrailingZeros: true)}×${RecipeUtils.formatNumber(hCm, decimalDigits: 1, trimTrailingZeros: true)} cm';
     _drawCenteredText(
       canvas: canvas,
       text: dimText,
@@ -398,6 +398,29 @@ class MoldSideCrossSectionPainter extends CustomPainter {
         color: textColor.withValues(alpha: 0.78),
         fontSize: 10,
         fontWeight: FontWeight.w600,
+      ),
+    );
+
+    // Side fill-height callout next to the mold
+    final rightEdgeX = outerPath.getBounds().right;
+    final tickX = rightEdgeX + 6;
+    final tickPaint = Paint()
+      ..color = color.withValues(alpha: 0.65)
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(tickX, baselineY), Offset(tickX, fillTopY), tickPaint);
+    canvas.drawLine(Offset(tickX - 2.5, baselineY), Offset(tickX + 2.5, baselineY), tickPaint);
+    canvas.drawLine(Offset(tickX - 2.5, fillTopY), Offset(tickX + 2.5, fillTopY), tickPaint);
+
+    final fillText =
+        '${RecipeUtils.formatNumber(hFillCm, decimalDigits: 1, trimTrailingZeros: true)} cm';
+    _drawCenteredText(
+      canvas: canvas,
+      text: fillText,
+      center: Offset(tickX + 20, (baselineY + fillTopY) / 2),
+      style: TextStyle(
+        color: color,
+        fontSize: 9.5,
+        fontWeight: FontWeight.w700,
       ),
     );
   }

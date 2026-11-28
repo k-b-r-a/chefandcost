@@ -96,9 +96,14 @@ class AdState {
 class AdNotifier extends Notifier<AdState> {
   static const String adFreeUntilPrefKey = 'ad_free_until';
   SharedPreferences? _prefs;
+  bool _disposed = false;
 
   @override
   AdState build() {
+    _disposed = false;
+    ref.onDispose(() {
+      _disposed = true;
+    });
     final isCloudSubscribed =
         ref.watch(cloudSyncProvider.select((s) => s.isSubscribed));
     final monetizationAdFreeUntil =
@@ -133,7 +138,7 @@ class AdNotifier extends Notifier<AdState> {
       lastRefreshed: DateTime.now(),
     );
 
-    AdService.isUserAdFreeCallback = () => initialState.isAdFree;
+    AdService.isUserAdFreeCallback = () => _disposed ? false : state.isAdFree;
     return initialState;
   }
 

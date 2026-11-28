@@ -19,8 +19,6 @@ import '../utils/app_logger.dart';
 import '../widgets/github_changelog_view.dart';
 import '../services/app_tutorial_service.dart';
 import '../services/url_launcher_service.dart';
-import '../widgets/active_group_chip.dart';
-import '../widgets/group_management_sheet.dart';
 import '../widgets/gooey_toast.dart';
 import '../theme/app_theme.dart';
 
@@ -56,10 +54,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             context: context,
             title: l10n.config_button,
             controller: _scrollController,
-            actions: [
-              const ActiveGroupChip(isCompact: true),
-              const SizedBox(width: 8),
-            ],
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
@@ -82,61 +76,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     child: Column(
                       children: [
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                          leading: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.teal.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(
-                              Icons.storefront_rounded,
-                              color: Colors.teal,
-                              size: 24,
-                            ),
-                          ),
-                          title: Text(
-                            l10n.groups_title,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Builder(
-                            builder: (context) {
-                              final groups =
-                                  ref.watch(groupsStreamProvider).asData?.value ??
-                                  const [];
-                              final activeGroups = groups
-                                  .where((g) => !g.isDeleted)
-                                  .toList();
-                              final hiddenIds = ref.watch(
-                                hiddenWorkspaceIdsProvider,
-                              );
-                              final visibleGroups = activeGroups
-                                  .where((g) => !hiddenIds.contains(g.id))
-                                  .toList();
-                              final String activeLabel;
-                              if (activeGroups.isEmpty ||
-                                  visibleGroups.length == activeGroups.length) {
-                                activeLabel = l10n.group_all_workspaces;
-                              } else if (visibleGroups.length == 1) {
-                                activeLabel = resolveWorkspaceDisplayName(
-                                  visibleGroups.first,
-                                  l10n,
-                                );
-                              } else {
-                                activeLabel = l10n.group_visible_count(
-                                  visibleGroups.length,
-                                  activeGroups.length,
-                                );
-                              }
-                              return Text('${l10n.group_active_label}: $activeLabel');
-                            },
-                          ),
-                          trailing: const Icon(Icons.chevron_right_rounded),
-                          onTap: () => GroupManagementSheet.show(context),
-                        ),
-                        const Divider(height: 1, indent: 20, endIndent: 20),
                         _buildMenuTile(
                           context,
                           ref: ref,

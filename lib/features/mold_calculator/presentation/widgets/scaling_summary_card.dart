@@ -83,55 +83,13 @@ class ScalingSummaryCard extends StatelessWidget {
 
           if (res != null) ...[
             const SizedBox(height: 16),
-            // KPI Row: k_V, k_A, Depth Ratio
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final kVTile = _KpiBadge(
-                  label: l10n.mold_calc_factor_kv,
-                  value:
-                      '${RecipeUtils.formatNumber(res.volumeScaleFactor, decimalDigits: 2, trimTrailingZeros: true)}×',
-                  highlight: true,
-                  color: theme.colorScheme.primary,
-                );
-                final kATile = _KpiBadge(
-                  label: l10n.mold_calc_factor_ka,
-                  value:
-                      '${RecipeUtils.formatNumber(res.areaScaleFactor, decimalDigits: 2, trimTrailingZeros: true)}×',
-                  color: theme.colorScheme.tertiary,
-                );
-                final depthTile = _KpiBadge(
-                  label: l10n.mold_calc_depth_ratio,
-                  value:
-                      '${RecipeUtils.formatNumber(res.depthRatio, decimalDigits: 2, trimTrailingZeros: true)}×',
-                  color: theme.colorScheme.secondary,
-                );
-
-                if (constraints.maxWidth < 460) {
-                  return Column(
-                    children: [
-                      kVTile,
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(child: kATile),
-                          const SizedBox(width: 8),
-                          Expanded(child: depthTile),
-                        ],
-                      ),
-                    ],
-                  );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(child: kVTile),
-                    const SizedBox(width: 10),
-                    Expanded(child: kATile),
-                    const SizedBox(width: 10),
-                    Expanded(child: depthTile),
-                  ],
-                );
-              },
+            // KPI Row: Depth Ratio
+            _KpiBadge(
+              label: l10n.mold_calc_depth_ratio,
+              value:
+                  '${RecipeUtils.formatNumber(res.depthRatio, decimalDigits: 2, trimTrailingZeros: true)}×',
+              highlight: true,
+              color: theme.colorScheme.secondary,
             ),
             const SizedBox(height: 14),
 

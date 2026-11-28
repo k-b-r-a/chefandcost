@@ -230,7 +230,7 @@ function validateIntegrityPayload(payload, options = {}) {
   // -------------------------------------------------------------
   const isValid = violations.length === 0;
 
-  return {
+  const result = {
     isValid,
     violations,
     warnings,
@@ -245,8 +245,11 @@ function validateIntegrityPayload(payload, options = {}) {
       playProtectSafe: isPlayProtectClean,
       appAccessRiskSafe: isOverlayClean,
     },
-    rawPayload: payload,
   };
+  if (options.includeRawPayload === true) {
+    result.rawPayload = payload;
+  }
+  return result;
 }
 
 /**

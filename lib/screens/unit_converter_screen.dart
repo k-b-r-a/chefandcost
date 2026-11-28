@@ -472,6 +472,7 @@ class _UnitConverterScreenState extends ConsumerState<UnitConverterScreen> {
     final name = unit.name.toLowerCase();
     if (name.contains('gram')) return l10n.unit_grams;
     if (name.contains('kilogram')) return l10n.unit_kilograms;
+    if (name.contains('fluid')) return l10n.unit_fluid_ounces;
     if (name.contains('ounce')) return l10n.unit_ounces;
     if (name.contains('milliliter')) return l10n.unit_milliliters;
     if (name.contains('liter')) return l10n.unit_liters;

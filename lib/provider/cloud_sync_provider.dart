@@ -205,7 +205,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
         if (remote.isGranted) {
           activeSubscribed = true;
           planPref = remote.plan;
-          expiresAt = null;
+          expiresAt = remote.expiresAt;
         }
       }
 
@@ -288,17 +288,6 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
       subscriptionPlan: plan,
       subscriptionExpiresAt: expiresAt,
     );
-    if (_firestoreService.isConfigured && _firestoreService.authCurrentUser != null) {
-      try {
-        final uid = _firestoreService.authCurrentUser!.uid;
-        await _firestoreService.updateUserSubscriptionStatus(
-          userId: uid,
-          isSubscribed: isSubscribed,
-          plan: plan,
-          expiresAt: expiresAt,
-        );
-      } catch (_) {}
-    }
     if (syncToMonetization && !_disposed) {
       try {
         await ref.read(monetizationProvider.notifier).setSubscription(
@@ -410,6 +399,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           await setSubscription(
             isSubscribed: true,
             plan: remote.plan,
+            expiresAt: remote.expiresAt,
           );
         }
       }
@@ -461,6 +451,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
           await setSubscription(
             isSubscribed: true,
             plan: remote.plan,
+            expiresAt: remote.expiresAt,
           );
         }
       }

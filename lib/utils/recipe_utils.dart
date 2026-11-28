@@ -724,6 +724,7 @@ class RecipeUtils {
     required List<RecipeIngredientData> ingredients,
     required String yieldText,
     required String priceText,
+    double fixedOverheadCost = 0.0,
   }) {
     double totalCost = 0.0;
     for (var ing in ingredients) {
@@ -732,8 +733,12 @@ class RecipeUtils {
         totalCost += ingCost;
       }
     }
+    final safeOverhead =
+        fixedOverheadCost.isFinite && fixedOverheadCost > 0
+            ? fixedOverheadCost
+            : 0.0;
     return calculateFinancials(
-      totalIngredientsCost: totalCost,
+      totalIngredientsCost: totalCost + safeOverhead,
       yieldVal: parseFormattedNumber(yieldText),
       pricePerPortion: parseFormattedNumber(priceText),
     );
@@ -762,8 +767,11 @@ class RecipeUtils {
         totalCost += lineCost;
       }
     }
+    final overhead = detail.recipe.fixedOverheadCost;
+    final safeOverhead =
+        overhead.isFinite && overhead > 0 ? overhead : 0.0;
     return calculateFinancials(
-      totalIngredientsCost: totalCost,
+      totalIngredientsCost: totalCost + safeOverhead,
       yieldVal: detail.recipe.defaultYield,
       pricePerPortion: detail.recipe.targetPricePerPortion,
     );
@@ -780,6 +788,7 @@ class RecipeUtils {
     required String priceText,
     required List<RecipeIngredientData> ingredients,
     required List<RecipeStepData> steps,
+    double? fixedOverheadCost,
     String? category,
     String? groupId,
     List<String>? spaceIds,
@@ -802,11 +811,16 @@ class RecipeUtils {
       ),
       targetProfitMargin: drift.Value(decimalMargin),
       targetPricePerPortion: drift.Value(parsedPrice),
+      fixedOverheadCost: fixedOverheadCost != null
+          ? drift.Value(fixedOverheadCost)
+          : const drift.Value.absent(),
       dateTimeModified: drift.Value(now),
       category: category != null
           ? drift.Value(category)
           : const drift.Value('cocina'),
-      groupId: const drift.Value(null),
+      groupId: groupId != null
+          ? drift.Value(groupId)
+          : const drift.Value.absent(),
     );
 
     await db.transaction(() async {

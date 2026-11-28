@@ -1,0 +1,44 @@
+name: Release AAB
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build_release_aab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Decode Android signing credentials
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && secrets.KEY_PROPERTIES != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/release-keystore.jks
+          printf '%s\n' "${{ secrets.KEY_PROPERTIES }}" > android/key.properties
+
+      - name: Install dependencies & generate l10n
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Build obfuscated & 16KB-verified AAB
+        run: bash scripts/build_play_bundle.sh
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: chefandcost-release-artifacts
+          path: build/release-artifacts/**
+          retention-days: 30

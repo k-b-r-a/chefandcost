@@ -53,7 +53,7 @@ void main() {
       expect(recipe.recipePk, kSampleManufacturingRecipePk);
       expect(recipe.name, contains('Galletas de Mantequilla'));
       expect(recipe.defaultYield, 24.0);
-      expect(recipe.targetProfitMargin, 50.0);
+      expect(recipe.targetProfitMargin, 0.50);
 
       // Verify exactly 3 manufacturing raw materials
       final detail = await db.getRecipeDetail(recipe.recipePk);

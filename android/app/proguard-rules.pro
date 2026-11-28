@@ -1,27 +1,26 @@
-## Flutter wrapper & engine rules (critico para JNI y GeneratedPluginRegistrant)
--keep class io.flutter.app.** { *; }
--keep class io.flutter.plugin.** { *; }
--keep class io.flutter.util.** { *; }
--keep class io.flutter.view.** { *; }
+## Stacktrace symbolication for Google Play Console (preserves line numbers, hides filenames)
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable,Signature,*Annotation*,EnclosingMethod,InnerClasses,Exceptions
+
+## Flutter engine, plugins & app native entrypoints
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 -keep class com.chefandcost.app.** { *; }
+-keep class com.github.dart_lang.jni.** { *; }
+-keep class com.github.dart_lang.jni_flutter.** { *; }
 
-# Play Core (compatibilidad con dependencias divididas)
+## Play Core & Play Integrity API
 -dontwarn com.google.android.play.core.**
-
-# Play Integrity API (usado en PlayIntegrityHandler.kt)
 -keep class com.google.android.play.core.integrity.** { *; }
 
-# Desugaring
+## Core library desugaring & OkHttp optional platform hooks
 -dontwarn java.lang.invoke.StringConcatFactory
-
-# Prevencion de fallos con Gson y flutter_local_notifications en modo Release (R8)
--keepattributes Signature
--keepattributes *Annotation*
--keepattributes EnclosingMethod
--keepattributes InnerClasses
 -dontwarn sun.misc.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+
+## Gson & flutter_local_notifications reflection models
 -keep class com.google.gson.reflect.TypeToken { *; }
 -keep class * extends com.google.gson.reflect.TypeToken { *; }
 -keepclassmembers class * {
@@ -29,8 +28,7 @@
 }
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
 
-# R8 Full Mode: add constructor/member retention where third-party AAR consumer rules omit { ... }
--keep class okhttp3.** { *; }
+## WorkManager, Room (used by WorkManager/AdMob on startup) & VersionedParcelable
 -keep class * extends androidx.work.ListenableWorker {
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
@@ -39,6 +37,3 @@
 -keep class * extends androidx.room.RoomDatabase {
     <init>();
 }
-
-# Repackage obfuscated classes into a short package (Play Console optimization)
--repackageclasses 'o'
