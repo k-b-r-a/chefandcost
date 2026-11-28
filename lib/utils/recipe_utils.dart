@@ -801,6 +801,9 @@ class RecipeUtils {
     final actualRecipePk = recipePk ?? uuid.v4();
     final now = DateTime.now();
 
+    final effectiveGroupId =
+        groupId ?? (spaceIds != null && spaceIds.isNotEmpty ? spaceIds.first : null);
+
     final recipeCompanion = RecipesCompanion(
       recipePk: drift.Value(actualRecipePk),
       name: drift.Value(name.trim()),
@@ -818,8 +821,8 @@ class RecipeUtils {
       category: category != null
           ? drift.Value(category)
           : const drift.Value('cocina'),
-      groupId: groupId != null
-          ? drift.Value(groupId)
+      groupId: (groupId != null || spaceIds != null)
+          ? drift.Value(effectiveGroupId)
           : const drift.Value.absent(),
     );
 

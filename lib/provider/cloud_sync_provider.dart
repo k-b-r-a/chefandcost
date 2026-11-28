@@ -1111,6 +1111,7 @@ class CloudSyncNotifier extends Notifier<CloudSyncState> {
   }
 
   void _invalidateDataStreams() {
+    ref.invalidate(groupsStreamProvider);
     ref.invalidate(recipesStreamProvider);
     ref.invalidate(recipesWithFinancialsStreamProvider);
     ref.invalidate(ingredientsStreamProvider);

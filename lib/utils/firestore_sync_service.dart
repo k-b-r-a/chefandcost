@@ -272,12 +272,23 @@ class FirestoreSyncService {
   }
 
   /// Resets the last synced timestamp (forces full differential re-sync next time).
-  Future<void> clearLastSyncedAt(String userId) async {
+  /// When [userId] is omitted or empty, clears sync cursors for all users (e.g. on local DB reset).
+  Future<void> clearLastSyncedAt([String? userId]) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('${prefLastSyncTimestampKey}_$userId');
-    await prefs.remove('${prefLastSyncKey}_$userId');
-    await prefs.remove(prefLastSyncTimestampKey);
-    await prefs.remove(prefLastSyncKey);
+    if (userId != null && userId.isNotEmpty) {
+      await prefs.remove('${prefLastSyncTimestampKey}_$userId');
+      await prefs.remove('${prefLastSyncKey}_$userId');
+      await prefs.remove('${prefLastSyncTimestampKey}_server_cursor_$userId');
+      await prefs.remove(prefLastSyncTimestampKey);
+      await prefs.remove(prefLastSyncKey);
+      return;
+    }
+    for (final key in prefs.getKeys().toList()) {
+      if (key.startsWith(prefLastSyncTimestampKey) ||
+          key.startsWith(prefLastSyncKey)) {
+        await prefs.remove(key);
+      }
+    }
   }
 
   bool _persistenceInitialized = false;
@@ -1092,12 +1103,329 @@ class FirestoreSyncService {
   // Two-Way Incremental Delta Sync
   // ---------------------------------------------------------------------------
 
-  /// Performs a manual or automatic, two-way incremental delta sync with Cloud Firestore.
+  /// Reconciles full remote Firestore snapshots against local SQLite using LWW
+  /// and local deletion tombstones, returning both the pull merge summary and
+  /// the exact local entities that need to be pushed back to Firestore.
+  @visibleForTesting
+  Future<
+    ({
+      SyncMergeResult mergeResult,
+      List<Group> groupsToPush,
+      List<Unit> unitsToPush,
+      List<Ingredient> ingredientsToPush,
+      List<RecipeDetail> recipesToPush,
+      List<DeletedRecord> tombstonesToPush,
+    })
+  >
+  reconcileRemoteSnapshots({
+    required AppDatabase db,
+    required DateTime? lastSyncTimestamp,
+    required List<({String id, Map<String, dynamic> data})> remoteGroupDocs,
+    required List<({String id, Map<String, dynamic> data})> remoteUnitDocs,
+    required List<({String id, Map<String, dynamic> data})> remoteIngredientDocs,
+    required List<({String id, Map<String, dynamic> data})> remoteRecipeDocs,
+    Future<void> Function(String docId)? onDuplicateRemoteUnit,
+  }) async {
+    int recipesAdded = 0;
+    int recipesUpdated = 0;
+    int recipesKeptLocal = 0;
+    int ingredientsAdded = 0;
+    int ingredientsUpdated = 0;
+
+    // Load local tombstones BEFORE Phase 1 so locally deleted items are not
+    // resurrected by older remote snapshots.
+    final allPendingTombstones = await db.getAllDeletedRecords();
+    final pendingRecipeTombstones = <String, DeletedRecord>{
+      for (final r in allPendingTombstones)
+        if (r.entityType == 'recipes') r.recordPk: r,
+    };
+    final pendingIngTombstones = <String, DeletedRecord>{
+      for (final r in allPendingTombstones)
+        if (r.entityType == 'ingredients') r.recordPk: r,
+    };
+    final tombstonesSupersededByRemote = <DeletedRecord>[];
+
+    // -------------------------------------------------------------
+    // PHASE 1: PULL REMOTE UPDATES (Full Snapshot Reconciliation)
+    // -------------------------------------------------------------
+
+    // 1. Remote Groups / Spaces (always pull all so workspace metadata is never lost)
+    final remoteGroupIds = <String>{};
+    final remoteGroupUpdatedTimes = <String, DateTime>{};
+    for (final doc in remoteGroupDocs) {
+      final group = groupFromFirestore(doc.data, fallbackId: doc.id);
+      remoteGroupIds.add(group.id);
+      remoteGroupUpdatedTimes[group.id] = group.updatedAt;
+      await db.mergeGroupFromRemote(group);
+    }
+
+    // 2. Remote Units (Pull all units so foreign keys never fail & purge remote duplicates)
+    final remoteUnitIds = <String>{};
+    final seenRemoteUnitNames = <String>{};
+    for (final doc in remoteUnitDocs) {
+      final unit = unitFromFirestore(doc.data, fallbackId: doc.id);
+      remoteUnitIds.add(unit.unitPk);
+      final normName = unit.name == 'unit_spoonfuls'
+          ? 'unit_tablespoons'
+          : unit.name;
+      if (!seenRemoteUnitNames.add(normName)) {
+        if (onDuplicateRemoteUnit != null) {
+          await onDuplicateRemoteUnit(doc.id);
+        }
+      }
+      await db.mergeUnitFromRemote(unit);
+    }
+
+    // 3. Remote Ingredients (Full snapshot so pre-existing records or records
+    // missing after a local DB reset are always restored)
+    final remoteIngIds = <String>{};
+    final remoteIngUpdatedTimes = <String, DateTime>{};
+
+    for (final doc in remoteIngredientDocs) {
+      final data = doc.data;
+      final ingPk = (data['ingredientPk'] as String?) ?? doc.id;
+      final isDeleted =
+          (data['is_deleted'] ?? data['isDeleted']) as bool? ?? false;
+      final remoteTime = _parseDate(
+        data['dateTimeModified'] ?? data['updatedAt'] ?? data['dateCreated'],
+      );
+      remoteIngIds.add(ingPk);
+      remoteIngUpdatedTimes[ingPk] = remoteTime;
+
+      if (isDeleted) {
+        final localIng = await db.getIngredientById(ingPk, includeDeleted: true);
+        if (localIng != null) {
+          final localTime = localIng.dateTimeModified ?? localIng.dateCreated;
+          if (remoteTime.isAfter(localTime) ||
+              remoteTime.isAtSameMomentAs(localTime)) {
+            await db.deleteIngredientPhysically(ingPk, recordTombstone: false);
+            ingredientsUpdated++;
+          }
+        }
+      } else {
+        final localTombstone = pendingIngTombstones[ingPk];
+        if (localTombstone != null) {
+          if (!remoteTime.isAfter(localTombstone.deletedAt)) {
+            continue;
+          }
+          pendingIngTombstones.remove(ingPk);
+          tombstonesSupersededByRemote.add(localTombstone);
+        }
+
+        final ing = ingredientFromFirestore(data, fallbackId: doc.id);
+        final res = await db.mergeIngredientFromRemote(ing);
+        if (res == 1) ingredientsAdded++;
+        if (res == 2) ingredientsUpdated++;
+      }
+    }
+
+    // 4. Remote Recipes (Full snapshot so pre-existing records or records
+    // missing after a local DB reset are always restored)
+    final remoteRecipeIds = <String>{};
+    final remoteRecipeUpdatedTimes = <String, DateTime>{};
+
+    for (final doc in remoteRecipeDocs) {
+      final data = doc.data;
+      final recipePk = (data['recipePk'] as String?) ?? doc.id;
+      final isDeleted =
+          (data['isDeleted'] ?? data['is_deleted']) as bool? ?? false;
+      final remoteTime = _parseDate(
+        data['dateTimeModified'] ?? data['updatedAt'] ?? data['dateCreated'],
+      );
+      remoteRecipeIds.add(recipePk);
+      remoteRecipeUpdatedTimes[recipePk] = remoteTime;
+
+      if (isDeleted) {
+        final localRecipe =
+            (await (db.select(db.recipes)
+                      ..where((t) => t.recipePk.equals(recipePk))
+                      ..limit(1))
+                    .get())
+                .firstOrNull;
+        if (localRecipe != null) {
+          final localTime =
+              localRecipe.dateTimeModified ?? localRecipe.dateCreated;
+          if (remoteTime.isAfter(localTime) ||
+              remoteTime.isAtSameMomentAs(localTime)) {
+            await db.deleteRecipeById(recipePk, recordTombstone: false);
+            recipesUpdated++;
+          }
+        }
+      } else {
+        final localTombstone = pendingRecipeTombstones[recipePk];
+        if (localTombstone != null) {
+          if (!remoteTime.isAfter(localTombstone.deletedAt)) {
+            continue;
+          }
+          pendingRecipeTombstones.remove(recipePk);
+          tombstonesSupersededByRemote.add(localTombstone);
+        }
+
+        final parsed = recipeFromFirestore(data, fallbackId: doc.id);
+        final stubTimestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+        final legacySpaceId = parsed.recipe.groupId;
+        if (legacySpaceId != null &&
+            await db.getGroupById(legacySpaceId) == null) {
+          await db.insertGroup(
+            GroupsCompanion(
+              id: drift.Value(legacySpaceId),
+              name: const drift.Value('Workspace'),
+              createdAt: drift.Value(stubTimestamp),
+              updatedAt: drift.Value(stubTimestamp),
+            ),
+          );
+        }
+        for (final spaceId in parsed.spaceIds) {
+          if (await db.getGroupById(spaceId) == null) {
+            await db.insertGroup(
+              GroupsCompanion(
+                id: drift.Value(spaceId),
+                name: const drift.Value('Workspace'),
+                createdAt: drift.Value(stubTimestamp),
+                updatedAt: drift.Value(stubTimestamp),
+              ),
+            );
+          }
+        }
+
+        final res = await db.mergeRecipeFromRemote(
+          remoteRecipe: parsed.recipe,
+          remoteIngredients: parsed.ingredients,
+          remoteSteps: parsed.steps,
+          nestedIngredients: parsed.nestedIngredients,
+          remoteSpaceIds: parsed.spaceIds,
+        );
+        if (res == 1) recipesAdded++;
+        if (res == 2) recipesUpdated++;
+        if (res == 0) recipesKeptLocal++;
+      }
+    }
+
+    if (tombstonesSupersededByRemote.isNotEmpty) {
+      await db.clearDeletedRecords(tombstonesSupersededByRemote);
+    }
+
+    // -------------------------------------------------------------
+    // PHASE 2: COMPUTE LOCAL UPDATES TO PUSH (Delta + Missing Remote + Tombstones)
+    // -------------------------------------------------------------
+    final groupsToPush = <Group>[];
+    final allLocalGroups = await db.getAllGroups(includeDeleted: true);
+    for (final group in allLocalGroups) {
+      final remoteTime = remoteGroupUpdatedTimes[group.id];
+      if (remoteTime != null && !group.updatedAt.isAfter(remoteTime)) {
+        continue;
+      }
+      final isMissingRemote = !remoteGroupIds.contains(group.id);
+      final isModifiedSince =
+          lastSyncTimestamp == null || group.updatedAt.isAfter(lastSyncTimestamp);
+      if (isMissingRemote || isModifiedSince) {
+        groupsToPush.add(group);
+      }
+    }
+
+    final localUnits = lastSyncTimestamp == null
+        ? await db.getAllUnits()
+        : (await db.getAllUnits())
+              .where((u) => u.isMutable || !remoteUnitIds.contains(u.unitPk))
+              .toList();
+
+    final allLocalIngredients =
+        (await db.getAllIngredients(includeDeleted: true))
+            .where((i) => !isSampleManufacturingIngredient(i.ingredientPk))
+            .toList();
+
+    final ingredientsToPush = <Ingredient>[];
+    final pushedIngIds = <String>{};
+    for (final ing in allLocalIngredients) {
+      final localTime = ing.isDeleted
+          ? (ing.deletedAt ?? ing.dateTimeModified ?? ing.dateCreated)
+          : (ing.dateTimeModified ?? ing.dateCreated);
+      final remoteTime = remoteIngUpdatedTimes[ing.ingredientPk];
+      if (remoteTime != null && !localTime.isAfter(remoteTime)) {
+        continue;
+      }
+      final isMissingRemote = !remoteIngIds.contains(ing.ingredientPk);
+      final isModifiedSince =
+          lastSyncTimestamp == null || !localTime.isBefore(lastSyncTimestamp);
+      if (isMissingRemote || isModifiedSince) {
+        pushedIngIds.add(ing.ingredientPk);
+        ingredientsToPush.add(ing);
+      }
+    }
+
+    final allLocalRecipes = (await db.getAllRecipeDetails())
+        .where((r) => !isSampleManufacturingRecipe(r.recipe.recipePk))
+        .toList();
+
+    final recipesToPush = <RecipeDetail>[];
+    for (final rd in allLocalRecipes) {
+      final r = rd.recipe;
+      final localTime = r.dateTimeModified ?? r.dateCreated;
+      final remoteTime = remoteRecipeUpdatedTimes[r.recipePk];
+      if (remoteTime != null && !localTime.isAfter(remoteTime)) {
+        continue;
+      }
+      final isMissingRemote = !remoteRecipeIds.contains(r.recipePk);
+      final isModifiedSince =
+          lastSyncTimestamp == null || !localTime.isBefore(lastSyncTimestamp);
+      if (!isMissingRemote && !isModifiedSince) {
+        continue;
+      }
+
+      for (final ri in rd.ingredients) {
+        if (!pushedIngIds.contains(ri.ingredient.ingredientPk) &&
+            !isSampleManufacturingIngredient(ri.ingredient.ingredientPk)) {
+          final ingTime = ri.ingredient.isDeleted
+              ? (ri.ingredient.deletedAt ??
+                  ri.ingredient.dateTimeModified ??
+                  ri.ingredient.dateCreated)
+              : (ri.ingredient.dateTimeModified ?? ri.ingredient.dateCreated);
+          final remoteIngTime =
+              remoteIngUpdatedTimes[ri.ingredient.ingredientPk];
+          if (remoteIngTime == null || ingTime.isAfter(remoteIngTime)) {
+            pushedIngIds.add(ri.ingredient.ingredientPk);
+            ingredientsToPush.add(ri.ingredient);
+          }
+        }
+      }
+
+      recipesToPush.add(rd);
+    }
+
+    final supersededKeys = {
+      for (final t in tombstonesSupersededByRemote)
+        '${t.entityType}:${t.recordPk}',
+    };
+    final tombstonesToPush = allPendingTombstones
+        .where((t) => !supersededKeys.contains('${t.entityType}:${t.recordPk}'))
+        .toList();
+
+    return (
+      mergeResult: SyncMergeResult(
+        recipesAdded: recipesAdded,
+        recipesUpdated: recipesUpdated,
+        recipesKeptLocal: recipesKeptLocal,
+        ingredientsAdded: ingredientsAdded,
+        ingredientsUpdated: ingredientsUpdated,
+      ),
+      groupsToPush: groupsToPush,
+      unitsToPush: localUnits,
+      ingredientsToPush: ingredientsToPush,
+      recipesToPush: recipesToPush,
+      tombstonesToPush: tombstonesToPush,
+    );
+  }
+
+  /// Performs a manual or automatic, two-way sync with Cloud Firestore.
   ///
-  /// 1. Queries only records updated after [lastSyncTimestamp] to minimize document reads.
-  /// 2. Merges remote records into local SQLite using last-write-wins based on updated_at / dateTimeModified.
-  /// 3. Propagates remote deletions (isDeleted == true) to SQLite without generating local tombstones.
-  /// 4. Pushes local records modified after [lastSyncTimestamp] plus pending tombstones in [DeletedRecords].
+  /// 1. Pulls full remote collection snapshots so pre-existing records and
+  ///    records missing after a local DB reset are always restored safely.
+  /// 2. Respects pending local tombstones in [DeletedRecords] so local deletions
+  ///    are never resurrected by older remote snapshots.
+  /// 3. Merges remote records into local SQLite using last-write-wins based on
+  ///    updated_at / dateTimeModified.
+  /// 4. Pushes local records modified after [lastSyncTimestamp] or missing from
+  ///    remote, plus pending tombstones in [DeletedRecords].
   /// 5. Commits batched writes (<= 450 ops) before updating [lastSyncTimestamp].
   /// 6. Clears synced tombstones from local [DeletedRecords].
   Future<SyncMergeResult> syncTwoWay({
@@ -1120,16 +1448,7 @@ class FirestoreSyncService {
     await initPersistence();
 
     final lastSyncTimestamp = await getLastSyncedAt(activeUid);
-    final prefs = await SharedPreferences.getInstance();
-    final serverCursorKey = '${prefLastSyncTimestampKey}_server_cursor_$activeUid';
-    final hasServerCursor = prefs.getBool(serverCursorKey) ?? false;
     final syncStartTime = DateTime.now().toUtc();
-
-    int recipesAdded = 0;
-    int recipesUpdated = 0;
-    int recipesKeptLocal = 0;
-    int ingredientsAdded = 0;
-    int ingredientsUpdated = 0;
 
     final userDoc = _firestore.collection('users').doc(activeUid);
     final recipesCol = userDoc.collection('recipes');
@@ -1139,150 +1458,45 @@ class FirestoreSyncService {
 
     final batchQueue = FirestoreBatchQueue(_firestore, maxBatchSize: 450);
 
-    // -------------------------------------------------------------
-    // PHASE 1: PULL REMOTE UPDATES (Delta Sync)
-    // -------------------------------------------------------------
+    final results = await Future.wait([
+      groupsCol.get(),
+      unitsCol.get(),
+      ingsCol.get(),
+      recipesCol.get(),
+    ]);
+    final remoteGroupsSnap = results[0];
+    final remoteUnitsSnap = results[1];
+    final remoteIngsSnap = results[2];
+    final remoteRecipesSnap = results[3];
 
-    // 1. Remote Groups / Spaces
-    Query<Map<String, dynamic>> groupsQuery = groupsCol;
-    if (lastSyncTimestamp != null && hasServerCursor) {
-      groupsQuery = groupsQuery.where(
-        'serverUpdatedAt',
-        isGreaterThan: Timestamp.fromDate(lastSyncTimestamp.toUtc()),
-      );
-    }
-    final remoteGroupsSnap = await groupsQuery.get();
-    for (final doc in remoteGroupsSnap.docs) {
-      await db.mergeGroupFromRemote(
-        groupFromFirestore(doc.data(), fallbackId: doc.id),
-      );
-    }
+    final unitRefsById = {
+      for (final doc in remoteUnitsSnap.docs) doc.id: doc.reference,
+    };
 
-    // 2. Remote Units (Pull all units so foreign keys never fail & purge remote duplicates)
-    final remoteUnitsSnap = await unitsCol.get();
-    final seenRemoteUnitNames = <String>{};
-    for (final doc in remoteUnitsSnap.docs) {
-      final unit = unitFromFirestore(doc.data(), fallbackId: doc.id);
-      final normName = unit.name == 'unit_spoonfuls'
-          ? 'unit_tablespoons'
-          : unit.name;
-      if (!seenRemoteUnitNames.add(normName)) {
-        await batchQueue.queueDelete(doc.reference);
-      }
-      await db.mergeUnitFromRemote(unit);
-    }
-
-    // 3. Remote Ingredients (Delta query if lastSyncTimestamp exists)
-    Query<Map<String, dynamic>> ingsQuery = ingsCol;
-    if (lastSyncTimestamp != null && hasServerCursor) {
-      ingsQuery = ingsQuery.where(
-        'serverUpdatedAt',
-        isGreaterThan: Timestamp.fromDate(lastSyncTimestamp.toUtc()),
-      );
-    }
-    final remoteIngsSnap = await ingsQuery.get();
-    final Map<String, DateTime> remoteIngUpdatedTimes = {};
-
-    for (final doc in remoteIngsSnap.docs) {
-      final data = doc.data();
-      final ingPk = (data['ingredientPk'] as String?) ?? doc.id;
-      final isDeleted = (data['is_deleted'] ?? data['isDeleted']) as bool? ?? false;
-      final remoteTime = _parseDate(data['dateTimeModified'] ?? data['updatedAt'] ?? data['dateCreated']);
-      remoteIngUpdatedTimes[ingPk] = remoteTime;
-
-      if (isDeleted) {
-        final localIng = await db.getIngredientById(ingPk, includeDeleted: true);
-        if (localIng != null) {
-          final localTime = localIng.dateTimeModified ?? localIng.dateCreated;
-          if (remoteTime.isAfter(localTime) || remoteTime.isAtSameMomentAs(localTime)) {
-            await db.deleteIngredientPhysically(ingPk, recordTombstone: false);
-            ingredientsUpdated++;
-          }
+    final plan = await reconcileRemoteSnapshots(
+      db: db,
+      lastSyncTimestamp: lastSyncTimestamp,
+      remoteGroupDocs: remoteGroupsSnap.docs
+          .map((doc) => (id: doc.id, data: doc.data()))
+          .toList(),
+      remoteUnitDocs: remoteUnitsSnap.docs
+          .map((doc) => (id: doc.id, data: doc.data()))
+          .toList(),
+      remoteIngredientDocs: remoteIngsSnap.docs
+          .map((doc) => (id: doc.id, data: doc.data()))
+          .toList(),
+      remoteRecipeDocs: remoteRecipesSnap.docs
+          .map((doc) => (id: doc.id, data: doc.data()))
+          .toList(),
+      onDuplicateRemoteUnit: (docId) async {
+        final ref = unitRefsById[docId];
+        if (ref != null) {
+          await batchQueue.queueDelete(ref);
         }
-      } else {
-        final ing = ingredientFromFirestore(data, fallbackId: doc.id);
-        final res = await db.mergeIngredientFromRemote(ing);
-        if (res == 1) ingredientsAdded++;
-        if (res == 2) ingredientsUpdated++;
-      }
-    }
+      },
+    );
 
-    // 4. Remote Recipes (Delta query if lastSyncTimestamp exists)
-    Query<Map<String, dynamic>> recipesQuery = recipesCol;
-    if (lastSyncTimestamp != null && hasServerCursor) {
-      recipesQuery = recipesQuery.where(
-        'serverUpdatedAt',
-        isGreaterThan: Timestamp.fromDate(lastSyncTimestamp.toUtc()),
-      );
-    }
-    final remoteRecipesSnap = await recipesQuery.get();
-    final Map<String, DateTime> remoteRecipeUpdatedTimes = {};
-
-    for (final doc in remoteRecipesSnap.docs) {
-      final data = doc.data();
-      final recipePk = (data['recipePk'] as String?) ?? doc.id;
-      final isDeleted = (data['isDeleted'] ?? data['is_deleted']) as bool? ?? false;
-      final remoteTime = _parseDate(data['dateTimeModified'] ?? data['updatedAt'] ?? data['dateCreated']);
-      remoteRecipeUpdatedTimes[recipePk] = remoteTime;
-
-      if (isDeleted) {
-        final localRecipe = (await (db.select(db.recipes)
-                  ..where((t) => t.recipePk.equals(recipePk))
-                  ..limit(1))
-                .get())
-            .firstOrNull;
-        if (localRecipe != null) {
-          final localTime = localRecipe.dateTimeModified ?? localRecipe.dateCreated;
-          if (remoteTime.isAfter(localTime) || remoteTime.isAtSameMomentAs(localTime)) {
-            await db.deleteRecipeById(recipePk, recordTombstone: false);
-            recipesUpdated++;
-          }
-        }
-      } else {
-        final parsed = recipeFromFirestore(data, fallbackId: doc.id);
-        final legacySpaceId = parsed.recipe.groupId;
-        if (legacySpaceId != null &&
-            await db.getGroupById(legacySpaceId) == null) {
-          await db.insertGroup(
-            GroupsCompanion.insert(
-              id: drift.Value(legacySpaceId),
-              name: 'Workspace',
-            ),
-          );
-        }
-        for (final spaceId in parsed.spaceIds) {
-          if (await db.getGroupById(spaceId) == null) {
-            await db.insertGroup(
-              GroupsCompanion.insert(
-                id: drift.Value(spaceId),
-                name: 'Workspace',
-              ),
-            );
-          }
-        }
-
-        final res = await db.mergeRecipeFromRemote(
-          remoteRecipe: parsed.recipe,
-          remoteIngredients: parsed.ingredients,
-          remoteSteps: parsed.steps,
-          nestedIngredients: parsed.nestedIngredients,
-          remoteSpaceIds: parsed.spaceIds,
-        );
-        if (res == 1) recipesAdded++;
-        if (res == 2) recipesUpdated++;
-        if (res == 0) recipesKeptLocal++;
-      }
-    }
-
-    // -------------------------------------------------------------
-    // PHASE 2: PUSH LOCAL DELTA UPDATES (Modified since lastSyncTimestamp + Tombstones)
-    // -------------------------------------------------------------
-    final localGroups = (await db.getAllGroups(includeDeleted: true)).where((g) {
-      if (lastSyncTimestamp == null) return true;
-      return g.updatedAt.isAfter(lastSyncTimestamp);
-    }).toList();
-
-    for (final group in localGroups) {
+    for (final group in plan.groupsToPush) {
       await batchQueue.queueSet(
         groupsCol.doc(group.id),
         groupToFirestore(group),
@@ -1290,34 +1504,14 @@ class FirestoreSyncService {
       );
     }
 
-    // Units
-    final localUnits = lastSyncTimestamp == null
-        ? await db.getAllUnits()
-        : await db.getCustomUnitsModifiedSince(lastSyncTimestamp);
-    for (final unit in localUnits) {
+    for (final unit in plan.unitsToPush) {
       final docRef = unitsCol.doc(unit.unitPk);
       final data = unitToFirestore(unit);
       data['updatedAt'] = Timestamp.fromDate(syncStartTime);
       await batchQueue.queueSet(docRef, data, SetOptions(merge: true));
     }
 
-    // Modified Ingredients
-    final localIngredients = (await db.getIngredientsModifiedSince(
-      lastSyncTimestamp,
-      includeDeleted: true,
-    )).where((i) => !isSampleManufacturingIngredient(i.ingredientPk)).toList();
-
-    final pushedIngIds = <String>{};
-    for (final ing in localIngredients) {
-      final localTime = ing.isDeleted
-          ? (ing.deletedAt ?? ing.dateTimeModified ?? ing.dateCreated)
-          : (ing.dateTimeModified ?? ing.dateCreated);
-      final remoteTime = remoteIngUpdatedTimes[ing.ingredientPk];
-      if (remoteTime != null && remoteTime.isAfter(localTime)) {
-        continue;
-      }
-
-      pushedIngIds.add(ing.ingredientPk);
+    for (final ing in plan.ingredientsToPush) {
       final docRef = ingsCol.doc(ing.ingredientPk);
       await batchQueue.queueSet(
         docRef,
@@ -1326,33 +1520,8 @@ class FirestoreSyncService {
       );
     }
 
-    // Modified Recipes
-    final localRecipes = (await db.getAllRecipeDetails(modifiedSince: lastSyncTimestamp))
-        .where((r) => !isSampleManufacturingRecipe(r.recipe.recipePk))
-        .toList();
-
-    for (final rd in localRecipes) {
-      for (final ri in rd.ingredients) {
-        if (!pushedIngIds.contains(ri.ingredient.ingredientPk) &&
-            !isSampleManufacturingIngredient(ri.ingredient.ingredientPk)) {
-          pushedIngIds.add(ri.ingredient.ingredientPk);
-          final docRef = ingsCol.doc(ri.ingredient.ingredientPk);
-          await batchQueue.queueSet(
-            docRef,
-            ingredientToFirestore(ri.ingredient),
-            SetOptions(merge: true),
-          );
-        }
-      }
-
-      final r = rd.recipe;
-      final localTime = r.dateTimeModified ?? r.dateCreated;
-      final remoteTime = remoteRecipeUpdatedTimes[r.recipePk];
-      if (remoteTime != null && remoteTime.isAfter(localTime)) {
-        continue;
-      }
-
-      final docRef = recipesCol.doc(r.recipePk);
+    for (final rd in plan.recipesToPush) {
+      final docRef = recipesCol.doc(rd.recipe.recipePk);
       await batchQueue.queueSet(
         docRef,
         recipeToFirestore(rd),
@@ -1360,9 +1529,7 @@ class FirestoreSyncService {
       );
     }
 
-    // Pending local tombstones (DeletedRecords)
-    final pendingTombstones = await db.getAllDeletedRecords();
-    for (final record in pendingTombstones) {
+    for (final record in plan.tombstonesToPush) {
       if (record.entityType == 'recipes') {
         if (isSampleManufacturingRecipe(record.recordPk)) continue;
         final docRef = recipesCol.doc(record.recordPk);
@@ -1412,21 +1579,14 @@ class FirestoreSyncService {
     await batchQueue.commit();
 
     // Clear synced tombstones from local database
-    await db.clearDeletedRecords(pendingTombstones);
+    await db.clearDeletedRecords(plan.tombstonesToPush);
 
     // -------------------------------------------------------------
     // PHASE 3: RECORD LAST SYNCED AT
     // -------------------------------------------------------------
     await setLastSyncedAt(activeUid, syncStartTime);
-    await prefs.setBool(serverCursorKey, true);
 
-    return SyncMergeResult(
-      recipesAdded: recipesAdded,
-      recipesUpdated: recipesUpdated,
-      recipesKeptLocal: recipesKeptLocal,
-      ingredientsAdded: ingredientsAdded,
-      ingredientsUpdated: ingredientsUpdated,
-    );
+    return plan.mergeResult;
   }
 }
 

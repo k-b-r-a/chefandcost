@@ -1322,11 +1322,14 @@ void main() {
         expect(inDbIng!.isDeleted, isTrue);
         expect(inDbIng.deletedAt?.toUtc(), tDeleted);
 
-        // Verification: dead ingredient reference was detached from recipe
+        // Verification: dead ingredient reference contributes 0 ingredient cost (only fixedOverheadCost 0.2 remains)
         final detail = await db.getRecipeDetail('rec-c2-nog');
         expect(detail.ingredients, hasLength(1));
         expect(detail.ingredients.single.ingredient.isDeleted, isTrue);
-        expect(RecipeUtils.calculateSummaryFromDetail(detail).totalCost, 0);
+        expect(
+          RecipeUtils.calculateSummaryFromDetail(detail).totalCost,
+          closeTo(0.2, 0.0001),
+        );
       },
     );
 
@@ -1915,5 +1918,286 @@ void main() {
       expect(batchSizes, [450, 450, 50]);
       expect(batchSizes.every((s) => s <= 450), isTrue);
     });
+
+    test(
+      'Modifying one recipe workspace, resetting local DB, and syncing restores ALL cloud recipes and workspaces',
+      () async {
+        final service = FirestoreSyncService();
+        final tOld = DateTime.utc(2026, 3, 1, 10, 0);
+        final tLastSync = DateTime.utc(2026, 3, 2, 10, 0);
+        final tEdited = DateTime.utc(2026, 3, 3, 12, 0);
+
+        // Seed workspaces & 3 recipes locally
+        await db.insertGroup(
+          GroupsCompanion(
+            id: const Value('space-bakery'),
+            name: const Value('Panadería'),
+            createdAt: Value(tOld),
+            updatedAt: Value(tOld),
+          ),
+        );
+        await db.insertGroup(
+          GroupsCompanion(
+            id: const Value('space-pastry'),
+            name: const Value('Pastelería'),
+            createdAt: Value(tOld),
+            updatedAt: Value(tOld),
+          ),
+        );
+
+        final savedR1 = await RecipeUtils.saveRecipe(
+          db: db,
+          name: 'Croissant',
+          description: '',
+          yieldText: '6',
+          yieldName: 'pcs',
+          profitMarginText: '50',
+          priceText: '3',
+          ingredients: [],
+          steps: [],
+          spaceIds: ['space-bakery'],
+        );
+        final rec1Pk = savedR1.recipe.recipePk;
+        expect(savedR1.recipe.groupId, 'space-bakery');
+        expect(savedR1.spaceIds, ['space-bakery']);
+
+        // Modify ONLY rec-1's workspace to space-pastry and verify groupId updates too
+        final editedR1 = await RecipeUtils.saveRecipe(
+          db: db,
+          recipePk: rec1Pk,
+          name: 'Croissant',
+          description: '',
+          yieldText: '6',
+          yieldName: 'pcs',
+          profitMarginText: '50',
+          priceText: '3',
+          ingredients: [],
+          steps: [],
+          spaceIds: ['space-pastry'],
+        );
+        expect(editedR1.recipe.groupId, 'space-pastry');
+        expect(editedR1.spaceIds, ['space-pastry']);
+
+        // Simulate Firestore cloud containing 2 legacy recipes (without serverUpdatedAt, older than lastSyncTimestamp)
+        // plus 1 newly edited recipe (newer than lastSyncTimestamp), and 2 workspaces.
+        final remoteGroups = [
+          (
+            id: 'space-bakery',
+            data: {
+              'id': 'space-bakery',
+              'name': 'Panadería',
+              'is_active': true,
+              'created_at': tOld.toIso8601String(),
+              'updated_at': tOld.toIso8601String(),
+              'is_deleted': false,
+            },
+          ),
+          (
+            id: 'space-pastry',
+            data: {
+              'id': 'space-pastry',
+              'name': 'Pastelería',
+              'is_active': true,
+              'created_at': tOld.toIso8601String(),
+              'updated_at': tOld.toIso8601String(),
+              'is_deleted': false,
+            },
+          ),
+        ];
+
+        final remoteRecipes = [
+          (
+            id: 'rec-1',
+            data: {
+              'recipePk': 'rec-1',
+              'name': 'Croissant',
+              'defaultYield': 6.0,
+              'yieldName': 'pcs',
+              'groupId': 'space-pastry',
+              'space_ids': ['space-pastry'],
+              'dateCreated': tOld.toIso8601String(),
+              'dateTimeModified': tEdited.toIso8601String(),
+              'updatedAt': Timestamp.fromDate(tEdited),
+              'archived': false,
+              'ingredients': <dynamic>[],
+              'steps': <dynamic>[],
+            },
+          ),
+          (
+            id: 'rec-2',
+            data: {
+              'recipePk': 'rec-2',
+              'name': 'Baguette',
+              'defaultYield': 2.0,
+              'yieldName': 'loaves',
+              'groupId': 'space-bakery',
+              'space_ids': ['space-bakery'],
+              'dateCreated': tOld.toIso8601String(),
+              'dateTimeModified': tOld.toIso8601String(),
+              'updatedAt': Timestamp.fromDate(tOld),
+              'archived': false,
+              'ingredients': <dynamic>[],
+              'steps': <dynamic>[],
+            },
+          ),
+          (
+            id: 'rec-3',
+            data: {
+              'recipePk': 'rec-3',
+              'name': 'Brioche',
+              'defaultYield': 4.0,
+              'yieldName': 'loaves',
+              'groupId': 'space-bakery',
+              'space_ids': ['space-bakery'],
+              'dateCreated': tOld.toIso8601String(),
+              'dateTimeModified': tOld.toIso8601String(),
+              'updatedAt': Timestamp.fromDate(tOld),
+              'archived': false,
+              'ingredients': <dynamic>[],
+              'steps': <dynamic>[],
+            },
+          ),
+        ];
+
+        // User taps "Delete local database"
+        await db.resetDatabase();
+        expect(await db.getAllRecipes(), isEmpty);
+
+        // Even if lastSyncTimestamp had already advanced past tOld (e.g. an already-affected device),
+        // reconciling full remote snapshots must restore ALL 3 recipes and preserve workspace names!
+        final plan = await service.reconcileRemoteSnapshots(
+          db: db,
+          lastSyncTimestamp: tLastSync,
+          remoteGroupDocs: remoteGroups,
+          remoteUnitDocs: const [],
+          remoteIngredientDocs: const [],
+          remoteRecipeDocs: remoteRecipes,
+        );
+
+        expect(plan.mergeResult.recipesAdded, 3);
+        final restoredRecipes = await db.getAllRecipes();
+        expect(
+          restoredRecipes.map((r) => r.recipePk).toSet(),
+          {'rec-1', 'rec-2', 'rec-3'},
+        );
+
+        final restoredPastry = await db.getGroupById('space-pastry');
+        final restoredBakery = await db.getGroupById('space-bakery');
+        expect(restoredPastry?.name, 'Pastelería');
+        expect(restoredBakery?.name, 'Panadería');
+
+        // Must NOT push back stub/overwriting group names for unmodified remote groups
+        expect(
+          plan.groupsToPush.where((g) => g.id == 'space-pastry'),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'reconcileRemoteSnapshots respects local recipe deletion tombstones and does not resurrect deleted recipes',
+      () async {
+        final service = FirestoreSyncService();
+        final tOld = DateTime.utc(2026, 3, 1, 10, 0);
+
+        await db.insertRecipe(
+          RecipesCompanion(
+            recipePk: const Value('rec-keep'),
+            name: const Value('Keep Me'),
+            defaultYield: const Value(1.0),
+            yieldName: const Value('portion'),
+            dateCreated: Value(tOld),
+            dateTimeModified: Value(tOld),
+          ),
+        );
+        await db.insertRecipe(
+          RecipesCompanion(
+            recipePk: const Value('rec-delete'),
+            name: const Value('Delete Me'),
+            defaultYield: const Value(1.0),
+            yieldName: const Value('portion'),
+            dateCreated: Value(tOld),
+            dateTimeModified: Value(tOld),
+          ),
+        );
+
+        // Locally delete rec-delete (creates tombstone at DateTime.now() > tOld)
+        await db.deleteRecipeById('rec-delete');
+
+        final remoteRecipes = [
+          (
+            id: 'rec-keep',
+            data: {
+              'recipePk': 'rec-keep',
+              'name': 'Keep Me',
+              'defaultYield': 1.0,
+              'yieldName': 'portion',
+              'dateCreated': tOld.toIso8601String(),
+              'dateTimeModified': tOld.toIso8601String(),
+              'archived': false,
+              'ingredients': <dynamic>[],
+              'steps': <dynamic>[],
+            },
+          ),
+          (
+            id: 'rec-delete',
+            data: {
+              'recipePk': 'rec-delete',
+              'name': 'Delete Me',
+              'defaultYield': 1.0,
+              'yieldName': 'portion',
+              'dateCreated': tOld.toIso8601String(),
+              'dateTimeModified': tOld.toIso8601String(),
+              'archived': false,
+              'ingredients': <dynamic>[],
+              'steps': <dynamic>[],
+            },
+          ),
+        ];
+
+        final plan = await service.reconcileRemoteSnapshots(
+          db: db,
+          lastSyncTimestamp: tOld,
+          remoteGroupDocs: const [],
+          remoteUnitDocs: const [],
+          remoteIngredientDocs: const [],
+          remoteRecipeDocs: remoteRecipes,
+        );
+
+        final localRecipes = await db.getAllRecipes();
+        expect(localRecipes.map((r) => r.recipePk).toList(), ['rec-keep']);
+        expect(
+          plan.tombstonesToPush.any(
+            (t) => t.recordPk == 'rec-delete' && t.entityType == 'recipes',
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'clearLastSyncedAt clears all users and server cursor keys when called with no userId',
+      () async {
+        final service = FirestoreSyncService();
+        final prefs = await SharedPreferences.getInstance();
+        await service.setLastSyncedAt('user-a', DateTime.utc(2026, 4, 1));
+        await service.setLastSyncedAt('user-b', DateTime.utc(2026, 4, 2));
+        await prefs.setBool(
+          '${FirestoreSyncService.prefLastSyncTimestampKey}_server_cursor_user-a',
+          true,
+        );
+
+        await service.clearLastSyncedAt();
+
+        expect(await service.getLastSyncedAt('user-a'), isNull);
+        expect(await service.getLastSyncedAt('user-b'), isNull);
+        expect(
+          prefs.getBool(
+            '${FirestoreSyncService.prefLastSyncTimestampKey}_server_cursor_user-a',
+          ),
+          isNull,
+        );
+      },
+    );
   });
 }

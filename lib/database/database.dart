@@ -307,9 +307,12 @@ class AppDatabase extends _$AppDatabase {
     }
     var filtered = rows;
     if (hiddenSpaceIds != null && hiddenSpaceIds.isNotEmpty) {
-      final activeLinks = await (select(
-        recipeSpaces,
-      )..where((t) => t.isDeleted.equals(false))).get();
+      final activeLinks = await (select(recipeSpaces).join([
+        innerJoin(groups, groups.id.equalsExp(recipeSpaces.spaceId)),
+      ])..where(
+        recipeSpaces.isDeleted.equals(false) &
+            groups.isDeleted.equals(false),
+      )).map((row) => row.readTable(recipeSpaces)).get();
       final spacesByRecipe = <String, Set<String>>{};
       for (final link in activeLinks) {
         spacesByRecipe
@@ -383,6 +386,10 @@ class AppDatabase extends _$AppDatabase {
         recipeSpaces,
         recipeSpaces.recipeId.equalsExp(recipes.recipePk),
       ),
+      leftOuterJoin(
+        groups,
+        groups.id.equalsExp(recipeSpaces.spaceId),
+      ),
     ]);
     return query.watch().map((rows) {
       final unique = <String, Recipe>{};
@@ -391,7 +398,11 @@ class AppDatabase extends _$AppDatabase {
         final recipe = row.readTable(recipes);
         unique[recipe.recipePk] = recipe;
         final link = row.readTableOrNull(recipeSpaces);
-        if (link != null && !link.isDeleted) {
+        final group = row.readTableOrNull(groups);
+        if (link != null &&
+            !link.isDeleted &&
+            group != null &&
+            !group.isDeleted) {
           activeSpacesByRecipe
               .putIfAbsent(recipe.recipePk, () => <String>{})
               .add(link.spaceId);
@@ -461,10 +472,15 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
       }
-      if (markModified) {
-        await (update(recipes)..where((t) => t.recipePk.equals(recipeId)))
-            .write(RecipesCompanion(dateTimeModified: Value(DateTime.now())));
-      }
+      final primarySpaceId = spaceIds.where(selected.contains).firstOrNull;
+      await (update(recipes)..where((t) => t.recipePk.equals(recipeId))).write(
+        RecipesCompanion(
+          groupId: Value(primarySpaceId),
+          dateTimeModified: markModified
+              ? Value(DateTime.now())
+              : const Value.absent(),
+        ),
+      );
     });
   }
 
@@ -1081,6 +1097,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(recipes).go();
       await delete(ingredients).go();
       await delete(units).go();
+      await delete(groups).go();
       await delete(deletedRecords).go();
       await initializeDefaultDatabase(this);
     });

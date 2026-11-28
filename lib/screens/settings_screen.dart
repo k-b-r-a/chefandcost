@@ -16,6 +16,7 @@ import '../database/sample_data.dart';
 import '../widgets/app_logo.dart';
 import '../constants.dart';
 import '../utils/app_logger.dart';
+import '../utils/firestore_sync_service.dart';
 import '../widgets/github_changelog_view.dart';
 import '../services/app_tutorial_service.dart';
 import '../services/url_launcher_service.dart';
@@ -297,6 +298,16 @@ class SettingsGeneralScreen extends ConsumerWidget {
                 }
                 final db = ref.read(databaseProvider);
                 await db.resetDatabase();
+                await ref
+                    .read(firestoreSyncServiceProvider)
+                    .clearLastSyncedAt();
+                await ref
+                    .read(hiddenWorkspaceIdsProvider.notifier)
+                    .showAllWorkspaces();
+                await ref
+                    .read(activeGroupIdProvider.notifier)
+                    .setActiveGroupId(kAllGroupsId);
+                ref.invalidate(groupsStreamProvider);
                 ref.invalidate(recipesStreamProvider);
                 ref.invalidate(recipesWithFinancialsStreamProvider);
                 ref.invalidate(ingredientsStreamProvider);
