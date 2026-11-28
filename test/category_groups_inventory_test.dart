@@ -67,8 +67,8 @@ void main() {
         await iterator.cancel();
       }
     });
-    test('Drift schemaVersion is 2', () {
-      expect(db.schemaVersion, equals(2));
+    test('Drift schemaVersion is 3', () {
+      expect(db.schemaVersion, equals(3));
     });
 
     test(

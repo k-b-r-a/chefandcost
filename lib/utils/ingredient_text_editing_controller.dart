@@ -70,8 +70,9 @@ class IngredientTextEditingController extends TextEditingController {
 
     final pattern = escapedNames.join('|');
     _cachedRegex = RegExp(
-      '(?<![a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])($pattern)(?![a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])',
+      '(?<![\\p{L}\\p{N}])($pattern)(?![\\p{L}\\p{N}])',
       caseSensitive: false,
+      unicode: true,
     );
     _lookupMap = lookup;
     _colorCache = colors;

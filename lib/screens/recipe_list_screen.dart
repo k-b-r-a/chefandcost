@@ -1169,7 +1169,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(customController.dispose);
   }
 
   void _openTemporaryScaledRecipeFromList(

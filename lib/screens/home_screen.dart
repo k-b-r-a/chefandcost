@@ -679,7 +679,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               );
             }
 
-            final recentList = recipes.take(4).toList();
+            final sortedRecipes = List<RecipeWithFinancials>.from(recipes)
+              ..sort(
+                (a, b) => (b.recipe.dateTimeModified ?? b.recipe.dateCreated)
+                    .compareTo(
+                      a.recipe.dateTimeModified ?? a.recipe.dateCreated,
+                    ),
+              );
+            final recentList = sortedRecipes.take(4).toList();
 
             return Column(
               children: recentList.map((item) {

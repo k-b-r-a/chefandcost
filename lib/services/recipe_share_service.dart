@@ -833,6 +833,10 @@ class RecipeShareService {
       final allUnits = await db.getAllUnits();
       final allIngredients = await db.getAllIngredients();
 
+      final unitBySymbolAndCategory = {
+        for (final u in allUnits)
+          '${u.symbol.toLowerCase()}|${(u.category ?? '').toLowerCase()}': u,
+      };
       final unitBySymbol = {for (final u in allUnits) u.symbol.toLowerCase(): u};
       final unitByName = {for (final u in allUnits) u.name.toLowerCase(): u};
       final ingByName = {
@@ -858,8 +862,13 @@ class RecipeShareService {
         if (unitMap != null) {
           final uSymbol = (unitMap['symbol'] as String?)?.trim().toLowerCase() ?? '';
           final uName = (unitMap['name'] as String?)?.trim().toLowerCase() ?? '';
+          final uCat = (unitMap['category'] as String?)?.trim().toLowerCase() ?? '';
 
-          Unit? matchedUnit = unitBySymbol[uSymbol] ?? unitByName[uName];
+          final effectiveSymbol =
+              (uSymbol == 'oz' && uCat == 'volume') ? 'fl oz' : uSymbol;
+          Unit? matchedUnit = unitBySymbolAndCategory['$effectiveSymbol|$uCat'] ??
+              unitByName[uName] ??
+              unitBySymbol[effectiveSymbol];
 
           if (matchedUnit == null) {
             // Create new unit

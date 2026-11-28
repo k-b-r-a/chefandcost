@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:io' show InternetAddress, Platform;
 import 'dart:ui' show AppLifecycleState;
-import 'package:flutter/foundation.dart' show ValueNotifier, VoidCallback, debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show ValueNotifier, VoidCallback, debugPrint, kIsWeb, kReleaseMode;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdService {
@@ -62,7 +63,9 @@ class AdService {
     if (kIsWeb) return false;
     try {
       if (Platform.environment.containsKey('FLUTTER_TEST')) return false;
-      return Platform.isAndroid || Platform.isIOS;
+      if (Platform.isAndroid) return true;
+      if (Platform.isIOS) return !kReleaseMode;
+      return false;
     } catch (_) {
       return false;
     }
@@ -73,7 +76,9 @@ class AdService {
     if (kIsWeb) return false;
     try {
       if (Platform.environment.containsKey('FLUTTER_TEST')) return false;
-      return Platform.isAndroid || Platform.isIOS;
+      if (Platform.isAndroid) return true;
+      if (Platform.isIOS) return !kReleaseMode;
+      return false;
     } catch (_) {
       return false;
     }

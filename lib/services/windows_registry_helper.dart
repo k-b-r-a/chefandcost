@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../constants.dart';
 
 /// Desktop initialization helper for Windows file associations.
 /// Registers the `.chefy` extension in `HKEY_CURRENT_USER\Software\Classes`
@@ -9,6 +11,9 @@ class WindowsRegistryHelper {
   static const String fileExtension = '.chefy';
   static const String fileTypeName = 'Chef&Cost Recipe';
   static const String mimeType = 'application/vnd.chefandcost.recipe';
+  static const String _prefRegisteredKey = 'windows_chefy_ext_registered_v1';
+
+  static Future<void> registerChefyExtension() => registerFileAssociation();
 
   /// Registers `.chefy` file association, ProgID, DefaultIcon and Shell Open command in HKCU.
   static Future<void> registerFileAssociation() async {
@@ -19,6 +24,12 @@ class WindowsRegistryHelper {
       // Skip registry changes inside test runners or headless testing environments
       if (exePath.contains('flutter_tester') ||
           Platform.environment.containsKey('FLUTTER_TEST')) {
+        return;
+      }
+
+      final cacheToken = '$exePath|$kAppVersion';
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getString(_prefRegisteredKey) == cacheToken) {
         return;
       }
 
@@ -74,6 +85,7 @@ class WindowsRegistryHelper {
       for (final cmd in commands) {
         await Process.run('reg', cmd);
       }
+      await prefs.setString(_prefRegisteredKey, cacheToken);
     } catch (e) {
       debugPrint('WindowsRegistryHelper: registration error: $e');
     }

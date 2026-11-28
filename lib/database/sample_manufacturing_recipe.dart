@@ -184,7 +184,7 @@ Future<bool> ensureSampleManufacturingRecipe(
         description: Value(l10n.sample_manufacturing_recipe_desc),
         defaultYield: const Value(24.0),
         yieldName: Value(l10n.sample_manufacturing_yield_name),
-        targetProfitMargin: const Value(50.0),
+        targetProfitMargin: const Value(0.50),
         targetPricePerPortion: const Value(0.23),
         fixedOverheadCost: const Value(0.0),
         colour: const Value('amber'),

@@ -69,12 +69,26 @@ function readJsonBody(req) {
   });
 }
 
-function sendJson(res, statusCode, body) {
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+const ALLOWED_ORIGINS = new Set([
+  'https://chefycost.web.app',
+  'https://chefycostbeta.web.app',
+  'https://chefycostalpha.web.app',
+]);
+
+function getCorsHeaders(req) {
+  const origin = req?.headers?.origin;
+  const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : 'https://chefycost.web.app';
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+}
+
+function sendJson(res, statusCode, body, req = null) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json',
+    ...getCorsHeaders(req),
   });
   res.end(JSON.stringify(body, null, 2));
 }
@@ -85,11 +99,7 @@ const server = http.createServer(async (req, res) => {
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    });
+    res.writeHead(204, getCorsHeaders(req));
     return res.end();
   }
 
@@ -112,7 +122,7 @@ const server = http.createServer(async (req, res) => {
     // -----------------------------------------------------------------
     if (req.method === 'POST' && pathname === '/api/v1/integrity/verify') {
       const body = await readJsonBody(req);
-      const { token, requestHash, nonce, packageName, policy } = body;
+      const { token, requestHash, nonce, packageName } = body;
 
       if (!token) {
         return sendJson(res, 400, {
@@ -134,7 +144,6 @@ const server = http.createServer(async (req, res) => {
         expectedPackageName: targetPackage,
         expectedRequestHash: requestHash,
         expectedNonce: nonce,
-        policy,
       });
 
       const httpStatus = verificationResult.isValid ? 200 : 403;
@@ -145,6 +154,12 @@ const server = http.createServer(async (req, res) => {
     // POST /api/v1/integrity/simulate (For unit testing / CI sandbox)
     // -----------------------------------------------------------------
     if (req.method === 'POST' && pathname === '/api/v1/integrity/simulate') {
+      if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+        return sendJson(res, 404, {
+          error: 'NOT_FOUND',
+          message: `Cannot ${req.method} ${pathname}`,
+        });
+      }
       const body = await readJsonBody(req);
       const { payload, expectedRequestHash, expectedNonce, policy } = body;
 

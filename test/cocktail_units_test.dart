@@ -37,7 +37,7 @@ void main() {
           settings,
           cocktail: true,
         )!;
-        expect(fluidOz.symbol, 'oz');
+        expect(fluidOz.symbol, 'fl oz');
         expect(fluidOz.category, 'volume');
         expect(fluidOz.factorToBase, 29.5735295625);
         expect(fluidOz.unitPk, isNot(massOz.unitPk));
@@ -248,7 +248,7 @@ void main() {
         (w) => w is TextField && w.controller?.text == '1 3/4',
       );
       expect(cocktailAmountFinder, findsOneWidget);
-      expect(find.text('oz'), findsWidgets);
+      expect(find.text('fl oz'), findsWidgets);
 
       // And beside it shows in ml too: '(52.5 ml)'
       expect(find.text('(52.5 ml)'), findsOneWidget);

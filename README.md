@@ -23,7 +23,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.1.4%2B5-6B3C22?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.1.4%2B7-6B3C22?style=flat-square)
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Web%20(WASM)%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux-EBBB9B?style=flat-square&labelColor=3B2314)
 ![Flutter](https://img.shields.io/badge/Flutter-Cross--Platform-02569B?style=flat-square&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-%5E3.11.5-0175C2?style=flat-square&logo=dart&logoColor=white)
@@ -164,7 +164,11 @@ flutter test
   ```
 - **Firebase App Distribution (APK):**
   ```bash
+  # Linux / macOS
   ./scripts/distribute_apk.sh
+
+  # Windows PowerShell
+  ./scripts/distribute_apk.ps1
   ```
 - **iOS IPA (requires macOS):**
   ```bash

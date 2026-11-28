@@ -3831,7 +3831,7 @@ abstract class AppLocalizations {
   /// No description provided for @cloud_sync_error_prefix.
   ///
   /// In en, this message translates to:
-  /// **'Sync error: '**
+  /// **'Sync error:'**
   String get cloud_sync_error_prefix;
 
   /// No description provided for @ad_free_pass_btn_label.
@@ -4659,7 +4659,7 @@ abstract class AppLocalizations {
   /// No description provided for @mold_calc_multi_cavity_toggle.
   ///
   /// In en, this message translates to:
-  /// **'Multi-cavity tray (×N)'**
+  /// **'Multi-cavity tray'**
   String get mold_calc_multi_cavity_toggle;
 
   /// No description provided for @mold_calc_cavity_shape.

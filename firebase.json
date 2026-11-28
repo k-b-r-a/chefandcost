@@ -84,7 +84,7 @@
           ]
         },
         {
-          "source": "**/*.html",
+          "source": "/index.html",
           "headers": [
             {
               "key": "Cache-Control",
@@ -93,7 +93,7 @@
           ]
         },
         {
-          "source": "**/*.js",
+          "source": "/flutter_bootstrap.js",
           "headers": [
             {
               "key": "Cache-Control",
@@ -102,7 +102,7 @@
           ]
         },
         {
-          "source": "**/*.json",
+          "source": "/flutter_service_worker.js",
           "headers": [
             {
               "key": "Cache-Control",
@@ -111,7 +111,7 @@
           ]
         },
         {
-          "source": "**/*.png",
+          "source": "/version.json",
           "headers": [
             {
               "key": "Cache-Control",
@@ -120,7 +120,7 @@
           ]
         },
         {
-          "source": "**/*.svg",
+          "source": "/manifest.json",
           "headers": [
             {
               "key": "Cache-Control",
@@ -129,11 +129,29 @@
           ]
         },
         {
-          "source": "**/*.ico",
+          "source": "**/*.wasm",
           "headers": [
             {
               "key": "Cache-Control",
-              "value": "no-cache, no-store, must-revalidate"
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(otf|ttf|woff2)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
+            }
+          ]
+        },
+        {
+          "source": "assets/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
             }
           ]
         }
@@ -198,7 +216,7 @@
           ]
         },
         {
-          "source": "**/*.html",
+          "source": "/index.html",
           "headers": [
             {
               "key": "Cache-Control",
@@ -207,7 +225,7 @@
           ]
         },
         {
-          "source": "**/*.js",
+          "source": "/flutter_bootstrap.js",
           "headers": [
             {
               "key": "Cache-Control",
@@ -216,7 +234,7 @@
           ]
         },
         {
-          "source": "**/*.json",
+          "source": "/flutter_service_worker.js",
           "headers": [
             {
               "key": "Cache-Control",
@@ -225,7 +243,7 @@
           ]
         },
         {
-          "source": "**/*.png",
+          "source": "/version.json",
           "headers": [
             {
               "key": "Cache-Control",
@@ -234,7 +252,7 @@
           ]
         },
         {
-          "source": "**/*.svg",
+          "source": "/manifest.json",
           "headers": [
             {
               "key": "Cache-Control",
@@ -243,11 +261,29 @@
           ]
         },
         {
-          "source": "**/*.ico",
+          "source": "**/*.wasm",
           "headers": [
             {
               "key": "Cache-Control",
-              "value": "no-cache, no-store, must-revalidate"
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(otf|ttf|woff2)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
+            }
+          ]
+        },
+        {
+          "source": "assets/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
             }
           ]
         }
@@ -312,7 +348,7 @@
           ]
         },
         {
-          "source": "**/*.html",
+          "source": "/index.html",
           "headers": [
             {
               "key": "Cache-Control",
@@ -321,7 +357,7 @@
           ]
         },
         {
-          "source": "**/*.js",
+          "source": "/flutter_bootstrap.js",
           "headers": [
             {
               "key": "Cache-Control",
@@ -330,7 +366,7 @@
           ]
         },
         {
-          "source": "**/*.json",
+          "source": "/flutter_service_worker.js",
           "headers": [
             {
               "key": "Cache-Control",
@@ -339,7 +375,7 @@
           ]
         },
         {
-          "source": "**/*.png",
+          "source": "/version.json",
           "headers": [
             {
               "key": "Cache-Control",
@@ -348,7 +384,7 @@
           ]
         },
         {
-          "source": "**/*.svg",
+          "source": "/manifest.json",
           "headers": [
             {
               "key": "Cache-Control",
@@ -357,11 +393,29 @@
           ]
         },
         {
-          "source": "**/*.ico",
+          "source": "**/*.wasm",
           "headers": [
             {
               "key": "Cache-Control",
-              "value": "no-cache, no-store, must-revalidate"
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(otf|ttf|woff2)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
+            }
+          ]
+        },
+        {
+          "source": "assets/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800, stale-while-revalidate=86400"
             }
           ]
         }

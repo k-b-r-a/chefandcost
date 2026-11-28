@@ -96,7 +96,7 @@ Future<({int recipesAdded, int ingredientsAdded})> loadSampleData(
       description: 'Deliciosa torta de chocolate esponjosa con ganache, ideal para cumpleaños y eventos.',
       yieldVal: 8.0,
       yieldName: 'porciones',
-      margin: 45.0,
+      margin: 0.45,
       price: 4.50,
       colour: 'amber',
       ingredients: [
@@ -123,7 +123,7 @@ Future<({int recipesAdded, int ingredientsAdded})> loadSampleData(
       description: 'Galletas americanas clásicas, crujientes en los bordes y suaves en el centro.',
       yieldVal: 24.0,
       yieldName: 'galletas',
-      margin: 50.0,
+      margin: 0.50,
       price: 1.20,
       colour: 'deepOrange',
       ingredients: [
@@ -149,7 +149,7 @@ Future<({int recipesAdded, int ingredientsAdded})> loadSampleData(
       description: 'Pan rústico tradicional de corteza crujiente y miga tierna, con fermentación lenta.',
       yieldVal: 2.0,
       yieldName: 'hogazas',
-      margin: 60.0,
+      margin: 0.60,
       price: 3.50,
       colour: 'brown',
       ingredients: [
@@ -172,7 +172,7 @@ Future<({int recipesAdded, int ingredientsAdded})> loadSampleData(
       description: 'Crema clásica de repostería francesa para rellenar facturas, tartas y medialunas.',
       yieldVal: 4.0,
       yieldName: 'porciones',
-      margin: 45.0,
+      margin: 0.45,
       price: 2.20,
       colour: 'yellow',
       ingredients: [

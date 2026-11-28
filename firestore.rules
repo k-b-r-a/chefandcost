@@ -13,10 +13,38 @@ service cloud.firestore {
       return request.resource == null || request.resource.data.keys().size() <= 50;
     }
 
+    function hasProtectedEntitlementFields(data) {
+      return data.keys().hasAny([
+        'isSubscribed',
+        'hasLifetimeSubscription',
+        'isVip',
+        'subscriptionPlan',
+        'subscriptionExpiresAt',
+        'plan',
+        'entitlementSource',
+        'purchaseToken'
+      ]);
+    }
+
     // 1. Datos del usuario (documento de usuario y todas sus subcolecciones: recipes, ingredients, units, groups, sync_meta)
     match /users/{userId} {
       allow read: if isAuthenticatedOwner(userId);
-      allow write: if isAuthenticatedOwner(userId) && isValidWriteSize();
+      allow create: if isAuthenticatedOwner(userId)
+                    && isValidWriteSize()
+                    && !hasProtectedEntitlementFields(request.resource.data);
+      allow update: if isAuthenticatedOwner(userId)
+                    && isValidWriteSize()
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                         'isSubscribed',
+                         'hasLifetimeSubscription',
+                         'isVip',
+                         'subscriptionPlan',
+                         'subscriptionExpiresAt',
+                         'plan',
+                         'entitlementSource',
+                         'purchaseToken'
+                       ]);
+      allow delete: if isAuthenticatedOwner(userId);
 
       match /{allChildren=**} {
         allow read: if isAuthenticatedOwner(userId);

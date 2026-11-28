@@ -120,7 +120,7 @@ Future<void> initializeDefaultDatabase(AppDatabase db, [Locale? locale]) async {
     UnitsCompanion(
       unitPk: const Value('unit_def_fluid_ounces'),
       name: const Value('unit_fluid_ounces'),
-      symbol: const Value('oz'),
+      symbol: const Value('fl oz'),
       category: const Value('volume'),
       factorToBase: const Value(29.5735295625),
       isMutable: const Value(false),
@@ -182,7 +182,8 @@ Future<void> initializeDefaultDatabase(AppDatabase db, [Locale? locale]) async {
     if (existing == null) {
       await db.insertUnit(unit);
     } else if (existing.category != unit.category.value ||
-        existing.factorToBase != unit.factorToBase.value) {
+        existing.factorToBase != unit.factorToBase.value ||
+        existing.symbol != unit.symbol.value) {
       await db.updateUnit(
         existing.copyWith(
           category: Value(unit.category.value),

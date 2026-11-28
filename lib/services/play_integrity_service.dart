@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:math' show Random;
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -207,7 +208,10 @@ class PlayIntegrityService {
 
   /// Generates a randomized default request hash.
   static String generateDefaultRequestHash() {
-    final entropy = '${DateTime.now().microsecondsSinceEpoch}_${base64UrlEncode(List<int>.generate(16, (i) => (i * 37) % 256))}';
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    final entropy =
+        '${DateTime.now().microsecondsSinceEpoch}_${base64UrlEncode(bytes)}';
     return generateSha256Digest(entropy);
   }
 }

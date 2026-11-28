@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -211,9 +212,6 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
 
     _initPurchaseStream();
     AdService.preloadRewardedAd();
-    if (_canUseNativeStore) {
-      unawaited(PlayIntegrityService.prepareTokenProvider());
-    }
 
     ref.onDispose(() {
       _disposed = true;
@@ -422,17 +420,86 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
         }
       } else if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
+        final isAnnual = purchase.productID.contains('annual');
+        String normalizedPlan =
+            isAnnual ? kAnnualSubscriptionId : kMonthlySubscriptionId;
+        DateTime expiresAt = DateTime.now().add(
+          isAnnual ? const Duration(days: 365) : const Duration(days: 30),
+        );
+
+        final purchaseToken = purchase.verificationData.serverVerificationData;
+        final isAndroidNative =
+            !kIsWeb && Platform.isAndroid && purchaseToken.isNotEmpty;
+        final currentUser = FirebaseAuth.instance.currentUser;
+
+        if (isAndroidNative && currentUser != null) {
+          try {
+            final uid = currentUser.uid;
+            final requestHash = PlayIntegrityService.generateSha256Digest(
+              '$uid:${purchase.productID}:$purchaseToken',
+            );
+            final integrityResult =
+                await PlayIntegrityService.requestIntegrityToken(
+              requestHash: requestHash,
+            );
+            if (!integrityResult.isSuccess || integrityResult.token == null) {
+              throw StateError(
+                integrityResult.errorMessage ?? 'Play Integrity check failed',
+              );
+            }
+
+            final obfuscatedAccountId = generateObfuscatedId(
+              uid,
+              salt: 'chefy_billing_account',
+            );
+            final obfuscatedProfileId = generateObfuscatedId(
+              uid,
+              salt: 'chefy_billing_profile',
+            );
+
+            final callable = FirebaseFunctions.instance
+                .httpsCallable('verifyPlayBillingPurchase');
+            final response = await callable.call<Map<String, dynamic>>({
+              'purchaseToken': purchaseToken,
+              'productId': purchase.productID,
+              'obfuscatedAccountId': obfuscatedAccountId,
+              'obfuscatedProfileId': obfuscatedProfileId,
+              'integrityToken': integrityResult.token,
+              'requestHash': requestHash,
+            });
+            final data = response.data;
+            if (data['verified'] != true) {
+              throw StateError('Server rejected Play Billing purchase');
+            }
+            if (data['planId'] is String &&
+                (data['planId'] as String).isNotEmpty) {
+              normalizedPlan = data['planId'] as String;
+            }
+            if (data['expiresAtMs'] is num) {
+              expiresAt = DateTime.fromMillisecondsSinceEpoch(
+                (data['expiresAtMs'] as num).toInt(),
+              );
+            }
+          } catch (e) {
+            debugPrint('[PlayBilling] Server verification failed: $e');
+            if (!_allowSandboxFallback) {
+              if (!_disposed) {
+                state = state.copyWith(
+                  isLoadingPurchase: false,
+                  errorMessage: 'subscription_store_unavailable',
+                );
+              }
+              continue;
+            }
+          }
+        }
+
         if (purchase.pendingCompletePurchase) {
           try {
             await InAppPurchase.instance.completePurchase(purchase);
           } catch (_) {}
         }
-        final isAnnual = purchase.productID.contains('annual');
-        final normalizedPlan =
-            isAnnual ? kAnnualSubscriptionId : kMonthlySubscriptionId;
-        final expiresAt = DateTime.now().add(
-          isAnnual ? const Duration(days: 365) : const Duration(days: 30),
-        );
+
         await setSubscription(
           isSubscribed: true,
           planId: normalizedPlan,
@@ -550,6 +617,9 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
         isAnnual ? kAnnualSubscriptionId : kMonthlySubscriptionId;
 
     if (_canUseNativeStore) {
+      if (!PlayIntegrityService.isWarmedUp) {
+        unawaited(PlayIntegrityService.prepareTokenProvider());
+      }
       try {
         final available = await InAppPurchase.instance.isAvailable();
         if (available) {
@@ -684,6 +754,9 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
     );
 
     if (_canUseNativeStore) {
+      if (!PlayIntegrityService.isWarmedUp) {
+        unawaited(PlayIntegrityService.prepareTokenProvider());
+      }
       try {
         final available = await InAppPurchase.instance.isAvailable();
         if (available) {
@@ -706,7 +779,7 @@ class MonetizationNotifier extends Notifier<MonetizationState> {
         await setSubscription(
           isSubscribed: true,
           planId: remote.plan,
-          expiresAt: null,
+          expiresAt: remote.expiresAt,
           successMessage: 'subscription_restored_success',
         );
         return true;

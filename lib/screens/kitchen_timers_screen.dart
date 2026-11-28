@@ -701,7 +701,7 @@ class _KitchenTimersScreenState extends ConsumerState<KitchenTimersScreen> {
           },
         );
       },
-    );
+    ).whenComplete(nameController.dispose);
   }
 
   Widget _buildTimePickerColumn({

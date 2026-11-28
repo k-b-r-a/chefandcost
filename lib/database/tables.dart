@@ -56,7 +56,7 @@ class Recipes extends Table {
   DateTimeColumn get dateCreated =>
       dateTime().clientDefault(() => DateTime.now())();
   DateTimeColumn get dateTimeModified =>
-      dateTime().withDefault(Constant(DateTime.now())).nullable()();
+      dateTime().withDefault(currentDateAndTime).nullable()();
 
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
 
@@ -117,7 +117,7 @@ class Ingredients extends Table {
   DateTimeColumn get dateCreated =>
       dateTime().clientDefault(() => DateTime.now())();
   DateTimeColumn get dateTimeModified =>
-      dateTime().withDefault(Constant(DateTime.now())).nullable()();
+      dateTime().withDefault(currentDateAndTime).nullable()();
 
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
   DateTimeColumn get deletedAt => dateTime().nullable()();
@@ -152,7 +152,7 @@ class RecipeIngredients extends Table {
   RealColumn get amountNeeded => real()();
 
   DateTimeColumn get dateTimeModified =>
-      dateTime().withDefault(Constant(DateTime.now())).nullable()();
+      dateTime().withDefault(currentDateAndTime).nullable()();
 
   @override
   Set<Column> get primaryKey => {recipeIngredientPk};
@@ -167,7 +167,7 @@ class RecipeSteps extends Table {
   TextColumn get instruction => text().withLength(max: noteLimit)();
 
   DateTimeColumn get dateTimeModified =>
-      dateTime().withDefault(Constant(DateTime.now())).nullable()();
+      dateTime().withDefault(currentDateAndTime).nullable()();
 
   @override
   Set<Column> get primaryKey => {stepPk};
